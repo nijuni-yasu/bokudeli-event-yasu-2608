@@ -48,6 +48,7 @@ const lightboxVisible = ref(false)
 const lightboxImgs = ref<AlbumLightboxSlide[]>([])
 const lightboxIndex = ref(0)
 const isLightboxDownloading = ref(false)
+const downloadingMessageId = ref<string | null>(null)
 /** サムネ読込済み Object URL（storage_path → url）。ライトボックスで再利用する */
 const attachmentObjectUrlByPath = ref(new Map<string, string>())
 /** ライトボックス用に ChatLog が生成した Object URL（サムネ側の URL は含めない） */
@@ -211,6 +212,30 @@ const onLightboxDownloadClick = async (): Promise<void> => {
     notification.show(t('chat.download_failed'), 'error')
   } finally {
     isLightboxDownloading.value = false
+  }
+}
+
+const onDownloadAllAttachments = async (message: ChatMessageItem): Promise<void> => {
+  const attachments = message.attachments ?? []
+  if (attachments.length === 0 || downloadingMessageId.value != null) {
+    return
+  }
+
+  downloadingMessageId.value = message.id
+  let iosHintShown = false
+  try {
+    for (const attachment of attachments) {
+      const blob = await getChatAttachmentBlob(attachment.storage_path)
+      const result = await downloadBlob(blob, attachment.file_name)
+      if (result === 'shared' && !iosHintShown) {
+        notification.show(t('chat.download_ios_hint'), 'info')
+        iosHintShown = true
+      }
+    }
+  } catch {
+    notification.show(t('chat.download_failed'), 'error')
+  } finally {
+    downloadingMessageId.value = null
   }
 }
 
@@ -468,7 +493,11 @@ onBeforeUnmount(() => {
                   :can-react="canReactToMessage(entry.message)"
                   :show-reaction-picker="canReactToMessage(entry.message)"
                   :show-recall="canRecall(entry.message)"
+                  :show-download="(entry.message.attachments ?? []).length > 0"
+                  :is-downloading="downloadingMessageId === entry.message.id"
+                  :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
                   @recall="openRecallConfirm(entry.message)"
+                  @download="onDownloadAllAttachments(entry.message)"
                 />
                 <p
                   v-linkify
@@ -490,7 +519,11 @@ onBeforeUnmount(() => {
                   :is-own-message="false"
                   :can-react="canReactToMessage(entry.message)"
                   :show-reaction-picker="canReactToMessage(entry.message)"
+                  :show-download="(entry.message.attachments ?? []).length > 0"
+                  :is-downloading="downloadingMessageId === entry.message.id"
+                  :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
                   @recall="openRecallConfirm(entry.message)"
+                  @download="onDownloadAllAttachments(entry.message)"
                 />
               </div>
               <div
@@ -511,7 +544,11 @@ onBeforeUnmount(() => {
                   :can-react="canReactToMessage(entry.message)"
                   :show-reaction-picker="canReactToMessage(entry.message)"
                   :show-recall="canRecall(entry.message)"
+                  :show-download="(entry.message.attachments ?? []).length > 0"
+                  :is-downloading="downloadingMessageId === entry.message.id"
+                  :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
                   @recall="openRecallConfirm(entry.message)"
+                  @download="onDownloadAllAttachments(entry.message)"
                 />
                 <div
                   class="chat-message-attachments"
@@ -534,8 +571,8 @@ onBeforeUnmount(() => {
                   v-if="
                     store.activeRoomId != null &&
                     entry.message.senderUserId !== currentUserId &&
-                    canReactToMessage(entry.message) &&
-                    (entry.message.body == null || entry.message.body === '')
+                    (entry.message.body == null || entry.message.body === '') &&
+                    (canReactToMessage(entry.message) || (entry.message.attachments ?? []).length > 0)
                   "
                   mode="actions"
                   :message="entry.message"
@@ -543,8 +580,12 @@ onBeforeUnmount(() => {
                   :current-user-id="currentUserId"
                   :is-own-message="false"
                   :can-react="canReactToMessage(entry.message)"
-                  :show-reaction-picker="true"
+                  :show-reaction-picker="canReactToMessage(entry.message)"
+                  :show-download="(entry.message.attachments ?? []).length > 0"
+                  :is-downloading="downloadingMessageId === entry.message.id"
+                  :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
                   @recall="openRecallConfirm(entry.message)"
+                  @download="onDownloadAllAttachments(entry.message)"
                 />
               </div>
               <ChatMessageReactions
@@ -636,20 +677,20 @@ onBeforeUnmount(() => {
 }
 
 .chat-group {
-  .chat-message-action-btn {
+  :deep(.chat-message-action-btn) {
     opacity: 0;
     transition: opacity 0.15s ease;
   }
 
-  &:hover .chat-message-action-btn,
-  &:focus-within .chat-message-action-btn,
-  .chat-message-action-btn:focus-visible {
+  &:hover :deep(.chat-message-action-btn),
+  &:focus-within :deep(.chat-message-action-btn),
+  :deep(.chat-message-action-btn:focus-visible) {
     opacity: 1;
   }
 }
 
 @media (hover: none) {
-  .chat-group .chat-message-action-btn {
+  .chat-group :deep(.chat-message-action-btn) {
     opacity: 1;
   }
 }

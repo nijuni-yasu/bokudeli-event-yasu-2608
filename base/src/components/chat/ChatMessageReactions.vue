@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiDotsVertical, mdiEmoticonHappyOutline } from '@mdi/js'
+import { mdiDotsVertical, mdiDownload, mdiEmoticonHappyOutline } from '@mdi/js'
 import { CHAT_REACTION_EMOJIS, type ChatReactionEmoji } from '@shokujii/common/schemas/ChatReaction.js'
 import { toggleReaction } from '@shokujii/base/stores/chatReaction.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -14,10 +14,14 @@ const props = defineProps<{
   canReact: boolean
   showReactionPicker?: boolean
   showRecall?: boolean
+  showDownload?: boolean
+  isDownloading?: boolean
+  isDownloadBlocked?: boolean
 }>()
 
 const emit = defineEmits<{
   recall: []
+  download: []
 }>()
 
 const { t } = useI18n()
@@ -90,7 +94,7 @@ const onSummaryChipClick = async (emoji: ChatReactionEmoji): Promise<void> => {
 <template>
   <template v-if="mode === 'actions'">
     <div
-      v-if="showReactionPicker === true || showRecall === true"
+      v-if="showReactionPicker === true || showRecall === true || showDownload === true"
       class="chat-message-action-btns d-flex align-center flex-shrink-0"
       :class="isOwnMessage ? 'chat-message-action-btns--own' : ''"
     >
@@ -148,6 +152,21 @@ const onSummaryChipClick = async (emoji: ChatReactionEmoji): Promise<void> => {
           </VList>
         </div>
       </VMenu>
+
+      <VBtn
+        v-if="showDownload === true"
+        icon
+        variant="text"
+        size="x-small"
+        color="default"
+        class="chat-message-action-btn flex-shrink-0"
+        :loading="isDownloading === true"
+        :disabled="isDownloadBlocked === true"
+        :aria-label="t('chat.download_all_attachments')"
+        @click.stop="emit('download')"
+      >
+        <VIcon :icon="mdiDownload" size="18" />
+      </VBtn>
     </div>
   </template>
 

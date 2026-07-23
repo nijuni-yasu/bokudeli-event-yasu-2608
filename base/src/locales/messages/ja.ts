@@ -1056,6 +1056,7 @@ export default {
     attachment_preview_group: '添付画像（送信前）',
     remove_attachment: '添付画像を取り消す',
     download_attachment: '画像をダウンロード',
+    download_all_attachments: '画像をすべてダウンロード',
     download_failed: '画像のダウンロードに失敗しました',
     download_ios_hint: '「共有」から「写真に保存」を選んでください',
     reaction_picker: 'リアクションを追加',

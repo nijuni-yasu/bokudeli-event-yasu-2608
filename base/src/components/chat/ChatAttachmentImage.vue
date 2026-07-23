@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { mdiDownload, mdiImageBrokenVariant } from '@mdi/js'
+import { mdiImageBrokenVariant } from '@mdi/js'
 import type { ChatAttachment } from '@shokujii/common/schemas/ChatMessage.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
 import { computeChatAttachmentDisplaySize } from '@shokujii/base/utils/chatAttachmentDisplaySize.js'
-import { downloadBlob } from '@shokujii/base/utils/downloadBlob.js'
-import { useNotification } from '@shokujii/base/composable/notification.js'
 import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
 
 const props = withDefaults(
@@ -28,13 +26,10 @@ const emit = defineEmits<{
 const lightboxPinActive = inject(injectionKeyChatAttachmentLightboxPin, ref(false))
 
 const { t } = useI18n()
-const notification = useNotification()
 
 const objectUrl = ref<string | null>(null)
-const attachmentBlob = ref<Blob | null>(null)
 const isLoading = ref(true)
 const hasError = ref(false)
-const isDownloading = ref(false)
 
 let loadGeneration = 0
 
@@ -50,7 +45,6 @@ const revokeObjectUrl = (): void => {
     URL.revokeObjectURL(objectUrl.value)
     objectUrl.value = null
   }
-  attachmentBlob.value = null
 }
 
 const loadAttachment = async (): Promise<void> => {
@@ -67,7 +61,6 @@ const loadAttachment = async (): Promise<void> => {
     if (generation !== loadGeneration) {
       return
     }
-    attachmentBlob.value = blob
     objectUrl.value = URL.createObjectURL(blob)
     emit('loaded', { storagePath: props.attachment.storage_path, url: objectUrl.value })
   } catch {
@@ -87,24 +80,6 @@ const onExpandClick = (): void => {
     return
   }
   emit('expand', { url: objectUrl.value, alt: props.attachment.file_name })
-}
-
-const onDownloadClick = async (): Promise<void> => {
-  const blob = attachmentBlob.value
-  if (blob == null || isDownloading.value) {
-    return
-  }
-  isDownloading.value = true
-  try {
-    const result = await downloadBlob(blob, props.attachment.file_name)
-    if (result === 'shared') {
-      notification.show(t('chat.download_ios_hint'), 'info')
-    }
-  } catch {
-    notification.show(t('chat.download_failed'), 'error')
-  } finally {
-    isDownloading.value = false
-  }
 }
 
 onMounted(() => {
@@ -145,18 +120,6 @@ onBeforeUnmount(() => {
       :class="{ 'chat-attachment-loaded--tile': isTileLayout }"
       :style="isTileLayout ? undefined : displaySizeStyle"
     >
-      <VBtn
-        icon
-        variant="flat"
-        size="x-small"
-        color="surface"
-        class="chat-attachment-download-btn"
-        :loading="isDownloading"
-        :aria-label="t('chat.download_attachment')"
-        @click.stop="onDownloadClick"
-      >
-        <VIcon :icon="mdiDownload" size="18" />
-      </VBtn>
       <button
         type="button"
         class="chat-attachment-button"
@@ -203,14 +166,6 @@ onBeforeUnmount(() => {
 .chat-attachment-loaded--tile {
   inline-size: 100%;
   block-size: 100%;
-}
-
-.chat-attachment-download-btn {
-  position: absolute;
-  inset-block-start: 4px;
-  inset-inline-end: 4px;
-  z-index: 1;
-  opacity: 0.92;
 }
 
 .chat-attachment-button {
