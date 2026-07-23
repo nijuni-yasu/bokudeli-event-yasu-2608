@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { mdiImageBrokenVariant } from '@mdi/js'
+import { mdiDownload, mdiImageBrokenVariant } from '@mdi/js'
 import type { ChatAttachment } from '@shokujii/common/schemas/ChatMessage.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
 import { computeChatAttachmentDisplaySize } from '@shokujii/base/utils/chatAttachmentDisplaySize.js'
+import { downloadBlob } from '@shokujii/base/utils/downloadBlob.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
 
 const props = withDefaults(
@@ -26,10 +28,13 @@ const emit = defineEmits<{
 const lightboxPinActive = inject(injectionKeyChatAttachmentLightboxPin, ref(false))
 
 const { t } = useI18n()
+const notification = useNotification()
 
 const objectUrl = ref<string | null>(null)
+const attachmentBlob = ref<Blob | null>(null)
 const isLoading = ref(true)
 const hasError = ref(false)
+const isDownloading = ref(false)
 
 let loadGeneration = 0
 
@@ -45,6 +50,7 @@ const revokeObjectUrl = (): void => {
     URL.revokeObjectURL(objectUrl.value)
     objectUrl.value = null
   }
+  attachmentBlob.value = null
 }
 
 const loadAttachment = async (): Promise<void> => {
@@ -61,6 +67,7 @@ const loadAttachment = async (): Promise<void> => {
     if (generation !== loadGeneration) {
       return
     }
+    attachmentBlob.value = blob
     objectUrl.value = URL.createObjectURL(blob)
     emit('loaded', { storagePath: props.attachment.storage_path, url: objectUrl.value })
   } catch {
@@ -80,6 +87,24 @@ const onExpandClick = (): void => {
     return
   }
   emit('expand', { url: objectUrl.value, alt: props.attachment.file_name })
+}
+
+const onDownloadClick = async (): Promise<void> => {
+  const blob = attachmentBlob.value
+  if (blob == null || isDownloading.value) {
+    return
+  }
+  isDownloading.value = true
+  try {
+    const result = await downloadBlob(blob, props.attachment.file_name)
+    if (result === 'shared') {
+      notification.show(t('chat.download_ios_hint'), 'info')
+    }
+  } catch {
+    notification.show(t('chat.download_failed'), 'error')
+  } finally {
+    isDownloading.value = false
+  }
 }
 
 onMounted(() => {
@@ -114,23 +139,41 @@ onBeforeUnmount(() => {
     <div v-if="isLoading" class="chat-attachment-placeholder d-flex align-center justify-center">
       <VProgressCircular indeterminate size="24" width="2" color="primary" />
     </div>
-    <button
+    <div
       v-else-if="objectUrl != null"
-      type="button"
-      class="chat-attachment-button"
+      class="chat-attachment-loaded"
+      :class="{ 'chat-attachment-loaded--tile': isTileLayout }"
       :style="isTileLayout ? undefined : displaySizeStyle"
-      @click="onExpandClick"
     >
-      <VImg
-        :src="objectUrl"
-        :alt="attachment.file_name"
-        :width="isTileLayout ? undefined : displaySize.width"
-        :height="isTileLayout ? undefined : displaySize.height"
-        :cover="isTileLayout"
-        class="rounded chat-attachment-img"
-        :class="{ 'chat-attachment-img--tile': isTileLayout }"
-      />
-    </button>
+      <VBtn
+        icon
+        variant="flat"
+        size="x-small"
+        color="surface"
+        class="chat-attachment-download-btn"
+        :loading="isDownloading"
+        :aria-label="t('chat.download_attachment')"
+        @click.stop="onDownloadClick"
+      >
+        <VIcon :icon="mdiDownload" size="18" />
+      </VBtn>
+      <button
+        type="button"
+        class="chat-attachment-button"
+        :style="isTileLayout ? undefined : displaySizeStyle"
+        @click="onExpandClick"
+      >
+        <VImg
+          :src="objectUrl"
+          :alt="attachment.file_name"
+          :width="isTileLayout ? undefined : displaySize.width"
+          :height="isTileLayout ? undefined : displaySize.height"
+          :cover="isTileLayout"
+          class="rounded chat-attachment-img"
+          :class="{ 'chat-attachment-img--tile': isTileLayout }"
+        />
+      </button>
+    </div>
     <div v-else-if="hasError" class="chat-attachment-error text-disabled text-sm">
       <VIcon :icon="mdiImageBrokenVariant" size="20" class="me-1" />
       {{ t('chat.error.attachment_load_failed') }}
@@ -151,6 +194,23 @@ onBeforeUnmount(() => {
   height: 100%;
   background: rgba(var(--v-theme-on-surface), 0.04);
   border-radius: 4px;
+}
+
+.chat-attachment-loaded {
+  position: relative;
+}
+
+.chat-attachment-loaded--tile {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.chat-attachment-download-btn {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 4px;
+  z-index: 1;
+  opacity: 0.92;
 }
 
 .chat-attachment-button {

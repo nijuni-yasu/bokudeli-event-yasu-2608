@@ -22,6 +22,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
+  'update:index': [value: number]
 }>()
 
 const { t } = useI18n()
@@ -65,6 +66,7 @@ const counterLabel = computed(() =>
 
 const onIndexChange = (_oldIndex: number, newIndex: number) => {
   displayIndex.value = newIndex
+  emit('update:index', newIndex)
 }
 
 const onHide = () => {

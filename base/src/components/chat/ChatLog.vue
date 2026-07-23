@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiDotsVertical } from '@mdi/js'
+import { mdiDotsVertical, mdiDownload } from '@mdi/js'
 import {
   convertToTimeString,
   convertToDateString,
@@ -19,6 +19,7 @@ import { CHAT_SYSTEM_EVENT_MEMBER_JOINED } from '@shokujii/common/schemas/ChatMe
 import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
+import { downloadBlob } from '@shokujii/base/utils/downloadBlob.js'
 import ChatAttachmentImage from './ChatAttachmentImage.vue'
 import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
 
@@ -45,6 +46,7 @@ const isRecalling = ref(false)
 const lightboxVisible = ref(false)
 const lightboxImgs = ref<AlbumLightboxSlide[]>([])
 const lightboxIndex = ref(0)
+const isLightboxDownloading = ref(false)
 /** サムネ読込済み Object URL（storage_path → url）。ライトボックスで再利用する */
 const attachmentObjectUrlByPath = ref(new Map<string, string>())
 /** ライトボックス用に ChatLog が生成した Object URL（サムネ側の URL は含めない） */
@@ -171,6 +173,43 @@ const onLightboxVisibleUpdate = (value: boolean): void => {
     revokeLightboxOwnedUrls()
     lightboxImgs.value = []
     lightboxIndex.value = 0
+    isLightboxDownloading.value = false
+  }
+}
+
+const currentLightboxSlide = computed((): AlbumLightboxSlide | null => {
+  if (!lightboxVisible.value) {
+    return null
+  }
+  return lightboxImgs.value[lightboxIndex.value] ?? null
+})
+
+const canDownloadLightboxSlide = computed((): boolean => {
+  const slide = currentLightboxSlide.value
+  return slide != null && slide.src !== ''
+})
+
+const onLightboxDownloadClick = async (): Promise<void> => {
+  const slide = currentLightboxSlide.value
+  if (slide == null || slide.src === '' || isLightboxDownloading.value) {
+    return
+  }
+
+  isLightboxDownloading.value = true
+  try {
+    const response = await fetch(slide.src)
+    if (!response.ok) {
+      throw new Error('fetch failed')
+    }
+    const blob = await response.blob()
+    const result = await downloadBlob(blob, slide.title ?? 'download')
+    if (result === 'shared') {
+      notification.show(t('chat.download_ios_hint'), 'info')
+    }
+  } catch {
+    notification.show(t('chat.download_failed'), 'error')
+  } finally {
+    isLightboxDownloading.value = false
   }
 }
 
@@ -512,7 +551,24 @@ onBeforeUnmount(() => {
       :show-caption="false"
       :show-counter="false"
       @update:visible="onLightboxVisibleUpdate"
+      @update:index="lightboxIndex = $event"
     />
+
+    <Teleport to="body">
+      <div v-if="lightboxVisible && canDownloadLightboxSlide" class="chat-lightbox-download">
+        <VBtn
+          variant="flat"
+          color="surface"
+          size="small"
+          :loading="isLightboxDownloading"
+          :prepend-icon="mdiDownload"
+          :aria-label="t('chat.download_attachment')"
+          @click="onLightboxDownloadClick"
+        >
+          {{ t('chat.download_attachment') }}
+        </VBtn>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -525,6 +581,13 @@ onBeforeUnmount(() => {
   @media (min-width: 600px) {
     padding: 20px;
   }
+}
+
+:global(.chat-lightbox-download) {
+  position: fixed;
+  inset-block-end: 24px;
+  inset-inline-end: 24px;
+  z-index: 10000;
 }
 
 .chat-body {

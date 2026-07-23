@@ -1053,6 +1053,9 @@ export default {
     image_preview_alt: '添付画像のプレビュー',
     attachment_preview_group: '添付画像（送信前）',
     remove_attachment: '添付画像を取り消す',
+    download_attachment: '画像をダウンロード',
+    download_failed: '画像のダウンロードに失敗しました',
+    download_ios_hint: '「共有」から「写真に保存」を選んでください',
     error: {
       preparing: '準備中です。しばらくしてから再度お試しください',
       room_not_found: 'チャットが見つかりません',
