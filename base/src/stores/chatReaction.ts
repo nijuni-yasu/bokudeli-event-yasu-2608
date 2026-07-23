@@ -4,7 +4,6 @@ import {
   getDoc,
   serverTimestamp,
   setDoc,
-  updateDoc,
   type DocumentData,
   type FirestoreDataConverter,
   type QueryDocumentSnapshot,
@@ -90,5 +89,5 @@ export const toggleReaction = async (
     return
   }
 
-  await updateDoc(ref, createReactionForUpdate(userId, emoji))
+  await setDoc(ref, createReactionForUpdate(userId, emoji), { merge: true })
 }
