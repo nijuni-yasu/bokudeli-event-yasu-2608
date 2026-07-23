@@ -22,8 +22,9 @@ export default [
         typescript: {
           project: './tsconfig.json',
         },
+        // TS リゾルバが拾えない devDependency / ルート hoisting 時のフォールバック
         node: {
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+          extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts'],
         },
       },
     },
