@@ -41,6 +41,7 @@ const UserDbSchema = z.object({
   counts_updated_at: TimestampSchema.optional(),
   user_type: z.enum(USER_TYPE_VALUES).optional(),
   enterprise_id: NonEmptyStringSchema.optional(),
+  user_tags: z.array(z.string()).optional(),
 })
 
 const UserAppSchema = z.object({
@@ -70,6 +71,7 @@ const UserAppSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => v ?? undefined),
+  user_tags: z.array(z.string()).default([]),
 })
 
 const convertToDb = (user: User) => {
@@ -106,6 +108,7 @@ export class User {
   counts_updated_at?: number
   user_type?: (typeof USER_TYPE_VALUES)[number]
   enterprise_id?: string
+  user_tags!: string[]
 
   constructor(id: string, src: Partial<User>) {
     Object.assign(this, UserAppSchema.parse(src))
