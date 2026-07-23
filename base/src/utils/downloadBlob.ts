@@ -38,19 +38,28 @@ const shareViaWebShare = async (blob: Blob, fileName: string): Promise<boolean> 
   return true
 }
 
+const isIosDevice = (): boolean => {
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    return true
+  }
+  return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+}
+
 /**
  * Blob を端末に保存する。iOS Safari 等では Web Share API にフォールバックする。
  */
 export const downloadBlob = async (blob: Blob, fileName: string): Promise<DownloadBlobResult> => {
   const safeName = sanitizeDownloadFileName(fileName)
 
-  try {
-    const shared = await shareViaWebShare(blob, safeName)
-    if (shared) {
-      return 'shared'
+  if (isIosDevice()) {
+    try {
+      const shared = await shareViaWebShare(blob, safeName)
+      if (shared) {
+        return 'shared'
+      }
+    } catch {
+      // share 失敗時は anchor ダウンロードへフォールバック
     }
-  } catch {
-    // share 失敗時は anchor ダウンロードへフォールバック
   }
 
   downloadViaAnchor(blob, safeName)

@@ -49,6 +49,7 @@ describe('downloadBlob', () => {
     Object.defineProperty(globalThis, 'navigator', {
       configurable: true,
       value: {
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
         canShare,
         share,
       },
@@ -61,6 +62,50 @@ describe('downloadBlob', () => {
   })
 
   it('Web Share が使える場合は share を呼ぶ', async () => {
+    canShare.mockReturnValue(true)
+    share.mockResolvedValue(undefined)
+    const blob = new Blob(['x'], { type: 'image/jpeg' })
+
+    const result = await downloadBlob(blob, 'photo.jpg')
+
+    expect(result).toBe('shared')
+    expect(share).toHaveBeenCalledOnce()
+    expect(anchorClick).not.toHaveBeenCalled()
+  })
+
+  it('iOS 以外では canShare が true でも anchor ダウンロードする', async () => {
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: {
+        userAgent: 'Mozilla/5.0 (Linux; Android 14)',
+        canShare,
+        share,
+      },
+      writable: true,
+    })
+    canShare.mockReturnValue(true)
+    const blob = new Blob(['x'], { type: 'image/jpeg' })
+
+    const result = await downloadBlob(blob, 'photo.jpg')
+
+    expect(result).toBe('downloaded')
+    expect(share).not.toHaveBeenCalled()
+    expect(anchorClick).toHaveBeenCalledOnce()
+  })
+
+  it('iPadOS デスクトップ UA でも Web Share を優先する', async () => {
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: {
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        platform: 'MacIntel',
+        maxTouchPoints: 5,
+        canShare,
+        share,
+      },
+      writable: true,
+    })
     canShare.mockReturnValue(true)
     share.mockResolvedValue(undefined)
     const blob = new Blob(['x'], { type: 'image/jpeg' })
