@@ -13,6 +13,10 @@
 | [x] | RC-7 | 3637688090 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | 同時リアクションで summary が古い値で上書き<br>Transaction 化 |
 | [x] | RC-8 | 3637688102 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Rules テストが new Date() で permission-denied<br>serverTimestamp() に修正 |
 | [ ] | RC-9 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | M | syncChatMessageReactionSummary の store 単体テストなし<br>Transaction ロジックは trigger テストでモックのみ |
+| [x] | RC-10 | 3637908004 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | updateDoc は converter を通らず emoji 変更が Rules 違反<br>setDoc merge に変更 |
+| [x] | RC-11 | 3637908006 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 📑 仕様書 | 🔧 微修正 | S | system/削除済み message へ reaction 可能<br>chatMessageAllowsReaction を Rules に追加 |
+| [x] | RC-12 | 3637908010 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | ChatLog scoped CSS が子 ChatMessageReactions に届かず hover 非表示<br>:deep() に修正 |
+| [x] | RC-13 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 一括 DL 中に他メッセージの DL ボタンが無反応<br>isDownloadBlocked で disabled 化 |
 
 ---
 
@@ -446,5 +450,190 @@ Useful? React with 👍 / 👎.
 **想定工数**: M
 
 **判断理由**: チェックリスト「Transaction・レースコンディションを含む store 関数を新規追加・変更した場合、優先してテストを追加」に該当。マージ blocker ではないが、RC-7 対応の核心ロジックのためテスト追加が望ましい。
+
+---
+
+## 評価セッション（2026-07-23 21:12・review-comments-evaluate / auto）
+
+- **評価日時**: 2026-07-23 21:12 JST
+- **評価者**: Cursor Agent（review-comments-evaluate / auto）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **手順 4a 自動修正**: RC-10〜RC-12（🚨 1件 / 🟡 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-10 | 3637908004 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | updateDoc は converter を通らず emoji 変更が Rules 違反<br>setDoc merge に変更 |
+| [x] | RC-11 | 3637908006 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 📑 仕様書 | 🔧 微修正 | S | system/削除済み message へ reaction 可能<br>chatMessageAllowsReaction を Rules に追加 |
+| [x] | RC-12 | 3637908010 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | ChatLog scoped CSS が子 ChatMessageReactions に届かず hover 非表示<br>:deep() に修正 |
+
+---
+
+**識別子**: RC-10（GitHub id: 3637908004）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/stores/chatReaction.ts:93`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  await updateDoc(ref, createReactionForUpdate(userId, emoji))
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  updateDoc で converter 前提の更新を避けてください**
+
+既存リアクションを別 emoji に変更するケースでこの分岐に入ると、Web SDK の `updateDoc` は `setDoc` と違って `chatReactionConverter.toFirestore()` を通さないため、`serverTimestamp()` へ変換されず `ChatReaction` インスタンス（`id`/`writeMode`/数値の `updated_at` 付き）がそのまま update データとして扱われます。その結果、クライアント側で plain object 検証に落ちるか、少なくとも Rules の `updated_at == request.time` / `keys().hasOnly(...)` に弾かれ、初回追加後のリアクション変更が常に失敗します。
+
+**コメント要約**: `updateDoc` は withConverter 付き ref でも converter を通さず、emoji 変更時に Rules 違反またはクライアント検証失敗になる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 妥当。`setDoc(ref, createReactionForUpdate(...), { merge: true })` に変更し converter 経由で `serverTimestamp()` を書き込む。
+
+---
+
+**識別子**: RC-11（GitHub id: 3637908006）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `firestore.rules:314`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++                    allow create: if isChatRoomWritable(roomId)
++                                  && chatMessageExists(roomId, messageId)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  system/削除済みメッセージへの reaction 書き込みを拒否してください**
+
+この `chatMessageExists` だけの条件だと、ルーム member が SDK などから直接 `reactions/{userId}` を書けば、仕様書の R-1 が対象外にしている system message や `deleted_at` 済み message にも create/update/delete できます。UI 側は `message_type === 'user'` かつ未削除に絞っていますが、Rules が同じ条件を検証しないため、不可視の reaction サブドキュメントと `reaction_summary` が作成されてデータ整合性が崩れます。
+
+**コメント要約**: `chatMessageExists` のみでは system / 削除済み message に reaction 書き込み可能。仕様 R-1 と UI 条件を Rules でも検証すべき。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ, 📑 仕様書
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 妥当。`chatMessageAllowsReaction`（`message_type == 'user'` かつ `deleted_at` なし）を追加し reactions の create/update/delete 条件に適用。Rules テストに system / deleted 拒否ケースを追加。
+
+---
+
+**識別子**: RC-12（GitHub id: 3637908010）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/chat/ChatLog.vue:647`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  .chat-group {
++    .chat-message-action-btn {
++      opacity: 0;
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P3 Badge](https://img.shields.io/badge/P3-lightgrey?style=flat)</sub></sub>  scoped CSS を子コンポーネントへ届かせてください**
+
+`ChatMessageReactions` へボタンを切り出した後もこの hover ルールは `ChatLog.vue` の scoped CSS のままなので、生成される selector は子コンポーネント内部の `.chat-message-action-btn` に一致しません。そのため PC でもリアクション/取り消しボタンが常時表示され、仕様の hover / focus-within 時だけ表示する挙動にならないため、`:deep(.chat-message-action-btn)` などで子要素まで届く selector にしてください。
+
+**コメント要約**: scoped CSS が子 `ChatMessageReactions` 内の `.chat-message-action-btn` に届かず、PC でもアクションボタンが常時表示される。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 妥当。`.chat-group` 内の hover / focus-within ルールを `:deep(.chat-message-action-btn)` に変更。
+
+---
+
+## 評価セッション（2026-07-23 21:15・shokujii-code-review）
+
+- **評価日時**: 2026-07-23 21:15 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **レビュー対象**: チャット画像一括ダウンロード（staged diff）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-13 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 一括 DL 中に他メッセージの DL ボタンが無反応<br>isDownloadBlocked で disabled 化 |
+
+---
+
+**識別子**: RC-13（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/chat/ChatLog.vue:218`
+
+**該当コード（レビュー時点の diff）**:
+
+```typescript
+if (attachments.length === 0 || downloadingMessageId.value != null) {
+  return
+}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [👤 UX/🔧微修正/S]: `downloadingMessageId` がセットされている間、他メッセージの DL ボタンもクリック可能だが `onDownloadAllAttachments` 内で early return するため無反応になる → `isDownloadBlocked` prop を追加し、DL 中は他メッセージのボタンを `disabled` にする
+
+**コメント要約**: 一括 DL 実行中、他メッセージの DL ボタンが disabled にならずクリックしても何も起きない。視覚的に disabled 化すべき。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `ChatMessageReactions` に `isDownloadBlocked` を追加。`ChatLog` から `downloadingMessageId != null && downloadingMessageId !== entry.message.id` を渡して DL ボタンを disabled 化。
 
 ---
