@@ -137,8 +137,8 @@ describe('chat reactions firestore rules', () => {
     await assertFails(
       ref.set({
         emoji: '😂',
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
       }),
     )
   })
@@ -213,6 +213,76 @@ describe('chat reactions firestore rules', () => {
       .doc(ROOM_ID)
       .collection('messages')
       .doc('missing-message')
+      .collection('reactions')
+      .doc(MEMBER_A)
+
+    await assertFails(
+      ref.set({
+        emoji: '👍',
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      }),
+    )
+  })
+
+  it('rejects reaction write for system message', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const now = new Date()
+      await context
+        .firestore()
+        .collection('chat_rooms')
+        .doc(ROOM_ID)
+        .collection('messages')
+        .doc('system-msg')
+        .set({
+          message_type: 'system',
+          system_event: 'member_joined',
+          created_at: now,
+        })
+    })
+
+    const ref = memberAuth(MEMBER_A)
+      .firestore()
+      .collection('chat_rooms')
+      .doc(ROOM_ID)
+      .collection('messages')
+      .doc('system-msg')
+      .collection('reactions')
+      .doc(MEMBER_A)
+
+    await assertFails(
+      ref.set({
+        emoji: '👍',
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      }),
+    )
+  })
+
+  it('rejects reaction write for deleted message', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const now = new Date()
+      await context
+        .firestore()
+        .collection('chat_rooms')
+        .doc(ROOM_ID)
+        .collection('messages')
+        .doc('deleted-msg')
+        .set({
+          message_type: 'user',
+          sender_user_id: MEMBER_A,
+          body: 'deleted',
+          created_at: now,
+          deleted_at: now,
+        })
+    })
+
+    const ref = memberAuth(MEMBER_A)
+      .firestore()
+      .collection('chat_rooms')
+      .doc(ROOM_ID)
+      .collection('messages')
+      .doc('deleted-msg')
       .collection('reactions')
       .doc(MEMBER_A)
 
