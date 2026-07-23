@@ -96,6 +96,9 @@ service cloud.firestore {
                 || emoji == '🎉'
                 || emoji == '🙏';
         }
+        function chatMessageExists(roomId, messageId) {
+            return exists(/databases/$(database)/documents/chat_rooms/$(roomId)/messages/$(messageId));
+        }
         function chatMembershipUpdateAllowed() {
             return request.resource.data.diff(resource.data).affectedKeys()
                     .hasOnly(['last_read_at', 'unread_count', 'updated_at'])
@@ -307,18 +310,22 @@ service cloud.firestore {
                 match /reactions/{userId} {
                     allow read: if isChatRoomMember(roomId);
                     allow create: if isChatRoomWritable(roomId)
+                                  && chatMessageExists(roomId, messageId)
                                   && request.auth.uid == userId
                                   && request.resource.data.keys().hasOnly(['emoji', 'created_at', 'updated_at'])
                                   && isAllowedChatReactionEmoji(request.resource.data.emoji)
                                   && request.resource.data.created_at == request.time
                                   && request.resource.data.updated_at == request.time;
                     allow update: if isChatRoomWritable(roomId)
+                                  && chatMessageExists(roomId, messageId)
                                   && request.auth.uid == userId
                                   && request.resource.data.keys().hasOnly(['emoji', 'created_at', 'updated_at'])
                                   && isAllowedChatReactionEmoji(request.resource.data.emoji)
                                   && request.resource.data.created_at == resource.data.created_at
                                   && request.resource.data.updated_at == request.time;
-                    allow delete: if isChatRoomWritable(roomId) && request.auth.uid == userId;
+                    allow delete: if isChatRoomWritable(roomId)
+                                  && chatMessageExists(roomId, messageId)
+                                  && request.auth.uid == userId;
                 }
             }
         }

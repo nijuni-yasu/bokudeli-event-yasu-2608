@@ -8,6 +8,7 @@ import {
   type RulesTestContext,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
+import { serverTimestamp } from 'firebase/firestore'
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 
 const PROJECT_ID = 'firestore-rules-chat-reactions'
@@ -125,8 +126,8 @@ describe('chat reactions firestore rules', () => {
     await assertSucceeds(
       ref.set({
         emoji: '😭',
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
       }),
     )
   })
@@ -147,14 +148,14 @@ describe('chat reactions firestore rules', () => {
     await assertSucceeds(
       ref.set({
         emoji: '👍',
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
       }),
     )
     await assertSucceeds(
       ref.update({
         emoji: '❤️',
-        updated_at: new Date(),
+        updated_at: serverTimestamp(),
       }),
     )
   })
@@ -201,6 +202,25 @@ describe('chat reactions firestore rules', () => {
         emoji: '👍',
         created_at: new Date(),
         updated_at: new Date(),
+      }),
+    )
+  })
+
+  it('rejects reaction write for non-existent message', async () => {
+    const ref = memberAuth(MEMBER_A)
+      .firestore()
+      .collection('chat_rooms')
+      .doc(ROOM_ID)
+      .collection('messages')
+      .doc('missing-message')
+      .collection('reactions')
+      .doc(MEMBER_A)
+
+    await assertFails(
+      ref.set({
+        emoji: '👍',
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
       }),
     )
   })

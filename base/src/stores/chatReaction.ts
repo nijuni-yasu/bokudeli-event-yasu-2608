@@ -32,8 +32,24 @@ const reactionFromFirestore = (snapshot: QueryDocumentSnapshot): ChatReaction =>
   })
 }
 
-const chatReactionConverter: FirestoreDataConverter<ChatReaction> = {
-  toFirestore(reaction: ChatReaction): DocumentData {
+/** toggleReaction 用: Rules の request.time 一致のため serverTimestamp() で書き込む */
+type ChatReactionWrite = ChatReaction & { writeMode?: 'create' | 'update' }
+
+const chatReactionConverter: FirestoreDataConverter<ChatReactionWrite> = {
+  toFirestore(reaction: ChatReactionWrite): DocumentData {
+    if (reaction.writeMode === 'create') {
+      return {
+        emoji: reaction.emoji,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      }
+    }
+    if (reaction.writeMode === 'update') {
+      return {
+        emoji: reaction.emoji,
+        updated_at: serverTimestamp(),
+      }
+    }
     return reaction.toFirestore()
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ChatReaction {
@@ -41,8 +57,18 @@ const chatReactionConverter: FirestoreDataConverter<ChatReaction> = {
   },
 }
 
+const createReactionForSend = (userId: string, emoji: ChatReactionEmoji): ChatReactionWrite => {
+  return Object.assign(new ChatReaction(userId, { emoji }), { writeMode: 'create' as const })
+}
+
+const createReactionForUpdate = (userId: string, emoji: ChatReactionEmoji): ChatReactionWrite => {
+  return Object.assign(new ChatReaction(userId, { emoji }), { writeMode: 'update' as const })
+}
+
 export const getChatReactionRef = (roomId: string, messageId: string, userId: string) => {
-  return doc(db, 'chat_rooms', roomId, 'messages', messageId, 'reactions', userId).withConverter(chatReactionConverter)
+  return doc(db, 'chat_rooms', roomId, 'messages', messageId, 'reactions', userId).withConverter(
+    chatReactionConverter,
+  )
 }
 
 export const toggleReaction = async (
@@ -62,16 +88,9 @@ export const toggleReaction = async (
   }
 
   if (action === 'add') {
-    await setDoc(ref, {
-      emoji,
-      created_at: serverTimestamp(),
-      updated_at: serverTimestamp(),
-    })
+    await setDoc(ref, createReactionForSend(userId, emoji))
     return
   }
 
-  await updateDoc(ref, {
-    emoji,
-    updated_at: serverTimestamp(),
-  })
+  await updateDoc(ref, createReactionForUpdate(userId, emoji))
 }
