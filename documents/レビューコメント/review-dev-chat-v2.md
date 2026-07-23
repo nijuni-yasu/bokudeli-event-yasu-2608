@@ -6,7 +6,7 @@
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | [x] | RC-1 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | イベントページのチャットボタン文言<br>仕様 E-4 を短ラベル「グループチャット」に更新 |
 | [x] | RC-2 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `useNavigateToEventChat` に catch がなく例外時 unhandled rejection<br>トースト表示 + `false` 返却を推奨 |
-| [ ] | RC-3 | 3637688126 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | 過去読み込み済みメッセージの reaction_summary が即時反映されない<br>楽観更新または再取得が必要 |
+| [x] | RC-3 | 3637688126 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | 過去読み込み済みメッセージの reaction_summary が即時反映されない<br>楽観更新または再取得が必要 |
 | [x] | RC-4 | 3637688080 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | converter 付き ref へ plain object を setDoc<br>初回リアクションが常に失敗 |
 | [x] | RC-5 | 3637688107 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 👤 UX | 🔧 微修正 | S | Web Share を canShare 全環境で優先<br>仕様 D-1/D-2 と不一致。iOS のみ share |
 | [x] | RC-6 | 3637688098 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 存在しない messageId へ reactions create 可能<br>orphan reaction 防止の exists 追加 |
@@ -17,6 +17,14 @@
 | [x] | RC-11 | 3637908006 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 📑 仕様書 | 🔧 微修正 | S | system/削除済み message へ reaction 可能<br>chatMessageAllowsReaction を Rules に追加 |
 | [x] | RC-12 | 3637908010 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | ChatLog scoped CSS が子 ChatMessageReactions に届かず hover 非表示<br>:deep() に修正 |
 | [x] | RC-13 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 一括 DL 中に他メッセージの DL ボタンが無反応<br>isDownloadBlocked で disabled 化 |
+| [x] | RC-14 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `reaction_summary_label` / `reaction_detail_loading` が未使用<br>削除するか UI で参照する |
+| [x] | RC-15 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 詳細ダイアログ読込中にタイトルが「リアクション 0」<br>件数確定までプレースホルダ表示を検討 |
+| [ ] | RC-16 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | `mergeMessages` が onSnapshot 再配信で楽観 summary を古い値で上書きしうる<br>楽観中 ID のマージ保護を検討 |
+| [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `toggleReactionWithOptimistic` の `currentSummary` が `Record<string, number>`<br>`ChatReactionSummary` に揃える |
+| [x] | RC-18 | 3638711191 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | ChatReactionDetailDialog が getDoc を直接実行<br>user store 経由に寄せる |
+| [x] | RC-19 | 3638711196 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 無効 emoji テストが new Date()<br>serverTimestamp() に修正 |
+| [x] | RC-20 | 3638711199 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | iPadOS デスクトップ UA が iOS 判定外<br>maxTouchPoints で判定追加 |
+| [x] | RC-21 | 3638711204 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | キャッシュ未初期化時 getDoc が楽観更新をブロック<br>patch 前に await している |
 
 ---
 
@@ -126,13 +134,13 @@ catch + トースト + false 返却を推奨。
 - **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
 - **Outdated 除外件数**: 0
 - **レビュー非該当スキップ件数**: 1（レビュー依頼定型コメント id: 5057694912）
-- **手順 4a 自動修正**: RC-4〜RC-8（🚨 2件 / 🟡 3件）。RC-3 は M のため未着手
+- **手順 4a 自動修正**: RC-4〜RC-8（🚨 2件 / 🟡 3件）。RC-3 は R-8 楽観更新で別途対応済み
 
 ### RC 一覧（サマリ）
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-3 | 3637688126 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | 過去読み込み済みメッセージの reaction_summary が即時反映されない<br>楽観更新または再取得が必要 |
+| [x] | RC-3 | 3637688126 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | 過去読み込み済みメッセージの reaction_summary が即時反映されない<br>楽観更新または再取得が必要 |
 | [x] | RC-4 | 3637688080 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | converter 付き ref へ plain object を setDoc<br>初回リアクションが常に失敗 |
 | [x] | RC-5 | 3637688107 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 👤 UX | 🔧 微修正 | S | Web Share を canShare 全環境で優先<br>仕様 D-1/D-2 と不一致。iOS のみ share |
 | [x] | RC-6 | 3637688098 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 存在しない messageId へ reactions create 可能<br>orphan reaction 防止の exists 追加 |
@@ -164,7 +172,7 @@ catch + トースト + false 返却を推奨。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -174,7 +182,7 @@ catch + トースト + false 返却を推奨。
 
 **想定工数**: M
 
-**判断理由**: 指摘は妥当。ChatLog のページング購読設計と連動するため、本 evaluate セッションでは自動修正対象外（M・UX ラベル）。
+**判断理由**: 指摘は妥当。`toggleReactionWithOptimistic` + `patchMessageReactionSummary` + `applyOptimisticReactionSummary` でピッカー操作直後にローカルサマリを更新。失敗時ロールバック。仕様 R-8 として `04_チャット機能_v2.md` に追記。
 
 ---
 
@@ -635,5 +643,207 @@ if (attachments.length === 0 || downloadingMessageId.value != null) {
 **想定工数**: S
 
 **判断理由**: `ChatMessageReactions` に `isDownloadBlocked` を追加。`ChatLog` から `downloadingMessageId != null && downloadingMessageId !== entry.message.id` を渡して DL ボタンを disabled 化。
+
+---
+
+## 評価セッション（2026-07-23 22:30・shokujii-code-review）
+
+- **評価日時**: 2026-07-23 22:30 JST
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **対象**: ステージング済み差分（V2-7 楽観更新・統合 pill・詳細ダイアログ）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **手順 3a/3b 自動修正**: なし（🚨 0 件。🟡 は M または 👤 UX ラベル含むため対象外）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-14 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `reaction_summary_label` / `reaction_detail_loading` が未使用<br>削除するか UI で参照する |
+| [x] | RC-15 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 詳細ダイアログ読込中にタイトルが「リアクション 0」<br>件数確定までプレースホルダ表示を検討 |
+| [ ] | RC-16 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | `mergeMessages` が onSnapshot 再配信で楽観 summary を古い値で上書きしうる<br>楽観中 ID のマージ保護を検討 |
+| [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `toggleReactionWithOptimistic` の `currentSummary` が `Record<string, number>`<br>`ChatReactionSummary` に揃える |
+
+### RC-14（GitHub id: なし・エージェントレビュー）
+
+**指摘箇所**: `base/src/locales/messages/ja.ts:1064`
+
+**該当コード**:
+
+```diff
++    reaction_summary_label: 'リアクション {label}',
++    reaction_detail_loading: '読み込み中…',
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📏 規約/🔧微修正/S]: `ja.ts` に追加した `reaction_summary_label` と `reaction_detail_loading` がステージング差分内のどのコンポーネントからも参照されていない → 未使用キーを削除するか、`ChatReactionDetailDialog` のローディング UI / pill の aria-label で使う
+
+**コメント要約**: i18n キー追加のみで参照箇所がなく dead code になっている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `ChatMessageReactions` の pill `aria-label` で `reaction_summary_label`、`ChatReactionDetailDialog` のローディング UI で `reaction_detail_loading` を参照。
+
+---
+
+### RC-15（GitHub id: なし・エージェントレビュー）
+
+**指摘箇所**: `base/src/components/chat/ChatReactionDetailDialog.vue:40`
+
+**該当コード**:
+
+```typescript
+const dialogTitle = computed(() => t('chat.reaction_detail_title', { count: reactionCount.value }))
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [👤 UX/🔧微修正/S]: 詳細ダイアログ open 直後は `rows` が空のためタイトルが「リアクション 0」と一瞬表示される → `isLoading` 中は件数なし文言、または `reaction_detail_loading` をタイトル/本文に使う
+
+**コメント要約**: ローディング中のダイアログタイトルが誤った件数 0 を示す。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `isLoading` 中は `reaction_detail_title_plain`（「リアクション」）を表示。fetch 完了後のみ `reaction_detail_title` で件数付きタイトルに切り替え。
+
+---
+
+### RC-16（GitHub id: なし・エージェントレビュー）
+
+**指摘箇所**: `base/src/stores/chat.ts:245`
+
+**該当コード**:
+
+```typescript
+export const mergeMessages = (existing: ChatMessageItem[], incoming: ChatMessageItem[]): ChatMessageItem[] => {
+  const map = new Map<string, ChatMessageItem>()
+  for (const message of existing) {
+    map.set(message.id, message)
+  }
+  for (const message of incoming) {
+    map.set(message.id, message) // incoming が常に優先
+  }
+  ...
+}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [👤 UX/📐リファクタ/M]: `patchMessageReactionSummary` で楽観更新した直後、別メッセージの追加等で messages `onSnapshot` が再配信されると、Trigger 反映前の古い `reaction_summary` で上書きされうる → 楽観更新中 messageId の summary を merge 時に保護する、または Trigger 反映まで pending フラグを持つ
+
+**コメント要約**: 楽観更新と snapshot merge の競合でサマリ表示が一瞬戻る可能性がある。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: Trigger は通常数百 ms 以内だが、混雑チャットでは flicker の原因になりうる。RC-3 対応の続きとして別コミットでもよい。
+
+---
+
+### RC-17（GitHub id: なし・エージェントレビュー）
+
+**指摘箇所**: `base/src/stores/chatReaction.ts:113`
+
+**該当コード**:
+
+```typescript
+  currentSummary: Record<string, number> | undefined,
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📏 規約/🔧微修正/S]: `toggleReactionWithOptimistic` の `currentSummary` が `Record<string, number>` になっており、`ChatReactionSummary` と不一致 → import して型を揃える
+
+**コメント要約**: 共通スキーマ型があるのに緩い Record 型を使っている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `toggleReactionWithOptimistic` の `currentSummary` を `ChatReactionSummary | undefined` に変更。
+
+---
+
+## 評価セッション（2026-07-23 23:35・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-07-23 23:35 JST
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **REVIEW_REQUEST_SINCE**: 2026-07-23T13:50:56Z
+- **partial**: false
+- **新規 RC**: 4 件（RC-18〜21）
+- **手順 4a 自動修正**: RC-19 / RC-20（🟡 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-18 | 3638711191 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | ChatReactionDetailDialog が getDoc を直接実行<br>user store 経由に寄せる |
+| [x] | RC-19 | 3638711196 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 無効 emoji テストが new Date()<br>serverTimestamp() に修正 |
+| [x] | RC-20 | 3638711199 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | iPadOS デスクトップ UA が iOS 判定外<br>maxTouchPoints で判定追加 |
+| [x] | RC-21 | 3638711204 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | キャッシュ未初期化時 getDoc が楽観更新をブロック<br>patch 前に await している |
+
+### RC-18（GitHub id: 3638711191）
+
+**評価**: 🟡 修正提案 | **ステータス**: ✅ 対応済み | **PRスコープ**: 📌 スコープ内 | **ラベル**: 📏 規約 | **種別**: 📐 リファクタ | **工数**: M
+
+**判断理由**: `user.ts` に `getUserById` を追加し、`ChatReactionDetailDialog` から store 経由でユーザー取得するよう変更。
+
+### RC-19（GitHub id: 3638711196）
+
+**評価**: 🟡 修正提案 | **ステータス**: ✅ 対応済み | **PRスコープ**: 📌 スコープ内 | **ラベル**: 📏 規約 | **種別**: 🔧 微修正 | **工数**: S
+
+**判断理由**: RC-8 と同種。rejects invalid emoji テストを serverTimestamp() に変更。
+
+### RC-20（GitHub id: 3638711199）
+
+**評価**: 🟡 修正提案 | **ステータス**: ✅ 対応済み | **PRスコープ**: 📌 スコープ内 | **ラベル**: 📏 規約 | **種別**: 🔧 微修正 | **工数**: S
+
+**判断理由**: MacIntel + maxTouchPoints > 1 で iPadOS デスクトップ UA を iOS 扱いに。Vitest 追加。
+
+### RC-21（GitHub id: 3638711204）
+
+**評価**: 🟡 修正提案 | **ステータス**: ✅ 対応済み | **PRスコープ**: 📌 スコープ内 | **ラベル**: 👤 UX | **種別**: 📐 リファクタ | **工数**: M
+
+**判断理由**: 楽観 patch を getDoc 前に適用。キャッシュ未初期化時は patch 後に getDoc で previousEmoji を解決し、差分があれば summary を再補正してから toggleReaction する。
 
 ---
