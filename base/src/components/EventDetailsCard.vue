@@ -28,6 +28,7 @@ import {
   mdiOpenInNew,
   mdiAccountGroup,
   mdiHelpCircleOutline,
+  mdiMessageTextOutline,
 } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
@@ -49,11 +50,19 @@ const props = withDefaults(
     /** イベントページでアルバムを横並び表示するときに渡す（Phase 2 想定） */
     albumImageUrls?: { id: string; url: string; caption: string }[]
     hideShareSns?: boolean
+    showOpenChatButton?: boolean
+    openChatLoading?: boolean
   }>(),
   {
     hideShareSns: false,
+    showOpenChatButton: false,
+    openChatLoading: false,
   },
 )
+
+const emit = defineEmits<{
+  openChat: []
+}>()
 
 const galleryAlbums = computed(() => (props.albumImageUrls ?? []).map((i) => ({ src: i.url, title: i.caption })))
 
@@ -320,22 +329,38 @@ const isShowMember = computed(() =>
                 {{ $t('event_details.participants') }}
                 <span class="text-h5"> {{ members.length }} / {{ event.event_max_people }} </span>
               </span>
-              <v-spacer />
-              <template v-if="members.length > 0">
-                <div v-if="isShowMember === true">
-                  <router-link :to="{ path: `${event.event_id}/members` }">
-                    <div class="d-flex align-end">
-                      <v-icon size="large" :icon="mdiAccountGroup" />
-                      <span class="ml-2" style="font-size: 16px">
-                        {{ $t('event_details.participants_profile') }}
-                      </span>
-                    </div>
-                  </router-link>
-                </div>
-                <div v-else-if="isShowMember === false" class="text-subtitle-2 text-right text-medium-emphasis">
-                  {{ $t('event_details.participants_profile_hidden') }}
-                </div>
-              </template>
+              <div
+                v-if="showOpenChatButton || members.length > 0"
+                class="d-flex align-center flex-wrap ga-3 event-participant-actions"
+              >
+                <VBtn
+                  v-if="showOpenChatButton"
+                  variant="outlined"
+                  rounded="pill"
+                  size="small"
+                  :prepend-icon="mdiMessageTextOutline"
+                  :loading="openChatLoading"
+                  :aria-label="$t('event_details.open_group_chat')"
+                  @click="emit('openChat')"
+                >
+                  {{ $t('event_details.open_group_chat') }}
+                </VBtn>
+                <template v-if="members.length > 0">
+                  <VBtn
+                    v-if="isShowMember === true"
+                    variant="outlined"
+                    rounded="pill"
+                    size="small"
+                    :prepend-icon="mdiAccountGroup"
+                    :to="{ path: `${event.event_id}/members` }"
+                  >
+                    {{ $t('event_details.participants_profile') }}
+                  </VBtn>
+                  <div v-else-if="isShowMember === false" class="text-subtitle-2 text-right text-medium-emphasis">
+                    {{ $t('event_details.participants_profile_hidden') }}
+                  </div>
+                </template>
+              </div>
             </div>
           </v-card-text>
           <v-divider class="custom-divider mt-0 mb-2" />
@@ -521,6 +546,18 @@ iframe {
   .community-name-text {
     font-size: 16px;
     line-height: 1.2;
+  }
+}
+
+.event-participant-actions {
+  margin-inline-start: auto;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+
+  @media (max-width: 599px) {
+    flex: 1 1 100%;
+    justify-content: flex-end;
   }
 }
 </style>

@@ -91,6 +91,7 @@ export default {
     event_details: '開催内容',
     participants: '参加者',
     participants_profile: '参加者プロフィール',
+    open_group_chat: 'グループチャット',
     participants_profile_hidden: '※参加者プロフィールは非表示です',
     order_count: '（{0}個）',
     menu_join_button: '注文して参加する',
@@ -1066,6 +1067,7 @@ export default {
       attachment_upload_failed: '画像の送信に失敗しました',
       attachment_load_failed: '画像の読み込みに失敗しました',
       recall_failed: '送信の取り消しに失敗しました。時間をおいて再度お試しください。',
+      open_failed: 'チャットを開けませんでした。時間をおいて再度お試しください。',
     },
   },
 }
