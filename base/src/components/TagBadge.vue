@@ -1,0 +1,47 @@
+<script setup lang="ts">
+const props = withDefaults(
+  defineProps<{
+    tag: string
+    /** 件数（参加者タグ集計など。2 以上のときだけ「｜件数」を表示。未指定はラベルのみ） */
+    count?: number
+    highlighted?: boolean
+    clickable?: boolean
+    /** x-small より一段小さくする（イベントページの参加者ブロックなど狭いレイアウト向け） */
+    compact?: boolean
+  }>(),
+  { highlighted: false, clickable: false, compact: false },
+)
+
+const emit = defineEmits<{
+  click: [tag: string]
+}>()
+
+const onClick = () => {
+  if (props.clickable) {
+    emit('click', props.tag)
+  }
+}
+</script>
+
+<template>
+  <v-chip
+    :color="highlighted ? 'primary' : 'grey-400'"
+    variant="outlined"
+    size="x-small"
+    class="ma-1"
+    :class="{ 'cursor-pointer': clickable, 'tag-badge--compact': compact }"
+    @click="onClick"
+  >
+    {{ tag }}<template v-if="count != null && count > 1">｜{{ count }}</template>
+  </v-chip>
+</template>
+
+<!-- <style lang="scss" scoped>
+.tag-badge--compact.v-chip {
+  --v-chip-size: 0.6rem;
+  --v-chip-height: 18px;
+  font-size: 0.6rem;
+  line-height: 1.25;
+  padding: 0 6px;
+}
+</style> -->

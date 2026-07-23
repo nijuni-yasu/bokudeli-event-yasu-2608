@@ -1,9 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
+import TagBadge from '@shokujii/base/components/TagBadge.vue'
 import { getUserPath } from '@/router/utils'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
+import { orderTagsWithHighlightFirst } from '@shokujii/base/utils/tagDisplayOrder.js'
+
 const { t: $t } = useI18n()
 
 defineProps<{
@@ -11,6 +17,24 @@ defineProps<{
   eventMaxPeople: number
   isShowMember: boolean
 }>()
+
+const currentUserStore = useCurrentUserStore()
+const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
+
+const isTagHighlighted = (tag: string) => myTags.value.has(tag)
+
+const orderedUserTags = (member: BokudeliEventMember) =>
+  orderTagsWithHighlightFirst(member.user_tags ?? [], isTagHighlighted)
+
+const onMemberTagClick = async (tag: string) => {
+  const uid = currentUserStore.firebaseUser?.uid
+  if (uid == null) return
+  try {
+    await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
+  } catch {
+    // 失敗時は握りつぶす（未ログイン等は上で return 済み）
+  }
+}
 
 function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string; count: number }][] {
   const map: Record<string, { name: string; count: number }> = {}
@@ -26,19 +50,57 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
   <section>
     <v-card-text class="text-left">
       <v-row v-if="isShowMember === true">
-        <v-col v-for="member in members" :key="member.user_id" class="d-flex justify-start pa-2" cols="6" sm="6" md="4">
-          <router-link
-            :to="getUserPath(member.user_id)"
-            class="text--primary cursor-pointer text-decoration-none d-flex align-center"
-          >
-            <v-row class="ma-0 d-flex align-center">
-              <UserAvatar :user="member" :size="60" />
-              <v-col class="ma-0 px-1">
-                <div class="d-flex align-center text-subtitle-2 font-weight-bold">
-                  <div>
-                    {{ member.user_name }}
+        <v-col
+          v-for="member in members"
+          :key="member.user_id"
+          class="d-flex align-stretch pa-2 my-4"
+          cols="6"
+          sm="6"
+          md="4"
+        >
+          <div class="d-flex flex-column w-100">
+            <router-link :to="getUserPath(member.user_id)" class="text--primary cursor-pointer text-decoration-none">
+              <div class="d-flex align-start">
+                <UserAvatar :user="member" :size="60" class="flex-shrink-0" />
+                <div class="pl-2 min-width-0 flex-grow-1">
+                  <div class="d-flex text-subtitle-2 font-weight-bold">
+                    <span class="text-break">{{ member.user_name }}</span>
+                  </div>
+                  <div
+                    v-for="[menuId, group] in groupOrderedMenus(member.orders)"
+                    :key="menuId"
+                    class="d-flex align-center"
+                    style="font-size: 12px; color: gray"
+                  >
+                    <div>
+                      <span>{{ group.name }}</span>
+                      <span v-if="group.count > 1"> {{ $t('event_details.order_count', [group.count]) }} </span>
+                    </div>
                   </div>
                 </div>
+              </div>
+            </router-link>
+            <div v-if="(member.user_tags ?? []).length > 0" class="d-flex flex-wrap mt-2 w-100">
+              <TagBadge
+                v-for="t in orderedUserTags(member)"
+                :key="t"
+                :tag="t"
+                compact
+                :highlighted="isTagHighlighted(t)"
+                :clickable="true"
+                @click="onMemberTagClick(t)"
+              />
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+      <!-- コミュニティの設定によっては参加者氏名を非表示にし、リンクをなくす -->
+      <v-row v-else-if="isShowMember === false">
+        <v-col v-for="member in members" :key="member.user_id" class="d-flex align-stretch pa-2" cols="6" sm="6" md="4">
+          <div class="d-flex flex-column w-100">
+            <div class="d-flex align-start">
+              <UserAvatar :user="member" :size="60" class="flex-shrink-0" />
+              <div class="pl-2 min-width-0 flex-grow-1">
                 <div
                   v-for="[menuId, group] in groupOrderedMenus(member.orders)"
                   :key="menuId"
@@ -50,34 +112,23 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
                     <span v-if="group.count > 1"> {{ $t('event_details.order_count', [group.count]) }} </span>
                   </div>
                 </div>
-              </v-col>
-            </v-row>
-          </router-link>
-        </v-col>
-      </v-row>
-      <!-- コミュニティの設定によっては参加者氏名を非表示にし、リンクをなくす -->
-      <v-row v-else-if="isShowMember === false">
-        <v-col v-for="member in members" :key="member.user_id" class="d-flex justify-start pa-2" cols="6" sm="6" md="4">
-          <v-row class="ma-0 d-flex align-center">
-            <UserAvatar :user="member" :size="60" />
-            <v-col class="ma-0 pl-2">
-              <div
-                v-for="[menuId, group] in groupOrderedMenus(member.orders)"
-                :key="menuId"
-                class="d-flex align-center"
-                style="font-size: 12px; color: gray"
-              >
-                <div>
-                  <span>{{ group.name }}</span>
-                  <span v-if="group.count > 1"> {{ $t('event_details.order_count', [group.count]) }} </span>
-                </div>
               </div>
-            </v-col>
-          </v-row>
+            </div>
+            <div v-if="(member.user_tags ?? []).length > 0" class="d-flex flex-wrap mt-2 w-100">
+              <TagBadge
+                v-for="t in orderedUserTags(member)"
+                :key="t"
+                :tag="t"
+                compact
+                :highlighted="isTagHighlighted(t)"
+                :clickable="true"
+                @click="onMemberTagClick(t)"
+              />
+            </div>
+          </div>
         </v-col>
       </v-row>
       <slot></slot>
     </v-card-text>
   </section>
 </template>
-<style lang="scss" scoped></style>

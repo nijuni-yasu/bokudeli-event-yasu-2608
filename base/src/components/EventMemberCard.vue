@@ -3,12 +3,32 @@ import { computed } from 'vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
+import TagBadge from '@shokujii/base/components/TagBadge.vue'
 import { getUserPath } from '@/router/utils'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
+import { orderTagsWithHighlightFirst } from '@shokujii/base/utils/tagDisplayOrder.js'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{
   member: BokudeliEventMember
 }>()
+
+const currentUserStore = useCurrentUserStore()
+const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
+const isTagHighlighted = (tag: string) => myTags.value.has(tag)
+
+const orderedUserTags = computed(() => orderTagsWithHighlightFirst(props.member.user_tags ?? [], isTagHighlighted))
+
+const onMemberTagClick = async (tag: string) => {
+  const uid = currentUserStore.firebaseUser?.uid
+  if (uid == null) return
+  try {
+    await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
+  } catch {
+    void 0
+  }
+}
 
 const userName = computed(() => props.member.user_name ?? 'ゲスト')
 const twitterUrl = computed(() =>
@@ -36,6 +56,18 @@ const userDescription = computed(() => props.member.user_description ?? '')
             </v-col>
           </v-row>
         </v-card-title>
+        <v-card-text v-if="orderedUserTags.length > 0" class="px-4 py-0">
+          <div class="d-flex flex-wrap justify-center" @click.stop.prevent>
+            <TagBadge
+              v-for="t in orderedUserTags"
+              :key="t"
+              :tag="t"
+              :highlighted="isTagHighlighted(t)"
+              :clickable="true"
+              @click="onMemberTagClick(t)"
+            />
+          </div>
+        </v-card-text>
         <v-card-text class="description">
           {{ userDescription }}
         </v-card-text>
