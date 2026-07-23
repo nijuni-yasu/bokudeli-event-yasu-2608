@@ -43,10 +43,10 @@ G-5 / G-6（WS-G）— コミュニティ承認・限定表示
 
 | 状態 | ID | タスク | 出所 | 依存 | パッケージ | Issue |
 |:--|:--|:--|:--|:--|:--|:--|
-| - [ ] | H-2 | **RC-20 確定** — 未ログイン時ロゴ URL 方針（Storage 公開 read / signed URL） | D-13 / [02_設計 §1](../90_アーカイブ/v0.4_機能拡張/02_設計.md) | — | doc, firebase | [#2205](https://github.com/nijuniinc/bokudeli-event-new/issues/2205) |
-| - [ ] | H-1 | ヘッダー常時表示に `company_logo_url` を反映 | D-13 / §1 | H-2 推奨 | enterprise, base | [#2206](https://github.com/nijuniinc/bokudeli-event-new/issues/2206) |
+| - [x] | H-2 | **RC-20 確定** — 未ログイン時ロゴ URL 方針（Storage 公開 read / signed URL） | D-13 / [02_設計 §1](../90_アーカイブ/v0.4_機能拡張/02_設計.md) | — | doc, firebase | [#2205](https://github.com/nijuniinc/bokudeli-event-new/issues/2205) |
+| - [x] | H-1 | ヘッダー常時表示に `company_logo_url` を反映 | D-13 / §1 | H-2 推奨 | enterprise, base | [#2206](https://github.com/nijuniinc/bokudeli-event-new/issues/2206) |
 | ~~—~~ | ~~H-2a~~ | ~~エンプラトップ `/` の未ログイン閲覧（authGuards + Rules）~~ | ~~D-14~~ | — | — | ~~[#2207](https://github.com/nijuniinc/bokudeli-event-new/issues/2207)~~ **不採用・クローズ予定** |
-| - [ ] | H-9 | login / pass-code を左右分割レイアウト化（左: 静的ヒーロー画像、右: フォーム） | D-14 / §2 | H-2 推奨 | enterprise | [#2213](https://github.com/nijuniinc/bokudeli-event-new/issues/2213) |
+| - [x] | H-9 | login / pass-code を背景画像 + 中央 v-card レイアウト化 | D-14 / §2 | H-2 推奨 | enterprise | [#2213](https://github.com/nijuniinc/bokudeli-event-new/issues/2213) |
 | - [ ] | H-2b | **ログイン後**トップに `publish_scope: community` イベント表示（非メンバー閲覧のみ） | §2-5 / §5 | **G-6** | enterprise, common |
 
 ### WS-H-B: マイページ・UI
