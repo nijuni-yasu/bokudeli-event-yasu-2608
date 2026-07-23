@@ -21,6 +21,8 @@ import {
 } from 'firebase/firestore'
 import { deleteObject, ref as storageRef } from 'firebase/storage'
 import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
+import type { ChatReactionEmoji } from '@shokujii/common/schemas/ChatReaction.js'
+import type { ChatReactionSummary } from '@shokujii/common/schemas/ChatReaction.js'
 import {
   ChatAttachmentSchema,
   ChatMessage,
@@ -260,6 +262,8 @@ export const useChatStore = defineStore('chat', () => {
   const isLoadingOlderMessages = ref(false)
   const hasMoreMessages = ref(true)
   const subscribedUserId = ref<string | null>(null)
+  /** 自分が各メッセージに付けたリアクション（楽観更新用。ルーム切替でクリア） */
+  const myReactionByMessageId = ref(new Map<string, ChatReactionEmoji>())
   /** ヘッダーアイコン等から一覧ドロワーを開く要求（インクリメントで通知） */
   const openChatListRequestId = ref(0)
 
@@ -377,6 +381,27 @@ export const useChatStore = defineStore('chat', () => {
     activeRoomId.value = null
     activeRoom.value = null
     messages.value = []
+    myReactionByMessageId.value = new Map()
+  }
+
+  const patchMessageReactionSummary = (messageId: string, summary: ChatReactionSummary | undefined): void => {
+    messages.value = messages.value.map((message) =>
+      message.id === messageId ? { ...message, reactionSummary: summary } : message,
+    )
+  }
+
+  const setMyReactionForMessage = (messageId: string, emoji: ChatReactionEmoji | undefined): void => {
+    const next = new Map(myReactionByMessageId.value)
+    if (emoji == null) {
+      next.delete(messageId)
+    } else {
+      next.set(messageId, emoji)
+    }
+    myReactionByMessageId.value = next
+  }
+
+  const getMyReactionForMessage = (messageId: string): ChatReactionEmoji | undefined => {
+    return myReactionByMessageId.value.get(messageId)
   }
 
   const unsubscribeAll = () => {
@@ -665,6 +690,10 @@ export const useChatStore = defineStore('chat', () => {
     unsubscribeActiveRoom,
     unsubscribeMemberships,
     mergeMessages,
+    myReactionByMessageId,
+    patchMessageReactionSummary,
+    setMyReactionForMessage,
+    getMyReactionForMessage,
   }
 })
 

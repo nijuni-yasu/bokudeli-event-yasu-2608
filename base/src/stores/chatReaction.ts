@@ -1,7 +1,9 @@
 import {
+  collection,
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   serverTimestamp,
   setDoc,
   type DocumentData,
@@ -12,9 +14,12 @@ import {
   ChatReaction,
   resolveChatReactionToggleAction,
   type ChatReactionEmoji,
+  type ChatReactionSummary,
 } from '@shokujii/common/schemas/ChatReaction.js'
+import { applyOptimisticReactionSummary } from '@shokujii/common/utils/chatReactionSummary.js'
 import { EpochMillisSchema } from '@shokujii/common/schemas/firebase/index.js'
 import { db } from '@shokujii/base/firebase.js'
+import { useChatStore } from '@shokujii/base/stores/chat.js'
 
 const parseEpochMillisOrDefault = (value: unknown, defaultValue: number): number => {
   const result = EpochMillisSchema.safeParse(value)
@@ -64,8 +69,17 @@ const createReactionForUpdate = (userId: string, emoji: ChatReactionEmoji): Chat
   return Object.assign(new ChatReaction(userId, { emoji }), { writeMode: 'update' as const })
 }
 
+const getChatReactionsCollectionRef = (roomId: string, messageId: string) => {
+  return collection(db, 'chat_rooms', roomId, 'messages', messageId, 'reactions').withConverter(chatReactionConverter)
+}
+
 export const getChatReactionRef = (roomId: string, messageId: string, userId: string) => {
-  return doc(db, 'chat_rooms', roomId, 'messages', messageId, 'reactions', userId).withConverter(chatReactionConverter)
+  return doc(getChatReactionsCollectionRef(roomId, messageId), userId)
+}
+
+export const listChatReactions = async (roomId: string, messageId: string): Promise<ChatReaction[]> => {
+  const snapshot = await getDocs(getChatReactionsCollectionRef(roomId, messageId))
+  return snapshot.docs.map((docSnapshot) => docSnapshot.data())
 }
 
 export const toggleReaction = async (
@@ -90,4 +104,37 @@ export const toggleReaction = async (
   }
 
   await setDoc(ref, createReactionForUpdate(userId, emoji), { merge: true })
+}
+
+export const toggleReactionWithOptimistic = async (
+  roomId: string,
+  messageId: string,
+  userId: string,
+  emoji: ChatReactionEmoji,
+  currentSummary: ChatReactionSummary | undefined,
+): Promise<void> => {
+  const chatStore = useChatStore()
+  let previousEmoji = chatStore.getMyReactionForMessage(messageId)
+  if (!chatStore.myReactionByMessageId.has(messageId)) {
+    const ref = getChatReactionRef(roomId, messageId, userId)
+    const snapshot = await getDoc(ref)
+    previousEmoji = snapshot.exists() ? snapshot.data()?.emoji : undefined
+  }
+  const action = resolveChatReactionToggleAction(previousEmoji, emoji)
+  const nextEmoji = action === 'remove' ? undefined : emoji
+  const optimisticSummary = applyOptimisticReactionSummary(currentSummary, previousEmoji, nextEmoji)
+
+  chatStore.patchMessageReactionSummary(messageId, optimisticSummary)
+  chatStore.setMyReactionForMessage(messageId, nextEmoji)
+
+  try {
+    await toggleReaction(roomId, messageId, userId, emoji)
+    const ref = getChatReactionRef(roomId, messageId, userId)
+    const snapshot = await getDoc(ref)
+    chatStore.setMyReactionForMessage(messageId, snapshot.exists() ? snapshot.data()?.emoji : undefined)
+  } catch (error) {
+    chatStore.patchMessageReactionSummary(messageId, currentSummary)
+    chatStore.setMyReactionForMessage(messageId, previousEmoji)
+    throw error
+  }
 }

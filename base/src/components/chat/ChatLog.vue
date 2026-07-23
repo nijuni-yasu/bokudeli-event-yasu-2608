@@ -22,6 +22,7 @@ import { downloadBlob } from '@shokujii/base/utils/downloadBlob.js'
 import { mdiDownload } from '@mdi/js'
 import ChatAttachmentImage from './ChatAttachmentImage.vue'
 import ChatMessageReactions from './ChatMessageReactions.vue'
+import ChatReactionDetailDialog from './ChatReactionDetailDialog.vue'
 import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
 
 import type { ChatMessageItem } from './types.js'
@@ -49,6 +50,8 @@ const lightboxImgs = ref<AlbumLightboxSlide[]>([])
 const lightboxIndex = ref(0)
 const isLightboxDownloading = ref(false)
 const downloadingMessageId = ref<string | null>(null)
+const reactionDetailOpen = ref(false)
+const reactionDetailMessageId = ref<string | null>(null)
 /** サムネ読込済み Object URL（storage_path → url）。ライトボックスで再利用する */
 const attachmentObjectUrlByPath = ref(new Map<string, string>())
 /** ライトボックス用に ChatLog が生成した Object URL（サムネ側の URL は含めない） */
@@ -309,6 +312,11 @@ const canRecall = (message: ChatMessageItem): boolean => {
 const openRecallConfirm = (message: ChatMessageItem) => {
   recallTarget.value = message
   showRecallConfirm.value = true
+}
+
+const openReactionDetail = (message: ChatMessageItem): void => {
+  reactionDetailMessageId.value = message.id
+  reactionDetailOpen.value = true
 }
 
 const confirmRecall = async () => {
@@ -596,6 +604,7 @@ onBeforeUnmount(() => {
                 :current-user-id="currentUserId"
                 :is-own-message="entry.message.senderUserId === currentUserId"
                 :can-react="canReactToMessage(entry.message)"
+                @open-detail="openReactionDetail(entry.message)"
               />
             </div>
             <span class="text-xs text-disabled">
@@ -617,6 +626,12 @@ onBeforeUnmount(() => {
     >
       {{ t('chat.recall_confirm_message') }}
     </ConfirmDialog>
+
+    <ChatReactionDetailDialog
+      v-model="reactionDetailOpen"
+      :room-id="store.activeRoomId"
+      :message-id="reactionDetailMessageId"
+    />
 
     <AlbumLightbox
       :visible="lightboxVisible"

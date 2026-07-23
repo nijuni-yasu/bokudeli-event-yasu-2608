@@ -1061,6 +1061,12 @@ export default {
     download_ios_hint: '「共有」から「写真に保存」を選んでください',
     reaction_picker: 'リアクションを追加',
     reaction_count: '{emoji} {count}件',
+    reaction_summary_label: 'リアクション {label}',
+    reaction_detail_title: 'リアクション {count}',
+    reaction_detail_title_plain: 'リアクション',
+    reaction_detail_close: 'リアクション詳細を閉じる',
+    reaction_detail_loading: '読み込み中…',
+    reaction_detail_failed: 'リアクションの取得に失敗しました',
     reaction_failed: 'リアクションの更新に失敗しました',
     error: {
       preparing: '準備中です。しばらくしてから再度お試しください',

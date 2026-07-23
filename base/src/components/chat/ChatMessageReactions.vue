@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { mdiDotsVertical, mdiDownload, mdiEmoticonHappyOutline } from '@mdi/js'
 import { CHAT_REACTION_EMOJIS, type ChatReactionEmoji } from '@shokujii/common/schemas/ChatReaction.js'
-import { toggleReaction } from '@shokujii/base/stores/chatReaction.js'
+import { buildReactionSummaryAriaLabel, formatReactionSummaryText } from '@shokujii/common/utils/chatReactionSummary.js'
+import { toggleReactionWithOptimistic } from '@shokujii/base/stores/chatReaction.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import type { ChatMessageItem } from './types.js'
 
@@ -22,6 +23,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   recall: []
   download: []
+  openDetail: []
 }>()
 
 const { t } = useI18n()
@@ -54,18 +56,19 @@ const onRecallClick = (): void => {
   emit('recall')
 }
 
-const reactionEntries = computed((): { emoji: ChatReactionEmoji; count: number }[] => {
-  const summary = props.message.reactionSummary
-  if (summary == null) {
-    return []
-  }
-  return CHAT_REACTION_EMOJIS.filter((emoji) => (summary[emoji] ?? 0) > 0).map((emoji) => ({
-    emoji,
-    count: summary[emoji] ?? 0,
-  }))
-})
+const hasReactionSummary = computed(() => formatReactionSummaryText(props.message.reactionSummary) !== '')
 
-const hasReactionSummary = computed(() => reactionEntries.value.length > 0)
+const reactionSummaryText = computed(() => formatReactionSummaryText(props.message.reactionSummary))
+
+const reactionSummaryAriaLabel = computed(() => {
+  const label = buildReactionSummaryAriaLabel(props.message.reactionSummary, (emoji, count) =>
+    t('chat.reaction_count', { emoji, count }),
+  )
+  if (label === '') {
+    return ''
+  }
+  return t('chat.reaction_summary_label', { label })
+})
 
 const onReactionSelect = async (emoji: ChatReactionEmoji): Promise<void> => {
   if (!props.canReact || isToggling.value) {
@@ -75,7 +78,13 @@ const onReactionSelect = async (emoji: ChatReactionEmoji): Promise<void> => {
   recallMenuOpen.value = false
   isToggling.value = true
   try {
-    await toggleReaction(props.roomId, props.message.id, props.currentUserId, emoji)
+    await toggleReactionWithOptimistic(
+      props.roomId,
+      props.message.id,
+      props.currentUserId,
+      emoji,
+      props.message.reactionSummary,
+    )
   } catch {
     notification.show(t('chat.reaction_failed'), 'error')
   } finally {
@@ -83,11 +92,8 @@ const onReactionSelect = async (emoji: ChatReactionEmoji): Promise<void> => {
   }
 }
 
-const onSummaryChipClick = async (emoji: ChatReactionEmoji): Promise<void> => {
-  if (!props.canReact) {
-    return
-  }
-  await onReactionSelect(emoji)
+const onSummaryClick = (): void => {
+  emit('openDetail')
 }
 </script>
 
@@ -176,16 +182,13 @@ const onSummaryChipClick = async (emoji: ChatReactionEmoji): Promise<void> => {
     :class="isOwnMessage ? 'justify-end' : 'justify-start'"
   >
     <VBtn
-      v-for="entry in reactionEntries"
-      :key="entry.emoji"
-      variant="tonal"
+      variant="flat"
       size="x-small"
-      class="chat-reaction-chip"
-      :disabled="!canReact || isToggling"
-      :aria-label="t('chat.reaction_count', { emoji: entry.emoji, count: entry.count })"
-      @click.stop="onSummaryChipClick(entry.emoji)"
+      class="chat-reaction-chip chat-reaction-chip--combined"
+      :aria-label="reactionSummaryAriaLabel"
+      @click.stop="onSummaryClick"
     >
-      {{ entry.emoji }} {{ entry.count }}
+      {{ reactionSummaryText }}
     </VBtn>
   </div>
 </template>
@@ -230,6 +233,16 @@ const onSummaryChipClick = async (emoji: ChatReactionEmoji): Promise<void> => {
   border-radius: 999px;
   text-transform: none;
   letter-spacing: normal;
+}
+
+.chat-reaction-chip--combined {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  font-size: 1rem;
+  line-height: 1.2;
+  min-block-size: 28px;
+  padding-inline: 10px;
 }
 </style>
 
