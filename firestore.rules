@@ -308,6 +308,10 @@ service cloud.firestore {
                         allow write: if false
                     }
                 }
+                match /member_tags/{tagUserId} {
+                    allow read: if request.auth != null
+                    allow write: if false
+                }
                 // stripes（決済情報は本人のみ read 可能 + テナント分離）
                 match /stripes/{stripeId} {
                     allow read: if request.auth != null
@@ -345,9 +349,15 @@ service cloud.firestore {
             allow create: if request.auth != null
                 && request.auth.uid == user_id
                 && userProfileCountsZeroOrAbsentOnCreate()
+                && (!('user_tags' in request.resource.data)
+                    || (request.resource.data.user_tags is list
+                        && request.resource.data.user_tags.size() <= 10))
             allow update: if request.auth != null
                 && request.auth.uid == user_id
                 && userProfileCountsUnchanged()
+                && (!('user_tags' in request.resource.data)
+                    || (request.resource.data.user_tags is list
+                        && request.resource.data.user_tags.size() <= 10))
             match /chat_memberships/{roomId} {
                 allow read: if request.auth != null && request.auth.uid == user_id;
                 allow create, delete: if false;
