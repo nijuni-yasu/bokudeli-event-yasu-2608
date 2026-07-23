@@ -28,20 +28,20 @@ const onClick = () => {
     :color="highlighted ? 'primary' : 'grey-400'"
     variant="outlined"
     size="x-small"
-    class="ma-1"
-    :class="{ 'cursor-pointer': clickable, 'tag-badge--compact': compact }"
+    :class="['tag-badge', { 'cursor-pointer': clickable, 'tag-badge--compact': compact, 'ma-1': !compact }]"
     @click="onClick"
   >
     {{ tag }}<template v-if="count != null && count > 1">｜{{ count }}</template>
   </v-chip>
 </template>
 
-<!-- <style lang="scss" scoped>
+<style lang="scss" scoped>
 .tag-badge--compact.v-chip {
-  --v-chip-size: 0.6rem;
-  --v-chip-height: 18px;
-  font-size: 0.6rem;
-  line-height: 1.25;
-  padding: 0 6px;
+  --v-chip-size: 0.6875rem;
+  --v-chip-height: 20px;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  padding: 0 5px;
+  margin: 0 2px 4px 0;
 }
-</style> -->
+</style>

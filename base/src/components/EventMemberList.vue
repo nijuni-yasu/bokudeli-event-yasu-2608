@@ -53,18 +53,21 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
         <v-col
           v-for="member in members"
           :key="member.user_id"
-          class="d-flex align-stretch pa-2 my-4"
+          class="d-flex align-stretch pa-2"
           cols="6"
           sm="6"
           md="4"
         >
-          <div class="d-flex flex-column w-100">
-            <router-link :to="getUserPath(member.user_id)" class="text--primary cursor-pointer text-decoration-none">
+          <v-sheet class="event-member-tile d-flex flex-column w-100 h-100 pa-3" rounded="lg">
+            <router-link
+              :to="getUserPath(member.user_id)"
+              class="event-member-tile__profile-link cursor-pointer text-decoration-none"
+            >
               <div class="d-flex align-start">
                 <UserAvatar :user="member" :size="60" class="flex-shrink-0" />
-                <div class="pl-2 min-width-0 flex-grow-1">
-                  <div class="d-flex text-subtitle-2 font-weight-bold">
-                    <span class="text-break">{{ member.user_name }}</span>
+                <div class="pl-2 min-width-0 flex-grow-1 overflow-hidden">
+                  <div class="event-member-tile__name font-weight-bold text-truncate" :title="member.user_name">
+                    {{ member.user_name }}
                   </div>
                   <div
                     v-for="[menuId, group] in groupOrderedMenus(member.orders)"
@@ -91,13 +94,13 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
                 @click="onMemberTagClick(t)"
               />
             </div>
-          </div>
+          </v-sheet>
         </v-col>
       </v-row>
       <!-- コミュニティの設定によっては参加者氏名を非表示にし、リンクをなくす -->
       <v-row v-else-if="isShowMember === false">
         <v-col v-for="member in members" :key="member.user_id" class="d-flex align-stretch pa-2" cols="6" sm="6" md="4">
-          <div class="d-flex flex-column w-100">
+          <v-sheet class="event-member-tile d-flex flex-column w-100 h-100 pa-3" rounded="lg">
             <div class="d-flex align-start">
               <UserAvatar :user="member" :size="60" class="flex-shrink-0" />
               <div class="pl-2 min-width-0 flex-grow-1">
@@ -114,21 +117,29 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
                 </div>
               </div>
             </div>
-            <div v-if="(member.user_tags ?? []).length > 0" class="d-flex flex-wrap mt-2 w-100">
-              <TagBadge
-                v-for="t in orderedUserTags(member)"
-                :key="t"
-                :tag="t"
-                compact
-                :highlighted="isTagHighlighted(t)"
-                :clickable="true"
-                @click="onMemberTagClick(t)"
-              />
-            </div>
-          </div>
+          </v-sheet>
         </v-col>
       </v-row>
       <slot></slot>
     </v-card-text>
   </section>
 </template>
+
+<style scoped lang="scss">
+.event-member-tile {
+  background-color: rgba(var(--v-theme-background), 38%);
+}
+
+.event-member-tile__name {
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+}
+
+.event-member-tile__profile-link {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+
+  &:hover {
+    opacity: 0.75;
+  }
+}
+</style>
