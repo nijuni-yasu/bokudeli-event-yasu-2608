@@ -237,6 +237,7 @@ const toMessageItem = (message: ChatMessage): ChatMessageItem => ({
   deletedAt: message.deleted_at,
   deletedDisplayName: message.deleted_display_name,
   attachments: message.attachments,
+  reactionSummary: message.reaction_summary,
 })
 
 export const mergeMessages = (existing: ChatMessageItem[], incoming: ChatMessageItem[]): ChatMessageItem[] => {

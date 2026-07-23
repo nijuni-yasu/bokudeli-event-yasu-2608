@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { mdiDotsVertical, mdiDownload } from '@mdi/js'
 import {
   convertToTimeString,
   convertToDateString,
@@ -20,7 +19,9 @@ import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolver
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
 import { downloadBlob } from '@shokujii/base/utils/downloadBlob.js'
+import { mdiDownload } from '@mdi/js'
 import ChatAttachmentImage from './ChatAttachmentImage.vue'
+import ChatMessageReactions from './ChatMessageReactions.vue'
 import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
 
 import type { ChatMessageItem } from './types.js'
@@ -262,6 +263,15 @@ const profileAriaLabel = (senderUserId: string): string => {
   return t('chat.open_user_profile', { name: resolveSenderName(senderUserId) })
 }
 
+const canReactToMessage = (message: ChatMessageItem): boolean => {
+  return (
+    message.messageType === 'user' &&
+    message.deletedAt == null &&
+    store.activeRoom?.isReadonly !== true &&
+    store.activeRoomId != null
+  )
+}
+
 const canRecall = (message: ChatMessageItem): boolean => {
   return (
     message.messageType === 'user' &&
@@ -448,25 +458,18 @@ onBeforeUnmount(() => {
                 v-if="entry.message.body != null && entry.message.body !== ''"
                 class="chat-message-text-row d-flex align-center gap-1"
               >
-                <VMenu v-if="canRecall(entry.message)" location="bottom">
-                  <template #activator="{ props: menuProps }">
-                    <VBtn
-                      v-bind="menuProps"
-                      icon
-                      variant="text"
-                      size="x-small"
-                      color="default"
-                      class="chat-recall-menu-btn flex-shrink-0"
-                      :aria-label="t('chat.recall_message')"
-                      @click.stop
-                    >
-                      <VIcon :icon="mdiDotsVertical" size="18" />
-                    </VBtn>
-                  </template>
-                  <VList density="compact">
-                    <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(entry.message)" />
-                  </VList>
-                </VMenu>
+                <ChatMessageReactions
+                  v-if="store.activeRoomId != null && entry.message.senderUserId === currentUserId"
+                  mode="actions"
+                  :message="entry.message"
+                  :room-id="store.activeRoomId"
+                  :current-user-id="currentUserId"
+                  :is-own-message="true"
+                  :can-react="canReactToMessage(entry.message)"
+                  :show-reaction-picker="canReactToMessage(entry.message)"
+                  :show-recall="canRecall(entry.message)"
+                  @recall="openRecallConfirm(entry.message)"
+                />
                 <p
                   v-linkify
                   class="chat-content py-3 px-4 elevation-1 mb-0"
@@ -478,33 +481,38 @@ onBeforeUnmount(() => {
                 >
                   {{ entry.message.body }}
                 </p>
+                <ChatMessageReactions
+                  v-if="store.activeRoomId != null && entry.message.senderUserId !== currentUserId"
+                  mode="actions"
+                  :message="entry.message"
+                  :room-id="store.activeRoomId"
+                  :current-user-id="currentUserId"
+                  :is-own-message="false"
+                  :can-react="canReactToMessage(entry.message)"
+                  :show-reaction-picker="canReactToMessage(entry.message)"
+                  @recall="openRecallConfirm(entry.message)"
+                />
               </div>
               <div
                 v-if="(entry.message.attachments ?? []).length > 0"
                 class="chat-message-attachments-row d-flex align-center gap-1"
               >
-                <VMenu
-                  v-if="canRecall(entry.message) && (entry.message.body == null || entry.message.body === '')"
-                  location="bottom"
-                >
-                  <template #activator="{ props: menuProps }">
-                    <VBtn
-                      v-bind="menuProps"
-                      icon
-                      variant="text"
-                      size="x-small"
-                      color="default"
-                      class="chat-recall-menu-btn flex-shrink-0"
-                      :aria-label="t('chat.recall_message')"
-                      @click.stop
-                    >
-                      <VIcon :icon="mdiDotsVertical" size="18" />
-                    </VBtn>
-                  </template>
-                  <VList density="compact">
-                    <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(entry.message)" />
-                  </VList>
-                </VMenu>
+                <ChatMessageReactions
+                  v-if="
+                    store.activeRoomId != null &&
+                    entry.message.senderUserId === currentUserId &&
+                    (entry.message.body == null || entry.message.body === '')
+                  "
+                  mode="actions"
+                  :message="entry.message"
+                  :room-id="store.activeRoomId"
+                  :current-user-id="currentUserId"
+                  :is-own-message="true"
+                  :can-react="canReactToMessage(entry.message)"
+                  :show-reaction-picker="canReactToMessage(entry.message)"
+                  :show-recall="canRecall(entry.message)"
+                  @recall="openRecallConfirm(entry.message)"
+                />
                 <div
                   class="chat-message-attachments"
                   :class="{
@@ -522,7 +530,32 @@ onBeforeUnmount(() => {
                     @expand="(payload) => openExpandedImage(entry.message, attachment.storage_path, payload)"
                   />
                 </div>
+                <ChatMessageReactions
+                  v-if="
+                    store.activeRoomId != null &&
+                    entry.message.senderUserId !== currentUserId &&
+                    canReactToMessage(entry.message) &&
+                    (entry.message.body == null || entry.message.body === '')
+                  "
+                  mode="actions"
+                  :message="entry.message"
+                  :room-id="store.activeRoomId"
+                  :current-user-id="currentUserId"
+                  :is-own-message="false"
+                  :can-react="canReactToMessage(entry.message)"
+                  :show-reaction-picker="true"
+                  @recall="openRecallConfirm(entry.message)"
+                />
               </div>
+              <ChatMessageReactions
+                v-if="store.activeRoomId != null"
+                mode="summary"
+                :message="entry.message"
+                :room-id="store.activeRoomId"
+                :current-user-id="currentUserId"
+                :is-own-message="entry.message.senderUserId === currentUserId"
+                :can-react="canReactToMessage(entry.message)"
+              />
             </div>
             <span class="text-xs text-disabled">
               {{ convertToTimeString(entry.message.createdAt) }}
@@ -602,21 +635,21 @@ onBeforeUnmount(() => {
   max-inline-size: 100%;
 }
 
-.chat-group-own {
-  .chat-recall-menu-btn {
+.chat-group {
+  .chat-message-action-btn {
     opacity: 0;
     transition: opacity 0.15s ease;
   }
 
-  &:hover .chat-recall-menu-btn,
-  &:focus-within .chat-recall-menu-btn,
-  .chat-recall-menu-btn:focus-visible {
+  &:hover .chat-message-action-btn,
+  &:focus-within .chat-message-action-btn,
+  .chat-message-action-btn:focus-visible {
     opacity: 1;
   }
 }
 
 @media (hover: none) {
-  .chat-group-own .chat-recall-menu-btn {
+  .chat-group .chat-message-action-btn {
     opacity: 1;
   }
 }

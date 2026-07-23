@@ -26,6 +26,7 @@ export type ChatMessageItem = {
   deletedAt?: number
   deletedDisplayName?: string
   attachments?: ChatAttachment[]
+  reactionSummary?: Record<string, number>
 }
 
 export type ChatActiveRoom = {

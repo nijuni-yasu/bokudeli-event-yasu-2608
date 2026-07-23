@@ -1057,6 +1057,9 @@ export default {
     download_attachment: '画像をダウンロード',
     download_failed: '画像のダウンロードに失敗しました',
     download_ios_hint: '「共有」から「写真に保存」を選んでください',
+    reaction_picker: 'リアクションを追加',
+    reaction_count: '{emoji} {count}件',
+    reaction_failed: 'リアクションの更新に失敗しました',
     error: {
       preparing: '準備中です。しばらくしてから再度お試しください',
       room_not_found: 'チャットが見つかりません',
