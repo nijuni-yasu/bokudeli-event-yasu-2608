@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { getAuth } from 'firebase/auth'
-import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
+import { getCommunityPath, getEventPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
@@ -297,7 +297,10 @@ const startOrderProcess = async () => {
         return
       }
       try {
-        await router.push(`${getUserPath(userId.value)}?eventId=${eventId}&communityAccount=${event.community_account}`)
+        await router.push({
+          path: '/orders',
+          query: { eventId, communityAccount: event.community_account },
+        })
       } catch (error) {
         console.error('Failed to navigate after order:', error)
       }
