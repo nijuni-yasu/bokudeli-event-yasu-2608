@@ -7,12 +7,13 @@ import { useNotification } from '@shokujii/base/composable/notification.js'
 import type { ChatMessageItem } from './types.js'
 
 const props = defineProps<{
-  mode: 'actions' | 'summary'
+  mode: 'side' | 'reaction-row'
   message: ChatMessageItem
   roomId: string
   currentUserId: string
   isOwnMessage: boolean
   canReact: boolean
+  timeLabel?: string
   showReactionPicker?: boolean
   showRecall?: boolean
   showDownload?: boolean
@@ -70,6 +71,12 @@ const reactionSummaryAriaLabel = computed(() => {
   return t('chat.reaction_summary_label', { label })
 })
 
+const showSideActions = computed(() => props.showRecall === true || props.showDownload === true)
+
+const showReactionRow = computed(
+  () => (props.showReactionPicker === true && props.canReact) || hasReactionSummary.value,
+)
+
 const onReactionSelect = async (emoji: ChatReactionEmoji): Promise<void> => {
   if (!props.canReact || isToggling.value) {
     return
@@ -98,44 +105,12 @@ const onSummaryClick = (): void => {
 </script>
 
 <template>
-  <template v-if="mode === 'actions'">
-    <div
-      v-if="showReactionPicker === true || showRecall === true || showDownload === true"
-      class="chat-message-action-btns d-flex align-center flex-shrink-0"
-      :class="isOwnMessage ? 'chat-message-action-btns--own' : ''"
-    >
-      <VMenu v-if="showReactionPicker === true && canReact" v-model="reactionMenuOpen" v-bind="actionMenuProps">
-        <template #activator="{ props: menuProps, isActive }">
-          <VBtn
-            v-bind="menuProps"
-            icon
-            variant="text"
-            size="x-small"
-            color="default"
-            class="chat-message-action-btn flex-shrink-0"
-            :class="{ 'chat-message-action-btn--active': isActive }"
-            :aria-label="t('chat.reaction_picker')"
-            :disabled="isToggling"
-            @click.stop
-          >
-            <VIcon :icon="mdiEmoticonHappyOutline" size="18" />
-          </VBtn>
-        </template>
-        <div class="chat-message-action-menu-panel chat-message-action-menu-panel--emoji d-flex align-center">
-          <VBtn
-            v-for="emoji in CHAT_REACTION_EMOJIS"
-            :key="emoji"
-            variant="text"
-            size="x-small"
-            class="chat-reaction-picker-btn"
-            :aria-label="t('chat.reaction_picker')"
-            @click.stop="onReactionSelect(emoji)"
-          >
-            {{ emoji }}
-          </VBtn>
-        </div>
-      </VMenu>
-
+  <div
+    v-if="mode === 'side' && timeLabel != null"
+    class="chat-message-side-meta flex-shrink-0"
+    :class="showSideActions ? 'chat-message-side-meta--with-actions' : ''"
+  >
+    <div v-if="showSideActions" class="chat-message-side-meta__actions d-flex align-center">
       <VMenu v-if="showRecall === true" v-model="recallMenuOpen" v-bind="actionMenuProps">
         <template #activator="{ props: menuProps, isActive }">
           <VBtn
@@ -174,14 +149,52 @@ const onSummaryClick = (): void => {
         <VIcon :icon="mdiDownload" size="18" />
       </VBtn>
     </div>
-  </template>
+    <span class="chat-message-side-meta__time text-xs text-disabled">{{ timeLabel }}</span>
+  </div>
 
   <div
-    v-else-if="hasReactionSummary"
-    class="chat-reaction-summary d-flex flex-wrap ga-1"
+    v-else-if="mode === 'reaction-row' && showReactionRow"
+    class="chat-message-reaction-row d-flex align-center flex-wrap ga-1"
     :class="isOwnMessage ? 'justify-end' : 'justify-start'"
   >
+    <VMenu
+      v-if="showReactionPicker === true && canReact"
+      v-model="reactionMenuOpen"
+      v-bind="actionMenuProps"
+    >
+      <template #activator="{ props: menuProps, isActive }">
+        <VBtn
+          v-bind="menuProps"
+          icon
+          variant="text"
+          size="x-small"
+          color="default"
+          class="chat-message-action-btn chat-message-reaction-picker-btn flex-shrink-0"
+          :class="{ 'chat-message-action-btn--active': isActive }"
+          :aria-label="t('chat.reaction_picker')"
+          :disabled="isToggling"
+          @click.stop
+        >
+          <VIcon :icon="mdiEmoticonHappyOutline" size="18" />
+        </VBtn>
+      </template>
+      <div class="chat-message-action-menu-panel chat-message-action-menu-panel--emoji d-flex align-center">
+        <VBtn
+          v-for="emoji in CHAT_REACTION_EMOJIS"
+          :key="emoji"
+          variant="text"
+          size="x-small"
+          class="chat-reaction-picker-btn"
+          :aria-label="t('chat.reaction_picker')"
+          @click.stop="onReactionSelect(emoji)"
+        >
+          {{ emoji }}
+        </VBtn>
+      </div>
+    </VMenu>
+
     <VBtn
+      v-if="hasReactionSummary"
       variant="flat"
       color="default"
       size="x-small"
@@ -195,6 +208,31 @@ const onSummaryClick = (): void => {
 </template>
 
 <style scoped lang="scss">
+.chat-message-side-meta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 36px;
+  min-block-size: 28px;
+}
+
+.chat-message-side-meta--with-actions {
+  min-inline-size: 56px;
+}
+
+.chat-message-side-meta__time {
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.chat-message-side-meta__actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
 .chat-message-action-btn {
   border-radius: 50%;
   inline-size: 28px;

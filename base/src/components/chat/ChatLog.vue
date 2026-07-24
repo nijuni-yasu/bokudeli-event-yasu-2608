@@ -20,6 +20,7 @@ import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
 import { downloadBlob } from '@shokujii/base/utils/downloadBlob.js'
 import { mdiDownload } from '@mdi/js'
+import { formatReactionSummaryText } from '@shokujii/common/utils/chatReactionSummary.js'
 import ChatAttachmentImage from './ChatAttachmentImage.vue'
 import ChatMessageReactions from './ChatMessageReactions.vue'
 import ChatReactionDetailDialog from './ChatReactionDetailDialog.vue'
@@ -319,6 +320,20 @@ const openReactionDetail = (message: ChatMessageItem): void => {
   reactionDetailOpen.value = true
 }
 
+const messageTimeLabel = (message: ChatMessageItem): string => convertToTimeString(message.createdAt)
+
+const messageAttachmentCount = (message: ChatMessageItem): number => message.attachments?.length ?? 0
+
+const showMessageSideMeta = (message: ChatMessageItem): boolean => store.activeRoomId != null
+
+const showMessageReactionRow = (message: ChatMessageItem): boolean => {
+  if (store.activeRoomId == null) {
+    return false
+  }
+  const hasSummary = formatReactionSummaryText(message.reactionSummary) !== ''
+  return canReactToMessage(message) || hasSummary
+}
+
 const confirmRecall = async () => {
   const roomId = store.activeRoomId
   const message = recallTarget.value
@@ -488,128 +503,84 @@ onBeforeUnmount(() => {
               :class="entry.message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
             >
               <div
-                v-if="entry.message.body != null && entry.message.body !== ''"
-                class="chat-message-text-row d-flex align-center gap-1"
+                class="chat-message-main-row d-flex align-center gap-1"
+                :class="entry.message.senderUserId === currentUserId ? 'chat-message-main-row--own' : ''"
               >
                 <ChatMessageReactions
-                  v-if="store.activeRoomId != null && entry.message.senderUserId === currentUserId"
-                  mode="actions"
+                  v-if="showMessageSideMeta(entry.message) && entry.message.senderUserId === currentUserId"
+                  mode="side"
                   :message="entry.message"
-                  :room-id="store.activeRoomId"
+                  :room-id="store.activeRoomId!"
                   :current-user-id="currentUserId"
                   :is-own-message="true"
                   :can-react="canReactToMessage(entry.message)"
-                  :show-reaction-picker="canReactToMessage(entry.message)"
+                  :time-label="messageTimeLabel(entry.message)"
                   :show-recall="canRecall(entry.message)"
-                  :show-download="(entry.message.attachments ?? []).length > 0"
+                  :show-download="messageAttachmentCount(entry.message) > 0"
                   :is-downloading="downloadingMessageId === entry.message.id"
                   :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
                   @recall="openRecallConfirm(entry.message)"
                   @download="onDownloadAllAttachments(entry.message)"
                 />
-                <p
-                  v-linkify
-                  class="chat-content py-3 px-4 elevation-1 mb-0"
-                  :class="
-                    entry.message.senderUserId === currentUserId
-                      ? 'bg-primary text-white chat-right'
-                      : 'bg-surface chat-left'
-                  "
-                >
-                  {{ entry.message.body }}
-                </p>
-                <ChatMessageReactions
-                  v-if="store.activeRoomId != null && entry.message.senderUserId !== currentUserId"
-                  mode="actions"
-                  :message="entry.message"
-                  :room-id="store.activeRoomId"
-                  :current-user-id="currentUserId"
-                  :is-own-message="false"
-                  :can-react="canReactToMessage(entry.message)"
-                  :show-reaction-picker="canReactToMessage(entry.message)"
-                  :show-download="(entry.message.attachments ?? []).length > 0"
-                  :is-downloading="downloadingMessageId === entry.message.id"
-                  :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
-                  @recall="openRecallConfirm(entry.message)"
-                  @download="onDownloadAllAttachments(entry.message)"
-                />
-              </div>
-              <div
-                v-if="(entry.message.attachments ?? []).length > 0"
-                class="chat-message-attachments-row d-flex align-center gap-1"
-              >
-                <ChatMessageReactions
-                  v-if="
-                    store.activeRoomId != null &&
-                    entry.message.senderUserId === currentUserId &&
-                    (entry.message.body == null || entry.message.body === '')
-                  "
-                  mode="actions"
-                  :message="entry.message"
-                  :room-id="store.activeRoomId"
-                  :current-user-id="currentUserId"
-                  :is-own-message="true"
-                  :can-react="canReactToMessage(entry.message)"
-                  :show-reaction-picker="canReactToMessage(entry.message)"
-                  :show-recall="canRecall(entry.message)"
-                  :show-download="(entry.message.attachments ?? []).length > 0"
-                  :is-downloading="downloadingMessageId === entry.message.id"
-                  :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
-                  @recall="openRecallConfirm(entry.message)"
-                  @download="onDownloadAllAttachments(entry.message)"
-                />
-                <div
-                  class="chat-message-attachments"
-                  :class="{
-                    'chat-message-attachments--single': (entry.message.attachments ?? []).length === 1,
-                    'chat-message-attachments--pair': (entry.message.attachments ?? []).length === 2,
-                  }"
-                >
-                  <ChatAttachmentImage
-                    v-for="attachment in entry.message.attachments ?? []"
-                    :key="attachment.storage_path"
-                    :attachment="attachment"
-                    :layout="(entry.message.attachments ?? []).length === 1 ? 'fluid' : 'tile'"
-                    @loaded="onAttachmentLoaded"
-                    @unloaded="onAttachmentUnloaded"
-                    @expand="(payload) => openExpandedImage(entry.message, attachment.storage_path, payload)"
-                  />
+                <div class="chat-message-bubble-body d-flex flex-column gap-1">
+                  <p
+                    v-if="entry.message.body != null && entry.message.body !== ''"
+                    v-linkify
+                    class="chat-content py-3 px-4 elevation-1 mb-0"
+                    :class="
+                      entry.message.senderUserId === currentUserId
+                        ? 'bg-primary text-white chat-right'
+                        : 'bg-surface chat-left'
+                    "
+                  >
+                    {{ entry.message.body }}
+                  </p>
+                  <div
+                    v-if="messageAttachmentCount(entry.message) > 0"
+                    class="chat-message-attachments"
+                    :class="{
+                      'chat-message-attachments--single': messageAttachmentCount(entry.message) === 1,
+                      'chat-message-attachments--pair': messageAttachmentCount(entry.message) === 2,
+                    }"
+                  >
+                    <ChatAttachmentImage
+                      v-for="attachment in entry.message.attachments ?? []"
+                      :key="attachment.storage_path"
+                      :attachment="attachment"
+                      :layout="messageAttachmentCount(entry.message) === 1 ? 'fluid' : 'tile'"
+                      @loaded="onAttachmentLoaded"
+                      @unloaded="onAttachmentUnloaded"
+                      @expand="(payload) => openExpandedImage(entry.message, attachment.storage_path, payload)"
+                    />
+                  </div>
                 </div>
                 <ChatMessageReactions
-                  v-if="
-                    store.activeRoomId != null &&
-                    entry.message.senderUserId !== currentUserId &&
-                    (entry.message.body == null || entry.message.body === '') &&
-                    (canReactToMessage(entry.message) || (entry.message.attachments ?? []).length > 0)
-                  "
-                  mode="actions"
+                  v-if="showMessageSideMeta(entry.message) && entry.message.senderUserId !== currentUserId"
+                  mode="side"
                   :message="entry.message"
-                  :room-id="store.activeRoomId"
+                  :room-id="store.activeRoomId!"
                   :current-user-id="currentUserId"
                   :is-own-message="false"
                   :can-react="canReactToMessage(entry.message)"
-                  :show-reaction-picker="canReactToMessage(entry.message)"
-                  :show-download="(entry.message.attachments ?? []).length > 0"
+                  :time-label="messageTimeLabel(entry.message)"
+                  :show-download="messageAttachmentCount(entry.message) > 0"
                   :is-downloading="downloadingMessageId === entry.message.id"
                   :is-download-blocked="downloadingMessageId != null && downloadingMessageId !== entry.message.id"
-                  @recall="openRecallConfirm(entry.message)"
                   @download="onDownloadAllAttachments(entry.message)"
                 />
               </div>
               <ChatMessageReactions
-                v-if="store.activeRoomId != null"
-                mode="summary"
+                v-if="showMessageReactionRow(entry.message)"
+                mode="reaction-row"
                 :message="entry.message"
-                :room-id="store.activeRoomId"
+                :room-id="store.activeRoomId!"
                 :current-user-id="currentUserId"
                 :is-own-message="entry.message.senderUserId === currentUserId"
                 :can-react="canReactToMessage(entry.message)"
+                :show-reaction-picker="canReactToMessage(entry.message)"
                 @open-detail="openReactionDetail(entry.message)"
               />
             </div>
-            <span class="text-xs text-disabled">
-              {{ convertToTimeString(entry.message.createdAt) }}
-            </span>
           </div>
         </div>
       </template>
@@ -687,26 +658,64 @@ onBeforeUnmount(() => {
   max-inline-size: 100%;
 }
 
-.chat-message-attachments-row {
+.chat-message-main-row {
   max-inline-size: 100%;
 }
 
+.chat-message-bubble-body {
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
 .chat-group {
-  :deep(.chat-message-action-btn) {
-    opacity: 0;
-    transition: opacity 0.15s ease;
+  :deep(.chat-message-side-meta--with-actions) {
+    .chat-message-side-meta__actions {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      justify-content: center;
+    }
+
+    .chat-message-side-meta__time {
+      opacity: 1;
+    }
   }
 
-  &:hover :deep(.chat-message-action-btn),
-  &:focus-within :deep(.chat-message-action-btn),
-  :deep(.chat-message-action-btn:focus-visible) {
+  &:hover :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__actions),
+  &:focus-within :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__actions) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:hover :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__time),
+  &:focus-within :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__time) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  :deep(.chat-message-side-meta--with-actions .chat-message-action-btn:focus-visible) {
     opacity: 1;
   }
 }
 
 @media (hover: none) {
-  .chat-group :deep(.chat-message-action-btn) {
-    opacity: 1;
+  .chat-group :deep(.chat-message-side-meta--with-actions) {
+    flex-direction: column;
+    gap: 2px;
+    min-block-size: auto;
+
+    .chat-message-side-meta__actions {
+      opacity: 1;
+      pointer-events: auto;
+      position: static;
+    }
+
+    .chat-message-side-meta__time {
+      opacity: 1;
+    }
   }
 }
 
