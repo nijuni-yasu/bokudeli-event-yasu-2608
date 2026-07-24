@@ -4,23 +4,17 @@ import { doc, orderBy, where } from 'firebase/firestore'
 import { useRoute, useRouter } from 'vue-router'
 import UserBioPanel from '@shokujii/base/components/UserBioPanel.vue'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
-import UserEventCard from '@shokujii/base/components/UserEventCard.vue'
 import ProfileEventCard from '@shokujii/base/components/ProfileEventCard.vue'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import FriendCard from '@shokujii/base/components/FriendCard.vue'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
-import { useUserOrderHistoryByUserId } from '@shokujii/base/stores/userOrderHistoryList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
-import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline, mdiReceiptText } from '@mdi/js'
-import { getChatPath, getCommunityPath, getEventPath, getReceiptPath, getUserPath } from '@/router/utils'
-import { useNavigateToEventChat } from '@shokujii/base/composable/useNavigateToEventChat.js'
-import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
-import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
-import { useNotification } from '@shokujii/base/composable/notification.js'
+import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline } from '@mdi/js'
+import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserFriendsStore, type UserFriendsStore } from '@shokujii/base/stores/userFriends.js'
 import { User } from '@shokujii/common/schemas/User.js'
@@ -42,7 +36,6 @@ const TAB_FRIENDS = 'friends'
 const TAB_EVENTS = 'events'
 const TAB_COMMUNITIES = 'communities'
 const TAB_FOODS = 'foods'
-const TAB_ORDERS = 'orders'
 
 /** プロフィール「ともだち」プレビュー。旧 72px×9 個相当の横幅に近づけるなら 72×(9/12)≈54。`UserAvatar` は 51 以上で medium サムネ（small より解像度高い） */
 const PROFILE_FRIEND_PREVIEW_AVATAR_SIZE = 54
@@ -56,13 +49,7 @@ const PROFILE_FRIENDS_PREVIEW_MAX_BY_BREAKPOINT = {
 
 /** `getUserFriends` の 1 回あたり件数（サーバ側 limit 上限 50 以下であること） */
 const PROFILE_FRIENDS_PAGE_SIZE = 30
-type TabKey =
-  | typeof TAB_PROFILE
-  | typeof TAB_FRIENDS
-  | typeof TAB_EVENTS
-  | typeof TAB_COMMUNITIES
-  | typeof TAB_FOODS
-  | typeof TAB_ORDERS
+type TabKey = typeof TAB_PROFILE | typeof TAB_FRIENDS | typeof TAB_EVENTS | typeof TAB_COMMUNITIES | typeof TAB_FOODS
 
 const props = defineProps<{
   userId: string
@@ -80,17 +67,11 @@ const profileFriendsPreviewMaxTotal = computed(() => {
 
 const profileUserId = props.userId
 
-const notification = useNotification()
-
 const { t: $t } = useI18n()
 
 const { user, exists } = storeToRefs(useUserStore(profileUserId))
 const currentUserStore = useCurrentUserStore()
 const { user: loginUser } = storeToRefs(currentUserStore)
-
-const cancelLoadingEventId = ref<string | null>(null)
-/** UserEventCard のキャンセルダイアログの開閉（開いているイベントの event_id、閉じているときは null） */
-const cancelDialogEventId = ref<string | null>(null)
 
 const isOwner = computed(() => loginUser.value?.user_id === profileUserId)
 /** Firestore 上に users ドキュメントが無い、または退会済み */
@@ -101,27 +82,6 @@ const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
   profileFilter: { kind: 'pf-null' },
 })
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
-
-const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId, 6, {
-  profileFilter: { kind: 'pf-null' },
-})
-const {
-  events: orderHistoryEvents,
-  orderStateByEventId: orderHistoryStateByEventId,
-  hasMore: orderHistoryHasMore,
-  initialLoaded: isOrderHistoryLoaded,
-} = storeToRefs(userOrderHistoryStore)
-
-watch(
-  () => [profileUserId, isOwner.value, exists.value, user.value?.is_deleted] as const,
-  ([pid, owner, ex, deleted]) => {
-    if (pid === '' || !owner) return
-    if (ex === null) return
-    if (ex === false || deleted === true) return
-    userOrderHistoryStore.reload()
-  },
-  { immediate: true },
-)
 
 const resolveFriendSortFromQuery = (rawSort: unknown): UserFriendsSortBy => {
   const sort = String(rawSort ?? '')
@@ -197,8 +157,7 @@ setupAutoLoadWhenEmpty([profilePreviewFriends, profilePreviewFriendsHasMore, pro
 })
 
 /**
- * URL の `?tab=xxx` をタブに解決する。未指定や本人以外で `orders` を直叩きされた場合は
- * プロフィールタブにフォールバックする（仕様 4.2.5）。
+ * URL の `?tab=xxx` をタブに解決する。
  */
 const resolveTabFromQuery = (rawTab: string): TabKey => {
   switch (rawTab) {
@@ -207,23 +166,12 @@ const resolveTabFromQuery = (rawTab: string): TabKey => {
     case TAB_COMMUNITIES:
     case TAB_FOODS:
       return rawTab
-    case TAB_ORDERS:
-      return loginUser.value?.user_id === profileUserId ? TAB_ORDERS : TAB_PROFILE
     default:
       return TAB_PROFILE
   }
 }
 
 const tabs = ref<TabKey>(resolveTabFromQuery(String(route.query.tab ?? '')))
-
-watch(
-  () => isOwner.value,
-  (owner) => {
-    if (!owner && tabs.value === TAB_ORDERS) {
-      tabs.value = TAB_PROFILE
-    }
-  },
-)
 
 const queryTabFor = (tab: TabKey): string | undefined => (tab === TAB_PROFILE ? undefined : tab)
 
@@ -350,63 +298,6 @@ const managerCommunities = computed(() =>
 
 const isUserEventsLoaded = computed(() => userEventsTotalCount.value !== null)
 
-const cancel = async (orderIds: string[], communityId: string, eventId: string) => {
-  if (orderIds.length === 0) return
-
-  cancelLoadingEventId.value = eventId
-  try {
-    const { data } = await callCancelOrders({
-      community_id: communityId,
-      event_id: eventId,
-      order_ids: orderIds,
-    })
-    await userOrderHistoryStore.reloadOrdersForEvent(eventId)
-
-    cancelDialogEventId.value = null
-
-    const hasRefundIssues = data.refund_errors != null && data.refund_errors.length > 0
-    if (hasRefundIssues || data.user_message) {
-      notification.show(data.user_message ?? $t('user.canceled'), 'warning')
-    } else {
-      notification.show($t('user.canceled'), 'success')
-    }
-  } catch (error) {
-    console.error(error)
-    notification.show($t('user.cancel_failed'), 'error')
-  } finally {
-    cancelLoadingEventId.value = null
-  }
-}
-
-// Stripeからのリダイレクトでイベントに参加した場合の処理
-const isUserSuccessJoinEventDialogVisible = ref(false)
-if (route.query.eventId != null && route.query.communityAccount != null) {
-  isUserSuccessJoinEventDialogVisible.value = true
-}
-
-const navigateToEventChatFromOrder = useNavigateToEventChat({
-  getChatPath,
-  userId: () => profileUserId,
-}).navigateToEventChat
-
-/** 注文完了で遷移したとき・既存 Pinia ストアが古い一覧のままになるのを防ぐ */
-watch(
-  () => [route.query.eventId, route.query.communityAccount, isOwner.value] as const,
-  ([eventId, communityAccount, owner]) => {
-    if (profileUserId === '') return
-    if (!owner) return
-    if (eventId != null && communityAccount != null) {
-      userEventListStore.reload()
-      userOrderHistoryStore.reload()
-    }
-  },
-  { immediate: true },
-)
-
-const downloadReceipt = (eventId: string, stripeId: string) => {
-  window.open(getReceiptPath(eventId, stripeId), '_blank')
-}
-
 const counts = computed(() => previewData.value?.counts ?? null)
 
 /** プロフィールプレビュー Callable の初回取得中（カード枠は先に表示） */
@@ -454,25 +345,10 @@ const previewFoods = computed(() => previewData.value?.previews.foods ?? [])
 /** フードタブ: 次ページがなく空のときだけ空表示（RC-53/54） */
 const showFoodsTabEmpty = computed(() => !foodLoading.value && pagedFoods.value.length === 0 && !foodHasMore.value)
 
-/** 注文履歴タブ: 追読み余地なしかつ可視 0 件のときだけ空表示（RC-7） */
-const showOrdersTabEmpty = computed(
-  () => isOrderHistoryLoaded.value && orderHistoryEvents.value.length === 0 && !orderHistoryHasMore.value,
-)
-
 setupAutoLoadWhenEmpty([pagedFoods, foodHasMore, foodLoading, tabs], {
   shouldLoad: () =>
     tabs.value === TAB_FOODS && pagedFoods.value.length === 0 && foodHasMore.value && !foodLoading.value,
   load: () => userFoodsStore.next(),
-})
-
-setupAutoLoadWhenEmpty([orderHistoryEvents, orderHistoryHasMore, isOrderHistoryLoaded, tabs], {
-  shouldLoad: () =>
-    tabs.value === TAB_ORDERS &&
-    isOwner.value &&
-    orderHistoryEvents.value.length === 0 &&
-    orderHistoryHasMore.value &&
-    isOrderHistoryLoaded.value,
-  load: () => userOrderHistoryStore.next(),
 })
 
 watch(
@@ -670,10 +546,6 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         <v-tab :value="TAB_FOODS">
           <v-icon :icon="mdiFood" size="22" />
           <span class="profile-page-tabs__label">{{ $t('user_profile.tab_foods') }}</span>
-        </v-tab>
-        <v-tab v-if="isOwner" :value="TAB_ORDERS">
-          <v-icon :icon="mdiReceiptText" size="22" />
-          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_orders') }}</span>
         </v-tab>
       </v-tabs>
       <v-window v-model="tabs" class="pa-4 pa-md-6">
@@ -1393,65 +1265,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
             </v-row>
           </template>
         </v-window-item>
-
-        <v-window-item v-if="isOwner" :value="TAB_ORDERS">
-          <div v-if="showOrdersTabEmpty" class="text-body-1 text-medium-emphasis pa-4">
-            {{ $t('user_profile.empty.orders') }}
-          </div>
-          <v-row>
-            <v-col v-for="event in orderHistoryEvents" :key="`order_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
-              <div class="event-card">
-                <UserEventCard
-                  v-model:cancel-dialog-event-id="cancelDialogEventId"
-                  :orders="orderHistoryStateByEventId[event.event_id]?.orders ?? []"
-                  :orders-loading="orderHistoryStateByEventId[event.event_id]?.loading ?? false"
-                  :orders-error="orderHistoryStateByEventId[event.event_id]?.error != null"
-                  :event="event"
-                  :isOwner="isOwner"
-                  :hide-private-scope-chip="true"
-                  :cancelLoading="cancelLoadingEventId === event.event_id"
-                  :event-detail-path="
-                    canLinkToDetail(event.is_public) ? getEventPath(event.community_account, event.event_id) : undefined
-                  "
-                  @downloadInvoice="downloadReceipt"
-                  @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
-                  @retry-orders="(eid: string) => userOrderHistoryStore.reloadOrdersForEvent(eid)"
-                />
-
-                <div
-                  v-if="cancelLoadingEventId === event.event_id"
-                  class="progress-container d-flex justify-center align-center"
-                >
-                  <v-progress-circular :indeterminate="true" size="large" />
-                </div>
-              </div>
-            </v-col>
-          </v-row>
-          <v-row class="justify-center">
-            <v-col cols="auto">
-              <IncrementalLoader
-                :loaded-count="orderHistoryEvents.length"
-                :total-count="orderHistoryHasMore ? Number.MAX_SAFE_INTEGER : orderHistoryEvents.length"
-                @load="userOrderHistoryStore.next()"
-              />
-            </v-col>
-          </v-row>
-        </v-window-item>
       </v-window>
     </v-col>
   </v-row>
-  <!-- 存在しない eventId や communityAccount にも反応してしまう。 TODO 修正 -->
-  <!-- prettier-ignore -->
-  <UserSuccessJoinEventDialog
-    v-if="$route.query.eventId != null || $route.query.communityAccount != null"
-    v-model="isUserSuccessJoinEventDialogVisible"
-    :event-id="(($route.query.eventId ?? '') as string)"
-    :community-account="(($route.query.communityAccount ?? '') as string)"
-    :is-posted="($route.query.isPosted === 'true')"
-    :session-id="(($route.query.session_id ?? '') as string)"
-    :user-id="profileUserId"
-    :navigate-to-event-chat="navigateToEventChatFromOrder"
-  />
 </template>
 
 <style scoped lang="scss">
