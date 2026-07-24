@@ -50,14 +50,7 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
   <section>
     <v-card-text class="text-left">
       <v-row v-if="isShowMember === true">
-        <v-col
-          v-for="member in members"
-          :key="member.user_id"
-          class="d-flex align-stretch pa-2"
-          cols="6"
-          sm="6"
-          md="4"
-        >
+        <v-col v-for="member in members" :key="member.user_id" class="d-flex align-stretch pa-2" cols="6" sm="6" md="4">
           <v-sheet class="event-member-tile d-flex flex-column w-100 h-100 pa-3" rounded="lg">
             <router-link
               :to="getUserPath(member.user_id)"
