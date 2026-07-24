@@ -43,26 +43,26 @@ G-5 / G-6（WS-G）— コミュニティ承認・限定表示
 
 | 状態 | ID | タスク | 出所 | 依存 | パッケージ | Issue |
 |:--|:--|:--|:--|:--|:--|:--|
-| - [x] | H-2 | **RC-20 確定** — 未ログイン時ロゴ URL 方針（Storage 公開 read / signed URL） | D-13 / [02_設計 §1](../90_アーカイブ/v0.4_機能拡張/02_設計.md) | — | doc, firebase | [#2205](https://github.com/nijuniinc/bokudeli-event-new/issues/2205) |
-| - [x] | H-1 | ヘッダー常時表示に `company_logo_url` を反映 | D-13 / §1 | H-2 推奨 | enterprise, base | [#2206](https://github.com/nijuniinc/bokudeli-event-new/issues/2206) |
+| ✅ | H-2 | **RC-20 確定** — 未ログイン時ロゴ URL 方針（Storage 公開 read / signed URL） | D-13 / [02_設計 §1](../90_アーカイブ/v0.4_機能拡張/02_設計.md) | — | doc, firebase | [#2205](https://github.com/nijuniinc/bokudeli-event-new/issues/2205) |
+| ✅ | H-1 | ヘッダー常時表示に `company_logo_url` を反映 | D-13 / §1 | H-2 推奨 | enterprise, base | [#2206](https://github.com/nijuniinc/bokudeli-event-new/issues/2206) |
 | ~~—~~ | ~~H-2a~~ | ~~エンプラトップ `/` の未ログイン閲覧（authGuards + Rules）~~ | ~~D-14~~ | — | — | ~~[#2207](https://github.com/nijuniinc/bokudeli-event-new/issues/2207)~~ **不採用・クローズ予定** |
-| - [x] | H-9 | login / pass-code を背景画像 + 中央 v-card レイアウト化 | D-14 / §2 | H-2 推奨 | enterprise | [#2213](https://github.com/nijuniinc/bokudeli-event-new/issues/2213) |
+| ✅ | H-9 | login / pass-code を背景画像 + 中央 v-card レイアウト化 | D-14 / §2 | H-2 推奨 | enterprise | [#2213](https://github.com/nijuniinc/bokudeli-event-new/issues/2213) |
 | - [ ] | H-2b | **ログイン後**トップに `publish_scope: community` イベント表示（非メンバー閲覧のみ） | §2-5 / §5 | **G-6** | enterprise, common |
 
 ### WS-H-B: マイページ・UI
 
 | 状態 | ID | タスク | 出所 | 依存 | パッケージ | Issue |
 |:--|:--|:--|:--|:--|:--|:--|
-| - [ ] | H-3 | enterprise マイページ UI を user 版に同期（v-card 等） | D-15 / §3 | — | enterprise | [#2210](https://github.com/nijuniinc/bokudeli-event-new/issues/2210) |
+| ✅ | H-3 | enterprise マイページ UI を user 版に同期（v-card 等） | D-15 / §3 | — | enterprise | [#2210](https://github.com/nijuniinc/bokudeli-event-new/issues/2210) |
 | - [ ] | H-4 | `UserProfilePage` の base 共通化 | D-15 / §3 | H-3 推奨 | base, user, enterprise |
 
 ### WS-H-C: 注文履歴・利用状況（`/orders`）
 
 | 状態 | ID | タスク | 出所 | 依存 | パッケージ | Issue |
 |:--|:--|:--|:--|:--|:--|:--|
-| - [ ] | H-5 | `/orders` 専用画面（PF: 注文のみ）。マイページタブ削除・redirect | D-16 / §4 | — | base, user, enterprise | [#2208](https://github.com/nijuniinc/bokudeli-event-new/issues/2208) |
-| - [ ] | H-6 | enterprise `/orders` に福利厚生利用状況セクション追加 | D-16 / §4 | H-5 | enterprise | [#2209](https://github.com/nijuniinc/bokudeli-event-new/issues/2209) |
-| - [ ] | H-5d | `10_仕様/04_詳細_マイページ・友人.md` EP-24/25 更新（タブ → `/orders`） | §4-7 | H-5 | doc |
+| ✅ | H-5 | `/orders` 専用画面（PF: 注文のみ）。マイページタブ削除・redirect | D-16 / §4 | — | base, user, enterprise | [#2208](https://github.com/nijuniinc/bokudeli-event-new/issues/2208) |
+| ✅ | H-6 | enterprise `/orders` に福利厚生利用状況セクション追加 | D-16 / §4 | H-5 | enterprise | [#2209](https://github.com/nijuniinc/bokudeli-event-new/issues/2209) |
+| ✅ | H-5d | `10_仕様/04_詳細_マイページ・友人.md` EP-24/25 更新（タブ → `/orders`） | §4-7 | H-5 | doc |
 
 ### WS-H-D: イベントテンプレート
 
@@ -99,13 +99,13 @@ G-5 / G-6（WS-G）— コミュニティ承認・限定表示
 
 | ID | Issue | 状態 |
 |:--|:--|:--|
-| H-2 | [#2205](https://github.com/nijuniinc/bokudeli-event-new/issues/2205) | - [ ] |
-| H-1 | [#2206](https://github.com/nijuniinc/bokudeli-event-new/issues/2206) | - [ ] |
+| H-2 | [#2205](https://github.com/nijuniinc/bokudeli-event-new/issues/2205) | ✅ |
+| H-1 | [#2206](https://github.com/nijuniinc/bokudeli-event-new/issues/2206) | ✅ |
 | ~~H-2a~~ | ~~[#2207](https://github.com/nijuniinc/bokudeli-event-new/issues/2207)~~ | **不採用** |
-| H-9 | [#2213](https://github.com/nijuniinc/bokudeli-event-new/issues/2213) | - [ ] |
-| H-5 | [#2208](https://github.com/nijuniinc/bokudeli-event-new/issues/2208) | - [ ] |
-| H-6 | [#2209](https://github.com/nijuniinc/bokudeli-event-new/issues/2209) | - [ ] |
-| H-3 | [#2210](https://github.com/nijuniinc/bokudeli-event-new/issues/2210) | - [ ] |
+| H-9 | [#2213](https://github.com/nijuniinc/bokudeli-event-new/issues/2213) | ✅ |
+| H-5 | [#2208](https://github.com/nijuniinc/bokudeli-event-new/issues/2208) | ✅ |
+| H-6 | [#2209](https://github.com/nijuniinc/bokudeli-event-new/issues/2209) | ✅ |
+| H-3 | [#2210](https://github.com/nijuniinc/bokudeli-event-new/issues/2210) | ✅ |
 | H-7 | [#2211](https://github.com/nijuniinc/bokudeli-event-new/issues/2211) | - [ ] |
 | H-8 | [#2212](https://github.com/nijuniinc/bokudeli-event-new/issues/2212) | - [ ] |
 
@@ -119,3 +119,4 @@ G-5 / G-6（WS-G）— コミュニティ承認・限定表示
 | 2026-07-23 | `03_` → `04_` にリネーム（`03_developmentデプロイ手順` との番号衝突回避） |
 | 2026-07-23 | WS-H Issue 起票（#2205〜#2212） |
 | 2026-07-23 | H-2a（#2207 未ログイントップ）不採用 → H-9（#2213 login ヒーロー UI）に差し替え。§2 設計更新 |
+| 2026-07-24 | 実装済みタスクの状態表記を `- [x]` から `✅` に統一（進捗の見方に準拠） |
