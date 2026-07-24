@@ -106,6 +106,22 @@ export const toggleReaction = async (
   await setDoc(ref, createReactionForUpdate(userId, emoji), { merge: true })
 }
 
+const applyOptimisticToggle = (
+  chatStore: ReturnType<typeof useChatStore>,
+  messageId: string,
+  currentSummary: ChatReactionSummary | undefined,
+  previousEmoji: ChatReactionEmoji | undefined,
+  emoji: ChatReactionEmoji,
+): ChatReactionEmoji | undefined => {
+  const action = resolveChatReactionToggleAction(previousEmoji, emoji)
+  const nextEmoji = action === 'remove' ? undefined : emoji
+  const optimisticSummary = applyOptimisticReactionSummary(currentSummary, previousEmoji, nextEmoji)
+
+  chatStore.patchMessageReactionSummary(messageId, optimisticSummary)
+  chatStore.setMyReactionForMessage(messageId, nextEmoji)
+  return nextEmoji
+}
+
 export const toggleReactionWithOptimistic = async (
   roomId: string,
   messageId: string,
@@ -115,17 +131,19 @@ export const toggleReactionWithOptimistic = async (
 ): Promise<void> => {
   const chatStore = useChatStore()
   let previousEmoji = chatStore.getMyReactionForMessage(messageId)
-  if (!chatStore.myReactionByMessageId.has(messageId)) {
+  const cacheMiss = !chatStore.myReactionByMessageId.has(messageId)
+
+  applyOptimisticToggle(chatStore, messageId, currentSummary, previousEmoji, emoji)
+
+  if (cacheMiss) {
     const ref = getChatReactionRef(roomId, messageId, userId)
     const snapshot = await getDoc(ref)
-    previousEmoji = snapshot.exists() ? snapshot.data()?.emoji : undefined
+    const resolvedPreviousEmoji = snapshot.exists() ? snapshot.data()?.emoji : undefined
+    if (resolvedPreviousEmoji !== previousEmoji) {
+      previousEmoji = resolvedPreviousEmoji
+      applyOptimisticToggle(chatStore, messageId, currentSummary, previousEmoji, emoji)
+    }
   }
-  const action = resolveChatReactionToggleAction(previousEmoji, emoji)
-  const nextEmoji = action === 'remove' ? undefined : emoji
-  const optimisticSummary = applyOptimisticReactionSummary(currentSummary, previousEmoji, nextEmoji)
-
-  chatStore.patchMessageReactionSummary(messageId, optimisticSummary)
-  chatStore.setMyReactionForMessage(messageId, nextEmoji)
 
   try {
     await toggleReaction(roomId, messageId, userId, emoji)

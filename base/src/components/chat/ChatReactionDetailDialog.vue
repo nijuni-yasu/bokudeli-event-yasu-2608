@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { mdiClose } from '@mdi/js'
-import { getDoc } from 'firebase/firestore'
 import type { ChatReaction } from '@shokujii/common/schemas/ChatReaction.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { listChatReactions } from '@shokujii/base/stores/chatReaction.js'
-import { getUserRef } from '@shokujii/base/stores/user.js'
+import { getUserById } from '@shokujii/base/stores/user.js'
 
 const props = defineProps<{
   modelValue: boolean
@@ -46,8 +45,7 @@ const dialogTitle = computed(() => {
 
 const fetchUser = async (userId: string): Promise<User | null> => {
   try {
-    const snapshot = await getDoc(getUserRef(userId))
-    return snapshot.exists() ? snapshot.data() : null
+    return (await getUserById(userId)) ?? null
   } catch {
     return null
   }

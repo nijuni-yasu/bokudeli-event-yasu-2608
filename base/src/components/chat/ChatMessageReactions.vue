@@ -183,6 +183,7 @@ const onSummaryClick = (): void => {
   >
     <VBtn
       variant="flat"
+      color="default"
       size="x-small"
       class="chat-reaction-chip chat-reaction-chip--combined"
       :aria-label="reactionSummaryAriaLabel"
@@ -235,8 +236,10 @@ const onSummaryClick = (): void => {
   letter-spacing: normal;
 }
 
-.chat-reaction-chip--combined {
-  background: rgb(var(--v-theme-surface));
+.chat-reaction-chip--combined.v-btn {
+  --v-btn-background: #fff;
+  background: #fff;
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
   border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   font-size: 1rem;

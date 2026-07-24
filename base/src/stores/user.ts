@@ -2,6 +2,7 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import {
   doc,
+  getDoc,
   updateDoc,
   onSnapshot,
   type Unsubscribe,
@@ -42,6 +43,11 @@ const userConverter: FirestoreDataConverter<User> = {
  */
 export const getUserRef = (userId: string): DocumentReference<User> => {
   return doc(db, 'users', userId).withConverter(userConverter)
+}
+
+export const getUserById = async (userId: string): Promise<User | undefined> => {
+  const snapshot = await getDoc(getUserRef(userId))
+  return snapshot.exists() ? snapshot.data() : undefined
 }
 
 export type UserStore = ReturnType<typeof useUserStore>
