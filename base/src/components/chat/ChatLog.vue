@@ -664,6 +664,12 @@ onBeforeUnmount(() => {
   max-inline-size: 100%;
 }
 
+@container chat-log (min-width: 0) {
+  .chat-body {
+    max-inline-size: min(100%, 65cqw);
+  }
+}
+
 .chat-message-content {
   max-inline-size: 100%;
 }
