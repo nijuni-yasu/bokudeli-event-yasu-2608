@@ -213,6 +213,16 @@ const onSummaryClick = (): void => {
   min-block-size: 28px;
 }
 
+@media (hover: hover) {
+  .chat-message-side-meta {
+    align-self: stretch;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    min-block-size: 0;
+  }
+}
+
 .chat-message-side-meta--with-actions {
   min-inline-size: 56px;
 }
@@ -233,6 +243,7 @@ const onSummaryClick = (): void => {
   border-radius: 50%;
   inline-size: 28px;
   block-size: 28px;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
 
   &:hover {
     background: rgba(var(--v-theme-on-surface), 0.08);

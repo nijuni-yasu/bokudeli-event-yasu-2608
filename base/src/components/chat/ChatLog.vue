@@ -507,7 +507,7 @@ onBeforeUnmount(() => {
               :class="entry.message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
             >
               <div
-                class="chat-message-main-row d-flex align-center gap-1"
+                class="chat-message-main-row d-flex gap-1"
                 :class="entry.message.senderUserId === currentUserId ? 'chat-message-main-row--own' : ''"
               >
                 <ChatMessageReactions
@@ -664,6 +664,13 @@ onBeforeUnmount(() => {
 
 .chat-message-main-row {
   max-inline-size: 100%;
+  align-items: center;
+}
+
+@media (hover: hover) {
+  .chat-message-main-row {
+    align-items: stretch;
+  }
 }
 
 .chat-message-bubble-body {
@@ -672,36 +679,39 @@ onBeforeUnmount(() => {
 }
 
 .chat-group {
-  :deep(.chat-message-side-meta--with-actions) {
-    .chat-message-side-meta__actions {
+  @media (hover: hover) {
+    :deep(.chat-message-side-meta--with-actions) {
+      .chat-message-side-meta__actions {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .chat-message-side-meta__time {
+        opacity: 1;
+      }
+    }
+
+    &:hover :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__actions),
+    &:focus-within :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__actions) {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    &:hover :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__time),
+    &:focus-within :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__time) {
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.15s ease;
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      justify-content: center;
     }
 
-    .chat-message-side-meta__time {
+    :deep(.chat-message-side-meta--with-actions .chat-message-action-btn:focus-visible) {
       opacity: 1;
     }
-  }
-
-  &:hover :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__actions),
-  &:focus-within :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__actions) {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  &:hover :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__time),
-  &:focus-within :deep(.chat-message-side-meta--with-actions .chat-message-side-meta__time) {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  :deep(.chat-message-side-meta--with-actions .chat-message-action-btn:focus-visible) {
-    opacity: 1;
   }
 }
 
