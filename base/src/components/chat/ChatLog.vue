@@ -324,7 +324,7 @@ const messageTimeLabel = (message: ChatMessageItem): string => convertToTimeStri
 
 const messageAttachmentCount = (message: ChatMessageItem): number => message.attachments?.length ?? 0
 
-const showMessageSideMeta = (message: ChatMessageItem): boolean => store.activeRoomId != null
+const showMessageSideMeta = (): boolean => store.activeRoomId != null
 
 const showMessageReactionRow = (message: ChatMessageItem): boolean => {
   if (store.activeRoomId == null) {
@@ -507,7 +507,7 @@ onBeforeUnmount(() => {
                 :class="entry.message.senderUserId === currentUserId ? 'chat-message-main-row--own' : ''"
               >
                 <ChatMessageReactions
-                  v-if="showMessageSideMeta(entry.message) && entry.message.senderUserId === currentUserId"
+                  v-if="showMessageSideMeta() && entry.message.senderUserId === currentUserId"
                   mode="side"
                   :message="entry.message"
                   :room-id="store.activeRoomId!"
@@ -555,7 +555,7 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <ChatMessageReactions
-                  v-if="showMessageSideMeta(entry.message) && entry.message.senderUserId !== currentUserId"
+                  v-if="showMessageSideMeta() && entry.message.senderUserId !== currentUserId"
                   mode="side"
                   :message="entry.message"
                   :room-id="store.activeRoomId!"

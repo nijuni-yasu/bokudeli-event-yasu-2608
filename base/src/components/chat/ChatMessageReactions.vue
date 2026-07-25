@@ -157,11 +157,7 @@ const onSummaryClick = (): void => {
     class="chat-message-reaction-row d-flex align-center flex-wrap ga-1"
     :class="isOwnMessage ? 'justify-end' : 'justify-start'"
   >
-    <VMenu
-      v-if="showReactionPicker === true && canReact"
-      v-model="reactionMenuOpen"
-      v-bind="actionMenuProps"
-    >
+    <VMenu v-if="showReactionPicker === true && canReact" v-model="reactionMenuOpen" v-bind="actionMenuProps">
       <template #activator="{ props: menuProps, isActive }">
         <VBtn
           v-bind="menuProps"
