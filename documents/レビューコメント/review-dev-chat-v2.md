@@ -30,6 +30,9 @@
 | [ ] | RC-24 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `ChatMessage` / `ChatMessageItem` の summary が `Record<string, number>`<br>`ChatReactionSummary` に揃える |
 | [x] | RC-25 | 3649681321 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | キャッシュ miss 時の getDoc 失敗で楽観更新が巻き戻されない<br>try/catch で rollback |
 | [x] | RC-26 | 3649681323 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | iOS 複数添付 DL が2枚目以降 share 失敗<br>`downloadBlobs` で1回の share に統合 |
+| [x] | RC-27 | 3650025984 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 書き込み成功後 getDoc 失敗で楽観 UI を巻き戻していた<br>toggle と確認 getDoc を分離 |
+| [x] | RC-28 | 3650025987 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | iOS share 不能時に anchor 成功扱い<br>`unavailable` 結果と案内 toast |
+| [x] | RC-29 | 3650025988 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | cache miss 時に誤った楽観 patch を先適用<br>getDoc 後に patch するよう変更 |
 
 ---
 
@@ -1079,5 +1082,27 @@ iOS で添付が複数ある場合、Web Share API が必要とする transient 
 **想定工数**: S
 
 **判断理由**: `downloadBlobs` を追加し、iOS では全 File を1回の `navigator.share` に渡す。非 iOS / share 不可時は従来どおり anchor 連続 DL。
+
+---
+
+## 評価セッション（2026-07-25 19:38・review-comments-evaluate）
+
+- **評価日時**: 2026-07-25 19:38 JST
+- **評価者**: Cursor Agent（review-comments-evaluate auto）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **REVIEW_REQUEST_SINCE**: 2026-07-25T10:16:29Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼コメント id:5078119177、Codex サマリ review id:4779106296）
+- **重複 RC スキップ**: GitHub id 3650025983 は RC-16 と同一指摘のため RC 採番せず
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-27 | 3650025984 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 書き込み成功後 getDoc 失敗で楽観 UI を巻き戻していた<br>toggle と確認 getDoc を分離 |
+| [x] | RC-28 | 3650025987 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | iOS share 不能時に anchor 成功扱い<br>`unavailable` 結果と案内 toast |
+| [x] | RC-29 | 3650025988 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | cache miss 時に誤った楽観 patch を先適用<br>getDoc 後に patch するよう変更 |
 
 ---
