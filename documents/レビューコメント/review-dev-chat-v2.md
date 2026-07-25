@@ -25,6 +25,9 @@
 | [x] | RC-19 | 3638711196 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 無効 emoji テストが new Date()<br>serverTimestamp() に修正 |
 | [x] | RC-20 | 3638711199 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | iPadOS デスクトップ UA が iOS 判定外<br>maxTouchPoints で判定追加 |
 | [x] | RC-21 | 3638711204 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | キャッシュ未初期化時 getDoc が楽観更新をブロック<br>patch 前に await している |
+| [ ] | RC-22 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | リアクション pill が `#fff` 固定<br>ダークテーマでコントラスト崩れ。Vuetify surface 変数へ |
+| [ ] | RC-23 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `chatMessageExists` が Rules 内で未参照<br>デッドコード削除 |
+| [ ] | RC-24 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `ChatMessage` / `ChatMessageItem` の summary が `Record<string, number>`<br>`ChatReactionSummary` に揃える |
 
 ---
 
@@ -845,5 +848,137 @@ export const mergeMessages = (existing: ChatMessageItem[], incoming: ChatMessage
 **評価**: 🟡 修正提案 | **ステータス**: ✅ 対応済み | **PRスコープ**: 📌 スコープ内 | **ラベル**: 👤 UX | **種別**: 📐 リファクタ | **工数**: M
 
 **判断理由**: 楽観 patch を getDoc 前に適用。キャッシュ未初期化時は patch 後に getDoc で previousEmoji を解決し、差分があれば summary を再補正してから toggleReaction する。
+
+---
+
+## 評価セッション（2026-07-24 16:49・shokujii-code-review）
+
+- **評価日時**: 2026-07-24 16:49 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **レビュー範囲**: `origin/development...HEAD` + 未コミット差分（`ChatLog.vue` / `ChatMessageReactions.vue` の Messenger 風 side/reaction-row リファクタ）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-9 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | M | syncChatMessageReactionSummary の store 単体テストなし<br>Transaction ロジックは trigger テストでモックのみ |
+| [ ] | RC-16 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | `mergeMessages` が onSnapshot 再配信で楽観 summary を古い値で上書きしうる<br>楽観中 ID のマージ保護を検討 |
+| [ ] | RC-22 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | リアクション pill が `#fff` 固定<br>ダークテーマでコントラスト崩れ。Vuetify surface 変数へ |
+| [ ] | RC-23 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `chatMessageExists` が Rules 内で未参照<br>デッドコード削除 |
+| [ ] | RC-24 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `ChatMessage` / `ChatMessageItem` の summary が `Record<string, number>`<br>`ChatReactionSummary` に揃える |
+
+---
+
+**識別子**: RC-22（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/chat/ChatMessageReactions.vue:277`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++.chat-reaction-chip--combined.v-btn {
++  --v-btn-background: #fff;
++  background: #fff;
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [👤 UX/🔧微修正/S]: リアクション summary pill の背景が `#fff` 固定で、Vuetify テーマ（ダークモード）と連動しない → `rgb(var(--v-theme-surface))` 等のテーマ変数に置き換える
+
+**コメント要約**: リアクション pill の白背景固定がダークテーマで視認性を損なう。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「テーマカラーを直接指定していないか」に該当。機能上の blocker ではないが、Materio / Vuetify 利用方針に沿って surface 系 CSS 変数へ寄せるのが望ましい。
+
+---
+
+**識別子**: RC-23（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `firestore.rules:99`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        function chatMessageExists(roomId, messageId) {
++            return exists(/databases/$(database)/documents/chat_rooms/$(roomId)/messages/$(messageId));
++        }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📏 規約/🔧微修正/S]: `chatMessageExists` が定義されているが reactions Rules から参照されていない（`chatMessageAllowsReaction` の `get()` で存在しない message は拒否される） → 未使用ヘルパーを削除する
+
+**コメント要約**: Rules にデッドコードが残っている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-6 対応時に追加されたが、最終実装は `chatMessageAllowsReaction` の `get()` でカバー。保守性のため削除を推奨。
+
+---
+
+**識別子**: RC-24（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/ChatMessage.ts:131`, `base/src/components/chat/types.ts:29`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  reaction_summary?: Record<string, number>
+```
+
+```diff
++  reactionSummary?: Record<string, number>
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📏 規約/🔧微修正/S]: Zod スキーマと `toggleReactionWithOptimistic` は `ChatReactionSummary` を使っているが、`ChatMessage` クラスと `ChatMessageItem` が `Record<string, number>` のまま → RC-17 と同様に `ChatReactionSummary` 型へ統一する
+
+**コメント要約**: 共通型があるのに UI / モデル層だけ緩い Record 型を使っている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 型の一貫性向上。実行時挙動への影響は小さい。
 
 ---
