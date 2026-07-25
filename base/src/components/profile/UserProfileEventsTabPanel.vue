@@ -28,7 +28,10 @@ const handleLoadMore = () => {
   <v-row v-else>
     <v-col v-for="event in events" :key="`event_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
       <div class="event-card">
-        <router-link v-if="canLinkToDetail(event.is_public)" :to="resolveEventPath(event.community_account, event.event_id)">
+        <router-link
+          v-if="canLinkToDetail(event.is_public)"
+          :to="resolveEventPath(event.community_account, event.event_id)"
+        >
           <ProfileEventCard :event="event" />
         </router-link>
         <div v-else>

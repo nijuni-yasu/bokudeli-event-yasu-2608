@@ -2,11 +2,11 @@ import { computed, type Ref } from 'vue'
 import { db } from '@shokujii/base/firebase.js'
 import { doc, orderBy, where } from 'firebase/firestore'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { profileListFilterToConstraints, type ProfileListFilter } from '@shokujii/base/stores/profileListFilter.js'
 import {
-  profileListFilterToConstraints,
-  type ProfileListFilter,
-} from '@shokujii/base/stores/profileListFilter.js'
-import { USER_PROFILE_TAB_COMMUNITIES, type UserProfileTabKey } from '@shokujii/base/components/profile/userProfileConstants.js'
+  USER_PROFILE_TAB_COMMUNITIES,
+  type UserProfileTabKey,
+} from '@shokujii/base/components/profile/userProfileConstants.js'
 import { useAutoLoadWhenEmpty } from '@shokujii/base/composable/useAutoLoadWhenEmpty.js'
 
 export const useUserProfileCommunityLists = (options: {
@@ -86,8 +86,7 @@ export const useUserProfileCommunityLists = (options: {
   )
 
   const isCommunitiesTabReady = computed(
-    () =>
-      memberCommunityListStore.value.totalCount !== null && managerCommunityListStore.value.totalCount !== null,
+    () => memberCommunityListStore.value.totalCount !== null && managerCommunityListStore.value.totalCount !== null,
   )
 
   useAutoLoadWhenEmpty(

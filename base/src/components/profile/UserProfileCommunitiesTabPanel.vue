@@ -38,12 +38,11 @@ const { t: $t } = useI18n()
         {{ $t('user_profile.section.joined_communities') }}
       </h3>
       <v-row>
-        <v-col
-          v-for="{ community, members } in memberCommunities"
-          :key="`member_${community.community_id}`"
-          cols="12"
-        >
-          <router-link v-if="canLinkToDetail(community.is_public)" :to="resolveCommunityPath(community.community_account)">
+        <v-col v-for="{ community, members } in memberCommunities" :key="`member_${community.community_id}`" cols="12">
+          <router-link
+            v-if="canLinkToDetail(community.is_public)"
+            :to="resolveCommunityPath(community.community_account)"
+          >
             <CommunityCard :community="community" :members="members" />
           </router-link>
           <div v-else>
@@ -76,7 +75,10 @@ const { t: $t } = useI18n()
           :key="`manager_${community.community_id}`"
           cols="12"
         >
-          <router-link v-if="canLinkToDetail(community.is_public)" :to="resolveCommunityPath(community.community_account)">
+          <router-link
+            v-if="canLinkToDetail(community.is_public)"
+            :to="resolveCommunityPath(community.community_account)"
+          >
             <CommunityCard :community="community" :members="members" />
           </router-link>
           <div v-else>

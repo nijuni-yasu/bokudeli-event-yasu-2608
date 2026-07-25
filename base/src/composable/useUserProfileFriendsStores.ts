@@ -47,9 +47,7 @@ export const useUserProfileFriendsStores = (options: {
   )
 
   const activeUserFriendsStore = computed(() =>
-    options.friendSortBy.value === 'meet_count'
-      ? userFriendsByMeetCountStore.value
-      : userFriendsByLastMetStore.value,
+    options.friendSortBy.value === 'meet_count' ? userFriendsByMeetCountStore.value : userFriendsByLastMetStore.value,
   )
   const activeFriends = computed(() => activeUserFriendsStore.value?.friends ?? [])
 

@@ -2,10 +2,7 @@
 import { mdiAccountGroup } from '@mdi/js'
 import type { UserProfileCommunityPreviewItem } from '@shokujii/common/apis/userProfile.js'
 import type { ProfileCommunityIconUrlFn } from '@shokujii/base/composable/useProfilePreviewMedia.js'
-import type {
-  ProfileLinkPolicyFn,
-  ResolveCommunityPathFn,
-} from '@shokujii/base/types/profilePathResolvers.js'
+import type { ProfileLinkPolicyFn, ResolveCommunityPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 
 defineProps<{
   joinedCommunities: UserProfileCommunityPreviewItem[]
@@ -64,9 +61,7 @@ const emit = defineEmits<{
                       />
                       <v-icon v-else :icon="mdiAccountGroup" />
                     </v-avatar>
-                    <div
-                      class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
-                    >
+                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
                       <div
                         class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
                       >
@@ -102,9 +97,7 @@ const emit = defineEmits<{
                       />
                       <v-icon v-else :icon="mdiAccountGroup" />
                     </v-avatar>
-                    <div
-                      class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
-                    >
+                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
                       <div
                         class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
                       >
@@ -154,9 +147,7 @@ const emit = defineEmits<{
                       />
                       <v-icon v-else :icon="mdiAccountGroup" />
                     </v-avatar>
-                    <div
-                      class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
-                    >
+                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
                       <div
                         class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
                       >
@@ -192,9 +183,7 @@ const emit = defineEmits<{
                       />
                       <v-icon v-else :icon="mdiAccountGroup" />
                     </v-avatar>
-                    <div
-                      class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
-                    >
+                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
                       <div
                         class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
                       >

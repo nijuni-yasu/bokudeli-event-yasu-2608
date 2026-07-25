@@ -3,9 +3,8 @@ import type { ProfileLinkPolicyFn } from '@shokujii/base/types/profilePathResolv
 
 export const useProfileLinkPolicy = (isOwner: MaybeRefOrGetter<boolean>): { canLinkToDetail: ProfileLinkPolicyFn } => {
   const canLinkToDetail = computed(
-    (): ProfileLinkPolicyFn =>
-      (isPublic: boolean, isLinkable?: boolean) =>
-        isLinkable ?? (toValue(isOwner) || isPublic),
+    (): ProfileLinkPolicyFn => (isPublic: boolean, isLinkable?: boolean) =>
+      isLinkable ?? (toValue(isOwner) || isPublic),
   )
 
   return {

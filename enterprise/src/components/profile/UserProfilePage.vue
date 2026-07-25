@@ -235,10 +235,7 @@ const goToTabFromStat = (tab: UserProfileTabKey) => {
   <v-row v-else-if="displayUser != null" justify="center">
     <v-col cols="12" sm="8" md="3">
       <UserBioPanel :user-data="displayUser" :is-editable="isOwner" hide-sns />
-      <p
-        v-if="department != null && department !== ''"
-        class="text-body-2 text-medium-emphasis mt-3 px-2"
-      >
+      <p v-if="department != null && department !== ''" class="text-body-2 text-medium-emphasis mt-3 px-2">
         {{ $t('user_profile.department_label', { department }) }}
       </p>
     </v-col>

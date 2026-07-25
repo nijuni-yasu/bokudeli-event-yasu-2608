@@ -67,9 +67,7 @@ const emit = defineEmits<{
                   </div>
                 </div>
                 <v-card-text class="pa-3 pt-2">
-                  <div
-                    class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0"
-                  >
+                  <div class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0">
                     <div
                       class="profile-preview-tile__meta text-medium-emphasis text-truncate min-width-0"
                       :title="formatProfilePreviewDate(event.event_start_datetime, 'withWeekday')"
@@ -113,9 +111,7 @@ const emit = defineEmits<{
                   </div>
                 </div>
                 <v-card-text class="pa-3 pt-2">
-                  <div
-                    class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0"
-                  >
+                  <div class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0">
                     <div
                       class="profile-preview-tile__meta text-medium-emphasis text-truncate min-width-0"
                       :title="formatProfilePreviewDate(event.event_start_datetime, 'withWeekday')"
