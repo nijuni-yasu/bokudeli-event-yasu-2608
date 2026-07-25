@@ -54,7 +54,7 @@ G-5 / G-6（WS-G）— コミュニティ承認・限定表示
 | 状態 | ID | タスク | 出所 | 依存 | パッケージ | Issue |
 |:--|:--|:--|:--|:--|:--|:--|
 | ✅ | H-3 | enterprise マイページ UI を user 版に同期（v-card 等） | D-15 / §3 | — | enterprise | [#2210](https://github.com/nijuniinc/bokudeli-event-new/issues/2210) |
-| - [ ] | H-4 | `UserProfilePage` の base 共通化 | D-15 / §3 | H-3 推奨 | base, user, enterprise |
+| ✅ | H-4 | `UserProfilePage` の base 共通化（パネル分割） | D-15 / §3 | H-3 推奨 | base, user, enterprise | [#2224](https://github.com/nijuniinc/bokudeli-event-new/issues/2224) |
 
 ### WS-H-C: 注文履歴・利用状況（`/orders`）
 
@@ -106,6 +106,7 @@ G-5 / G-6（WS-G）— コミュニティ承認・限定表示
 | H-5 | [#2208](https://github.com/nijuniinc/bokudeli-event-new/issues/2208) | ✅ |
 | H-6 | [#2209](https://github.com/nijuniinc/bokudeli-event-new/issues/2209) | ✅ |
 | H-3 | [#2210](https://github.com/nijuniinc/bokudeli-event-new/issues/2210) | ✅ |
+| H-4 | [#2224](https://github.com/nijuniinc/bokudeli-event-new/issues/2224) | ✅ |
 | H-7 | [#2211](https://github.com/nijuniinc/bokudeli-event-new/issues/2211) | - [ ] |
 | H-8 | [#2212](https://github.com/nijuniinc/bokudeli-event-new/issues/2212) | - [ ] |
 
