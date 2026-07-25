@@ -16,7 +16,7 @@ import {
   type ChatReactionEmoji,
   type ChatReactionSummary,
 } from '@shokujii/common/schemas/ChatReaction.js'
-import { applyOptimisticReactionSummary } from '@shokujii/common/utils/chatReactionSummary.js'
+import { applyOptimisticReactionSummary, isSameReactionSummary } from '@shokujii/common/utils/chatReactionSummary.js'
 import { EpochMillisSchema } from '@shokujii/common/schemas/firebase/index.js'
 import { db } from '@shokujii/base/firebase.js'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
@@ -140,11 +140,16 @@ export const toggleReactionWithOptimistic = async (
   }
 
   const nextEmoji = applyOptimisticToggle(chatStore, messageId, currentSummary, previousEmoji, emoji)
+  const expectedOptimisticSummary = applyOptimisticReactionSummary(currentSummary, previousEmoji, nextEmoji)
 
   try {
     await toggleReaction(roomId, messageId, userId, emoji)
   } catch (error) {
-    chatStore.patchMessageReactionSummary(messageId, currentSummary)
+    // 待機中に listener がサマリを更新していた場合は、呼出時の古い値へ戻さない
+    const latestSummary = chatStore.messages.find((message) => message.id === messageId)?.reactionSummary
+    if (isSameReactionSummary(latestSummary, expectedOptimisticSummary)) {
+      chatStore.patchMessageReactionSummary(messageId, currentSummary)
+    }
     chatStore.setMyReactionForMessage(messageId, previousEmoji)
     throw error
   }

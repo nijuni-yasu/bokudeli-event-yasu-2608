@@ -49,6 +49,25 @@ export const applyOptimisticReactionSummary = (
   return normalizeReactionSummary(nextSummary)
 }
 
+/** 楽観ロールバック判定用: emoji ごとの件数が一致するか */
+export const isSameReactionSummary = (
+  left: ChatReactionSummary | undefined,
+  right: ChatReactionSummary | undefined,
+): boolean => {
+  if (left == null && right == null) {
+    return true
+  }
+  if (left == null || right == null) {
+    return false
+  }
+  const leftKeys = Object.keys(left)
+  const rightKeys = Object.keys(right)
+  if (leftKeys.length !== rightKeys.length) {
+    return false
+  }
+  return leftKeys.every((emoji) => left[emoji] === right[emoji])
+}
+
 /** サマリ pill 表示用: CHAT_REACTION_EMOJIS 順に emoji を count 回連続表示 */
 export const formatReactionSummaryText = (summary: ChatReactionSummary | undefined): string => {
   if (summary == null) {

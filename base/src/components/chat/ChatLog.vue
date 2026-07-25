@@ -57,6 +57,8 @@ const reactionDetailMessageId = ref<string | null>(null)
 const attachmentObjectUrlByPath = ref(new Map<string, string>())
 /** ライトボックス用に ChatLog が生成した Object URL（サムネ側の URL は含めない） */
 const lightboxOwnedObjectUrls = ref<string[]>([])
+/** ライトボックス表示セッション。閉じる・開き直しでインクリメントし、遅延 fetch の stale 反映を防ぐ */
+const lightboxFetchGeneration = ref(0)
 const attachmentLightboxPinActive = ref(false)
 
 provide(injectionKeyChatAttachmentLightboxPin, attachmentLightboxPinActive)
@@ -104,13 +106,14 @@ const resolveAttachmentObjectUrl = (
 
 const fetchPendingLightboxSlides = async (
   pending: { slideIndex: number; storagePath: string; fileName: string }[],
+  generation: number,
 ): Promise<void> => {
   await Promise.all(
     pending.map(async ({ slideIndex, storagePath, fileName }) => {
       try {
         const blob = await getChatAttachmentBlob(storagePath)
         const url = URL.createObjectURL(blob)
-        if (!lightboxVisible.value) {
+        if (!lightboxVisible.value || generation !== lightboxFetchGeneration.value) {
           URL.revokeObjectURL(url)
           return
         }
@@ -133,6 +136,8 @@ const openExpandedImage = (
   payload: { url: string; alt: string },
 ): void => {
   revokeLightboxOwnedUrls()
+  lightboxFetchGeneration.value += 1
+  const generation = lightboxFetchGeneration.value
 
   const attachments = message.attachments ?? []
 
@@ -168,13 +173,14 @@ const openExpandedImage = (
   lightboxVisible.value = true
 
   if (pendingFetches.length > 0) {
-    void fetchPendingLightboxSlides(pendingFetches)
+    void fetchPendingLightboxSlides(pendingFetches, generation)
   }
 }
 
 const onLightboxVisibleUpdate = (value: boolean): void => {
   lightboxVisible.value = value
   if (!value) {
+    lightboxFetchGeneration.value += 1
     attachmentLightboxPinActive.value = false
     revokeLightboxOwnedUrls()
     lightboxImgs.value = []

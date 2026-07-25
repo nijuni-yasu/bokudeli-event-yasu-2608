@@ -33,6 +33,8 @@
 | [x] | RC-27 | 3650025984 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 書き込み成功後 getDoc 失敗で楽観 UI を巻き戻していた<br>toggle と確認 getDoc を分離 |
 | [x] | RC-28 | 3650025987 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | iOS share 不能時に anchor 成功扱い<br>`unavailable` 結果と案内 toast |
 | [x] | RC-29 | 3650025988 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | cache miss 時に誤った楽観 patch を先適用<br>getDoc 後に patch するよう変更 |
+| [x] | RC-30 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ライトボックス遅延 fetch が閉じ直し後のセッションに反映されうる<br>generation で stale 反映を破棄 |
+| [x] | RC-31 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 楽観更新失敗時に呼出時 summary へ無条件ロールバック<br>他ユーザー更新を消す。期待値一致時のみ戻す |
 
 ---
 
@@ -1106,3 +1108,117 @@ iOS で添付が複数ある場合、Web Share API が必要とする transient 
 | [x] | RC-29 | 3650025988 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | cache miss 時に誤った楽観 patch を先適用<br>getDoc 後に patch するよう変更 |
 
 ---
+
+## 評価セッション（2026-07-25 20:00・shokujii-code-review）
+
+- **評価日時**: 2026-07-25 20:00 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3a 自動修正**: RC-30・RC-31（🚨 2件）
+- **既知未着手（本セッションで再採番せず）**: RC-9 / RC-16 / RC-22 / RC-23 / RC-24
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-30 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ライトボックス遅延 fetch が閉じ直し後のセッションに反映されうる<br>generation で stale 反映を破棄 |
+| [x] | RC-31 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 楽観更新失敗時に呼出時 summary へ無条件ロールバック<br>他ユーザー更新を消す。期待値一致時のみ戻す |
+
+---
+
+**識別子**: RC-30（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/chat/ChatLog.vue:113`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+ const fetchPendingLightboxSlides = async (
+   pending: { slideIndex: number; storagePath: string; fileName: string }[],
+ ): Promise<void> => {
+   await Promise.all(
+     pending.map(async ({ slideIndex, storagePath, fileName }) => {
+       try {
+         const blob = await getChatAttachmentBlob(storagePath)
+         const url = URL.createObjectURL(blob)
+         if (!lightboxVisible.value) {
+           URL.revokeObjectURL(url)
+           return
+         }
+         lightboxOwnedObjectUrls.value.push(url)
+         onAttachmentLoaded({ storagePath, url })
+         const slide = lightboxImgs.value[slideIndex]
+         if (slide != null) {
+           lightboxImgs.value[slideIndex] = { src: url, title: fileName }
+         }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: ライトボックスを閉じた後すぐ別画像を開くと、先行する `fetchPendingLightboxSlides` が新しい表示セッションにも `lightboxImgs` を書き換えます。さらに同じ添付画像がその間にサムネイル側で読み込まれると、`onAttachmentLoaded` がその URL を revoke して表示を壊します。→ ライトボックス表示ごとの generation を導入し、開始時点と同じセッションの場合だけ反映する。競合時は新規 URL を revoke する。
+
+**コメント要約**: ライトボックス遅延 fetch が閉じ直し後のセッションに反映されうる
+
+generation で stale 反映を破棄
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `lightboxVisible` だけでは閉じ→すぐ開き直しで true のまま残り、旧 fetch が新セッションのスライドを上書きしうる。`lightboxFetchGeneration` を開閉で進め、fetch 完了時に世代不一致なら URL を破棄するよう修正済み。
+
+---
+
+**識別子**: RC-31（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/chatReaction.ts:147`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+   try {
+     await toggleReaction(roomId, messageId, userId, emoji)
+   } catch (error) {
+     chatStore.patchMessageReactionSummary(messageId, currentSummary)
+     chatStore.setMyReactionForMessage(messageId, previousEmoji)
+     throw error
+   }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: 書き込み失敗時、呼び出し開始時の `currentSummary` へ無条件に戻すため、待機中に到着した他ユーザーのサマリ更新を消します。例えば別ユーザーの反応が listener で反映された後に自分の書き込みが拒否されると、その反応もローカルから消え、次の反応まで復元されません。→ 楽観更新後の期待サマリと最新ストア値が一致する場合のみ呼出時の値へ戻し、不一致なら他経路の更新を優先する。
+
+**コメント要約**: 楽観更新失敗時に呼出時 summary へ無条件ロールバック
+
+他ユーザー更新を消す。期待値一致時のみ戻す
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 失敗ロールバックが listener 経由の最新集計を巻き戻す実害がある。`isSameReactionSummary` で期待楽観値と一致するときだけ `currentSummary` に戻すよう修正済み。`myReaction` は常に previous へ復元。
+

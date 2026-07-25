@@ -4,6 +4,7 @@ import {
   buildReactionSummary,
   buildReactionSummaryAriaLabel,
   formatReactionSummaryText,
+  isSameReactionSummary,
   normalizeReactionSummary,
 } from './chatReactionSummary.js'
 
@@ -39,5 +40,12 @@ describe('chatReactionSummary utils', () => {
   it('buildReactionSummaryAriaLabel joins formatted entries', () => {
     const label = buildReactionSummaryAriaLabel({ '❤️': 2, '😆': 1 }, (emoji, count) => `${emoji} ${count}件`)
     expect(label).toBe('❤️ 2件、😆 1件')
+  })
+
+  it('isSameReactionSummary compares counts', () => {
+    expect(isSameReactionSummary(undefined, undefined)).toBe(true)
+    expect(isSameReactionSummary({ '❤️': 1 }, undefined)).toBe(false)
+    expect(isSameReactionSummary({ '❤️': 1 }, { '❤️': 1 })).toBe(true)
+    expect(isSameReactionSummary({ '❤️': 1 }, { '❤️': 2 })).toBe(false)
   })
 })
