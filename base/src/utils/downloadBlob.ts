@@ -26,16 +26,23 @@ const downloadViaAnchor = (blob: Blob, fileName: string): void => {
   URL.revokeObjectURL(url)
 }
 
-const shareViaWebShare = async (blob: Blob, fileName: string): Promise<boolean> => {
-  if (typeof navigator.share !== 'function' || typeof navigator.canShare !== 'function') {
+const blobToShareFile = (blob: Blob, fileName: string): File => {
+  return new File([blob], fileName, { type: blob.type !== '' ? blob.type : 'application/octet-stream' })
+}
+
+const shareFilesViaWebShare = async (files: File[]): Promise<boolean> => {
+  if (files.length === 0 || typeof navigator.share !== 'function' || typeof navigator.canShare !== 'function') {
     return false
   }
-  const file = new File([blob], fileName, { type: blob.type !== '' ? blob.type : 'application/octet-stream' })
-  if (!navigator.canShare({ files: [file] })) {
+  if (!navigator.canShare({ files })) {
     return false
   }
-  await navigator.share({ files: [file] })
+  await navigator.share({ files })
   return true
+}
+
+const shareViaWebShare = async (blob: Blob, fileName: string): Promise<boolean> => {
+  return shareFilesViaWebShare([blobToShareFile(blob, fileName)])
 }
 
 const isIosDevice = (): boolean => {
@@ -63,5 +70,39 @@ export const downloadBlob = async (blob: Blob, fileName: string): Promise<Downlo
   }
 
   downloadViaAnchor(blob, safeName)
+  return 'downloaded'
+}
+
+export type DownloadBlobItem = {
+  blob: Blob
+  fileName: string
+}
+
+/**
+ * 複数 Blob を保存する。iOS では transient activation を1回で消費するため、可能なら1回の Web Share にまとめる。
+ */
+export const downloadBlobs = async (items: DownloadBlobItem[]): Promise<DownloadBlobResult> => {
+  if (items.length === 0) {
+    return 'downloaded'
+  }
+  if (items.length === 1) {
+    return downloadBlob(items[0].blob, items[0].fileName)
+  }
+
+  if (isIosDevice()) {
+    try {
+      const files = items.map(({ blob, fileName }) => blobToShareFile(blob, sanitizeDownloadFileName(fileName)))
+      const shared = await shareFilesViaWebShare(files)
+      if (shared) {
+        return 'shared'
+      }
+    } catch {
+      // share 失敗時は anchor ダウンロードへフォールバック
+    }
+  }
+
+  for (const { blob, fileName } of items) {
+    downloadViaAnchor(blob, sanitizeDownloadFileName(fileName))
+  }
   return 'downloaded'
 }

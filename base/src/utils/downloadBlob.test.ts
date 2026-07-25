@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { downloadBlob } from './downloadBlob.js'
+import { downloadBlob, downloadBlobs } from './downloadBlob.js'
 
 describe('downloadBlob', () => {
   const anchorClick = vi.fn()
@@ -147,5 +147,21 @@ describe('downloadBlob', () => {
     await downloadBlob(blob, '   ')
 
     expect(mockAnchor.download).toBe('download')
+  })
+
+  it('iOS では複数ファイルを1回の share にまとめる', async () => {
+    canShare.mockReturnValue(true)
+    share.mockResolvedValue(undefined)
+    const items = [
+      { blob: new Blob(['a'], { type: 'image/jpeg' }), fileName: 'a.jpg' },
+      { blob: new Blob(['b'], { type: 'image/jpeg' }), fileName: 'b.jpg' },
+    ]
+
+    const result = await downloadBlobs(items)
+
+    expect(result).toBe('shared')
+    expect(share).toHaveBeenCalledOnce()
+    expect(share.mock.calls[0]?.[0]?.files).toHaveLength(2)
+    expect(anchorClick).not.toHaveBeenCalled()
   })
 })

@@ -28,6 +28,8 @@
 | [ ] | RC-22 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | リアクション pill が `#fff` 固定<br>ダークテーマでコントラスト崩れ。Vuetify surface 変数へ |
 | [ ] | RC-23 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `chatMessageExists` が Rules 内で未参照<br>デッドコード削除 |
 | [ ] | RC-24 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `ChatMessage` / `ChatMessageItem` の summary が `Record<string, number>`<br>`ChatReactionSummary` に揃える |
+| [x] | RC-25 | 3649681321 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | キャッシュ miss 時の getDoc 失敗で楽観更新が巻き戻されない<br>try/catch で rollback |
+| [x] | RC-26 | 3649681323 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | iOS 複数添付 DL が2枚目以降 share 失敗<br>`downloadBlobs` で1回の share に統合 |
 
 ---
 
@@ -980,5 +982,102 @@ export const mergeMessages = (existing: ChatMessageItem[], incoming: ChatMessage
 **想定工数**: S
 
 **判断理由**: 型の一貫性向上。実行時挙動への影響は小さい。
+
+---
+
+## 評価セッション（2026-07-25 16:04・review-comments-evaluate）
+
+- **評価日時**: 2026-07-25 16:04 JST
+- **評価者**: Cursor Agent（review-comments-evaluate auto）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **REVIEW_REQUEST_SINCE**: 2026-07-25T06:43:43Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼コメント id:5077359738、Codex サマリ review id:4778717688）
+- **重複 RC スキップ**: GitHub id 3649681322 は RC-16 と同一指摘のため RC 採番せず
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-25 | 3649681321 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | キャッシュ miss 時の getDoc 失敗で楽観更新が巻き戻されない<br>try/catch で rollback |
+| [x] | RC-26 | 3649681323 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | iOS 複数添付 DL が2枚目以降 share 失敗<br>`downloadBlobs` で1回の share に統合 |
+
+---
+
+**識別子**: RC-25（GitHub id: 3649681321）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `base/src/stores/chatReaction.ts:140`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  if (cacheMiss) {
++    const ref = getChatReactionRef(roomId, messageId, userId)
++    const snapshot = await getDoc(ref)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  キャッシュ取得失敗時にも楽観更新を巻き戻す**
+
+初回操作やリアクション削除後のようにキャッシュがない状態で、この `getDoc` がオフラインや一時的な通信障害により失敗すると、直前の楽観更新だけが適用されたまま例外が返ります。この await は後続の `try/catch` の外にあるためロールバックされず、特にライブ購読範囲外の過去メッセージでは、実際には書き込まれていないリアクションがルームを開き直すまで表示され続けます。
+
+**コメント要約**: cacheMiss 時の getDoc が try/catch 外のため、通信失敗時に楽観 UI が残る。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-21 で楽観先行は解消済みだが、getDoc 失敗時の rollback が未実装だった。cacheMiss ブロックを try/catch で囲み、失敗時に summary / myReaction を復元する。
+
+---
+
+**識別子**: RC-26（GitHub id: 3649681323）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `base/src/components/chat/ChatLog.vue:233`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    for (const attachment of attachments) {
++      const blob = await getChatAttachmentBlob(attachment.storage_path)
++      const result = await downloadBlob(blob, attachment.file_name)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  iOSでは複数画像を一度の共有処理にまとめる**
+
+iOS で添付が複数ある場合、Web Share API が必要とする transient user activation は最初の `navigator.share` で消費されるため、共有画面から戻った後の2枚目以降は新しいユーザー操作なしに `downloadBlob` を呼ぶことになります。その結果、後続の share は拒否され、iOS では信頼できないため回避したはずの `<a download>` にフォールバックして「画像をすべてダウンロード」を完遂できません。全 File を1回の share に渡すか、各画像を明示的なユーザー操作で保存させる必要があります。
+
+**コメント要約**: iOS で複数添付をループ share すると2枚目以降が失敗する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `downloadBlobs` を追加し、iOS では全 File を1回の `navigator.share` に渡す。非 iOS / share 不可時は従来どおり anchor 連続 DL。
 
 ---

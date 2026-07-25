@@ -18,7 +18,7 @@ import { CHAT_SYSTEM_EVENT_MEMBER_JOINED } from '@shokujii/common/schemas/ChatMe
 import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
-import { downloadBlob } from '@shokujii/base/utils/downloadBlob.js'
+import { downloadBlob, downloadBlobs } from '@shokujii/base/utils/downloadBlob.js'
 import { mdiDownload } from '@mdi/js'
 import { formatReactionSummaryText } from '@shokujii/common/utils/chatReactionSummary.js'
 import ChatAttachmentImage from './ChatAttachmentImage.vue'
@@ -226,15 +226,15 @@ const onDownloadAllAttachments = async (message: ChatMessageItem): Promise<void>
   }
 
   downloadingMessageId.value = message.id
-  let iosHintShown = false
   try {
-    for (const attachment of attachments) {
-      const blob = await getChatAttachmentBlob(attachment.storage_path)
-      const result = await downloadBlob(blob, attachment.file_name)
-      if (result === 'shared' && !iosHintShown) {
-        notification.show(t('chat.download_ios_hint'), 'info')
-        iosHintShown = true
-      }
+    const blobs = await Promise.all(attachments.map((attachment) => getChatAttachmentBlob(attachment.storage_path)))
+    const items = attachments.map((attachment, index) => ({
+      blob: blobs[index],
+      fileName: attachment.file_name,
+    }))
+    const result = await downloadBlobs(items)
+    if (result === 'shared') {
+      notification.show(t('chat.download_ios_hint'), 'info')
     }
   } catch {
     notification.show(t('chat.download_failed'), 'error')
