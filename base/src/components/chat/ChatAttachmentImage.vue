@@ -114,23 +114,29 @@ onBeforeUnmount(() => {
     <div v-if="isLoading" class="chat-attachment-placeholder d-flex align-center justify-center">
       <VProgressCircular indeterminate size="24" width="2" color="primary" />
     </div>
-    <button
+    <div
       v-else-if="objectUrl != null"
-      type="button"
-      class="chat-attachment-button"
+      class="chat-attachment-loaded"
+      :class="{ 'chat-attachment-loaded--tile': isTileLayout }"
       :style="isTileLayout ? undefined : displaySizeStyle"
-      @click="onExpandClick"
     >
-      <VImg
-        :src="objectUrl"
-        :alt="attachment.file_name"
-        :width="isTileLayout ? undefined : displaySize.width"
-        :height="isTileLayout ? undefined : displaySize.height"
-        :cover="isTileLayout"
-        class="rounded chat-attachment-img"
-        :class="{ 'chat-attachment-img--tile': isTileLayout }"
-      />
-    </button>
+      <button
+        type="button"
+        class="chat-attachment-button"
+        :style="isTileLayout ? undefined : displaySizeStyle"
+        @click="onExpandClick"
+      >
+        <VImg
+          :src="objectUrl"
+          :alt="attachment.file_name"
+          :width="isTileLayout ? undefined : displaySize.width"
+          :height="isTileLayout ? undefined : displaySize.height"
+          :cover="isTileLayout"
+          class="rounded chat-attachment-img"
+          :class="{ 'chat-attachment-img--tile': isTileLayout }"
+        />
+      </button>
+    </div>
     <div v-else-if="hasError" class="chat-attachment-error text-disabled text-sm">
       <VIcon :icon="mdiImageBrokenVariant" size="20" class="me-1" />
       {{ t('chat.error.attachment_load_failed') }}
@@ -151,6 +157,15 @@ onBeforeUnmount(() => {
   height: 100%;
   background: rgba(var(--v-theme-on-surface), 0.04);
   border-radius: 4px;
+}
+
+.chat-attachment-loaded {
+  position: relative;
+}
+
+.chat-attachment-loaded--tile {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .chat-attachment-button {

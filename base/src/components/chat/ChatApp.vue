@@ -506,7 +506,18 @@ onBeforeUnmount(() => {
 
           <div class="flex-grow-1 overflow-hidden">
             <div class="d-flex align-center gap-2">
-              <h6 class="text-base font-weight-regular text-truncate">
+              <h6
+                class="text-base font-weight-regular text-truncate mb-0"
+                :class="{ 'cursor-pointer': canOpenActiveEvent }"
+                :role="canOpenActiveEvent ? 'link' : undefined"
+                :tabindex="canOpenActiveEvent ? 0 : undefined"
+                :aria-label="
+                  canOpenActiveEvent ? t('chat.open_event_page', { name: store.activeRoom.displayTitle }) : undefined
+                "
+                @click="onActiveRoomAvatarClick"
+                @keydown.enter.prevent="onActiveRoomAvatarClick"
+                @keydown.space.prevent="onActiveRoomAvatarClick"
+              >
                 {{ store.activeRoom.displayTitle }}
               </h6>
               <VChip v-if="!store.activeRoom.isActive" size="x-small" color="secondary" variant="tonal">
