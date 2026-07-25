@@ -49,12 +49,30 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] ローディング中を表現する変数は `null | boolean` パターンを使っているか（`null` = ローディング中）
 - [ ] 複数の非同期処理が競合しうる箇所で `isLoading` を個別に持っていないか（先祖返りを防ぐため一つにまとめる）
 - [ ] テーマカラーを直接指定していないか（Vuetify Theme を使う）
-- [ ] `base/src/components/pages/` は deprecated であることを認識しているか
+- [ ] `base/src/components/pages/` は deprecated であることを認識しているか（**新規は `components/<domain>/` のパネル + 各 app shell 組み立て**。`orders.vue` は #2208 時点の例外で pages/ に配置済み。以降の新規画面は domain パネル + shell を優先）
+- [ ] 複数 app（`user` / `enterprise` / `partner`）で共有する画面を **monolith（1 ファイル丸ごと base 化）** していないか（**v-card / タブパネル単位**で `base` に置き、**タブ shell・認可・app 差分は各 app の shell** に残す）
+- [ ] マイページ（`UserProfilePage`）等の新規 base 化は `base/src/components/profile/` 配下の `*PreviewCard` / `*TabPanel` + composable とし、`base/src/components/profile/UserProfilePage.vue` のような **ページ monolith を新設していないか**
+- [ ] base パネルへの path / filter / 認可差分は **`profilePathResolvers.ts` 型 + props 注入**（`resolveUserPath` / `resolveEventPath` / `profileFilter` / `canLinkToDetail` 等）で渡しているか（base 内 `@/router/utils` 依存を新規追加していないか）
+- [ ] app shell が store 初期化・タブ URL 同期・enterprise Callable ゲート等の **組み立て責務**を担い、base パネルは **表示 + emit** に留まっているか
 - [ ] ハードコードされた UI 文字列を `i18n` に移行しているか（**`ja.ts` のみ**。英語 locale は作らない）
 - [ ] `src/locales/messages/en.ts` 等の **英語 locale を新規追加していないか**（本プロジェクトは日本語のみ）
 - [ ] 英語用の UI 文字列だけを別ファイルに分けていないか（未使用の `en.ts` 残骸を作らない）
 - [ ] 削除等の破壊的操作に確認モーダルを挟んでいるか（誤操作防止の UX）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
+
+#### base 共通化（パネル分割）— 詳細
+
+**方針（H-4 確定）**: 画面を base に **丸ごと移さない**。1 v-card / 1 タブパネル程度の UI 単位を `base` に置き、**各 app の shell（例: `user/src/components/profile/UserProfilePage.vue`）で組み立てる**。
+
+| レイヤ | 置き場所 | 例 |
+|:--|:--|:--|
+| preview v-card / タブパネル | `base/src/components/profile/` | `UserProfileEventsPreviewCard.vue`, `UserProfileFriendsTabPanel.vue` |
+| 認可・tab sync・store 束ね | `base/src/composable/` | `useUserProfileAuthState`, `useUserProfileTabSync` |
+| タブ・Bio・app 差分・props 注入 | `user` / `enterprise` shell | `profileFilter`, `hide-sns`, Callable ゲート |
+
+**先例**: manage パネル（`CommunityEventsPanel.vue`）、注文履歴（`orders.vue` + `profileFilter` 注入）。
+
+**レビュー時の 🚨 例**: `base/src/components/profile/UserProfilePage.vue` を新設・復活させ、user/enterprise を薄ラッパーにした PR → monolith 方針違反。
 
 ### セキュリティ
 
@@ -775,3 +793,47 @@ const XxxDbSchema = z.object({
 ```
 
 日付範囲の「開始日時のみ設定可能」等、明示的に `null` が必要な特殊ケースは `TimestampSchema.nullable()` のように使ってよい（例: `PartnerMenu.ts`）。
+
+### NG: ページ丸ごと base 化（monolith）
+
+```vue
+<!-- NG: 1,500 行超の UserProfilePage を base に置き、user/enterprise は props だけ渡す薄ラッパー -->
+<!-- base/src/components/profile/UserProfilePage.vue（monolith） -->
+<script setup lang="ts">
+import { getUserPath } from '@/router/utils' <!-- base 内 @/ 依存も NG -->
+// ... タブ・store・認可・全 v-window-item が 1 ファイルに集中
+</script>
+```
+
+```vue
+<!-- OK: base は v-card / タブパネル単位。shell が組み立て -->
+<!-- user/src/components/profile/UserProfilePage.vue（shell） -->
+<script setup lang="ts">
+import UserProfileEventsPreviewCard from '@shokujii/base/components/profile/UserProfileEventsPreviewCard.vue'
+import UserProfileEventsTabPanel from '@shokujii/base/components/profile/UserProfileEventsTabPanel.vue'
+import { useUserProfileAuthState } from '@shokujii/base/composable/useUserProfileAuthState.js'
+import { getEventPath, getUserPath } from '@/router/utils'
+</script>
+<template>
+  <UserBioPanel ... />
+  <v-tabs v-model="tabs">...</v-tabs>
+  <v-window v-model="tabs">
+    <v-window-item :value="TAB_PROFILE">
+      <UserProfileEventsPreviewCard
+        :resolve-event-path="getEventPath"
+        :can-link-to-detail="canLinkToDetail"
+        @show-more="goToTab(TAB_EVENTS)"
+      />
+    </v-window-item>
+    <v-window-item :value="TAB_EVENTS">
+      <UserProfileEventsTabPanel :resolve-event-path="getEventPath" ... />
+    </v-window-item>
+  </v-window>
+</template>
+```
+
+```typescript
+// OK: path / 認可ポリシーは型 + props（base/src/types/profilePathResolvers.ts）
+export type ResolveEventPathFn = (communityAccount: string, eventId: string) => RouteLocationRaw
+export type ProfileLinkPolicyFn = (isPublic: boolean, isLinkable?: boolean) => boolean
+```

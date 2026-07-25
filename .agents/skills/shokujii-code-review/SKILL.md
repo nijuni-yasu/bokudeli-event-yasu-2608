@@ -150,7 +150,11 @@ consume はその時点の **review スコープ差分の fingerprint**（`revie
 - [ ] ローディング中を表現する変数は `null | boolean` パターンを使っているか（`null` = ローディング中）
 - [ ] 複数の非同期処理が競合しうる箇所で `isLoading` を個別に持っていないか（先祖返りを防ぐため一つにまとめる）
 - [ ] テーマカラーを直接指定していないか（Vuetify Theme を使う）
-- [ ] `base/src/components/pages/` は deprecated であることを認識しているか
+- [ ] `base/src/components/pages/` は deprecated であることを認識しているか（**新規は `components/<domain>/` のパネル + 各 app shell 組み立て**。`orders.vue` は #2208 時点の例外で pages/ に配置済み。以降の新規画面は domain パネル + shell を優先）
+- [ ] 複数 app（`user` / `enterprise` / `partner`）で共有する画面を **monolith（1 ファイル丸ごと base 化）** していないか（**v-card / タブパネル単位**で `base` に置き、**タブ shell・認可・app 差分は各 app の shell** に残す）
+- [ ] マイページ（`UserProfilePage`）等の新規 base 化は `base/src/components/profile/` 配下の `*PreviewCard` / `*TabPanel` + composable とし、`base/src/components/profile/UserProfilePage.vue` のような **ページ monolith を新設していないか**
+- [ ] base パネルへの path / filter / 認可差分は **`profilePathResolvers.ts` 型 + props 注入**（`resolveUserPath` / `resolveEventPath` / `profileFilter` / `canLinkToDetail` 等）で渡しているか（base 内 `@/router/utils` 依存を新規追加していないか）
+- [ ] app shell が store 初期化・タブ URL 同期・enterprise Callable ゲート等の **組み立て責務**を担い、base パネルは **表示 + emit** に留まっているか
 - [ ] ハードコードされた UI 文字列を `i18n` に移行しているか
 - [ ] 削除等の破壊的操作に確認モーダルを挟んでいるか（誤操作防止の UX）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
