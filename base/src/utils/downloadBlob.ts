@@ -1,4 +1,4 @@
-export type DownloadBlobResult = 'downloaded' | 'shared'
+export type DownloadBlobResult = 'downloaded' | 'shared' | 'unavailable'
 
 const sanitizeDownloadFileName = (fileName: string): string => {
   const trimmed = fileName.trim()
@@ -65,8 +65,9 @@ export const downloadBlob = async (blob: Blob, fileName: string): Promise<Downlo
         return 'shared'
       }
     } catch {
-      // share 失敗時は anchor ダウンロードへフォールバック
+      return 'unavailable'
     }
+    return 'unavailable'
   }
 
   downloadViaAnchor(blob, safeName)
@@ -97,8 +98,9 @@ export const downloadBlobs = async (items: DownloadBlobItem[]): Promise<Download
         return 'shared'
       }
     } catch {
-      // share 失敗時は anchor ダウンロードへフォールバック
+      return 'unavailable'
     }
+    return 'unavailable'
   }
 
   for (const { blob, fileName } of items) {

@@ -118,6 +118,15 @@ describe('downloadBlob', () => {
   })
 
   it('Web Share が使えない場合は anchor ダウンロードする', async () => {
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: {
+        userAgent: 'Mozilla/5.0 (Linux; Android 14)',
+        canShare,
+        share,
+      },
+      writable: true,
+    })
     canShare.mockReturnValue(false)
     const blob = new Blob(['x'], { type: 'image/jpeg' })
 
@@ -130,6 +139,15 @@ describe('downloadBlob', () => {
   })
 
   it('share 失敗時は anchor ダウンロードにフォールバックする', async () => {
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: {
+        userAgent: 'Mozilla/5.0 (Linux; Android 14)',
+        canShare,
+        share,
+      },
+      writable: true,
+    })
     canShare.mockReturnValue(true)
     share.mockRejectedValue(new Error('cancelled'))
     const blob = new Blob(['x'], { type: 'image/png' })
@@ -140,7 +158,26 @@ describe('downloadBlob', () => {
     expect(anchorClick).toHaveBeenCalledOnce()
   })
 
+  it('iOS で share 不能時は unavailable を返す', async () => {
+    canShare.mockReturnValue(false)
+    const blob = new Blob(['x'], { type: 'image/jpeg' })
+
+    const result = await downloadBlob(blob, 'photo.jpg')
+
+    expect(result).toBe('unavailable')
+    expect(anchorClick).not.toHaveBeenCalled()
+  })
+
   it('空のファイル名は download にサニタイズする', async () => {
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: {
+        userAgent: 'Mozilla/5.0 (Linux; Android 14)',
+        canShare,
+        share,
+      },
+      writable: true,
+    })
     canShare.mockReturnValue(false)
     const blob = new Blob(['x'], { type: 'image/jpeg' })
 

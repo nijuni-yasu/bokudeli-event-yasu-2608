@@ -1059,6 +1059,7 @@ export default {
     download_all_attachments: '画像をすべてダウンロード',
     download_failed: '画像のダウンロードに失敗しました',
     download_ios_hint: '「共有」から「写真に保存」を選んでください',
+    download_ios_unavailable: '共有できませんでした。画像を長押しして保存してください',
     reaction_picker: 'リアクションを追加',
     reaction_count: '{emoji} {count}件',
     reaction_summary_label: 'リアクション {label}',

@@ -211,6 +211,8 @@ const onLightboxDownloadClick = async (): Promise<void> => {
     const result = await downloadBlob(blob, slide.title ?? 'download')
     if (result === 'shared') {
       notification.show(t('chat.download_ios_hint'), 'info')
+    } else if (result === 'unavailable') {
+      notification.show(t('chat.download_ios_unavailable'), 'info')
     }
   } catch {
     notification.show(t('chat.download_failed'), 'error')
@@ -235,6 +237,8 @@ const onDownloadAllAttachments = async (message: ChatMessageItem): Promise<void>
     const result = await downloadBlobs(items)
     if (result === 'shared') {
       notification.show(t('chat.download_ios_hint'), 'info')
+    } else if (result === 'unavailable') {
+      notification.show(t('chat.download_ios_unavailable'), 'info')
     }
   } catch {
     notification.show(t('chat.download_failed'), 'error')
