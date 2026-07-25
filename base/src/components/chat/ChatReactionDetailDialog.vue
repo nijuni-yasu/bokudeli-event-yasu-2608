@@ -138,7 +138,7 @@ const resolveDisplayName = (row: ReactionDetailRow): string => {
             </template>
             <VListItemTitle class="text-body-2">{{ resolveDisplayName(row) }}</VListItemTitle>
             <template #append>
-              <span class="chat-reaction-detail-emoji text-body-1">{{ row.emoji }}</span>
+              <span class="chat-reaction-detail-emoji">{{ row.emoji }}</span>
             </template>
           </VListItem>
         </VList>
@@ -157,6 +157,9 @@ const resolveDisplayName = (row: ReactionDetailRow): string => {
 }
 
 .chat-reaction-detail-emoji {
+  font-size: 1.375rem;
   line-height: 1;
+  opacity: 1;
+  color: unset;
 }
 </style>
