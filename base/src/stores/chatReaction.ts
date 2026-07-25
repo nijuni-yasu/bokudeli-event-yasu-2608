@@ -133,32 +133,27 @@ export const toggleReactionWithOptimistic = async (
   let previousEmoji = chatStore.getMyReactionForMessage(messageId)
   const cacheMiss = !chatStore.myReactionByMessageId.has(messageId)
 
-  applyOptimisticToggle(chatStore, messageId, currentSummary, previousEmoji, emoji)
-
   if (cacheMiss) {
-    try {
-      const ref = getChatReactionRef(roomId, messageId, userId)
-      const snapshot = await getDoc(ref)
-      const resolvedPreviousEmoji = snapshot.exists() ? snapshot.data()?.emoji : undefined
-      if (resolvedPreviousEmoji !== previousEmoji) {
-        previousEmoji = resolvedPreviousEmoji
-        applyOptimisticToggle(chatStore, messageId, currentSummary, previousEmoji, emoji)
-      }
-    } catch (error) {
-      chatStore.patchMessageReactionSummary(messageId, currentSummary)
-      chatStore.setMyReactionForMessage(messageId, previousEmoji)
-      throw error
-    }
+    const ref = getChatReactionRef(roomId, messageId, userId)
+    const snapshot = await getDoc(ref)
+    previousEmoji = snapshot.exists() ? snapshot.data()?.emoji : undefined
   }
+
+  const nextEmoji = applyOptimisticToggle(chatStore, messageId, currentSummary, previousEmoji, emoji)
 
   try {
     await toggleReaction(roomId, messageId, userId, emoji)
-    const ref = getChatReactionRef(roomId, messageId, userId)
-    const snapshot = await getDoc(ref)
-    chatStore.setMyReactionForMessage(messageId, snapshot.exists() ? snapshot.data()?.emoji : undefined)
   } catch (error) {
     chatStore.patchMessageReactionSummary(messageId, currentSummary)
     chatStore.setMyReactionForMessage(messageId, previousEmoji)
     throw error
+  }
+
+  try {
+    const ref = getChatReactionRef(roomId, messageId, userId)
+    const snapshot = await getDoc(ref)
+    chatStore.setMyReactionForMessage(messageId, snapshot.exists() ? snapshot.data()?.emoji : undefined)
+  } catch {
+    chatStore.setMyReactionForMessage(messageId, nextEmoji)
   }
 }
