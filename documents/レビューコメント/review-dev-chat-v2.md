@@ -35,6 +35,8 @@
 | [x] | RC-29 | 3650025988 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | cache miss 時に誤った楽観 patch を先適用<br>getDoc 後に patch するよう変更 |
 | [x] | RC-30 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ライトボックス遅延 fetch が閉じ直し後のセッションに反映されうる<br>generation で stale 反映を破棄 |
 | [x] | RC-31 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 楽観更新失敗時に呼出時 summary へ無条件ロールバック<br>他ユーザー更新を消す。期待値一致時のみ戻す |
+| [ ] | RC-32 | 3650086791 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | loadOlderMessages 済みメッセージの他ユーザー reaction_summary が live 更新されない<br>購読追加または再取得が必要 |
+| [ ] | RC-33 | 3650086793 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | iOS 一括 DL で fetch 待ち中に user activation 失効<br>Blob 事前取得または二段階 share UI が必要 |
 
 ---
 
@@ -1222,3 +1224,111 @@ generation で stale 反映を破棄
 
 **判断理由**: 失敗ロールバックが listener 経由の最新集計を巻き戻す実害がある。`isSameReactionSummary` で期待楽観値と一致するときだけ `currentSummary` に戻すよう修正済み。`myReaction` は常に previous へ復元。
 
+---
+
+## 評価セッション（2026-07-25 20:19・review-comments-evaluate）
+
+- **評価日時**: 2026-07-25 20:19 JST
+- **評価者**: Cursor Agent（review-comments-evaluate auto）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **REVIEW_REQUEST_SINCE**: 2026-07-25T10:58:07Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼コメント id:5078233278、5078245120）
+- **手順 4a 自動修正**: なし（🟡 M・👤 UX・修正方針が複数のため）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-32 | 3650086791 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | loadOlderMessages 済みメッセージの他ユーザー reaction_summary が live 更新されない<br>購読追加または再取得が必要 |
+| [ ] | RC-33 | 3650086793 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | iOS 一括 DL で fetch 待ち中に user activation 失効<br>Blob 事前取得または二段階 share UI が必要 |
+
+---
+
+**識別子**: RC-32（GitHub id: 3650086791）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/stores/chat.ts:242`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -237,6 +239,7 @@ const toMessageItem = (message: ChatMessage): ChatMessageItem => ({
+   deletedAt: message.deleted_at,
+   deletedDisplayName: message.deleted_display_name,
+   attachments: message.attachments,
++  reactionSummary: message.reaction_summary,
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  過去メッセージのリアクション更新も購読する**
+
+最新50件より古いメッセージを `loadOlderMessages` で読み込んだ後に別ユーザーがリアクションすると、そのメッセージは最新50件だけを対象とする `subscribeMessages` のクエリ外であり、過去分も一度の `getDocs` でしか取得されないため、ここで取り込んだ `reactionSummary` が以後更新されません。詳細ダイアログを開けば最新の reactions が表示される一方、pill はルームを開き直すまで古いままになるので、読み込み済み過去メッセージの集計更新も購読するか、該当メッセージを再取得してください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: loadOlderMessages で表示中の古いメッセージは subscribeMessages 範囲外のため、他ユーザーの reaction_summary 更新が pill に届かない。
+読み込み済みメッセージへの購読追加または再取得が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。RC-3 の楽観更新は自分の操作に限定され、他ユーザーによる summary 更新は latest 50 件の onSnapshot に載らない。RC-16 の merge 保護と合わせて設計検討が必要。自動修正対象外。
+
+---
+
+**識別子**: RC-33（GitHub id: 3650086793）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/chat/ChatLog.vue:238`
+
+**該当コード（レビュー時点の diff）**: （末尾抜粋）
+
+```diff
++const onDownloadAllAttachments = async (message: ChatMessageItem): Promise<void> => {
++  ...
++  downloadingMessageId.value = message.id
++  try {
++    const blobs = await Promise.all(attachments.map((attachment) => getChatAttachmentBlob(attachment.storage_path)))
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  iOS の共有前にユーザー操作権限を失わないようにする**
+
+iOS で添付を保存する場合、`navigator.share()` には一時的なユーザーアクティベーションが必要ですが、クリック後にここで全画像のネットワーク取得を待ってから `downloadBlobs` を呼んでいます。画像が大きい、枚数が多い、または回線が遅い場合は取得中にアクティベーションが失効し、Safari が share を拒否して「画像をすべてダウンロード」を完遂できません。Blob を事前取得しておくか、取得完了後にもう一度明示的な操作で共有を開始する二段階 UI にしてください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: iOS 一括 DL で getChatAttachmentBlob 完了まで share を遅延すると user activation が失効し unavailable になりうる。
+Blob 事前キャッシュまたは二段階 share UI が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。RC-26 で複数 File の 1 回 share は解消済みだが、fetch 待ちによる activation 失効は未対応。実装方針が複数あるため自動修正対象外。
+
+---
