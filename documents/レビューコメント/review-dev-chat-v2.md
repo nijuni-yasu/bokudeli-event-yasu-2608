@@ -37,6 +37,11 @@
 | [x] | RC-31 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 楽観更新失敗時に呼出時 summary へ無条件ロールバック<br>他ユーザー更新を消す。期待値一致時のみ戻す |
 | [ ] | RC-32 | 3650086791 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | loadOlderMessages 済みメッセージの他ユーザー reaction_summary が live 更新されない<br>購読追加または再取得が必要 |
 | [ ] | RC-33 | 3650086793 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | iOS 一括 DL で fetch 待ち中に user activation 失効<br>Blob 事前取得または二段階 share UI が必要 |
+| [ ] | RC-34 | 3650169779 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | iOS 一括 DL で Blob 取得後に share 開始<br>activation 失効で unavailable。RC-33 と同趣旨 |
+| [ ] | RC-35 | 3650169782 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | loadOlderMessages 済みメッセージの reaction_summary が live 更新されない<br>RC-32 と同趣旨 |
+| [ ] | RC-36 | 3650169784 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | onSnapshot 再配信で楽観 summary が古い値で上書きされうる<br>pending 中 ID の merge 保護。RC-16 と同趣旨 |
+| [ ] | RC-37 | 3650169785 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | cache miss 時 getDoc 完了まで楽観 UI が遅延<br>myReaction 事前取得で初回も即時反映を検討 |
+| [ ] | RC-38 | 3650169787 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | 複数タブからの toggle が read-modify-write 競合<br>Transaction 化で原子的に action 決定 |
 
 ---
 
@@ -1330,5 +1335,252 @@ Blob 事前キャッシュまたは二段階 share UI が必要。
 **想定工数**: M
 
 **判断理由**: 指摘は妥当。RC-26 で複数 File の 1 回 share は解消済みだが、fetch 待ちによる activation 失効は未対応。実装方針が複数あるため自動修正対象外。
+
+---
+
+## 評価セッション（2026-07-25 21:36・review-comments-evaluate）
+
+- **評価日時**: 2026-07-25 21:36 JST
+- **評価者**: Cursor Agent（review-comments-evaluate manual）
+- **ブランチ名**: dev/chat-v2
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2221
+- **REVIEW_REQUEST_SINCE**: 2026-07-25T12:23:02Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 1（依頼コメント id:5078468154）
+- **手順 4a 自動修正**: なし（🟡 M・👤 UX / 💾 データ・修正方針が複数のため）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-34 | 3650169779 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | iOS 一括 DL で Blob 取得後に share 開始<br>activation 失効で unavailable。RC-33 と同趣旨 |
+| [ ] | RC-35 | 3650169782 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | loadOlderMessages 済みメッセージの reaction_summary が live 更新されない<br>RC-32 と同趣旨 |
+| [ ] | RC-36 | 3650169784 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | onSnapshot 再配信で楽観 summary が古い値で上書きされうる<br>pending 中 ID の merge 保護。RC-16 と同趣旨 |
+| [ ] | RC-37 | 3650169785 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📐 リファクタ | M | cache miss 時 getDoc 完了まで楽観 UI が遅延<br>myReaction 事前取得で初回も即時反映を検討 |
+| [ ] | RC-38 | 3650169787 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | 複数タブからの toggle が read-modify-write 競合<br>Transaction 化で原子的に action 決定 |
+
+---
+
+**識別子**: RC-34（GitHub id: 3650169779）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/chat/ChatLog.vue:243`
+
+**該当コード（レビュー時点の diff）**: （末尾抜粋）
+
+```diff
++const onDownloadAllAttachments = async (message: ChatMessageItem): Promise<void> => {
++  ...
++  downloadingMessageId.value = message.id
++  try {
++    const blobs = await Promise.all(attachments.map((attachment) => getChatAttachmentBlob(attachment.storage_path)))
++    const items = attachments.map((attachment, index) => ({
++      blob: blobs[index],
++      fileName: attachment.file_name,
++    }))
++    const result = await downloadBlobs(items)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Blob 取得後に iOS 共有を開始しない**
+
+iOS では保存処理が `navigator.share()` に依存していますが、ここへ到達する前に全添付の Storage 読み込みを `await` しています。通信に時間がかかって transient user activation が失効すると Safari が共有を拒否し、`unavailable` になるため、特に複数画像の一括ダウンロードが機能しません。Blob を事前取得するか、取得完了後にユーザーが明示的に共有を開始する二段階 UI にしてください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: iOS 一括 DL で Storage 読み込み完了まで share を遅延すると user activation が失効し unavailable になりうる。
+Blob 事前取得または二段階 share UI が必要（RC-33 と同趣旨）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。RC-33 と同一論点の再指摘（commit `6a59f4954` 再レビュー）。RC-26/28 で share 統合・unavailable 通知は入れたが activation 失効自体は未対応。実装方針が複数あるため自動修正対象外。
+
+---
+
+**識別子**: RC-35（GitHub id: 3650169782）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/stores/chat.ts:242`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -237,6 +239,7 @@ const toMessageItem = (message: ChatMessage): ChatMessageItem => ({
+   deletedAt: message.deleted_at,
+   deletedDisplayName: message.deleted_display_name,
+   attachments: message.attachments,
++  reactionSummary: message.reaction_summary,
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  過去ページのリアクション更新も購読する**
+
+`reactionSummary` をメッセージへ取り込んでいますが、リアルタイム購読は最新 50 件だけで、`loadOlderMessages` が取得したメッセージは一度きりの `getDocs` のままです。そのため、51 件目以前のメッセージに別ユーザーがリアクションしても表示中の pill は更新されず、サマリが空だった場合は詳細ダイアログを開く手段も現れません。読み込んだ過去ページも更新を購読するか、リアクション側の変更を別途反映してください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: loadOlderMessages で表示中の古いメッセージは subscribeMessages 範囲外のため、他ユーザーの reaction_summary 更新が pill に届かない。
+RC-32 と同趣旨。購読追加または再取得が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。RC-32 と同一論点の再指摘。設計検討が必要で自動修正対象外。
+
+---
+
+**識別子**: RC-36（GitHub id: 3650169784）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/stores/chat.ts:390`
+
+**該当コード（レビュー時点の diff）**: （末尾抜粋）
+
+```diff
++  const patchMessageReactionSummary = (messageId: string, summary: ChatReactionSummary | undefined): void => {
++    messages.value = messages.value.map((message) =>
++      message.id === messageId ? { ...message, reactionSummary: summary } : message,
++    )
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  楽観更新中のサマリをスナップショットから保護する**
+
+この楽観更新には pending 状態がないため、リアクション書き込み後、集計 Trigger が message を更新する前に新着メッセージなどで最新メッセージ query の `onSnapshot` が再配信されると、`mergeMessages` がサーバー上の古い `reaction_summary` でこの値を上書きします。即時表示したリアクションが一度消えて Trigger 完了後に再表示されるので、pending 中の message ID は incoming summary で上書きしないようにしてください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: 楽観 patch 後に onSnapshot 再配信で mergeMessages が古い reaction_summary で上書きし、一瞬消える flicker が起きうる。
+RC-16 と同趣旨。pending 中 messageId の merge 保護が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。RC-16 未着手と重複。pending フラグ設計が必要で自動修正対象外。
+
+---
+
+**識別子**: RC-37（GitHub id: 3650169785）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/stores/chatReaction.ts:139`
+
+**該当コード（レビュー時点の diff）**: （末尾抜粋）
+
+```diff
++  if (cacheMiss) {
++    const ref = getChatReactionRef(roomId, messageId, userId)
++    const snapshot = await getDoc(ref)
++    previousEmoji = snapshot.exists() ? snapshot.data()?.emoji : undefined
++  }
++
++  const nextEmoji = applyOptimisticToggle(chatStore, messageId, currentSummary, previousEmoji, emoji)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  初回リアクションを読み取り前に反映する**
+
+ルームを開いた直後は `myReactionByMessageId` が空なので、各メッセージへの初回操作は必ずこの分岐で `getDoc` の完了を待ってから `applyOptimisticToggle` に進みます。低速回線ではピッカーを選択しても長時間サマリが変わらず、実装対象の楽観更新が初回操作では成立しません。自分のリアクション状態を事前購読・取得するなどして、クリック時の UI 更新自体はネットワーク待ちより前に行ってください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: cache miss 時は getDoc 完了まで楽観 UI が遅延する。ルーム入室時に myReaction を事前取得すれば初回も即時反映できる。
+RC-29 は誤 patch 防止のため getDoc 先行を採用しており、両立には事前キャッシュが必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。RC-29 の getDoc 先行とトレードオフ。表示中メッセージの myReaction 事前購読で両立可能だが設計が必要。自動修正対象外。
+
+---
+
+**識別子**: RC-38（GitHub id: 3650169787）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/stores/chatReaction.ts:94`
+
+**該当コード（レビュー時点の diff）**: （末尾抜粋）
+
+```diff
++export const toggleReaction = async (
++  ...
++): Promise<void> => {
++  const ref = getChatReactionRef(roomId, messageId, userId)
++  const snapshot = await getDoc(ref)
++  const currentEmoji = snapshot.exists() ? snapshot.data()?.emoji : undefined
++  const action = resolveChatReactionToggleAction(currentEmoji, emoji)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  リアクショントグルをトランザクション化する**
+
+同じユーザーが複数タブや端末から同じメッセージを操作すると、この読み取りと後続の `setDoc` / `deleteDoc` の間にもう一方の書き込みが入り、両方が同じ旧状態から action を決定します。その結果、連続したトグルとして期待される最終状態にならなかったり、既に作成されたドキュメントへ create 用の異なる `created_at` を書いて Rules に拒否されたりします。ドキュメントの読み取りと action に応じた書き込みを Firestore Transaction 内で原子的に実行してください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: 複数タブ/端末での read-modify-write 競合により toggle 結果が不整合または Rules 拒否になりうる。
+クライアント側 runTransaction で read と write を原子的に実行する必要がある。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。マルチタブ競合は実在しうる。converter + Rules との整合を保った Transaction 化は M 工数。自動修正対象外。
 
 ---
