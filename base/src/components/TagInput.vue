@@ -140,13 +140,7 @@ const isMasterDisabled = (tag: string) => props.loading || isAtLimit.value || is
       <v-expansion-panel v-for="g in TAG_GENRES" :key="g.genre">
         <v-expansion-panel-title>
           <span>{{ g.genre }}</span>
-          <v-chip
-            v-if="genreSelectedCount(g.tags) > 0"
-            size="x-small"
-            color="primary"
-            variant="tonal"
-            class="ml-2"
-          >
+          <v-chip v-if="genreSelectedCount(g.tags) > 0" size="x-small" color="primary" variant="tonal" class="ml-2">
             {{ genreSelectedCount(g.tags) }}
           </v-chip>
         </v-expansion-panel-title>

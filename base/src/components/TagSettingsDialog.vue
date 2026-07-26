@@ -48,13 +48,7 @@ const onRemoveTag = async (tag: string) => {
 </script>
 
 <template>
-  <v-dialog
-    v-model="model"
-    max-width="640"
-    :fullscreen="smAndDown"
-    scrollable
-    transition="dialog-bottom-transition"
-  >
+  <v-dialog v-model="model" max-width="640" :fullscreen="smAndDown" scrollable transition="dialog-bottom-transition">
     <v-card class="tag-settings-dialog pa-sm-9 pa-5">
       <v-card-item class="text-center pb-2 px-0">
         <v-icon :icon="mdiTagOutline" color="primary" size="32" class="mb-2" />
