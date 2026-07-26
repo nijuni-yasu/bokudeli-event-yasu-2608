@@ -16,10 +16,10 @@ export const updateUserTags = onCall<UpdateUserTagsRequest, Promise<{ success: b
       throw new HttpsError('unauthenticated', '認証が必要です')
     }
     const raw = request.data?.tags
-    if (!Array.isArray(raw)) {
+    if (!Array.isArray(raw) || !raw.every((t) => typeof t === 'string')) {
       throw new HttpsError('invalid-argument', 'tags が不正です')
     }
-    const normalized = normalizeTagList(raw.map((t) => String(t)))
+    const normalized = normalizeTagList(raw)
     if (normalized.length > MAX_TAGS) {
       throw new HttpsError('invalid-argument', `タグは最大${MAX_TAGS}個までです`)
     }
@@ -46,7 +46,11 @@ export const addTagToMyProfile = onCall<AddTagToMyProfileRequest, Promise<{ succ
     if (uid == null) {
       throw new HttpsError('unauthenticated', '認証が必要です')
     }
-    const tag = normalizeTag(String(request.data?.tag ?? ''))
+    const rawTag = request.data?.tag
+    if (typeof rawTag !== 'string') {
+      throw new HttpsError('invalid-argument', 'tag が不正です')
+    }
+    const tag = normalizeTag(rawTag)
     if (tag.length === 0) {
       throw new HttpsError('invalid-argument', 'タグが空です')
     }
