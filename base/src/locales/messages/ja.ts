@@ -746,6 +746,22 @@ export default {
     private_event_chip: '限定公開',
     stat_view_detail: '{label}の詳細を見る',
   },
+  user_tags: {
+    add_tag: 'タグ追加',
+    settings_button_empty: 'タグを設定',
+    settings_button_edit: 'タグを編集',
+    dialog_title: 'タグの編集',
+    save: '保存',
+    cancel: 'キャンセル',
+    save_success: 'タグを保存しました',
+    save_failed: '保存に失敗しました',
+    section_title: 'タグ',
+    section_empty: '未設定',
+    section_count: '{count}/10',
+    empty_hint: 'タップで取り込み、またはタグを設定して共通の話題を見つけましょう',
+    cart_hint: '参加者と共通の話題を見つけやすくなります',
+    join_dialog_hint: '参加者と共通の話題を見つけましょう',
+  },
   manage: {
     settings: {
       submit: '設定する',
