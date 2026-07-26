@@ -10,6 +10,7 @@ import { getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
 import { orderTagsWithHighlightFirst } from '@shokujii/base/utils/tagDisplayOrder.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const { t: $t } = useI18n()
 
@@ -20,6 +21,7 @@ defineProps<{
 }>()
 
 const currentUserStore = useCurrentUserStore()
+const notification = useNotification()
 const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 
 const isTagHighlighted = (tag: string) => myTags.value.has(tag)
@@ -33,11 +35,19 @@ const showMemberTags = (member: BokudeliEventMember) => (member.user_tags ?? [])
 
 const onMemberTagClick = async (tag: string) => {
   const uid = currentUserStore.firebaseUser?.uid
-  if (uid == null) return
+  if (uid == null) {
+    notification.show($t('event_details.tag_toggle_login_required'), 'error')
+    return
+  }
   try {
-    await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
-  } catch {
-    // 失敗時は握りつぶす（未ログイン等は上で return 済み）
+    const r = await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
+    notification.show(
+      r === 'added' ? $t('event_details.tag_toggle_added') : $t('event_details.tag_toggle_removed'),
+      'success',
+    )
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : $t('event_details.tag_toggle_failed')
+    notification.show(msg, 'error')
   }
 }
 

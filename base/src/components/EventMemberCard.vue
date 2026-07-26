@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
@@ -9,13 +10,17 @@ import { getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
 import { orderTagsWithHighlightFirst } from '@shokujii/base/utils/tagDisplayOrder.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
+
+const { t: $t } = useI18n()
 
 const props = defineProps<{
   member: BokudeliEventMember
 }>()
 
 const currentUserStore = useCurrentUserStore()
+const notification = useNotification()
 const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 const isTagHighlighted = (tag: string) => myTags.value.has(tag)
 
@@ -27,11 +32,19 @@ const showMemberTags = computed(() => (props.member.user_tags ?? []).length > 0 
 
 const onMemberTagClick = async (tag: string) => {
   const uid = currentUserStore.firebaseUser?.uid
-  if (uid == null) return
+  if (uid == null) {
+    notification.show($t('event_details.tag_toggle_login_required'), 'error')
+    return
+  }
   try {
-    await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
-  } catch {
-    void 0
+    const r = await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
+    notification.show(
+      r === 'added' ? $t('event_details.tag_toggle_added') : $t('event_details.tag_toggle_removed'),
+      'success',
+    )
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : $t('event_details.tag_toggle_failed')
+    notification.show(msg, 'error')
   }
 }
 
@@ -80,16 +93,16 @@ const userDescription = computed(() => props.member.user_description ?? '')
         <v-card-text class="sns-buttons">
           <v-row class="justify-center">
             <v-col cols="auto">
-              <a v-if="twitterUrl" :href="twitterUrl" target="_blank" @click.stop>
+              <a v-if="twitterUrl" :href="twitterUrl" target="_blank" rel="noopener noreferrer" @click.stop>
                 <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
               </a>
-              <a v-if="facebookUrl" :href="facebookUrl" target="_blank" @click.stop>
+              <a v-if="facebookUrl" :href="facebookUrl" target="_blank" rel="noopener noreferrer" @click.stop>
                 <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
               </a>
-              <a v-if="instagramUrl" :href="instagramUrl" target="_blank" @click.stop>
+              <a v-if="instagramUrl" :href="instagramUrl" target="_blank" rel="noopener noreferrer" @click.stop>
                 <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
               </a>
-              <a v-if="websiteUrl" :href="websiteUrl" target="_blank" @click.stop>
+              <a v-if="websiteUrl" :href="websiteUrl" target="_blank" rel="noopener noreferrer" @click.stop>
                 <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
               </a>
             </v-col>
