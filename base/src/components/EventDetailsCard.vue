@@ -8,8 +8,6 @@ import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityS
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
 import EventParticipantTags from '@shokujii/base/components/EventParticipantTags.vue'
-import TagBadge from '@shokujii/base/components/TagBadge.vue'
-import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -97,32 +95,6 @@ const twitterHashTagSearchUrl = computed(() => {
 const eventStore = useAppEventStore(props.event)
 
 const ev = computed(() => eventStore.event ?? props.event)
-
-const eventTagSnack = ref(false)
-const eventTagSnackMsg = ref('')
-const eventTagSnackColor = ref<'success' | 'error'>('success')
-
-const myTagsForEvent = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
-
-const onEventSettingTagClick = async (tag: string) => {
-  const uid = currentUserStore.firebaseUser?.uid
-  if (uid == null) {
-    eventTagSnackMsg.value = 'ログインが必要です'
-    eventTagSnackColor.value = 'error'
-    eventTagSnack.value = true
-    return
-  }
-  try {
-    const r = await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
-    eventTagSnackMsg.value = r === 'added' ? 'タグを取り入れました' : 'タグを外しました'
-    eventTagSnackColor.value = 'success'
-    eventTagSnack.value = true
-  } catch (e: unknown) {
-    eventTagSnackMsg.value = (e as { message?: string })?.message ?? '更新に失敗しました'
-    eventTagSnackColor.value = 'error'
-    eventTagSnack.value = true
-  }
-}
 
 const members = computed(() =>
   [...(eventStore.members ?? [])].sort(
@@ -263,22 +235,6 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
           {{ $t('event_details.overview') }}
         </v-card-text>
         <v-divider class="custom-divider mt-0 mb-3" />
-        <v-card-text class="px-5 pb-2">
-          <div class="text-subtitle-2 mb-2">{{ $t('event_details.event_tags') }}</div>
-          <div v-if="(ev.event_setting_tags ?? []).length === 0" class="text-medium-emphasis text-body-2 mb-2">
-            {{ $t('event_details.event_tags_not_set') }}
-          </div>
-          <div v-else class="d-flex flex-wrap mb-2">
-            <TagBadge
-              v-for="t in ev.event_setting_tags"
-              :key="t"
-              :tag="t"
-              :highlighted="myTagsForEvent.has(t)"
-              :clickable="true"
-              @click="onEventSettingTagClick(t)"
-            />
-          </div>
-        </v-card-text>
         <v-table class="custom-table mx-5 my-3" density="compact">
           <tbody>
             <tr>
@@ -469,9 +425,6 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
           />
           <EventParticipantTags :event="ev" />
         </div>
-        <v-snackbar v-model="eventTagSnack" :color="eventTagSnackColor" location="top" timeout="3000">
-          {{ eventTagSnackMsg }}
-        </v-snackbar>
         <v-card-text class="px-5" :class="{ 'mt-6': !shouldShowParticipantsSection }">
           <v-row align="center" no-gutters class="flex-nowrap">
             <v-col cols="auto" class="d-flex justify-start flex-shrink-0">

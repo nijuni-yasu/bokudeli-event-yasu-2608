@@ -139,8 +139,6 @@ export const EventDbSchema = z.object({
   canceled_at: TimestampSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
   minimum_participants: optionalDeleteField(MinimumParticipantsDbInnerSchema),
-  /** 主催者設定のイベントタグ（マスタのみ・最大5件は Callable / ルールで検証） */
-  event_setting_tags: z.array(z.string()).optional(),
   /** 参加者タグの集計（Functions のみ更新） */
   event_members_tags: z.record(z.string(), z.number()).optional(),
 })
@@ -198,7 +196,6 @@ const EventAppSchema = z.object({
   shop_name: z.string().default(''),
   event_name: z.string().default(''),
   subdomain_tags: z.array(z.string()).default([]),
-  event_setting_tags: z.array(z.string()).max(5).default([]),
   event_members_tags: z.record(z.string(), z.number()).optional(),
   bill_fullname: z.string().default(''),
   bill_email: z.string().default(''),
@@ -277,7 +274,6 @@ export class Event {
   event_place_url!: string
   members!: string[]
   subdomain_tags!: string[]
-  event_setting_tags!: string[]
   event_members_tags?: Record<string, number>
 
   community_bill_settings?: CommunityBillSettingsType
