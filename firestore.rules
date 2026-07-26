@@ -101,6 +101,26 @@ service cloud.firestore {
                 && request.resource.data.get('ordered_food_count', 0) == 0
                 && !('counts_updated_at' in request.resource.data);
         }
+        function userTagElementValid(tags, index) {
+            return tags.size() <= index
+                || (tags[index] is string
+                    && tags[index].size() > 0
+                    && tags[index].size() <= 20);
+        }
+        function isValidUserTagsList(tags) {
+            return tags is list
+                && tags.size() <= 10
+                && userTagElementValid(tags, 0)
+                && userTagElementValid(tags, 1)
+                && userTagElementValid(tags, 2)
+                && userTagElementValid(tags, 3)
+                && userTagElementValid(tags, 4)
+                && userTagElementValid(tags, 5)
+                && userTagElementValid(tags, 6)
+                && userTagElementValid(tags, 7)
+                && userTagElementValid(tags, 8)
+                && userTagElementValid(tags, 9);
+        }
         function chatRoomDoc(roomId) {
             return get(/databases/$(database)/documents/chat_rooms/$(roomId)).data;
         }
@@ -346,14 +366,12 @@ service cloud.firestore {
                 && request.auth.uid == user_id
                 && userProfileCountsZeroOrAbsentOnCreate()
                 && (!('user_tags' in request.resource.data)
-                    || (request.resource.data.user_tags is list
-                        && request.resource.data.user_tags.size() <= 10))
+                    || isValidUserTagsList(request.resource.data.user_tags))
             allow update: if request.auth != null
                 && request.auth.uid == user_id
                 && userProfileCountsUnchanged()
                 && (!('user_tags' in request.resource.data)
-                    || (request.resource.data.user_tags is list
-                        && request.resource.data.user_tags.size() <= 10))
+                    || isValidUserTagsList(request.resource.data.user_tags))
             match /chat_memberships/{roomId} {
                 allow read: if request.auth != null && request.auth.uid == user_id;
                 allow create, delete: if false;
