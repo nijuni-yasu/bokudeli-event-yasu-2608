@@ -5,6 +5,7 @@ import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
+import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
 import { getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
@@ -25,6 +26,10 @@ const isTagHighlighted = (tag: string) => myTags.value.has(tag)
 
 const orderedUserTags = (member: BokudeliEventMember) =>
   orderTagsWithHighlightFirst(member.user_tags ?? [], isTagHighlighted)
+
+const isCurrentUser = (member: BokudeliEventMember) => member.user_id === currentUserStore.firebaseUser?.uid
+
+const showMemberTags = (member: BokudeliEventMember) => (member.user_tags ?? []).length > 0 || isCurrentUser(member)
 
 const onMemberTagClick = async (tag: string) => {
   const uid = currentUserStore.firebaseUser?.uid
@@ -76,16 +81,17 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
                 </div>
               </div>
             </router-link>
-            <div v-if="(member.user_tags ?? []).length > 0" class="d-flex flex-wrap mt-2 w-100">
+            <div v-if="showMemberTags(member)" class="d-flex flex-wrap mt-2 w-100">
               <TagBadge
                 v-for="t in orderedUserTags(member)"
                 :key="t"
                 :tag="t"
                 compact
                 :highlighted="isTagHighlighted(t)"
-                :clickable="true"
+                :clickable="!isCurrentUser(member)"
                 @click="onMemberTagClick(t)"
               />
+              <TagAddChip v-if="isCurrentUser(member)" compact />
             </div>
           </v-sheet>
         </v-col>

@@ -4,6 +4,7 @@ import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/
 import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
+import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
 import { getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
@@ -19,6 +20,10 @@ const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 const isTagHighlighted = (tag: string) => myTags.value.has(tag)
 
 const orderedUserTags = computed(() => orderTagsWithHighlightFirst(props.member.user_tags ?? [], isTagHighlighted))
+
+const isCurrentUser = computed(() => props.member.user_id === currentUserStore.firebaseUser?.uid)
+
+const showMemberTags = computed(() => (props.member.user_tags ?? []).length > 0 || isCurrentUser.value)
 
 const onMemberTagClick = async (tag: string) => {
   const uid = currentUserStore.firebaseUser?.uid
@@ -56,16 +61,17 @@ const userDescription = computed(() => props.member.user_description ?? '')
             </v-col>
           </v-row>
         </v-card-title>
-        <v-card-text v-if="orderedUserTags.length > 0" class="px-4 py-0">
+        <v-card-text v-if="showMemberTags" class="px-4 py-0">
           <div class="d-flex flex-wrap justify-center" @click.stop.prevent>
             <TagBadge
               v-for="t in orderedUserTags"
               :key="t"
               :tag="t"
               :highlighted="isTagHighlighted(t)"
-              :clickable="true"
+              :clickable="!isCurrentUser"
               @click="onMemberTagClick(t)"
             />
+            <TagAddChip v-if="isCurrentUser" />
           </div>
         </v-card-text>
         <v-card-text class="description">
