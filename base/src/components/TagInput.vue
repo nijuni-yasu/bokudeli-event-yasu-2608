@@ -1,20 +1,32 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { mdiPencilOutline, mdiTagOutline } from '@mdi/js'
 import { TAG_GENRES } from '@shokujii/common/constants/tags.js'
 import { normalizeTag } from '@shokujii/common/utils/normalizeTag.js'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
 
-const props = defineProps<{
-  modelValue: string[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    tags: string[]
+    loading?: boolean
+  }>(),
+  { loading: false },
+)
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string[]]
+  add: [tag: string]
+  remove: [tag: string]
 }>()
+
+const { t: $t } = useI18n()
 
 const freeInput = ref('')
 const snackbar = ref(false)
 const snackbarMessage = ref('')
+
+const isAtLimit = computed(() => props.tags.length >= 10)
+const tagProgress = computed(() => (props.tags.length / 10) * 100)
 
 const showError = (msg: string) => {
   snackbarMessage.value = msg
@@ -28,79 +40,129 @@ watch(freeInput, (v) => {
   }
 })
 
-const remove = (t: string) => {
-  emit(
-    'update:modelValue',
-    props.modelValue.filter((x) => x !== t),
-  )
-}
-
-const addTag = (raw: string) => {
+const tryAddTag = (raw: string) => {
   const t = normalizeTag(raw)
   if (t.length === 0) return
   if (t.length > 20) {
-    showError('タグは最大20文字までです')
+    showError($t('user_tags.tag_max_length'))
     return
   }
-  if (props.modelValue.includes(t)) {
+  if (props.tags.includes(t)) {
     return
   }
-  if (props.modelValue.length >= 10) {
-    showError('タグは最大10個までです')
+  if (props.tags.length >= 10) {
+    showError($t('user_tags.limit_reached'))
     return
   }
-  emit('update:modelValue', [...props.modelValue, t])
+  emit('add', t)
   freeInput.value = ''
 }
 
-const addMaster = (t: string) => {
-  addTag(t)
+const onRemove = (t: string) => {
+  if (props.loading) return
+  emit('remove', t)
 }
+
+const onMasterClick = (t: string) => {
+  if (props.loading || props.tags.includes(t) || isAtLimit.value) return
+  tryAddTag(t)
+}
+
+const genreSelectedCount = (genreTags: readonly string[]) => genreTags.filter((t) => props.tags.includes(t)).length
+
+const isMasterSelected = (tag: string) => props.tags.includes(tag)
+
+const isMasterPickable = (tag: string) => !props.loading && !props.tags.includes(tag) && !isAtLimit.value
+
+const isMasterDisabled = (tag: string) => props.loading || isAtLimit.value || isMasterSelected(tag)
 </script>
 
 <template>
-  <div>
-    <div class="text-subtitle-2 mb-2">設定中のタグ（最大10個）</div>
-    <div class="d-flex flex-wrap mb-4">
-      <TagBadge v-for="t in modelValue" :key="t" :tag="t" :clickable="true" @click="remove(t)" />
-      <span v-if="modelValue.length === 0" class="text-medium-emphasis text-body-2">未設定</span>
-    </div>
+  <div class="tag-input">
+    <v-alert variant="tonal" color="primary" density="compact" class="text-body-2 mb-6">
+      {{ $t('user_tags.dialog_hint') }}
+    </v-alert>
 
+    <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-4" height="2" />
+
+    <v-sheet class="tag-input__hero rounded-lg pa-4 mb-6">
+      <div class="d-flex align-center justify-space-between mb-2">
+        <div class="text-subtitle-2">{{ $t('user_tags.current_tags_heading') }}</div>
+        <div class="text-caption font-weight-medium">{{ $t('user_tags.section_count', { count: tags.length }) }}</div>
+      </div>
+      <v-progress-linear
+        :model-value="tagProgress"
+        color="primary"
+        height="6"
+        rounded
+        class="mb-3"
+        :aria-label="$t('user_tags.section_count', { count: tags.length })"
+      />
+
+      <transition-group v-if="tags.length > 0" name="tag-chip" tag="div" class="d-flex flex-wrap">
+        <TagBadge
+          v-for="t in tags"
+          :key="t"
+          :tag="t"
+          emphasized
+          highlighted
+          removable
+          :disabled="loading"
+          @close="onRemove"
+        />
+      </transition-group>
+
+      <div v-else class="tag-input__empty text-center py-4">
+        <v-icon :icon="mdiTagOutline" color="primary" size="28" class="mb-2 opacity-80" />
+        <p class="text-body-2 text-medium-emphasis mb-0">{{ $t('user_tags.section_empty_prompt') }}</p>
+      </div>
+
+      <p v-if="isAtLimit" class="text-caption text-medium-emphasis mb-0 mt-3">{{ $t('user_tags.limit_reached') }}</p>
+    </v-sheet>
+
+    <div class="text-subtitle-2 mb-2">{{ $t('user_tags.free_input_heading') }}</div>
     <v-text-field
       v-model="freeInput"
-      label="フリー入力で追加"
-      density="comfortable"
+      :placeholder="$t('user_tags.free_input_placeholder')"
+      :hint="isAtLimit ? $t('user_tags.limit_reached') : $t('user_tags.free_input_hint')"
+      persistent-hint
+      density="compact"
       variant="outlined"
       hide-details="auto"
-      class="mb-4"
-      @keyup.enter="addTag(freeInput)"
-    />
-    <v-btn
-      color="primary"
-      variant="tonal"
       class="mb-6"
-      :disabled="normalizeTag(freeInput).length === 0"
-      @click="addTag(freeInput)"
-    >
-      フリータグを追加
-    </v-btn>
+      :disabled="loading || isAtLimit"
+      :prepend-inner-icon="mdiPencilOutline"
+      @keyup.enter="tryAddTag(freeInput)"
+    />
 
-    <div class="text-subtitle-2 mb-2">マスタタグ（ジャンル別）</div>
-    <v-expansion-panels variant="accordion" multiple>
-      <v-expansion-panel v-for="g in TAG_GENRES" :key="g.genre" :title="g.genre">
+    <div class="text-subtitle-2 mb-3">{{ $t('user_tags.master_tags_heading') }}</div>
+    <v-expansion-panels variant="accordion" multiple class="tag-input__panels">
+      <v-expansion-panel v-for="g in TAG_GENRES" :key="g.genre">
+        <v-expansion-panel-title>
+          <span>{{ g.genre }}</span>
+          <v-chip
+            v-if="genreSelectedCount(g.tags) > 0"
+            size="x-small"
+            color="primary"
+            variant="tonal"
+            class="ml-2"
+          >
+            {{ genreSelectedCount(g.tags) }}
+          </v-chip>
+        </v-expansion-panel-title>
         <v-expansion-panel-text>
-          <div class="d-flex flex-wrap">
-            <v-btn
+          <div class="d-flex flex-wrap pt-1">
+            <TagBadge
               v-for="tag in g.tags"
               :key="tag"
-              size="small"
-              variant="text"
-              class="ma-1"
-              :disabled="modelValue.includes(tag) || modelValue.length >= 10"
-              @click="addMaster(tag)"
-            >
-              {{ tag }}
-            </v-btn>
+              :tag="tag"
+              compact
+              :selected="isMasterSelected(tag)"
+              :pickable="isMasterPickable(tag)"
+              :clickable="isMasterPickable(tag)"
+              :disabled="isMasterDisabled(tag)"
+              @click="onMasterClick(tag)"
+            />
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -111,3 +173,54 @@ const addMaster = (t: string) => {
     </v-snackbar>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.tag-input__hero {
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-theme-primary), 0.2);
+}
+
+.tag-input__hero :deep(.tag-badge--emphasized.v-chip) {
+  background-color: rgba(var(--v-theme-primary), 0.12);
+  color: rgb(var(--v-theme-primary));
+}
+
+.tag-input__empty {
+  border: 1px dashed rgba(var(--v-theme-primary), 0.35);
+  border-radius: 8px;
+}
+
+.tag-input__panels {
+  :deep(.v-expansion-panel) {
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    border-radius: 8px !important;
+    margin-bottom: 8px;
+
+    &::before {
+      box-shadow: none;
+    }
+  }
+
+  :deep(.v-expansion-panel-title) {
+    min-height: 48px;
+    font-size: 0.875rem;
+  }
+}
+
+.tag-chip-enter-active,
+.tag-chip-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.tag-chip-enter-from,
+.tag-chip-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.tag-chip-move {
+  transition: transform 0.2s ease;
+}
+</style>
