@@ -1,21 +1,30 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
+import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { sortTagCountRowsByHighlightThenCount } from '@shokujii/base/utils/tagDisplayOrder.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
-const props = defineProps<{
-  event: BokudeliEvent
-}>()
+const props = withDefaults(
+  defineProps<{
+    event: BokudeliEvent
+    maxVisibleTags?: number
+    showEmptyHint?: boolean
+    compact?: boolean
+  }>(),
+  {
+    showEmptyHint: false,
+    compact: false,
+  },
+)
 
 const { t: $t } = useI18n()
 const currentUserStore = useCurrentUserStore()
-const snackbar = ref(false)
-const snackbarMessage = ref('')
-const snackbarColor = ref<'success' | 'error'>('success')
+const notification = useNotification()
 
 const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 
@@ -28,44 +37,58 @@ const sortedParticipantTags = computed((): { tag: string; count: number }[] => {
   return sortTagCountRowsByHighlightThenCount(rows, isHighlighted)
 })
 
+const visibleParticipantTags = computed(() => {
+  if (props.maxVisibleTags == null) return sortedParticipantTags.value
+  return sortedParticipantTags.value.slice(0, props.maxVisibleTags)
+})
+
+const isLoggedIn = computed(() => currentUserStore.firebaseUser != null)
+
+const showEmptyHintMessage = computed(
+  () =>
+    props.showEmptyHint &&
+    isLoggedIn.value &&
+    (currentUserStore.user?.user_tags?.length ?? 0) === 0 &&
+    sortedParticipantTags.value.length > 0,
+)
+
 const onTagClick = async (tag: string) => {
   const uid = currentUserStore.firebaseUser?.uid
   if (uid == null) {
-    snackbarMessage.value = 'ログインが必要です'
-    snackbarColor.value = 'error'
-    snackbar.value = true
+    notification.show($t('event_details.tag_toggle_login_required'), 'error')
     return
   }
   try {
     const r = await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
-    snackbarMessage.value = r === 'added' ? 'タグを取り入れました' : 'タグを外しました'
-    snackbarColor.value = 'success'
-    snackbar.value = true
+    notification.show(
+      r === 'added' ? $t('event_details.tag_toggle_added') : $t('event_details.tag_toggle_removed'),
+      'success',
+    )
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : '更新に失敗しました'
-    snackbarMessage.value = msg
-    snackbarColor.value = 'error'
-    snackbar.value = true
+    const msg = e instanceof Error ? e.message : $t('event_details.tag_toggle_failed')
+    notification.show(msg, 'error')
   }
 }
 </script>
 
 <template>
-  <section v-if="sortedParticipantTags.length > 0" class="px-5 pb-4">
+  <section v-if="sortedParticipantTags.length > 0" :class="compact ? 'px-0 pb-2' : 'px-5 pb-4'">
     <div class="text-subtitle-1 font-weight-bold mb-2">{{ $t('event_details.participant_tags_title') }}</div>
+    <p v-if="showEmptyHintMessage" class="text-body-2 text-medium-emphasis mb-2">
+      {{ $t('user_tags.empty_hint') }}
+    </p>
     <div class="d-flex flex-wrap align-center">
       <TagBadge
-        v-for="row in sortedParticipantTags"
+        v-for="row in visibleParticipantTags"
         :key="row.tag"
         :tag="row.tag"
         :count="row.count"
         :highlighted="isHighlighted(row.tag)"
         :clickable="true"
+        :compact="compact"
         @click="onTagClick(row.tag)"
       />
+      <TagAddChip :compact="compact" />
     </div>
-    <v-snackbar v-model="snackbar" :color="snackbarColor" location="top" timeout="3000">
-      {{ snackbarMessage }}
-    </v-snackbar>
   </section>
 </template>

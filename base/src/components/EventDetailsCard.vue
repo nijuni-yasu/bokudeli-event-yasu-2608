@@ -423,7 +423,7 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
             :event-max-people="event.event_max_people"
             :is-show-member="isShowMember"
           />
-          <EventParticipantTags :event="ev" />
+          <EventParticipantTags :event="ev" :show-empty-hint="true" />
         </div>
         <v-card-text class="px-5" :class="{ 'mt-6': !shouldShowParticipantsSection }">
           <v-row align="center" no-gutters class="flex-nowrap">
