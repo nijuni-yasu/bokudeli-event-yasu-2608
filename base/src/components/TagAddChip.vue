@@ -26,7 +26,7 @@ const isLoggedIn = computed(() => currentUserStore.firebaseUser != null)
   <template v-if="isLoggedIn">
     <v-chip
       color="primary"
-      variant="tonal"
+      variant="outlined"
       size="x-small"
       :prepend-icon="mdiPlus"
       :class="['tag-add-chip', 'cursor-pointer', { 'tag-add-chip--compact': compact, 'ma-1': !compact }]"

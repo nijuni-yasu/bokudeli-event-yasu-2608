@@ -25,10 +25,14 @@ const onClick = () => {
 
 <template>
   <v-chip
-    :color="highlighted ? 'primary' : 'grey-400'"
-    variant="outlined"
+    :variant="highlighted ? 'tonal' : 'flat'"
+    :color="highlighted ? 'primary' : undefined"
     size="x-small"
-    :class="['tag-badge', { 'cursor-pointer': clickable, 'tag-badge--compact': compact, 'ma-1': !compact }]"
+    :class="[
+      'tag-badge',
+      highlighted ? 'tag-badge--highlighted' : 'tag-badge--default',
+      { 'cursor-pointer': clickable, 'tag-badge--compact': compact, 'ma-1': !compact },
+    ]"
     @click="onClick"
   >
     {{ tag }}<template v-if="count != null && count > 1">｜{{ count }}</template>
@@ -36,6 +40,11 @@ const onClick = () => {
 </template>
 
 <style lang="scss" scoped>
+.tag-badge--default.v-chip {
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+}
+
 .tag-badge--compact.v-chip {
   --v-chip-size: 0.6875rem;
   --v-chip-height: 20px;
