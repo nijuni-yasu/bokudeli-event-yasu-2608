@@ -14,21 +14,3 @@ export function orderTagsWithHighlightFirst(tags: string[], isHighlighted: (tag:
   }
   return [...highlighted, ...rest]
 }
-
-export type TagCountRow = { tag: string; count: number }
-
-/**
- * event_members_tags 等の集計行: ハイライト行を先頭ブロックにまとめ、その中で件数降順。
- * 非ハイライト行も同様に後ろのブロックで件数降順。
- */
-export function sortTagCountRowsByHighlightThenCount(
-  rows: TagCountRow[],
-  isHighlighted: (tag: string) => boolean,
-): TagCountRow[] {
-  return [...rows].sort((a, b) => {
-    const ha = isHighlighted(a.tag)
-    const hb = isHighlighted(b.tag)
-    if (ha !== hb) return ha ? -1 : 1
-    return b.count - a.count
-  })
-}

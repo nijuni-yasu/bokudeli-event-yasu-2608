@@ -2,8 +2,6 @@
 const props = withDefaults(
   defineProps<{
     tag: string
-    /** 件数（参加者タグ集計など。2 以上のときだけ「｜件数」を表示。未指定はラベルのみ） */
-    count?: number
     highlighted?: boolean
     clickable?: boolean
     /** x-small より一段小さくする（イベントページの参加者ブロックなど狭いレイアウト向け） */
@@ -35,7 +33,7 @@ const onClick = () => {
     ]"
     @click="onClick"
   >
-    {{ tag }}<template v-if="count != null && count > 1">｜{{ count }}</template>
+    {{ tag }}
   </v-chip>
 </template>
 
