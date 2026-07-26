@@ -24,9 +24,13 @@ const redirectFromLegacyOrdersRoutes = (): boolean => {
     return true
   }
   if (tab === 'usage' && isOwner && uid != null) {
-    void fetchEnterpriseUsageTabEligible(uid).then((eligible) => {
-      void router.replace(getOrdersPath(eligible ? 'usage' : undefined))
-    })
+    void fetchEnterpriseUsageTabEligible(uid)
+      .then((eligible) => {
+        void router.replace(getOrdersPath(eligible ? 'usage' : undefined))
+      })
+      .catch(() => {
+        void router.replace(getOrdersPath())
+      })
     return true
   }
   if (isOwner && route.query.eventId != null && route.query.communityAccount != null) {

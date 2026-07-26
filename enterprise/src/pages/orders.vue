@@ -23,9 +23,13 @@ watch(
       showUsage.value = false
       return
     }
-    void fetchEnterpriseUsageTabEligible(uid).then((eligible) => {
-      showUsage.value = eligible
-    })
+    void fetchEnterpriseUsageTabEligible(uid)
+      .then((eligible) => {
+        showUsage.value = eligible
+      })
+      .catch(() => {
+        showUsage.value = false
+      })
   },
   { immediate: true },
 )

@@ -119,7 +119,7 @@ const cancel = async (orderIds: string[], communityId: string, eventId: string) 
 }
 
 const downloadReceipt = (eventId: string, stripeId: string) => {
-  window.open(props.resolveReceiptPath(eventId, stripeId), '_blank')
+  window.open(props.resolveReceiptPath(eventId, stripeId), '_blank', 'noopener,noreferrer')
 }
 
 const isUserSuccessJoinEventDialogVisible = ref(false)

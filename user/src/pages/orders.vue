@@ -17,13 +17,18 @@ const navigateToEventChat = async (params: { communityId: string; eventId: strin
   if (userId == null || userId === '') {
     return false
   }
-  const roomId = await waitForEventChatMembership(userId, params.communityId, params.eventId)
-  if (roomId == null) {
-    notification.show($t('chat.error.preparing'), 'warning')
+  try {
+    const roomId = await waitForEventChatMembership(userId, params.communityId, params.eventId)
+    if (roomId == null) {
+      notification.show($t('chat.error.preparing'), 'warning')
+      return false
+    }
+    await router.push(getChatPath(roomId))
+    return true
+  } catch {
+    notification.show($t('chat.error.open_failed'), 'error')
     return false
   }
-  await router.push(getChatPath(roomId))
-  return true
 }
 </script>
 
