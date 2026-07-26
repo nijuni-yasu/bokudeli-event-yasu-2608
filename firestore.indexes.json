@@ -1591,24 +1591,6 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
-          "fieldPath": "members",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "is_deleted",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_end_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
           "fieldPath": "event_setting_tags",
           "arrayConfig": "CONTAINS"
         },
