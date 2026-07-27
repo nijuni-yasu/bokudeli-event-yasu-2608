@@ -7,10 +7,10 @@ import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
 import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
+import TagImportHintDialog from '@shokujii/base/components/TagImportHintDialog.vue'
 import { mdiAlphaXCircle, mdiCogOutline, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
-import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
-import { useNotification } from '@shokujii/base/composable/notification.js'
+import { useProfileTagToggle } from '@shokujii/base/composable/useTagImportHint.js'
 
 const { t: $t } = useI18n()
 
@@ -26,9 +26,14 @@ const props = withDefaults(
 )
 
 const currentUserStore = useCurrentUserStore()
-const notification = useNotification()
 
 const isEditable = computed(() => props.isEditable ?? false)
+const { showDialog: showTagImportHint, confirmHint, toggleTag } = useProfileTagToggle()
+
+const onTagClick = (tag: string) => {
+  if (isEditable.value) return
+  toggleTag(tag)
+}
 
 const userName = computed(() => props.userData.user_name ?? 'ゲスト')
 
@@ -60,25 +65,6 @@ const displayTags = computed(() => props.userData.user_tags ?? [])
 
 const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 const isHighlighted = (tag: string) => myTags.value.has(tag)
-
-const onTagClick = async (tag: string) => {
-  if (isEditable.value) return
-  const uid = currentUserStore.firebaseUser?.uid
-  if (uid == null) {
-    notification.show($t('event_details.tag_toggle_login_required'), 'error')
-    return
-  }
-  try {
-    const r = await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
-    notification.show(
-      r === 'added' ? $t('event_details.tag_toggle_added') : $t('event_details.tag_toggle_removed'),
-      'success',
-    )
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : $t('event_details.tag_toggle_failed')
-    notification.show(msg, 'error')
-  }
-}
 </script>
 
 <template>
@@ -136,6 +122,7 @@ const onTagClick = async (tag: string) => {
         </v-card-actions>
       </v-card>
     </v-col>
+    <TagImportHintDialog v-model="showTagImportHint" @confirm="confirmHint" />
   </v-row>
 </template>
 

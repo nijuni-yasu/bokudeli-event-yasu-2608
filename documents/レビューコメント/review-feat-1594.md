@@ -22,6 +22,8 @@
 | [x] | RC-16 | 4781511966 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 02_マイページ Phase1 文言整合 |
 | [x] | RC-17 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | EventMemberCard SNS リンクに rel 未追加 |
 | [ ] | RC-18 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | user_tags Rules 変更に tests 未追加 |
+| [x] | RC-19 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagImportHintDialog dismiss 冗長 |
+| [x] | RC-20 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 取り込み可能タグ無しでもヒント表示 |
 
 ## 評価セッション（2026-07-24 15:06・review-comments-evaluate auto）
 
@@ -586,5 +588,115 @@ EventMemberCard でもタグクリック時の失敗が握りつぶしになっ�
 **想定工数**: M
 
 **判断理由**: チェックリスト「firestore.rules 変更時 tests 追加」に該当。マージ必須ではないが RC-8 対応の品質担保として推奨。
+
+---
+
+## 評価セッション（2026-07-26 21:35・shokujii-code-review）
+
+- **評価日時**: 2026-07-26 21:35 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3b 自動修正**: RC-19・RC-20（🟡 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-19 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagImportHintDialog dismiss 冗長 |
+| [x] | RC-20 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 取り込み可能タグ無しでもヒント表示 |
+
+---
+
+**識別子**: RC-19（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/TagImportHintDialog.vue:9`
+
+**該当コード**:
+
+```vue
+const emit = defineEmits<{ dismiss: [] }>()
+// ...
+emit('dismiss')
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `TagImportHintDialog` の `dismiss` emit と親の `@dismiss` ハンドラは、`v-model` と composable 内の `showDialog` watch（閉じたときに sessionStorage 記録）と重複している。OK ボタンは `model = false` のみで十分。
+
+**コメント要約**: dismiss イベントを削除し v-model のみで閉じる処理に統一する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `TagImportHintDialog` から emit を削除。各呼び出し元は `v-model` のみに簡略化。`useTagImportHint` の `dismiss` 返却も削除。
+
+---
+
+**識別子**: RC-20（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventMemberList.vue:29`
+
+**該当コード**:
+
+```typescript
+const showTagImportHintEnabled = computed(() => isLoggedIn.value && props.isShowMember === true)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: ログイン済みかつ参加者名表示 ON だけで初回ヒントが出るため、他参加者にタグが1件も無い画面や `/members` の event 読み込み前でも説明ダイアログが表示されうる。取り込み操作が可能なとき（他参加者にタグあり・event ロード済み）に限定すべき。
+
+**コメント要約**: `hasImportableMemberTags`（自分以外で tag 保有者がいる）と event ロード完了を `enabled` 条件に追加する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `EventMemberList` と `members.vue` に `hasImportableMemberTags` を追加し、取り込み可能なタグがある場合のみヒントを表示するよう変更。
+
+---
+
+## 評価セッション（2026-07-26 21:38・review-comments-evaluate auto）
+
+- **評価日時**: 2026-07-26 21:38 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-07-26T12:25:15Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型文 5083456665、Copilot 問題なし 5083482038、Codex 接続案内 5083482425）
+- **partial 評価**: はい（Codex substantive なし。Copilot は 🚨/🟡 指摘なし）
+- **新規 RC**: なし
+- **手順 4a 自動修正**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| — | — | — | — | — | — | — | — | — | 新規 RC なし |
 
 ---

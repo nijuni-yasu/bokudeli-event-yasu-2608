@@ -98,8 +98,8 @@ export default {
     open_group_chat: 'グループチャット',
     participants_profile_hidden: '※参加者プロフィールは非表示です',
     tag_toggle_login_required: 'ログインが必要です',
-    tag_toggle_added: 'タグを取り入れました',
-    tag_toggle_removed: 'タグを外しました',
+    tag_toggle_added: '「{0}」のタグを取り入れました',
+    tag_toggle_removed: '「{0}」のタグを外しました',
     tag_toggle_failed: '更新に失敗しました',
     order_count: '（{0}個）',
     menu_join_button: '注文して参加する',
@@ -770,6 +770,12 @@ export default {
     section_count: '{count}/10',
     cart_hint: '参加者と共通の話題を見つけやすくなります',
     join_dialog_hint: '参加者と共通の話題を見つけましょう',
+    import_hint_title: 'タグの取り込み',
+    import_hint_body: 'タグをタップすると、自分のプロフィールに追加・解除できます。',
+    import_hint_sample_tag: 'サッカー',
+    import_hint_gray: '… まだ持っていないタグ（追加）',
+    import_hint_green: '… すでに持っているタグ（解除）',
+    import_hint_ok: 'OK',
   },
   manage: {
     settings: {

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
@@ -8,19 +7,16 @@ import TagBadge from '@shokujii/base/components/TagBadge.vue'
 import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
 import { getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
+import { useProfileTagToggle } from '@shokujii/base/composable/useTagImportHint.js'
 import { orderTagsWithHighlightFirst } from '@shokujii/base/utils/tagDisplayOrder.js'
-import { useNotification } from '@shokujii/base/composable/notification.js'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
-
-const { t: $t } = useI18n()
 
 const props = defineProps<{
   member: BokudeliEventMember
 }>()
 
 const currentUserStore = useCurrentUserStore()
-const notification = useNotification()
+const { toggleTag: onMemberTagClick } = useProfileTagToggle()
 const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 const isTagHighlighted = (tag: string) => myTags.value.has(tag)
 
@@ -29,24 +25,6 @@ const orderedUserTags = computed(() => orderTagsWithHighlightFirst(props.member.
 const isCurrentUser = computed(() => props.member.user_id === currentUserStore.firebaseUser?.uid)
 
 const showMemberTags = computed(() => (props.member.user_tags ?? []).length > 0 || isCurrentUser.value)
-
-const onMemberTagClick = async (tag: string) => {
-  const uid = currentUserStore.firebaseUser?.uid
-  if (uid == null) {
-    notification.show($t('event_details.tag_toggle_login_required'), 'error')
-    return
-  }
-  try {
-    const r = await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
-    notification.show(
-      r === 'added' ? $t('event_details.tag_toggle_added') : $t('event_details.tag_toggle_removed'),
-      'success',
-    )
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : $t('event_details.tag_toggle_failed')
-    notification.show(msg, 'error')
-  }
-}
 
 const userName = computed(() => props.member.user_name ?? 'ゲスト')
 const twitterUrl = computed(() =>

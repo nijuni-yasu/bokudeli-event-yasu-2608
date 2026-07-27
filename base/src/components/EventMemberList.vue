@@ -6,11 +6,11 @@ import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
 import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
+import TagImportHintDialog from '@shokujii/base/components/TagImportHintDialog.vue'
 import { getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
+import { useProfileTagToggle } from '@shokujii/base/composable/useTagImportHint.js'
 import { orderTagsWithHighlightFirst } from '@shokujii/base/utils/tagDisplayOrder.js'
-import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const { t: $t } = useI18n()
 
@@ -21,7 +21,7 @@ defineProps<{
 }>()
 
 const currentUserStore = useCurrentUserStore()
-const notification = useNotification()
+const { showDialog: showTagImportHint, confirmHint, toggleTag: onMemberTagClick } = useProfileTagToggle()
 const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 
 const isTagHighlighted = (tag: string) => myTags.value.has(tag)
@@ -32,24 +32,6 @@ const orderedUserTags = (member: BokudeliEventMember) =>
 const isCurrentUser = (member: BokudeliEventMember) => member.user_id === currentUserStore.firebaseUser?.uid
 
 const showMemberTags = (member: BokudeliEventMember) => (member.user_tags ?? []).length > 0 || isCurrentUser(member)
-
-const onMemberTagClick = async (tag: string) => {
-  const uid = currentUserStore.firebaseUser?.uid
-  if (uid == null) {
-    notification.show($t('event_details.tag_toggle_login_required'), 'error')
-    return
-  }
-  try {
-    const r = await toggleTagOnMyProfile(tag, currentUserStore.user?.user_tags)
-    notification.show(
-      r === 'added' ? $t('event_details.tag_toggle_added') : $t('event_details.tag_toggle_removed'),
-      'success',
-    )
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : $t('event_details.tag_toggle_failed')
-    notification.show(msg, 'error')
-  }
-}
 
 function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string; count: number }][] {
   const map: Record<string, { name: string; count: number }> = {}
@@ -131,6 +113,7 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
       </v-row>
       <slot></slot>
     </v-card-text>
+    <TagImportHintDialog v-model="showTagImportHint" @confirm="confirmHint" />
   </section>
 </template>
 
