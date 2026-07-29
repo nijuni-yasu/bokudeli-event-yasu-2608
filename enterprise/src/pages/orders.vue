@@ -13,17 +13,19 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 const route = useRoute()
 const router = useRouter()
 const { enterpriseId } = useEnterpriseId()
-const { user: loginUser, firebaseUser } = storeToRefs(useCurrentUserStore())
+const { firebaseUser, user: loginUser } = storeToRefs(useCurrentUserStore())
 
-const profileUserId = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? '')
-
+// loginUser を読む前にゲートを初期化する（先読みすると useUserStore が autoSubscribe:true で生成され RC-17 抑止が無効化される）
+const gateUserId = firebaseUser.value?.uid ?? ''
 const {
   isProfileGateLoading,
   isProfileAccessDenied,
   isInvalidProfile,
   isPreviewAccessGranted,
   previewError,
-} = useUserProfileAuthState(profileUserId.value, 'enterprise-callable-gate')
+} = useUserProfileAuthState(gateUserId, 'enterprise-callable-gate')
+
+const profileUserId = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? '')
 
 const showUsage = ref(false)
 const usageSection = ref<HTMLElement | null>(null)

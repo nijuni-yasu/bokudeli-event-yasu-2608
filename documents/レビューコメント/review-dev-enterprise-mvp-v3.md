@@ -31,6 +31,7 @@
 | [x] | RC-25 | 3650210094 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24 と同一（再読込後 v=1 再利用）<br>Enterprise.updated_at を cache キーに |
 | [x] | RC-26 | 3651880394 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ cache キー）<br>updated_at ベースに置換 |
 | [x] | RC-27 | 3651880391 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | useNavigateToEventChat 再利用提案<br>RC-14 で try/catch 済み。composable 化は任意 |
+| [x] | RC-28 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | /orders で loginUser 先読みにより useUserStore が先に subscribe<br>RC-17 autoSubscribe:false が Pinia 再利用で無効化 |
 
 ---
 
@@ -1073,3 +1074,61 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 **想定工数**: —
 
 **判断理由**: RC-14 で try/catch + `chat.error.open_failed` を実装済み。composable 化は 📐 リファクタ相当で必須ではない。
+
+---
+
+## 評価セッション（2026-07-30 00:07・shokujii-code-review）
+
+- **評価日時**: 2026-07-30 00:07 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **対象**: 直近 5 コミット（`86ec628f0`〜`b7ee39d2a`）
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-28 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | /orders で loginUser 先読みにより useUserStore 先 subscribe<br>RC-17 autoSubscribe:false が無効 |
+
+---
+
+**識別子**: RC-28（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/orders.vue:18`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const profileUserId = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? '')
++
++const {
++  ...
++} = useUserProfileAuthState(profileUserId.value, 'enterprise-callable-gate')
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `profileUserId.value` 評価時に `loginUser` を先に読むため、`useCurrentUserStore().user` computed 経由で `useUserStore(uid)`（デフォルト `autoSubscribe: true`）が先に生成される。Pinia は同一 `/users/${uid}` ストアを再利用するため、直後の `useUserProfileAuthState` 内 `{ autoSubscribe: false }` は無視され、RC-17 対応が `/orders` では効いていない。`UserProfilePage` と同様、`loginUser` を読む前に `firebaseUser.value?.uid` を `useUserProfileAuthState` に渡すか、ゲート用 UID の取得順序を入れ替えること。
+
+**コメント要約**: RC-17 の autoSubscribe 抑止が orders ページで Pinia ストア再利用により無効化。preview 前 Firestore 直読が残る。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書, 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `currentUser.user` computed が `useUserStore(uid)` を副作用付きで呼ぶ設計と、`profileUserId` が `loginUser` を先参照するため、初回 store 生成時に subscribe が開始される。`UserProfilePage` は route param を先に渡しており問題なし。
+
+**対応内容**: `firebaseUser.value?.uid` を `loginUser` 参照前に `gateUserId` として `useUserProfileAuthState` に渡すよう順序を入れ替え。
