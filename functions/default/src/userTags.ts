@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { createModuleLogger } from './utils/logger.js'
-import { getUser, getUserRef, ShokujiiUser } from './stores/user.js'
+import { getUser, getUserRef } from './stores/user.js'
 import { normalizeTag, normalizeTagList } from '@shokujii/common/utils/normalizeTag.js'
 import type { UpdateUserTagsRequest, AddTagToMyProfileRequest } from '@shokujii/common/apis/userTags.js'
 
@@ -33,8 +33,7 @@ export const updateUserTags = onCall<UpdateUserTagsRequest, Promise<{ success: b
     if (existing == null) {
       throw new HttpsError('not-found', 'ユーザーが見つかりません')
     }
-    const updated = new ShokujiiUser(uid, { ...existing, user_tags: normalized })
-    await getUserRef(uid).set(updated, { merge: true })
+    await getUserRef(uid).update({ user_tags: normalized })
     logger.info('user_tags 更新', { uid, count: normalized.length })
     return { success: true, message: '' }
   },
@@ -69,8 +68,7 @@ export const addTagToMyProfile = onCall<AddTagToMyProfileRequest, Promise<{ succ
     if (current.length >= MAX_TAGS) {
       throw new HttpsError('failed-precondition', `タグは最大${MAX_TAGS}個までです`)
     }
-    const updated = new ShokujiiUser(uid, { ...existing, user_tags: [...current, tag] })
-    await getUserRef(uid).set(updated, { merge: true })
+    await getUserRef(uid).update({ user_tags: [...current, tag] })
     logger.info('user_tags 1件追加', { uid, tag })
     return { success: true, message: '' }
   },

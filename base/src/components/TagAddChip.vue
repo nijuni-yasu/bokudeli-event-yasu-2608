@@ -30,7 +30,7 @@ const isLoggedIn = computed(() => currentUserStore.firebaseUser != null)
       size="x-small"
       :prepend-icon="mdiPlus"
       :class="['tag-add-chip', 'cursor-pointer', { 'tag-add-chip--compact': compact, 'ma-1': !compact }]"
-      @click.stop="tagDialog = true"
+      @click.stop.prevent="tagDialog = true"
     >
       {{ $t('user_tags.add_tag') }}
     </v-chip>

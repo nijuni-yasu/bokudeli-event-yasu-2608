@@ -14,20 +14,20 @@
 | [x] | RC-8 | 5083168653 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | user_tags Rules 要素型・長さ |
 | [x] | RC-9 | 5083168653 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | タグクリック失敗の通知 UX |
 | [x] | RC-10 | 3652325976 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | target=_blank に rel 追加 |
-| [ ] | RC-11 | 3652326000 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | TagInput 文言 i18n 化 |
+| [x] | RC-11 | 3652326000 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | TagInput 文言 i18n 化 |
 | [x] | RC-12 | 3652326017 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | EventMemberCard 失敗通知 |
 | [x] | RC-13 | 3652326028 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | event_setting_tags index 削除 |
-| [ ] | RC-14 | 4781511966 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | set(merge) 競合 → update/transaction |
+| [x] | RC-14 | 4781511966 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | set(merge) 競合 → user_tags のみ update |
 | [x] | RC-15 | 4781511966 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | EventMemberList 失敗通知（RC-9/12 同趣旨） |
 | [x] | RC-16 | 4781511966 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 02_マイページ Phase1 文言整合 |
 | [x] | RC-17 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | EventMemberCard SNS リンクに rel 未追加 |
-| [ ] | RC-18 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | user_tags Rules 変更に tests 未追加 |
+| [x] | RC-18 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | user_tags Rules 変更に tests 追加 |
 | [x] | RC-19 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagImportHintDialog dismiss 冗長 |
 | [x] | RC-20 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 取り込み可能タグ無しでもヒント表示 |
-| [ ] | RC-21 | 3652333341 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | — | 🆕 新機能 | L | Callable デプロイ後に Hosting 公開 |
+| [x] | RC-21 | 3652333341 | 🟡 修正提案 | 📤 #2226 別Issue化 | 📤 スコープ外 | — | 🆕 新機能 | L | Callable デプロイ後に Hosting 公開<br>https://github.com/nijuniinc/bokudeli-event-new/issues/2226 |
 | [x] | RC-22 | 3652333346 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメントのみ | S | RC-3 を #2225 に紐付け |
 | [x] | RC-23 | 3654654219 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 退会時 user_tags 匿名化 |
-| [ ] | RC-24 | 3654654226 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip click.prevent 追加 |
+| [x] | RC-24 | 3654654226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip click.prevent 追加 |
 | [x] | RC-25 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 13_アカウント削除に user_tags 匿名化追記 |
 
 ## 評価セッション（2026-07-24 15:06・review-comments-evaluate auto）
@@ -370,7 +370,7 @@ TagInput 内の文言（ラベル・見出し・エラーメッセージ）が�
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -380,7 +380,7 @@ TagInput 内の文言（ラベル・見出し・エラーメッセージ）が�
 
 **想定工数**: M
 
-**判断理由**: AGENTS.md i18n 方針に合致。工数 M のため auto-fix 対象外。
+**判断理由**: TagInput / TagSettingsDialog は `$t('user_tags.*')` + ja.ts 集約済み。ユーザー向け直書き日本語なしを確認し対応完了。
 
 ---
 
@@ -400,7 +400,7 @@ addTagToMyProfile でも users ドキュメント全体を set(merge) で書き�
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -410,7 +410,7 @@ addTagToMyProfile でも users ドキュメント全体を set(merge) で書き�
 
 **想定工数**: M
 
-**判断理由**: 指摘は妥当。updateUserTags も同パターン。store 経由の partial update 設計が必要で M 工数。
+**判断理由**: `updateUserTags` / `addTagToMyProfile` の書き込みを `getUserRef(uid).update({ user_tags })` に変更。transaction は採用せず方針 A で他フィールド巻き戻しリスクを解消。
 
 ---
 
@@ -582,7 +582,7 @@ EventMemberCard でもタグクリック時の失敗が握りつぶしになっ�
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -592,7 +592,7 @@ EventMemberCard でもタグクリック時の失敗が握りつぶしになっ�
 
 **想定工数**: M
 
-**判断理由**: チェックリスト「firestore.rules 変更時 tests 追加」に該当。マージ必須ではないが RC-8 対応の品質担保として推奨。
+**判断理由**: `tests/firestore-rules/src/userTags.test.ts` を追加。許可 2 件・拒否 5 件（11 件・空文字・21 文字・非 string・他人 update）をカバー。
 
 ---
 
@@ -723,7 +723,7 @@ const showTagImportHintEnabled = computed(() => isLoggedIn.value && props.isShow
 | [ ] | RC-21 | 3652333341 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | — | 🆕 新機能 | L | deploy_functions と deploy_user のデプロイ順序未保証<br>新 Callable 追加時の既知パターン。CI 横断改善は別 Issue 化推奨 |
 | [x] | RC-22 | 3652333346 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメントのみ | S | RC-3 が Issue 番号なし `📤 別PR` のまま<br>#2225 作成・RC-3 を 📤 #2225 別Issue化 に更新 |
 | [x] | RC-23 | 3654654219 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 退会時 `anonymizeUser` が user_tags を残す<br>空配列へ置換（13_アカウント削除と整合） |
-| [ ] | RC-24 | 3654654226 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip の @click.stop のみで router-link 遷移<br>@click.stop.prevent へ修正 |
+| [x] | RC-24 | 3654654226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip の @click.stop.prevent へ修正 |
 
 ---
 
@@ -751,7 +751,7 @@ const showTagImportHintEnabled = computed(() => isLoggedIn.value && props.isShow
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: 📤 #2226 別Issue化
 
 **PRスコープ**: 📤 スコープ外
 
@@ -761,7 +761,7 @@ const showTagImportHintEnabled = computed(() => isLoggedIn.value && props.isShow
 
 **想定工数**: L
 
-**判断理由**: 指摘は妥当だが、新 Callable 追加のたびに発生する**既存 CI パターン**（他 Function 追加時も同様）。本 PR 固有のバグではなく、ワークフロー横断の `needs` 設計変更はスコープが大きい。別 Issue で CI 全体のデプロイ順序を検討するのが自然。
+**判断理由**: CI 横断のデプロイ順序設計は本 PR スコープ外。#2226 を作成（milestone v2.12・shokujii-all-task Todo）。https://github.com/nijuniinc/bokudeli-event-new/issues/2226
 
 ---
 
@@ -860,7 +860,7 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -870,7 +870,7 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 
 **想定工数**: S
 
-**判断理由**: 指摘は妥当。EventMemberCard L77 の親 `@click.stop.prevent` に届かない構造。自動修正対象外（👤 UX ラベル）。1 行修正で対応可。
+**判断理由**: `@click.stop.prevent="tagDialog = true"` に変更。router-link のデフォルト遷移をチップ自身でキャンセル。
 
 ---
 
@@ -925,5 +925,25 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 **想定工数**: S
 
 **判断理由**: RC-23 対応（`user_tags: []`）と仕様書の差分。§6.1.1 に 1 行追記で一意。手順 3b で自動修正済み。
+
+---
+
+## 評価セッション（2026-07-30 00:06・残 RC 対応実装）
+
+- **評価日時**: 2026-07-30 00:06 JST
+- **評価者**: Cursor Agent（feat/1594 残 RC 対応計画）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **手順 4a 自動修正**: 該当なし（計画に沿った手動実装）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-11 | 3652326000 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | TagInput i18n 確認済み（コード変更なし） |
+| [x] | RC-14 | 4781511966 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | user_tags のみ update（方針 A） |
+| [x] | RC-18 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | userTags.test.ts 追加（7 ケース） |
+| [x] | RC-21 | 3652333341 | 🟡 修正提案 | 📤 #2226 別Issue化 | 📤 スコープ外 | — | 🆕 新機能 | L | CI デプロイ順序 → #2226 |
+| [x] | RC-24 | 3654654226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip @click.stop.prevent |
 
 ---
