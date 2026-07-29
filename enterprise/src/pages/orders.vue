@@ -17,13 +17,8 @@ const { firebaseUser, user: loginUser } = storeToRefs(useCurrentUserStore())
 
 // loginUser を読む前にゲートを初期化する（先読みすると useUserStore が autoSubscribe:true で生成され RC-17 抑止が無効化される）
 const gateUserId = firebaseUser.value?.uid ?? ''
-const {
-  isProfileGateLoading,
-  isProfileAccessDenied,
-  isInvalidProfile,
-  isPreviewAccessGranted,
-  previewError,
-} = useUserProfileAuthState(gateUserId, 'enterprise-callable-gate')
+const { isProfileGateLoading, isProfileAccessDenied, isInvalidProfile, isPreviewAccessGranted, previewError } =
+  useUserProfileAuthState(gateUserId, 'enterprise-callable-gate')
 
 const profileUserId = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? '')
 
@@ -74,9 +69,7 @@ const profileFilter = computed(() => {
   return { kind: 'enterprise' as const, enterpriseId: id }
 })
 
-const canShowOrders = computed(
-  () => enterpriseId.value != null && isPreviewAccessGranted.value,
-)
+const canShowOrders = computed(() => enterpriseId.value != null && isPreviewAccessGranted.value)
 </script>
 
 <template>
