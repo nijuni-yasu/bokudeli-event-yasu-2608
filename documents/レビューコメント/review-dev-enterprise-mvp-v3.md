@@ -23,13 +23,13 @@
 | [x] | RC-17 | 3650210086 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | Enterprise モードで useUserStore が無条件 subscribe<br>autoSubscribe: false で preview 前 Firestore 直読を防止 |
 | [x] | RC-18 | 3650210088 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | members/managers 条件に converter なし doc()<br>getUserRef に統一 |
 | [x] | RC-19 | 3651896167 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | Checkout 直後 loginUser 未確定で完了ダイアログ表示<br>firebaseUser.uid 確定後に v-if |
-| [ ] | RC-20 | 3650210091 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🔒 セキュリティ | 📋 仕様追加 | M | /orders が enterpriseId のみでマウント<br>停止メンバーでも注文履歴・キャンセル可能 |
-| [ ] | RC-21 | 3650210092 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | eligible=false 時 URL が ?tab=usage のまま<br>§4.2.9 に従い router.replace で正規化 |
+| [x] | RC-20 | 3650210091 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 🔒 セキュリティ | 📋 仕様追加 | M | /orders に preview ゲート追加<br>停止メンバーは access_denied / not-found 表示 |
+| [x] | RC-21 | 3650210092 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | eligible=false 時 ?tab=usage 残存<br>router.replace(getOrdersPath()) で正規化 |
 | [x] | RC-22 | 3649670521 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | 旧 usage URL 失敗時フォールバック（RC-13 と同一）<br>.catch で /orders へ replace 済み |
 | [x] | RC-23 | 3650210093 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 旧 usage 非同期 redirect が route 変更後も発火<br>requestPath 一致確認を追加 |
-| [ ] | RC-24 | 3649670518 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | logoRenderGeneration が再読込で 0 リセット<br>永続 cache-bust 値（更新日時等）が必要 |
-| [ ] | RC-25 | 3650210094 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24 と同一（再読込後 v=1 再利用）<br>サーバー側更新世代の導入が必要 |
-| [ ] | RC-26 | 3651880394 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ cache キー）<br>永続値への置換が必要 |
+| [x] | RC-24 | 3649670518 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | logoRenderGeneration を廃止<br>getEnterpriseByDomain.updated_at で cache-bust |
+| [x] | RC-25 | 3650210094 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24 と同一（再読込後 v=1 再利用）<br>Enterprise.updated_at を cache キーに |
+| [x] | RC-26 | 3651880394 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ cache キー）<br>updated_at ベースに置換 |
 | [x] | RC-27 | 3651880391 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | useNavigateToEventChat 再利用提案<br>RC-14 で try/catch 済み。composable 化は任意 |
 
 ---
@@ -627,13 +627,13 @@ user 側の新しい `/orders` は個人の注文履歴画面ですが、確認�
 | [x] | RC-17 | 3650210086 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | Enterprise で useUserStore 無条件 subscribe<br>autoSubscribe: false で回避 |
 | [x] | RC-18 | 3650210088 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | members/managers に getUserRef 未使用<br>withConverter 付き ref に統一 |
 | [x] | RC-19 | 3651896167 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | Checkout 直後 UID 空で完了ダイアログ<br>firebaseUser.uid + v-if で待機 |
-| [ ] | RC-20 | 3650210091 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🔒 セキュリティ | 📋 仕様追加 | M | 停止メンバーが /orders を利用可能<br>preview ゲート後に Orders マウント |
-| [ ] | RC-21 | 3650210092 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | eligible=false 時 ?tab=usage 残存<br>router.replace で /orders 正規化 |
+| [x] | RC-20 | 3650210091 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 🔒 セキュリティ | 📋 仕様追加 | M | 停止メンバーが /orders を利用可能<br>useUserProfileAuthState ゲート後に Orders マウント |
+| [x] | RC-21 | 3650210092 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | eligible=false 時 ?tab=usage 残存<br>router.replace で /orders 正規化 |
 | [x] | RC-22 | 3649670521 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | RC-13 と同一（legacy usage 失敗時）<br>.catch で /orders へ replace 済み |
 | [x] | RC-23 | 3650210093 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 非同期 redirect の route 競合<br>requestPath 一致確認を追加 |
-| [ ] | RC-24 | 3649670518 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | logoRenderGeneration が再読込でリセット<br>永続 cache-bust 値が必要 |
-| [ ] | RC-25 | 3650210094 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24 と同一（v=1 再利用問題） |
-| [ ] | RC-26 | 3651880394 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ） |
+| [x] | RC-24 | 3649670518 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | logoRenderGeneration が再読込でリセット<br>updated_at ベース cache-bust に置換 |
+| [x] | RC-25 | 3650210094 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24 と同一（v=1 再利用問題） |
+| [x] | RC-26 | 3651880394 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ） |
 | [x] | RC-27 | 3651880391 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | useNavigateToEventChat 再利用提案<br>RC-14 で try/catch 済み |
 
 ---
@@ -804,7 +804,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -814,7 +814,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **想定工数**: M
 
-**判断理由**: 指摘妥当。§5.2.1 EP-5（is_active==false → not-found）と RC-44 の preview ゲート方針に整合させ、`getUserProfilePreview` 成功（または同等 active 判定）まで Orders をマウントしない実装が必要。セキュリティ影響ありのため自動修正対象外。
+**判断理由**: `useUserProfileAuthState(..., 'enterprise-callable-gate')` を追加。`isPreviewAccessGranted` 成立後のみ `<Orders>` をマウントし、停止メンバーは access_denied / not-found を表示。usage eligible 取得も gate 後に限定。
 
 ---
 
@@ -842,7 +842,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -852,7 +852,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **想定工数**: S
 
-**判断理由**: 指摘妥当。`documents/08_エンタープライズ/10_仕様/04_詳細_マイページ・友人.md` §4.2.9「上限未設定時は `/orders`」に従い `eligible === false` かつ `tab=usage` 時に `router.replace` が必要。📑 ラベルのため自動修正対象外。
+**判断理由**: `fetchEnterpriseUsageTabEligible` 完了時（catch 含む）に `eligible === false` かつ `tab=usage` なら `router.replace(getOrdersPath())` で §4.2.9 に準拠。
 
 ---
 
@@ -954,7 +954,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -964,7 +964,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **想定工数**: M
 
-**判断理由**: 指摘は技術的に妥当。永続 cache-bust（Storage metadata 更新日時・Enterprise スキーマへの logo 更新 epoch 等）の設計が必要。RC-1 対応の延長で工数 M。
+**判断理由**: `logoRenderGeneration` を削除。`GetEnterpriseByDomainResponse.updated_at` と `Enterprise` コンストラクタの `src.updated_at` 読み取りを修正し、`withEnterpriseLogoCacheBust(url, updated_at)` に一本化。
 
 ---
 
@@ -990,7 +990,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -1000,7 +1000,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **想定工数**: M
 
-**判断理由**: RC-24 と同根。サーバー側永続値への置換が必要。
+**判断理由**: RC-24 と同根。`updated_at` を cache キーに使用し再読込後も同一 `v=` を維持。
 
 ---
 
@@ -1026,7 +1026,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -1036,7 +1036,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **想定工数**: M
 
-**判断理由**: RC-24 と同根。👤 UX ラベルのため自動修正対象外。
+**判断理由**: RC-24 と同根。`updated_at` ベース cache-bust でセッション跨ぎも正しいロゴを表示。
 
 ---
 
