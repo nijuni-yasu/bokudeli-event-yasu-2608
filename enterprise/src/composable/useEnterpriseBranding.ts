@@ -3,7 +3,6 @@ import type { GetEnterpriseByDomainResponse } from '@shokujii/common/apis/enterp
 import { layoutConfig as layoutsConfig } from '@layouts'
 import { themeConfig } from '@themeConfig'
 import defaultHeaderLogo from '@/assets/images/shokujii/shokujii_logo_wide.png'
-import { useEnterpriseStore } from '@/stores/enterprise'
 import { withEnterpriseLogoCacheBust } from '@/utils/enterpriseLogoUrl'
 
 const headerLogoSrc = ref<string>(defaultHeaderLogo)
@@ -15,10 +14,9 @@ export function useEnterpriseBranding(): {
   headerLogoAlt: Ref<string>
 } {
   function syncHeaderLogo(enterprise: GetEnterpriseByDomainResponse | null): void {
-    const enterpriseStore = useEnterpriseStore()
     const url = enterprise?.company_logo_url
     const baseSrc = url != null && url !== '' ? url : defaultHeaderLogo
-    const src = withEnterpriseLogoCacheBust(baseSrc, enterpriseStore.logoRenderGeneration)
+    const src = withEnterpriseLogoCacheBust(baseSrc, enterprise?.updated_at ?? 0)
     const alt = enterprise?.company_name ?? 'shokujii'
 
     headerLogoSrc.value = src

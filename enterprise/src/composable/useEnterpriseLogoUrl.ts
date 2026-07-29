@@ -17,7 +17,7 @@ export function useEnterpriseLogoUrl(): { logoUrl: ComputedRef<string>; companyN
 
   const logoUrl = computed(() => {
     const base = resolveEnterpriseLoginLogoUrl(enterpriseStore.enterprise)
-    return withEnterpriseLogoCacheBust(base, enterpriseStore.logoRenderGeneration)
+    return withEnterpriseLogoCacheBust(base, enterpriseStore.enterprise?.updated_at ?? 0)
   })
   const companyName = computed(() => enterpriseStore.enterprise?.company_name ?? '')
 
