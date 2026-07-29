@@ -191,9 +191,7 @@ watch(
     </v-col>
   </v-row>
   <UserSuccessJoinEventDialog
-    v-if="
-      userId !== '' && (route.query.eventId != null || route.query.communityAccount != null)
-    "
+    v-if="userId !== '' && (route.query.eventId != null || route.query.communityAccount != null)"
     v-model="isUserSuccessJoinEventDialogVisible"
     :event-id="String(route.query.eventId ?? '')"
     :community-account="String(route.query.communityAccount ?? '')"
