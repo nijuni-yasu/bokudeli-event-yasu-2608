@@ -124,7 +124,7 @@ export class Enterprise {
     this.id = id
     this.enterprise_id = id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
-    this.updated_at = Date.now()
+    this.updated_at = EpochMillisSchema.default(Date.now()).parse(src.updated_at)
     if (src.billing_settings != null) {
       this.billing_settings = EnterpriseBillingSettingsAppSchema.parse(src.billing_settings)
     } else if (this.billing_settings == null) {
