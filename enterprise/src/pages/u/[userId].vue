@@ -24,11 +24,14 @@ const redirectFromLegacyOrdersRoutes = (): boolean => {
     return true
   }
   if (tab === 'usage' && isOwner && uid != null) {
+    const requestPath = route.fullPath
     void fetchEnterpriseUsageTabEligible(uid)
       .then((eligible) => {
+        if (route.fullPath !== requestPath) return
         void router.replace(getOrdersPath(eligible ? 'usage' : undefined))
       })
       .catch(() => {
+        if (route.fullPath !== requestPath) return
         void router.replace(getOrdersPath())
       })
     return true

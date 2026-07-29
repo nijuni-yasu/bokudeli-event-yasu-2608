@@ -35,7 +35,9 @@ export const useUserProfileAuthState = (profileUserId: string, authMode: UserPro
     accessDenied: previewAccessDenied,
   } = storeToRefs(previewStore)
 
-  const { user, exists } = storeToRefs(useUserStore(profileUserId))
+  const { user, exists } = storeToRefs(
+    useUserStore(profileUserId, { autoSubscribe: !isEnterpriseMode }),
+  )
 
   const displayUser = computed((): User | null => {
     if (isEnterpriseMode) {

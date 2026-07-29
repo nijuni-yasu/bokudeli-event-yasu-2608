@@ -38,8 +38,8 @@ const route = useRoute()
 const notification = useNotification()
 const { t: $t } = useI18n()
 
-const { user: loginUser } = storeToRefs(useCurrentUserStore())
-const userId = computed(() => loginUser.value?.user_id ?? '')
+const { user: loginUser, firebaseUser } = storeToRefs(useCurrentUserStore())
+const userId = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? '')
 
 const userOrderHistoryStore = shallowRef<UserOrderHistoryListStore | null>(null)
 
@@ -191,7 +191,9 @@ watch(
     </v-col>
   </v-row>
   <UserSuccessJoinEventDialog
-    v-if="route.query.eventId != null || route.query.communityAccount != null"
+    v-if="
+      userId !== '' && (route.query.eventId != null || route.query.communityAccount != null)
+    "
     v-model="isUserSuccessJoinEventDialogVisible"
     :event-id="String(route.query.eventId ?? '')"
     :community-account="String(route.query.communityAccount ?? '')"

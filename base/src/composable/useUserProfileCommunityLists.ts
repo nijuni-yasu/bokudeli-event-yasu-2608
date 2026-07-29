@@ -1,7 +1,7 @@
 import { computed, type Ref } from 'vue'
-import { db } from '@shokujii/base/firebase.js'
-import { doc, orderBy, where } from 'firebase/firestore'
+import { orderBy, where } from 'firebase/firestore'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { getUserRef } from '@shokujii/base/stores/user.js'
 import { profileListFilterToConstraints, type ProfileListFilter } from '@shokujii/base/stores/profileListFilter.js'
 import {
   USER_PROFILE_TAB_COMMUNITIES,
@@ -20,7 +20,7 @@ export const useUserProfileCommunityLists = (options: {
     useCommunityListStore(
       [
         ...communityFilterConstraints.value,
-        where('members', 'array-contains', doc(db, 'users', options.profileUserId)),
+        where('members', 'array-contains', getUserRef(options.profileUserId)),
         orderBy('community_num_members', 'desc'),
       ],
       5,
@@ -31,7 +31,7 @@ export const useUserProfileCommunityLists = (options: {
     useCommunityListStore(
       [
         ...communityFilterConstraints.value,
-        where('managers', 'array-contains', doc(db, 'users', options.profileUserId)),
+        where('managers', 'array-contains', getUserRef(options.profileUserId)),
         orderBy('community_num_members', 'desc'),
       ],
       5,

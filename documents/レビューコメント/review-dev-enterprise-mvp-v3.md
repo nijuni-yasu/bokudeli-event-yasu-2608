@@ -19,6 +19,18 @@
 | [x] | RC-13 | 3651873409 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | legacy ?tab=usage redirect の fetch 失敗時に空白画面 |
 | [x] | RC-14 | 3651873411 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | user /orders の navigateToEventChat に try/catch なし |
 | [x] | RC-15 | 3651873413 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | useUserProfileTabSync の route.query スプレッドに as 使用 |
+| [x] | RC-16 | 3650210089 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | base の @/router/utils 依存（RC-9 と同一指摘）<br>props 注入済み |
+| [x] | RC-17 | 3650210086 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | Enterprise モードで useUserStore が無条件 subscribe<br>autoSubscribe: false で preview 前 Firestore 直読を防止 |
+| [x] | RC-18 | 3650210088 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | members/managers 条件に converter なし doc()<br>getUserRef に統一 |
+| [x] | RC-19 | 3651896167 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | Checkout 直後 loginUser 未確定で完了ダイアログ表示<br>firebaseUser.uid 確定後に v-if |
+| [ ] | RC-20 | 3650210091 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🔒 セキュリティ | 📋 仕様追加 | M | /orders が enterpriseId のみでマウント<br>停止メンバーでも注文履歴・キャンセル可能 |
+| [ ] | RC-21 | 3650210092 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | eligible=false 時 URL が ?tab=usage のまま<br>§4.2.9 に従い router.replace で正規化 |
+| [x] | RC-22 | 3649670521 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | 旧 usage URL 失敗時フォールバック（RC-13 と同一）<br>.catch で /orders へ replace 済み |
+| [x] | RC-23 | 3650210093 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 旧 usage 非同期 redirect が route 変更後も発火<br>requestPath 一致確認を追加 |
+| [ ] | RC-24 | 3649670518 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | logoRenderGeneration が再読込で 0 リセット<br>永続 cache-bust 値（更新日時等）が必要 |
+| [ ] | RC-25 | 3650210094 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24 と同一（再読込後 v=1 再利用）<br>サーバー側更新世代の導入が必要 |
+| [ ] | RC-26 | 3651880394 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ cache キー）<br>永続値への置換が必要 |
+| [x] | RC-27 | 3651880391 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | useNavigateToEventChat 再利用提案<br>RC-14 で try/catch 済み。composable 化は任意 |
 
 ---
 
@@ -594,3 +606,470 @@ user 側の新しい `/orders` は個人の注文履歴画面ですが、確認�
 **想定工数**: S
 
 **判断理由**: 指摘妥当。変数に型注釈を付け `as` を削除。
+
+---
+
+## 評価セッション（2026-07-29 16:19・review-comments-evaluate）
+
+- **評価日時**: 2026-07-29 16:19 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` manual）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 5（レビュー依頼定型文×3・Codex connect 案内×1・Copilot トップレベル RC-13 重複×1）
+- **手順 4a 自動修正**: RC-17〜19・RC-23（🚨 2件 / 🟡 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-16 | 3650210089 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | RC-9 と同一（router utils props 注入）<br>評価時点で対応済み |
+| [x] | RC-17 | 3650210086 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | Enterprise で useUserStore 無条件 subscribe<br>autoSubscribe: false で回避 |
+| [x] | RC-18 | 3650210088 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | members/managers に getUserRef 未使用<br>withConverter 付き ref に統一 |
+| [x] | RC-19 | 3651896167 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | Checkout 直後 UID 空で完了ダイアログ<br>firebaseUser.uid + v-if で待機 |
+| [ ] | RC-20 | 3650210091 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🔒 セキュリティ | 📋 仕様追加 | M | 停止メンバーが /orders を利用可能<br>preview ゲート後に Orders マウント |
+| [ ] | RC-21 | 3650210092 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | eligible=false 時 ?tab=usage 残存<br>router.replace で /orders 正規化 |
+| [x] | RC-22 | 3649670521 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | RC-13 と同一（legacy usage 失敗時）<br>.catch で /orders へ replace 済み |
+| [x] | RC-23 | 3650210093 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 非同期 redirect の route 競合<br>requestPath 一致確認を追加 |
+| [ ] | RC-24 | 3649670518 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | logoRenderGeneration が再読込でリセット<br>永続 cache-bust 値が必要 |
+| [ ] | RC-25 | 3650210094 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24 と同一（v=1 再利用問題） |
+| [ ] | RC-26 | 3651880394 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ） |
+| [x] | RC-27 | 3651880391 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | useNavigateToEventChat 再利用提案<br>RC-14 で try/catch 済み |
+
+---
+
+**識別子**: RC-16（GitHub id: 3650210089）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/pages/orders.vue:16`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++import { getEventPath, getReceiptPath } from '@/router/utils'
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  base から app の router util を参照しないでください**
+
+共有 `base` コンポーネントが `@/router/utils` を import すると、`@` が利用側アプリの alias として解決され、各 consumer が `getEventPath` と `getReceiptPath` を同じ形で実装していることに依存します。base 単体や別アプリで利用した場合に解決不能または誤ったルートになるため、他の path resolver と同様に app shell から props で注入してください。
+
+**コメント要約**: base 共有コンポーネントが `@/router/utils` に依存している。RC-9（Copilot id: 3650196180）と同一指摘で、props 注入に修正済み。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: RC-9 対応済み。`ResolveEventPathFn` / `ResolveReceiptPathFn` を props で受け取る実装に置換済み。重複指摘のため新規対応不要。
+
+---
+
+**識別子**: RC-17（GitHub id: 3650210086）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/composable/useUserProfileAuthState.ts:38`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const { user, exists } = storeToRefs(useUserStore(profileUserId))
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Enterprise モードでは user store を生成しないでください**
+
+Enterprise の `/u/:userId` でもこの行が無条件に `useUserStore` を生成するため、`getUserProfilePreview` の認可ゲートが完了する前に公開 Firestore の `users/{uid}` へ `onSnapshot` が開始されます。`useUserStore` の購読はページ離脱時にも解除されず、閲覧した UID ごとに不要なリスナーと課金 read が蓄積するうえ、`documents/08_エンタープライズ/10_仕様/04_詳細_マイページ・友人.md:361` の「preview 成功前の Firestore 直読を防ぐ」という方針にも反します。`pf-firestore` モードのときだけ store を生成してください。
+
+**コメント要約**: enterprise-callable-gate でも useUserStore が onSnapshot を開始し、preview 前 Firestore 直読・リスナー蓄積が発生する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書, 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。§5.2.1 RC-44 に反する。`useUserStore` に `autoSubscribe` オプションを追加し、enterprise モードでは `autoSubscribe: false` で subscribe を抑止。
+
+---
+
+**識別子**: RC-18（GitHub id: 3650210088）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/composable/useUserProfileCommunityLists.ts:23`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        where('members', 'array-contains', doc(db, 'users', options.profileUserId)),
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  ユーザー参照には getUserRef を使用してください**
+
+コミュニティの `members` 条件に converter のない `doc(db, 'users', ...)` を渡しており、同じファイルの `managers` 条件にも同じ参照が複製されています。`base/src/stores/user.ts` が array-contains 用にも `getUserRef` を使うよう明記しているため、参照生成をそちらへ統一し、DocumentReference の converter 保証を維持してください。
+
+**コメント要約**: array-contains 用 DocumentReference が withConverter なし `doc()`。AGENTS.md の xxxRef 規約違反。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`members` / `managers` 両方を `getUserRef` に置換。
+
+---
+
+**識別子**: RC-19（GitHub id: 3651896167）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/pages/orders.vue:42`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const userId = computed(() => loginUser.value?.user_id ?? '')
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Auth UID の確定後に決済完了ダイアログを表示してください**
+
+Stripe Checkout からコールドリダイレクトされた場合、Firebase Auth が復元済みでも `users/{uid}` の snapshot が返るまでは `loginUser` が `null` のため、ここでは一時的に空の UID が渡されます。`UserSuccessJoinEventDialog` は空 UID の場合に注文読込中・`processing` 判定を無効化するため、PayPay などの処理中決済でも通常の完了表示やシェア誘導を先に表示し得ます。ログイン必須ルートで既に確定している `firebaseUser.uid` を使用するか、UID が非空になるまでダイアログを生成しないでください。
+
+**コメント要約**: Checkout 直後は loginUser 未ロードで UID 空。完了ダイアログが processing 判定をスキップし誤表示しうる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害, 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`firebaseUser.uid` をフォールバックに追加し、`userId !== ''` まで `UserSuccessJoinEventDialog` を v-if で抑止。
+
+---
+
+**識別子**: RC-20（GitHub id: 3650210091）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `enterprise/src/pages/orders.vue:52`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  <Orders v-if="enterpriseId != null" :profile-filter="profileFilter" hide-share-sns>
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  /orders を有効な EnterpriseMember でゲートしてください**
+
+Enterprise 版ではこの条件だけで注文画面をマウントするため、`disableEnterpriseMember` 後も有効期限内の ID トークンを持つ停止ユーザーが注文履歴を取得し、期限前注文のキャンセルまで実行できます。従来のプロフィール内注文タブは `getUserProfilePreview` 成功後の `isPreviewAccessGranted` を条件に `reload()` していましたが、新画面は即座に collectionGroup を読み、Rules と `cancelOrders` も本人・テナント一致のみで `is_active` を検証しません。既存の EnterpriseMember active 判定を通過するまで `<Orders>` を生成しないでください。
+
+**コメント要約**: 停止メンバーが /orders で注文履歴取得・キャンセル可能。preview / active 判定ゲートが欠落。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書, 🔒 セキュリティ
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘妥当。§5.2.1 EP-5（is_active==false → not-found）と RC-44 の preview ゲート方針に整合させ、`getUserProfilePreview` 成功（または同等 active 判定）まで Orders をマウントしない実装が必要。セキュリティ影響ありのため自動修正対象外。
+
+---
+
+**識別子**: RC-21（GitHub id: 3650210092）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `enterprise/src/pages/orders.vue:27`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    void fetchEnterpriseUsageTabEligible(uid).then((eligible) => {
++      showUsage.value = eligible
++    })
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  利用対象外では usage クエリを取り除いてください**
+
+`/orders?tab=usage` を直接開いたユーザーが月額上限未設定の場合、この callback は `showUsage` を false にするだけなので URL が `/orders?tab=usage` のまま残ります。仕様では対象外時は `/orders` に正規化すると定義されており、現在の実装では存在しないセクションへの深リンクをブックマーク・共有できてしまいます。`eligible === false` のときは `tab` を除去する `router.replace` も行ってください。
+
+**コメント要約**: 上限未設定時も URL が `?tab=usage` のまま。§4.2.9 の `/orders` 正規化未実装。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`documents/08_エンタープライズ/10_仕様/04_詳細_マイページ・友人.md` §4.2.9「上限未設定時は `/orders`」に従い `eligible === false` かつ `tab=usage` 時に `router.replace` が必要。📑 ラベルのため自動修正対象外。
+
+---
+
+**識別子**: RC-22（GitHub id: 3649670521）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `enterprise/src/pages/u/[userId].vue:29`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    void fetchEnterpriseUsageTabEligible(uid).then((eligible) => {
++      void router.replace(getOrdersPath(eligible ? 'usage' : undefined))
++    })
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  旧利用状況URLの判定失敗時にも遷移を完了してください**
+
+本人が旧ブックマーク `/u/:userId?tab=usage` を開いた際、Callable が一時的なネットワーク障害や Functions エラーで reject すると、この Promise には成功ハンドラしかないため遷移が実行されません。一方で関数は直後に `true` を返して `shouldShowProfile` を `false` にするので、利用者は旧 URL 上の空白画面に取り残され、未処理の Promise rejection も発生します。失敗時は `/orders` へフォールバックするかプロフィール表示を復元してください。
+
+**コメント要約**: RC-13（Copilot id: 3651873409）と同一。legacy usage redirect の fetch 失敗時フォールバック。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: RC-13 対応済み。`.catch(() => router.replace(getOrdersPath()))` が評価時点のコードに存在。
+
+---
+
+**識別子**: RC-23（GitHub id: 3650210093）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `enterprise/src/pages/u/[userId].vue:29`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    void fetchEnterpriseUsageTabEligible(uid).then((eligible) => {
++      void router.replace(getOrdersPath(eligible ? 'usage' : undefined))
++    })
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  旧 usage URL の非同期リダイレクトを失効させてください**
+
+旧 `/u/:userId?tab=usage` を開いた直後にユーザーが戻る操作や別ページへの遷移を行っても、この非同期判定はキャンセルされず、完了時に現在のルートを `/orders` へ `replace` します。判定には ID token と Firestore の複数 read が含まれるため競合時間があり、後からユーザーの正常な遷移を上書きできます。開始時の route を記録して完了時に一致を確認するか、watch の cleanup で古いリダイレクトを無効化してください。
+
+**コメント要約**: 非同期 redirect が route 変更後も発火し、ユーザーの後続遷移を上書きしうる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`requestPath = route.fullPath` を記録し、then/catch 完了時に一致確認してから replace。
+
+---
+
+**識別子**: RC-24（GitHub id: 3649670518）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `enterprise/src/stores/enterprise.ts:12`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const logoRenderGeneration = ref(0)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  ロゴのキャッシュ版をページ再読込後も一意にしてください**
+
+管理画面で固定 Storage パスのロゴを上書きした後、この世代番号はページ再読込のたびに `0` へ戻り、最初の解決で再び `v=1` になります。そのため、更新前に `...?v=1` がブラウザへキャッシュされ、更新直後は `v=2` で新画像を表示できても、次回の再読込では再利用された `v=1` から古いロゴが復活し得ます。既存指摘後に世代番号が追加されたことが新しい根拠ですが、セッション内でしか単調増加しないため、アップロード日時やオブジェクト世代など永続的に変化する値を使用してください。
+
+**コメント要約**: RC-1 の logoRenderGeneration はセッション内のみ有効。再読込後 v=1 再利用で古いロゴが復活しうる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘は技術的に妥当。永続 cache-bust（Storage metadata 更新日時・Enterprise スキーマへの logo 更新 epoch 等）の設計が必要。RC-1 対応の延長で工数 M。
+
+---
+
+**識別子**: RC-25（GitHub id: 3650210094）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `enterprise/src/stores/enterprise.ts:24`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      logoRenderGeneration.value += 1
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  ロゴの cache-bust 値をページ再読込後も再利用しないでください**
+
+`logoRenderGeneration` はメモリ上で 0 から始まり、最初の企業解決で毎回 1 になるため、固定 Storage URL は各ページロードで同じ `?v=1` に戻ります。旧ロゴを `?v=1` でキャッシュしたブラウザでは、管理画面で同一パスへ新ロゴを上書きして一度 `?v=2` を表示できても、ページ再読込後に再びキャッシュ済みの旧画像へ戻ります。サーバー側の更新時刻・保存済みバージョンなど、再起動をまたいでロゴ更新ごとに変わる値を使用してください。
+
+**コメント要約**: RC-24 と同一論点。メモリ世代では再読込後 cache キーがリセットされる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: RC-24 と同根。サーバー側永続値への置換が必要。
+
+---
+
+**識別子**: RC-26（GitHub id: 3651880394）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `enterprise/src/stores/enterprise.ts:24`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      logoRenderGeneration.value += 1
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  ロゴのキャッシュキーをセッションをまたいで更新してください**
+
+`logoRenderGeneration` はページを読み直すたびに 0 へ戻り、初回の `resolveEnterprise()` で常に 1 になります。そのため、同じ Storage URL のロゴを上書きしたセッションでは一時的に `?v=2` で更新できても、その後の再読み込みでは過去にも使った `?v=1` に戻り、ブラウザが上書き前のロゴをキャッシュから再表示し得ます。ロゴの更新日時や保存世代など、サーバー側で更新のたびに変わり再読み込み後も維持される値をキャッシュキーに使用してください。
+
+**コメント要約**: RC-24/25 と同一。セッション跨ぎで cache キーが単調増加しない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: RC-24 と同根。👤 UX ラベルのため自動修正対象外。
+
+---
+
+**識別子**: RC-27（GitHub id: 3651880391）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `user/src/pages/orders.vue:20`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const roomId = await waitForEventChatMembership(userId, params.communityId, params.eventId)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  既存のチャット遷移 composable を再利用してください**
+
+注文完了ダイアログからチャットを開く際、`router.push` などが例外を返すと、この関数の Promise がそのまま reject されます。呼び出し元の `UserSuccessJoinEventDialog` は `finally` しか持たないため、ユーザーには失敗通知が出ずダイアログに留まります。既存の `useNavigateToEventChat` は同じ処理を `try/catch` で包み、`chat.error.open_failed` を表示して `false` を返すので、ここでもその composable を利用してください。
+
+**コメント要約**: RC-14 と同趣旨。composable 再利用を推奨するが try/catch 自体は RC-14 で対応済み。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: RC-14 で try/catch + `chat.error.open_failed` を実装済み。composable 化は 📐 リファクタ相当で必須ではない。
