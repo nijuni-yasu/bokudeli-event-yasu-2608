@@ -74,7 +74,7 @@ const onClose = () => {
     :prepend-icon="selected ? mdiCheck : undefined"
     :class="[
       'tag-badge',
-      isHighlighted ? 'tag-badge--highlighted' : 'tag-badge--default',
+      isHighlighted ? 'tag-badge--highlighted' : pickable ? undefined : 'tag-badge--default',
       {
         'cursor-pointer': clickable && !disabled,
         'tag-badge--compact': compact,
@@ -111,6 +111,7 @@ const onClose = () => {
 }
 
 .tag-badge--pickable.v-chip:not(.v-chip--disabled) {
+  background-color: rgb(var(--v-theme-surface));
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,

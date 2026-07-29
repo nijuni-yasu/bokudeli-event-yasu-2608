@@ -63,9 +63,14 @@ const onRemove = (t: string) => {
   emit('remove', t)
 }
 
-const onMasterClick = (t: string) => {
-  if (props.loading || props.tags.includes(t) || isAtLimit.value) return
-  tryAddTag(t)
+const onMasterClick = (tag: string) => {
+  if (props.loading) return
+  if (props.tags.includes(tag)) {
+    onRemove(tag)
+    return
+  }
+  if (isAtLimit.value) return
+  tryAddTag(tag)
 }
 
 const genreSelectedCount = (genreTags: readonly string[]) => genreTags.filter((t) => props.tags.includes(t)).length
@@ -74,7 +79,7 @@ const isMasterSelected = (tag: string) => props.tags.includes(tag)
 
 const isMasterPickable = (tag: string) => !props.loading && !props.tags.includes(tag) && !isAtLimit.value
 
-const isMasterDisabled = (tag: string) => props.loading || isAtLimit.value || isMasterSelected(tag)
+const isMasterDisabled = (tag: string) => props.loading || (!isMasterSelected(tag) && isAtLimit.value)
 </script>
 
 <template>
@@ -151,9 +156,9 @@ const isMasterDisabled = (tag: string) => props.loading || isAtLimit.value || is
               :key="tag"
               :tag="tag"
               compact
-              :selected="isMasterSelected(tag)"
-              :pickable="isMasterPickable(tag)"
-              :clickable="isMasterPickable(tag)"
+              :highlighted="isMasterSelected(tag)"
+              :pickable="!isMasterSelected(tag) && isMasterPickable(tag)"
+              :clickable="!loading && (isMasterSelected(tag) || isMasterPickable(tag))"
               :disabled="isMasterDisabled(tag)"
               @click="onMasterClick(tag)"
             />
@@ -198,6 +203,22 @@ const isMasterDisabled = (tag: string) => props.loading || isAtLimit.value || is
   :deep(.v-expansion-panel-title) {
     min-height: 48px;
     font-size: 0.875rem;
+  }
+
+  :deep(.tag-badge--highlighted.tag-badge--compact.v-chip) {
+    background-color: rgba(var(--v-theme-primary), 0.12);
+    color: rgb(var(--v-theme-primary));
+    transition:
+      background-color 0.15s ease,
+      transform 0.1s ease;
+
+    &:not(.v-chip--disabled):hover {
+      background-color: rgba(var(--v-theme-primary), 0.2);
+    }
+
+    &:not(.v-chip--disabled):active {
+      transform: scale(0.97);
+    }
   }
 }
 
