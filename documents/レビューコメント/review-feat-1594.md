@@ -6,7 +6,7 @@
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | [x] | RC-1 | 3643250457 | 🚨 必須修正 | 👌 修正不要 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | member_tags read 緩すぎ → コレクション廃止 |
 | [x] | RC-2 | 3643250460 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | isShowMember=false 時タグ非表示 |
-| [x] | RC-3 | 3643250463 | 🟡 修正提案 | 📤 別PR | 📤 スコープ外 | 🔒 セキュリティ | 🔧 微修正 | M | event_setting_tags Rules → 別 PR |
+| [x] | RC-3 | 3643250463 | 🟡 修正提案 | 📤 #2225 別Issue化 | 📤 スコープ外 | 🔒 セキュリティ | 🔧 微修正 | M | event_setting_tags Rules → #2225 |
 | [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | review doc 旧仕様要約 |
 | [x] | RC-5 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | 廃止 Trigger GCP delete 手順 |
 | [x] | RC-6 | 5083168653 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | updateUserTags の String(t) 型検証 |
@@ -24,6 +24,11 @@
 | [ ] | RC-18 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | user_tags Rules 変更に tests 未追加 |
 | [x] | RC-19 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagImportHintDialog dismiss 冗長 |
 | [x] | RC-20 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 取り込み可能タグ無しでもヒント表示 |
+| [ ] | RC-21 | 3652333341 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | — | 🆕 新機能 | L | Callable デプロイ後に Hosting 公開 |
+| [x] | RC-22 | 3652333346 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメントのみ | S | RC-3 を #2225 に紐付け |
+| [x] | RC-23 | 3654654219 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 退会時 user_tags 匿名化 |
+| [ ] | RC-24 | 3654654226 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip click.prevent 追加 |
+| [x] | RC-25 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 13_アカウント削除に user_tags 匿名化追記 |
 
 ## 評価セッション（2026-07-24 15:06・review-comments-evaluate auto）
 
@@ -151,7 +156,7 @@
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 📤 別PR（`feat/1594-event-tags` へ移管。本 PR からイベントタグ実装を omit）
+**ステータス**: 📤 #2225 別Issue化（`feat/1594-event-tags` へ移管。本 PR からイベントタグ実装を omit）
 
 **PRスコープ**: 📤 スコープ外
 
@@ -698,5 +703,227 @@ const showTagImportHintEnabled = computed(() => isLoggedIn.value && props.isShow
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | — | — | — | — | — | — | — | — | — | 新規 RC なし |
+
+---
+
+## 評価セッション（2026-07-29 16:21・review-comments-evaluate）
+
+- **評価日時**: 2026-07-29 16:21 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` manual）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 1（3652478112: RC-18 と同一指摘のため RC 採番なし）
+- **手順 4a 自動修正**: RC-23（🚨 1件）、RC-22（🟡 1件・Issue #2225 作成 + RC-3 更新）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-21 | 3652333341 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | — | 🆕 新機能 | L | deploy_functions と deploy_user のデプロイ順序未保証<br>新 Callable 追加時の既知パターン。CI 横断改善は別 Issue 化推奨 |
+| [x] | RC-22 | 3652333346 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメントのみ | S | RC-3 が Issue 番号なし `📤 別PR` のまま<br>#2225 作成・RC-3 を 📤 #2225 別Issue化 に更新 |
+| [x] | RC-23 | 3654654219 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 退会時 `anonymizeUser` が user_tags を残す<br>空配列へ置換（13_アカウント削除と整合） |
+| [ ] | RC-24 | 3654654226 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip の @click.stop のみで router-link 遷移<br>@click.stop.prevent へ修正 |
+
+---
+
+**識別子**: RC-21（GitHub id: 3652333341）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `.github/workflows/deploy_functions.yml:84`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+             pf)
+-              echo "args=--force --only functions:...functions:getUserFriendMeetLog,functions:eventReceipt,..."
++              echo "args=--force --only functions:...functions:getUserFriendMeetLog,functions:updateUserTags,functions:addTagToMyProfile,functions:eventReceipt,..."
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Callable のデプロイ完了後にフロントを公開する**
+
+確認した `deploy_functions.yml` と `deploy_user.yml` は同じ development／production への push で独立して起動し、相互の `needs` や完了待ちがありません。この変更ではフロントが新規 `updateUserTags`／`addTagToMyProfile` を直ちに呼ぶため、Hosting 側が先に公開された場合、Functions のデプロイが終わるまでタグの保存が `not-found` になります。Functions 完了後に Hosting をデプロイする順序をワークフローで保証するか、先に Callable だけを提供できるリリース手順にしてください。
+
+**コメント要約**: deploy_functions と deploy_user が並列起動のため、Hosting が先に公開されると新 Callable が未デプロイで not-found になりうる。<br>デプロイ順序の保証またはリリース手順の明文化が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📤 スコープ外
+
+**ラベル**: —
+
+**変更種別**: 🆕 新機能
+
+**想定工数**: L
+
+**判断理由**: 指摘は妥当だが、新 Callable 追加のたびに発生する**既存 CI パターン**（他 Function 追加時も同様）。本 PR 固有のバグではなく、ワークフロー横断の `needs` 設計変更はスコープが大きい。別 Issue で CI 全体のデプロイ順序を検討するのが自然。
+
+---
+
+**識別子**: RC-22（GitHub id: 3652333346）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `documents/レビューコメント/review-feat-1594.md:46`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++| [x] | RC-3 | 3643250463 | 🟡 修正提案 | 📤 別PR | 📤 スコープ外 | ...
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  RC-3 を実在する別 Issue に紐付ける**
+
+RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに、Issue 番号のない `📤 別PR` のまま `[x]` にしており、`feat/1594-event-tags` が作成・マージされなければ対応が追跡不能になります。別対応として完了扱いにする場合は Issue を作成し、ステータスを `📤 #NNNN 別Issue化`、要約を Issue URL または番号付きに更新してください。
+
+**コメント要約**: RC-3 の別 PR 移管が Issue 未作成のまま完了扱いになっている。<br>AGENTS.md に従い Issue 作成とステータス更新が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📄 ドキュメントのみ
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: AGENTS.md「別 Issue 化は Issue 作成まで完了」に合致。#2225 を作成し、冒頭通し表・RC-3 ブロックのステータスを `📤 #2225 別Issue化` に更新済み。
+
+---
+
+**識別子**: RC-23（GitHub id: 3654654219）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `common/src/schemas/User.ts:104`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+   enterprise_id?: string
++  user_tags!: string[]
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  退会時にプロフィールタグも匿名化する**
+
+ユーザーがタグを設定した後にアカウントを削除すると、`anonymizeUser()` は `existingUser` を展開したまま `user_tags` を上書きしないため、興味・関心タグだけが `users/{uid}` に残り続けます。このコレクションは公開 read であり、過去イベントの参加者表示も `user_tags` を直接描画するため、退会後もタグが第三者に公開されます。ほかのプロフィール項目と同様、匿名化時に空配列へ置換するかフィールドを削除してください。
+
+**コメント要約**: `anonymizeUser` が spread で `user_tags` を残し、退会後も興味タグが公開される。<br>13_アカウント削除の他フィールド匿名化と同様に空配列へ置換する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘どおりプライバシー上の問題。`functions/default/src/stores/user.ts` の `anonymizeUser` に `user_tags: []` を追加済み（手順 4a 自動修正）。
+
+---
+
+**識別子**: RC-24（GitHub id: 3654654226）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/TagAddChip.vue:33`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      @click.stop="tagDialog = true"
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  追加チップで親カードのリンク遷移も止める**
+
+`/members` の自分の参加者カードでは、このチップが `EventMemberCard` 全体の `<router-link>` 内に配置されています。ここで `.stop` すると、外側のタグ領域にある `@click.stop.prevent` までイベントが届かず、リンクのデフォルト動作もキャンセルされないため、ダイアログを開くクリックと同時に自分のプロフィールへ遷移してダイアログがアンマウントされます。このハンドラ自身で `.prevent` するか、操作領域をカードリンクの外へ移してください。
+
+**コメント要約**: TagAddChip の `@click.stop` だけでは router-link の遷移を防げず、ダイアログと同時にプロフィールへ遷移する。<br>`@click.stop.prevent` への変更が最小修正。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。EventMemberCard L77 の親 `@click.stop.prevent` に届かない構造。自動修正対象外（👤 UX ラベル）。1 行修正で対応可。
+
+---
+
+## 評価セッション（2026-07-29 16:24・shokujii-code-review）
+
+- **評価日時**: 2026-07-29 16:24 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3b 自動修正**: RC-25（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-25 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 13_アカウント削除 §6.1.1 に user_tags 匿名化行が未記載 |
+
+---
+
+**識別子**: RC-25（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `documents/03_参加者獲得/13_アカウント削除.md:113`
+
+**該当コード**:
+
+```diff
+ | user_sns_* | 空文字 `""` に上書き |
++| user_tags | 空配列 `[]` に上書き（プロフィールタグの匿名化） |
+ | user_account | 空文字 `""` に上書き |
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄 ドキュメントのみ/S]: `anonymizeUser` に `user_tags: []` を追加したが、13_アカウント削除 §6.1.1 の匿名化対象表に `user_tags` が未記載。他 PII フィールドと同様、退会時は空配列に上書きする旨を追記する。
+
+**コメント要約**: アカウント削除仕様書の匿名化対象表に `user_tags` の行を追加し、実装と整合させる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: RC-23 対応（`user_tags: []`）と仕様書の差分。§6.1.1 に 1 行追記で一意。手順 3b で自動修正済み。
 
 ---

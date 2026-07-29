@@ -224,6 +224,7 @@ export const anonymizeUser = async (uid: string, transaction: Transaction): Prom
     user_sns_twitter: '',
     user_sns_instagram: '',
     user_sns_website: '',
+    user_tags: [],
     // user_account は削除（下の update でフィールドごと削除）
     is_deleted: true,
     deleted_at: DateTime.now().toMillis(),
