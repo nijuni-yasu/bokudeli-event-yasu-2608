@@ -37,6 +37,9 @@
 | [x] | RC-31 | 3675795410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | autoSubscribe:false 先行生成後 subscribe 未開始<br>useUserStore 再利用時に subscribe() を呼ぶ |
 | [x] | RC-32 | 3675741933 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | gateUserId 空で preview Callable 失敗<br>getAuth().currentUser 優先 + 空 ID は load 抑止 |
 | [x] | RC-33 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | userProfilePreview.reload が空 ID で Callable 呼び出し<br>load 先頭で targetUserId 空なら return |
+| [x] | RC-34 | 3689139785 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | getOrdersPathAfterOrder が位置引数2個<br>ResolveOrdersPathFn と不一致で query 壊れ |
+| [x] | RC-35 | 3689139789 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 注文完了時に参加イベント一覧未 reload<br>userEventListStore.reload を orders watch に追加 |
+| [x] | RC-36 | 5140905153 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useUserStore の subscribe 二重呼び出し<br>setup 内と store 再利用時の意図整理 |
 
 ---
 
@@ -1358,3 +1361,106 @@ Enterprise で別ユーザーのプロフィールを最初に開くと `useUser
 **想定工数**: S
 
 **判断理由**: RC-32 と同根。初期化ガードだけでは不十分。`load()` 先頭 guard で init / reload 双方をカバー。
+
+---
+
+## 評価セッション（2026-07-31 17:35・review-comments-evaluate auto）
+
+- **評価日時**: 2026-07-31 17:35 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・PR review wake）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **REVIEW_REQUEST_SINCE**: 2026-07-31T08:20:32Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼定型文・Codex 接続案内のみ・Copilot 確認済み表）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-34 | 3689139785 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | getOrdersPathAfterOrder 引数不一致<br>オブジェクト destructuring に修正 |
+| [x] | RC-35 | 3689139789 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 注文完了 watch で参加イベント未 reload<br>userEventListStore.reload 追加 |
+| [x] | RC-36 | 5140905153 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useUserStore subscribe 二重呼び出し<br>setup 内呼び出し削除・出口のみ |
+
+**手順 4a 自動修正**: RC-34・RC-35
+
+---
+
+**識別子**: RC-34（GitHub id: 3689139785）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）/ Copilot トップレベル
+
+**指摘箇所**: `user/src/router/utils.ts:11`, `enterprise/src/router/utils.ts:13`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+export const getOrdersPathAfterOrder = (eventId: string, communityAccount: string) => ({
+```
+
+**コメント要約**: Cart は `resolveOrdersPath({ eventId, communityAccount })` で呼ぶが utils は位置引数2個のため query が壊れ完了ダイアログが開かない。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。RC-30 実装のランタイムバグ。両 app の `getOrdersPathAfterOrder` をオブジェクト引数に変更。
+
+---
+
+**識別子**: RC-35（GitHub id: 3689139789）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/pages/orders.vue:136`
+
+**コメント要約**: 注文完了 query 付き `/orders` 遷移時、注文履歴のみ reload し参加イベント Pinia キャッシュが stale のまま。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。移行前 mypage watcher 相当として `useUserEventListByUserId(..., autoLoad: false).reload()` を watch に追加。
+
+---
+
+**識別子**: RC-36（GitHub id: 5140905153・Copilot トップレベル内 [nits]）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/user.ts:137-139`, `155-157`
+
+**コメント要約**: autoSubscribe 時に setup 内と store 再利用時で subscribe が二重に見える。ガードで実害はないが意図が読みにくい。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。Pinia setup 内 subscribe は初回 options のみ効き RC-31 外側と重複。setup 内呼び出しを削除し `useUserStore` 出口の subscribe のみに統一。
+
+---

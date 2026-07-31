@@ -9,6 +9,7 @@ import {
   useUserOrderHistoryByUserId,
   type UserOrderHistoryListStore,
 } from '@shokujii/base/stores/userOrderHistoryList.js'
+import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
 import type { ProfileListFilter } from '@shokujii/base/stores/profileListFilter.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
@@ -134,6 +135,7 @@ watch(
     if (uid === '' || store == null) return
     if (eventId != null && communityAccount != null) {
       store.reload()
+      useUserEventListByUserId(uid, PAGE_SIZE, { profileFilter: props.profileFilter, autoLoad: false }).reload()
     }
   },
   { immediate: true },

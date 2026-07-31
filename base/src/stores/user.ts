@@ -134,10 +134,6 @@ export const useUserStore = (userId: string, options?: UseUserStoreOptions) => {
       }
     }
 
-    if (options?.autoSubscribe !== false) {
-      subscribe()
-    }
-
     return {
       exists,
       user,

@@ -10,7 +10,7 @@ export const getUserPath = (userId: string) => `/u/${userId}`
 export const getOrdersPath = (tab?: 'usage') =>
   tab === 'usage' ? { path: '/orders', query: { tab: 'usage' } } : '/orders'
 
-export const getOrdersPathAfterOrder = (eventId: string, communityAccount: string) => ({
+export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { eventId: string; communityAccount: string }) => ({
   path: '/orders',
   query: { eventId, communityAccount },
 })
