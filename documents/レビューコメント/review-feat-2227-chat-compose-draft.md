@@ -23,6 +23,9 @@
 | [x] | RC-17 | 3690100915 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 外側添付ボタンが送信中も有効→compose 不一致で残存<br>外側 VBtn・file input を isSending で無効化 |
 | [x] | RC-18 | 3690100921 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信失敗後 in-flight 解除で下書きが空のまま<br>in-flight 終了 watch で restore |
 | [x] | RC-19 | 5142343053 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | luxon 統一 imo（Copilot 再依頼後）<br>RC-7/11/16 と同根 |
+| [x] | RC-20 | 5142579309 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | DateTime imo（reflect 後 Copilot）<br>RC-7/11/16/19 と同根 |
+| [x] | RC-21 | 3690277364 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 復元前 revoke で共有 previewUrl が壊れる<br>同一内容スキップ・必要分のみ revoke |
+| [x] | RC-22 | 3690277375 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 再マウント後 in-flight 中も入力可→復元で上書き<br>isComposeInputLocked・空欄時のみ restore |
 
 ---
 
@@ -829,5 +832,130 @@ shokujii-code-review チェックリストに沿って Files changed を確認�
 **想定工数**: —
 
 **判断理由**: 内部 LRU / リビジョン用メタ。表示日時ではない。
+
+---
+
+## 評価セッション（2026-07-31 21:00・review-comments-evaluate）
+
+- **評価日時**: 2026-07-31 21:00 JST
+- **ブランチ名**: feat/2227-chat-compose-draft
+- **PR**: [#2228](https://github.com/nijuniinc/bokudeli-event-new/pull/2228)
+- **REVIEW_REQUEST_SINCE**: 2026-07-31T11:52:02Z
+- **partial**: true（Codex connect のみ。インライン指摘なし）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼 5142569166、Codex connect 5142580687）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-20 | 5142579309 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | updatedAt/accessedAt の Date.now imo<br>RC-7/11/16/19 と同根 |
+
+---
+
+**識別子**: RC-20（GitHub id: 5142579309・Copilot）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts`
+
+**該当コード（レビュー時点の diff）**: `（インライン指摘なし）`
+
+**レビュワーのコメント（原文）**:
+
+shokujii-code-review チェックリストに沿って Files changed を確認しました。🚨 必須修正はありません。[imo] `updatedAt` / `accessedAt` 更新で `Date.now()` を使っている箇所は、プロジェクト規約に揃えるなら `DateTime.now().toMillis()` へ統一するのがよいです。
+
+**コメント要約**: 重大指摘なし。Date.now imo のみ。<br>既存 RC と同根。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: 内部メタ用 number。表示・TZ 非依存。
+
+---
+
+## 評価セッション（2026-07-31 21:08・review-comments-evaluate）
+
+- **評価日時**: 2026-07-31 21:08 JST
+- **ブランチ名**: feat/2227-chat-compose-draft
+- **PR**: [#2228](https://github.com/nijuniinc/bokudeli-event-new/pull/2228)
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0（RC-20 は前セッション記録済みのため重複 RC 化なし）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-21 | 3690277364 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | restore 前 revoke で共有 blob 破壊<br>同一 compose は no-op・URL 選択 revoke |
+| [x] | RC-22 | 3690277375 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | in-flight 中の再マウントで入力・復元競合<br>isComposeInputLocked・非空なら restore 省略 |
+
+---
+
+**識別子**: RC-21（GitHub id: 3690277364・Codex）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue`（`restoreComposeForRoom`）
+
+**該当コード（レビュー時点の diff）**: `(diff_hunk 未取得)`
+
+**レビュワーのコメント（原文）**:
+
+**復元前に共有中のプレビュー URL を破棄しないでください** — 送信失敗後 in-flight 解除 watch が `restoreComposeForRoom` を呼ぶと、ローカルと store が同じ previewUrl を共有しているのに `clearSelectedImages()` で revoke してから store から再設定しプレビューが壊れる。表示中 compose が既に同内容なら復元を省略するか、store に残す URL を revoke しないこと。
+
+**コメント要約**: 失敗後の restore が共有 blob URL を二重 revoke。<br>同一内容なら復元スキップ、異なる場合は保持 URL のみ revoke。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `isSameDraftContent` で同一なら return。異なる場合は draft 側 previewUrl のみ残して revoke。
+
+---
+
+**識別子**: RC-22（GitHub id: 3690277375・Codex）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:227` 付近（compose 入力）
+
+**該当コード（レビュー時点の diff）**: `(diff_hunk 未取得)`
+
+**レビュワーのコメント（原文）**:
+
+**再マウント後も送信中の入力を無効化してください** — 再マウント後 `isSending` は false のため in-flight 中も入力でき、`endInFlightSend` 後の restore が新入力を成功時空欄・失敗時古い内容で上書きする。`isInFlightSend` も無効化条件に含めるか、新しいローカル入力を保持すること。
+
+**コメント要約**: store in-flight とローカル isSending の乖離で入力・復元が競合。<br>in-flight 中は入力ロック、非空時は restore しない。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `isComposeInputLocked`（`isSending` || `isInFlightSend`）。in-flight 解除 watch は空 compose のときのみ restore。
 
 ---
