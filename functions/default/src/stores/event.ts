@@ -395,6 +395,41 @@ export const getAcceptingOrderEventsByTime = async (
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
 
+export const getAcceptingOrderEventsByMinimumParticipantsJudgmentTime = async (
+  startTimeMillis: number,
+  endTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
+    .where('minimum_participants.enabled', '==', true)
+    .where('minimum_participants.judgment_datetime', '>', Timestamp.fromMillis(startTimeMillis))
+    .where('minimum_participants.judgment_datetime', '<=', Timestamp.fromMillis(endTimeMillis))
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
+
+/** 判断日を過ぎたが未評価のキャッチアップ用（`judgment_datetime < end`） */
+export const getAcceptingOrderEventsWithPastMinimumParticipantsJudgment = async (
+  endTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
+    .where('minimum_participants.enabled', '==', true)
+    .where('minimum_participants.judgment_datetime', '<', Timestamp.fromMillis(endTimeMillis))
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
+
 // イベント終了時間の範囲で注文受付中のイベントを取得
 export const getAcceptingOrderEventsByEndTime = async (
   startTimeMillis: number,
