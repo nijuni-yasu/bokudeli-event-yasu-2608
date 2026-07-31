@@ -424,6 +424,23 @@ export default {
     deadline_minute: '分',
     event_max_people: '定員数',
     event_max_people_hint: '※イベント参加できる最大の定員数を設定してください。',
+    minimum_participants: {
+      section_title: '最小催行人数',
+      toggle_label: '最小催行人数を設定する',
+      count_label: '最小催行人数（名）',
+      days_label: '判断タイミング（注文期限の何日前）',
+      count_hint: '1〜5名。人数が最小催行人数未満の場合、自動でイベントを中止します。',
+      days_hint: '1〜5日前から選択できます。',
+      organizer_summary:
+        '注文期限の {days} 日前の時点で、参加者が {count} 人未満ならイベントを自動中止します（{below} 人以下のとき中止）。',
+      readonly_note: '注文受付開始後は変更できません（設定内容は表示のみ）。',
+      public_title: '最小催行人数について',
+      public_body:
+        'このイベントは、注文期限の {days} 日前（{judgment}）の時点で参加者が {count} 名未満の場合、自動的に中止されます。',
+      public_model_a_note: '判定はその日時1回のみ行います。判定日以降に参加者が減っても、自動では中止されません。',
+      validation_count: '1〜5の整数で入力してください',
+      validation_days: '1〜5の整数で入力してください',
+    },
     event_sns_hash_tag: 'ハッシュタグ',
     event_sns_hash_tag_hint: '※SNS投稿時のハッシュタグを設定してください。',
     activity: '公開設定',

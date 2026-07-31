@@ -29,6 +29,13 @@ import {
   PF_EVENT_PAYMENT_UI_STRATEGY,
   type EventPaymentUiStrategy,
 } from '@shokujii/base/composable/eventPaymentUiStrategy.js'
+import {
+  createDefaultMinimumParticipants,
+  computeMinimumParticipantsJudgmentDatetime,
+  isMinimumParticipantsEditingAllowed,
+  MINIMUM_PARTICIPANTS_DEFAULT_COUNT,
+  MINIMUM_PARTICIPANTS_DEFAULT_JUDGMENT_DAYS_BEFORE,
+} from '@shokujii/common/utils/minimumParticipants.js'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -186,6 +193,87 @@ const maxPeopleValidator = (v: number) => {
   }
   return true
 }
+
+const minimumParticipantsEditable = computed(
+  () => !props.readonly && isMinimumParticipantsEditingAllowed(event.value.event_status.value),
+)
+
+const minimumParticipantsEnabled = computed({
+  get: () => event.value.minimum_participants != null,
+  set: (enabled: boolean) => {
+    if (enabled) {
+      if (event.value.minimum_participants == null) {
+        event.value.minimum_participants = createDefaultMinimumParticipants(event.value.event_deadline_datetime)
+      }
+    } else {
+      event.value.minimum_participants = undefined
+    }
+  },
+})
+
+const minimumParticipantsCount = computed({
+  get: () => event.value.minimum_participants?.count ?? MINIMUM_PARTICIPANTS_DEFAULT_COUNT,
+  set: (count: number) => {
+    const mp = event.value.minimum_participants
+    if (mp == null) {
+      return
+    }
+    mp.count = count
+  },
+})
+
+const minimumParticipantsDaysBefore = computed({
+  get: () =>
+    event.value.minimum_participants?.judgment_days_before ?? MINIMUM_PARTICIPANTS_DEFAULT_JUDGMENT_DAYS_BEFORE,
+  set: (days: number) => {
+    const mp = event.value.minimum_participants
+    if (mp == null) {
+      return
+    }
+    mp.judgment_days_before = days
+    mp.judgment_datetime = computeMinimumParticipantsJudgmentDatetime(event.value.event_deadline_datetime, days)
+  },
+})
+
+const minimumParticipantsBelowCount = computed(() => {
+  const count = event.value.minimum_participants?.count ?? MINIMUM_PARTICIPANTS_DEFAULT_COUNT
+  return Math.max(0, count - 1)
+})
+
+const minimumParticipantsRangeValidator =
+  (min: number, max: number, messageKey: 'validation_count' | 'validation_days') => (v: number) => {
+    if (!Number.isInteger(v) || v < min || v > max) {
+      return $t(`event_detail.minimum_participants.${messageKey}`)
+    }
+    return true
+  }
+
+watch(
+  () => event.value.event_deadline_datetime,
+  () => {
+    const mp = event.value.minimum_participants
+    if (mp == null || !minimumParticipantsEditable.value) {
+      return
+    }
+    mp.judgment_datetime = computeMinimumParticipantsJudgmentDatetime(
+      event.value.event_deadline_datetime,
+      mp.judgment_days_before,
+    )
+  },
+)
+
+watch(
+  () => event.value.minimum_participants?.count,
+  () => {
+    const mp = event.value.minimum_participants
+    if (mp == null || !minimumParticipantsEditable.value) {
+      return
+    }
+    if (mp.count > event.value.event_max_people) {
+      mp.count = event.value.event_max_people
+    }
+  },
+)
 
 if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
@@ -480,6 +568,65 @@ const tinymceInit = computed(() => ({
           />
         </v-col>
       </v-row>
+    </v-card-text>
+
+    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
+      <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleOutline" />
+      {{ $t('event_detail.minimum_participants.section_title') }}
+    </v-card-title>
+    <v-card-text class="mt-1 mt-md-3">
+      <v-switch
+        v-model="minimumParticipantsEnabled"
+        :label="$t('event_detail.minimum_participants.toggle_label')"
+        :readonly="!minimumParticipantsEditable"
+        :disabled="!minimumParticipantsEditable"
+        hide-details
+        class="mb-2"
+      />
+      <template v-if="minimumParticipantsEnabled && event.minimum_participants != null">
+        <v-row>
+          <v-col cols="4" sm="3">
+            <v-text-field
+              v-model.number="minimumParticipantsCount"
+              type="number"
+              min="1"
+              max="5"
+              outlined
+              dense
+              :label="$t('event_detail.minimum_participants.count_label')"
+              :hint="$t('event_detail.minimum_participants.count_hint')"
+              :rules="minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_count')] : []"
+              :readonly="!minimumParticipantsEditable"
+            />
+          </v-col>
+          <v-col cols="4" sm="3">
+            <v-text-field
+              v-model.number="minimumParticipantsDaysBefore"
+              type="number"
+              min="1"
+              max="5"
+              outlined
+              dense
+              :label="$t('event_detail.minimum_participants.days_label')"
+              :hint="$t('event_detail.minimum_participants.days_hint')"
+              :rules="minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_days')] : []"
+              :readonly="!minimumParticipantsEditable"
+            />
+          </v-col>
+        </v-row>
+        <p class="text-body-2 text-medium-emphasis px-1">
+          {{
+            $t('event_detail.minimum_participants.organizer_summary', {
+              count: event.minimum_participants.count,
+              days: event.minimum_participants.judgment_days_before,
+              below: minimumParticipantsBelowCount,
+            })
+          }}
+        </p>
+      </template>
+      <p v-if="!minimumParticipantsEditable && minimumParticipantsEnabled" class="text-caption text-medium-emphasis">
+        {{ $t('event_detail.minimum_participants.readonly_note') }}
+      </p>
     </v-card-text>
 
     <!-- Activity -->

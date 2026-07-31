@@ -36,6 +36,7 @@ import LineIcon from '@shokujii/base/icons/line'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
 import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
+import MinimumParticipantsNotice from '@shokujii/base/components/MinimumParticipantsNotice.vue'
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
 import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
 import { useDisplay } from 'vuetify'
@@ -320,6 +321,9 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
           {{ $t('event_details.event_details') }}
         </v-card-text>
         <v-divider class="custom-divider mt-0 mb-3" />
+        <v-card-text v-if="event.minimum_participants?.enabled" class="pt-0 pb-0">
+          <minimum-participants-notice :minimum-participants="event.minimum_participants" />
+        </v-card-text>
         <v-card-text class="pt-0">
           <tiny-m-c-e-viewer :content="event.event_desc" class="event-content" />
         </v-card-text>
