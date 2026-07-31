@@ -167,6 +167,10 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
     inFlightSendRoomIds.value = next
   }
 
+  const isInFlightSend = (roomId: string): boolean => {
+    return inFlightSendRoomIds.value.has(roomId)
+  }
+
   const getDraftUpdatedAt = (roomId: string): number | undefined => {
     return draftsByRoomId.value.get(roomId)?.updatedAt
   }
@@ -217,6 +221,7 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
     removeDraftIfUpdatedAt,
     beginInFlightSend,
     endInFlightSend,
+    isInFlightSend,
     clearAllDrafts,
     syncOwnerUserId,
   }

@@ -20,6 +20,9 @@
 | [x] | RC-14 | 3690025797 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | LRU が updatedAt のみで getDraft が access 更新しない<br>accessedAt 分離・getDraft で更新 |
 | [x] | RC-15 | 3690025802 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信中の画面離脱で下書き復元→再送可能<br>inFlightSend・送信中 persist スキップ |
 | [x] | RC-16 | 5142251246 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | DateTime.now 統一の imo（Copilot）<br>LRU 内部メタは RC-7/11 と同根 |
+| [x] | RC-17 | 3690100915 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 外側添付ボタンが送信中も有効→compose 不一致で残存<br>外側 VBtn・file input を isSending で無効化 |
+| [x] | RC-18 | 3690100921 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信失敗後 in-flight 解除で下書きが空のまま<br>in-flight 終了 watch で restore |
+| [x] | RC-19 | 5142343053 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | luxon 統一 imo（Copilot 再依頼後）<br>RC-7/11/16 と同根 |
 
 ---
 
@@ -717,5 +720,114 @@ shokujii-code-review チェックリストに沿って確認。重大な不具�
 **想定工数**: —
 
 **判断理由**: LRU / accessedAt 内部メタ。表示・TZ 非依存。
+
+---
+
+## 評価セッション（2026-07-31 20:33・review-comments-evaluate）
+
+- **評価日時**: 2026-07-31 20:33 JST
+- **ブランチ名**: feat/2227-chat-compose-draft
+- **PR**: [#2228](https://github.com/nijuniinc/bokudeli-event-new/pull/2228)
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼 5142333571、Codex connect 5142344448）
+- **pending wake**: `since` 2026-07-31T11:24:30Z を手動 evaluate で処理
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-17 | 3690100915 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 外側添付が送信中も有効<br>VBtn・file input・openImagePicker を無効化 |
+| [x] | RC-18 | 3690100921 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 失敗後 in-flight 解除で空欄のまま<br>isInFlightSend watch で restore |
+| [x] | RC-19 | 5142343053 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | luxon imo<br>RC-7/11/16 と同根 |
+
+---
+
+**識別子**: RC-17（GitHub id: 3690100915・Codex）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:653`
+
+**該当コード（レビュー時点の diff）**: `(diff_hunk 未取得)`
+
+**レビュワーのコメント（原文）**:
+
+**添付ボタンも送信中は無効化してください** — 画像送信中でも入力欄外側の添付ボタンには `isSending` の無効化がなく、送信成功時に compose 一致判定が false となり送信済み本文・画像と新画像が残る。外側添付ボタンとファイル入力も無効化してください。
+
+**コメント要約**: 外側添付のみ送信中操作可能で成功後に壊れたプレビュー・重複送信リスク。<br>全体の isSending 無効化を揃える。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 外側 `VBtn`・`input[type=file]` に `:disabled="isSending"`。`openImagePicker` / `onImageSelected` でもガード。
+
+---
+
+**識別子**: RC-18（GitHub id: 3690100921・Codex）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts:167`
+
+**該当コード（レビュー時点の diff）**: `(diff_hunk 未取得)`
+
+**レビュワーのコメント（原文）**:
+
+**送信失敗後に保留下書きを再表示してください** — in-flight 中に画面を離れて戻ると空欄。アップロード失敗で in-flight 解除後も restore はルーム変更時のみのため、同ルームでは空のまま。失敗時の in-flight 解除を監視して下書きを復元してください。
+
+**コメント要約**: 失敗＋再マウントで store に下書きがあっても UI が空。<br>in-flight 終了時に restore。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `isInFlightSend` を公開し、active ルームの in-flight が true→false になったとき `restoreComposeForRoom` を呼ぶ watch を追加。
+
+---
+
+**識別子**: RC-19（GitHub id: 5142343053・Copilot）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts`
+
+**該当コード（レビュー時点の diff）**: `（インライン指摘なし）`
+
+**レビュワーのコメント（原文）**:
+
+shokujii-code-review チェックリストに沿って Files changed を確認しました。🚨 必須修正はありません。[imo] `Date.now()` を `DateTime.now().toMillis()` へ統一するとより整合的です。
+
+**コメント要約**: 重大指摘なし。Date.now imo。<br>RC-7/11/16 と同根。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: 内部 LRU / リビジョン用メタ。表示日時ではない。
 
 ---

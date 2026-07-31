@@ -165,6 +165,9 @@ const validateImageFile = (file: File): string | null => {
 }
 
 const onImageSelected = (event: Event): void => {
+  if (isSending.value) {
+    return
+  }
   const input = event.target as HTMLInputElement
   const files = input.files
   if (files == null || files.length === 0) {
@@ -200,6 +203,9 @@ const onImageSelected = (event: Event): void => {
 }
 
 const openImagePicker = (): void => {
+  if (isSending.value) {
+    return
+  }
   if (!canAddMoreImages.value) {
     notification.show(t('chat.error.attachment_count_limit', { count: CHAT_ATTACHMENT_MAX_COUNT }), 'warning')
     return
@@ -443,6 +449,21 @@ watch(
 )
 
 watch(
+  () => {
+    const roomId = store.activeRoomId
+    if (roomId == null) {
+      return false
+    }
+    return composeDraftStore.isInFlightSend(roomId)
+  },
+  (inFlight, wasInFlight) => {
+    if (wasInFlight === true && inFlight === false) {
+      restoreComposeForRoom(store.activeRoomId)
+    }
+  },
+)
+
+watch(
   () => [store.membershipsLoaded, store.rooms, props.roomId, currentUserId.value] as const,
   ([loaded, rooms, roomId, userId]) => {
     clearPendingRoomTimeout()
@@ -646,6 +667,7 @@ onBeforeUnmount(() => {
             accept="image/png,image/jpeg,image/gif,image/webp"
             class="d-none"
             :aria-label="t('chat.attach_image')"
+            :disabled="isSending"
             @change="onImageSelected"
           />
 
@@ -658,6 +680,7 @@ onBeforeUnmount(() => {
               size="small"
               class="chat-compose-attach-btn flex-shrink-0"
               :aria-label="t('chat.attach_image')"
+              :disabled="isSending"
               @click="openImagePicker"
             >
               <VIcon :icon="mdiImageOutline" />
