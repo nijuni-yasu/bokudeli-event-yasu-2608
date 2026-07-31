@@ -1,21 +1,12 @@
 import { getFirestore } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
 import Stripe from 'stripe'
-import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { getEventInCommunity } from './stores/event.js'
-import { getOrders, saveOrder } from './stores/memberOrder.js'
+import { getEventBulkCancelPipeline } from './stores/eventBulkCancelPipeline.js'
 import { recalcEventMembers } from './utils/recalcEventMembers.js'
-import {
-  getEventEnterpriseId,
-  revertEnterpriseSubsidyUsageOnCancelBulk,
-  sumEnterpriseSubsidyAmounts,
-} from './utils/enterpriseSubsidyOrders.js'
-import { writeAuditLog } from './utils/auditLog.js'
-import { applyOrderCanceledSideEffects } from './orderCanceledSideEffects.js'
-import { refundMemberOrdersStripe } from './utils/refundMemberOrdersStripe.js'
-import { sendEventBulkCancellationMails } from './eventBulkCancellationMail.js'
+import { applyBulkEventCancelInTransaction } from './applyBulkEventCancelInTransaction.js'
+import { finishBulkEventCancelPostProcessing } from './finishBulkEventCancelPostProcessing.js'
 import { createModuleLogger } from './utils/logger.js'
-import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 
 const logger = createModuleLogger('cancelEventBulkCore')
 
@@ -33,24 +24,39 @@ export type CancelEventBulkCoreParams = {
 }
 
 export type CancelEventBulkCoreResult =
-  | { outcome: 'already_canceled' }
+  | { outcome: 'already_canceled'; refundErrorsCount: number; orderCount: number }
   | {
       outcome: 'canceled'
       orderCount: number
       refundErrorsCount: number
     }
 
-function groupOrdersByUser(orders: EventMemberOrder[]): Map<string, EventMemberOrder[]> {
-  const map = new Map<string, EventMemberOrder[]>()
-  for (const order of orders) {
-    const list = map.get(order.user_id)
-    if (list != null) {
-      list.push(order)
-    } else {
-      map.set(order.user_id, [order])
+/**
+ * 中止済みイベントに対する呼び出し。本機能の一括中止で pipeline が作られ後処理が未完了の場合のみ再開する。
+ * pipeline が無い（本機能以外の経路で中止済み）・完了済みの場合は何もしない（べき等）。
+ */
+async function resumeAlreadyCanceled(
+  params: CancelEventBulkCoreParams,
+  nowMillis: number,
+): Promise<CancelEventBulkCoreResult> {
+  const { community_id, event_id } = params
+  const pipeline = await getEventBulkCancelPipeline(community_id, event_id)
+  if (pipeline == null || !pipeline.isPostProcessingIncomplete) {
+    logger.info('cancelEventBulkCore idempotent skip', { community_id, event_id })
+    return {
+      outcome: 'already_canceled',
+      orderCount: pipeline?.bulk_canceled_order_ids.length ?? 0,
+      refundErrorsCount: 0,
     }
   }
-  return map
+
+  logger.info('cancelEventBulkCore resume post-processing', { community_id, event_id })
+  const resumed = await finishBulkEventCancelPostProcessing({ ...params, nowMillis })
+  return {
+    outcome: 'already_canceled',
+    orderCount: resumed.orderCount,
+    refundErrorsCount: resumed.refundErrorsCount,
+  }
 }
 
 export async function cancelEventBulkCore(params: CancelEventBulkCoreParams): Promise<CancelEventBulkCoreResult> {
@@ -63,8 +69,7 @@ export async function cancelEventBulkCore(params: CancelEventBulkCoreParams): Pr
   }
 
   if (eventBefore.event_status.value === 'event_canceled') {
-    logger.info('cancelEventBulkCore idempotent skip', { community_id, event_id })
-    return { outcome: 'already_canceled' }
+    return resumeAlreadyCanceled(params, nowMillis)
   }
 
   const calculatedStatus = eventBefore.calculatedEventStatus
@@ -74,144 +79,40 @@ export async function cancelEventBulkCore(params: CancelEventBulkCoreParams): Pr
 
   await recalcEventMembers(eventBefore)
 
-  const eventPayment = eventBefore.event_payment
-  const enterpriseId = getEventEnterpriseId(eventBefore)
-  const eventMonth = eventPayment === 'enterprise_subsidy' ? formatYearMonth(eventBefore.event_start_datetime) : null
-
   const canceledOrders = await getFirestore().runTransaction(async (transaction) => {
-    const tEvent = await getEventInCommunity(community_id, event_id, transaction)
-    if (tEvent == null) {
-      throw new Error('イベントが見つかりません')
-    }
-    if (tEvent.event_status.value === 'event_canceled') {
-      return null
-    }
-
-    const ordered = await getOrders(community_id, event_id, 'ordered', transaction)
-
-    for (const order of ordered) {
-      if (order.status !== 'ordered') {
-        throw new Error(`注文 ${order.id} のステータスが ordered ではありません: ${order.status}`)
-      }
-    }
-
-    // 先払いは全 ordered に stripe_id が必須。一部欠落のまま canceled にすると未返金が隠れる
-    if (eventPayment === 'user_advance' && ordered.length > 0 && ordered.some((o) => o.stripe_id == null)) {
-      throw new Error('先払い注文に決済情報（stripe_id）が紐づいていません')
-    }
-
-    if (eventPayment === 'enterprise_subsidy' && enterpriseId != null && eventMonth != null) {
-      await revertEnterpriseSubsidyUsageOnCancelBulk({
-        enterpriseId,
-        eventMonth,
-        ordersByUser: groupOrdersByUser(ordered),
-        transaction,
-      })
-    }
-
-    for (const order of ordered) {
-      order.status = 'canceled'
-      order.canceled_at = nowMillis
-      await saveOrder(community_id, event_id, order.user_id, order, transaction)
-    }
-
-    await tEvent.updateEvent(
-      {
-        event_status: {
-          value: 'event_canceled',
-          shop_comment: tEvent.event_status.shop_comment,
-          cancel_reason,
-        },
-        canceled_at: nowMillis,
-        canceled_by,
-      },
+    return applyBulkEventCancelInTransaction({
+      community_id,
+      event_id,
+      cancel_reason,
       canceled_by,
+      nowMillis,
       transaction,
-    )
-
-    return ordered
+    })
   })
 
   if (canceledOrders === null) {
-    return { outcome: 'already_canceled' }
+    return resumeAlreadyCanceled(params, nowMillis)
   }
 
-  const eventAfter = await getEventInCommunity(community_id, event_id)
-  if (eventAfter == null) {
-    throw new Error('イベント更新後の読み込みに失敗しました')
-  }
-
-  if (eventPayment === 'enterprise_subsidy' && enterpriseId != null && canceledOrders.length > 0) {
-    const returnedSubsidy = sumEnterpriseSubsidyAmounts(canceledOrders)
-    await writeAuditLog({
-      enterpriseId,
-      userId: canceled_by,
-      action: 'order_cancel',
-      targetType: 'order_session',
-      details: {
-        order_ids: canceledOrders.map((o) => o.id),
-        returned_subsidy_amount: returnedSubsidy,
-        bulk_event_cancel: true,
-      },
-    })
-  }
-
-  const userIds = [...new Set(canceledOrders.map((o) => o.user_id))]
-  for (const userId of userIds) {
-    try {
-      await applyOrderCanceledSideEffects({ event: eventAfter, userId })
-    } catch (error) {
-      logger.error('applyOrderCanceledSideEffects failed', {
-        error,
-        community_id,
-        event_id,
-        userId,
-      })
-    }
-  }
-
-  const hasStripePayment = canceledOrders.some((o) => o.stripe_id != null)
-  let refundErrorsCount = 0
-  if (hasStripePayment) {
-    const { refundErrors } = await refundMemberOrdersStripe({
-      communityId: community_id,
-      eventId: event_id,
-      orders: canceledOrders,
-      stripe,
-      nowMillis,
-    })
-    refundErrorsCount = refundErrors.length
-  }
-
-  // 注文は上記トランザクションで canceled 済みのため、宛先は canceledOrders の user_id から解決する
-  await sendEventBulkCancellationMails({
-    event: eventAfter,
-    cancelReason: cancel_reason,
-    participantUserIds: userIds,
+  const post = await finishBulkEventCancelPostProcessing({
+    community_id,
+    event_id,
+    cancel_reason,
+    canceled_by,
+    initiator,
+    min_required,
+    stripe,
+    nowMillis,
+    canceledOrders,
   })
-
-  const bulkEnterpriseId = getEventEnterpriseId(eventAfter)
-  if (initiator === 'minimum_participants' && bulkEnterpriseId != null) {
-    await writeAuditLog({
-      enterpriseId: bulkEnterpriseId,
-      userId: 'system',
-      action: 'event_auto_cancel',
-      targetType: 'event',
-      targetId: event_id,
-      details: {
-        order_count: canceledOrders.length,
-        min_required: min_required ?? null,
-      },
-    })
-  }
 
   logger.info('cancelEventBulkCore completed', {
     community_id,
     event_id,
-    orderCount: canceledOrders.length,
-    refundErrorsCount,
+    orderCount: post.orderCount,
+    refundErrorsCount: post.refundErrorsCount,
     initiator,
   })
 
-  return { outcome: 'canceled', orderCount: canceledOrders.length, refundErrorsCount }
+  return { outcome: 'canceled', orderCount: post.orderCount, refundErrorsCount: post.refundErrorsCount }
 }

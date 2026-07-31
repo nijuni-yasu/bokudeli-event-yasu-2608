@@ -2,49 +2,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type Stripe from 'stripe'
 
 const getEventInCommunityMock = vi.fn()
-const getOrdersMock = vi.fn()
-const saveOrderMock = vi.fn()
+const getEventBulkCancelPipelineMock = vi.fn()
 const recalcEventMembersMock = vi.fn()
-const revertEnterpriseSubsidyUsageOnCancelBulkMock = vi.fn()
-const writeAuditLogMock = vi.fn()
-const applyOrderCanceledSideEffectsMock = vi.fn()
-const refundMemberOrdersStripeMock = vi.fn()
-const sendEventBulkCancellationMailsMock = vi.fn()
+const applyBulkEventCancelInTransactionMock = vi.fn()
+const finishBulkEventCancelPostProcessingMock = vi.fn()
 
 vi.mock('./stores/event.js', () => ({
   getEventInCommunity: (...args: unknown[]) => getEventInCommunityMock(...args),
 }))
 
-vi.mock('./stores/memberOrder.js', () => ({
-  getOrders: (...args: unknown[]) => getOrdersMock(...args),
-  saveOrder: (...args: unknown[]) => saveOrderMock(...args),
+vi.mock('./stores/eventBulkCancelPipeline.js', () => ({
+  getEventBulkCancelPipeline: (...args: unknown[]) => getEventBulkCancelPipelineMock(...args),
 }))
 
 vi.mock('./utils/recalcEventMembers.js', () => ({
   recalcEventMembers: (...args: unknown[]) => recalcEventMembersMock(...args),
 }))
 
-vi.mock('./utils/enterpriseSubsidyOrders.js', () => ({
-  getEventEnterpriseId: () => undefined,
-  revertEnterpriseSubsidyUsageOnCancelBulk: (...args: unknown[]) =>
-    revertEnterpriseSubsidyUsageOnCancelBulkMock(...args),
-  sumEnterpriseSubsidyAmounts: () => 0,
+vi.mock('./applyBulkEventCancelInTransaction.js', () => ({
+  applyBulkEventCancelInTransaction: (...args: unknown[]) => applyBulkEventCancelInTransactionMock(...args),
 }))
 
-vi.mock('./utils/auditLog.js', () => ({
-  writeAuditLog: (...args: unknown[]) => writeAuditLogMock(...args),
-}))
-
-vi.mock('./orderCanceledSideEffects.js', () => ({
-  applyOrderCanceledSideEffects: (...args: unknown[]) => applyOrderCanceledSideEffectsMock(...args),
-}))
-
-vi.mock('./utils/refundMemberOrdersStripe.js', () => ({
-  refundMemberOrdersStripe: (...args: unknown[]) => refundMemberOrdersStripeMock(...args),
-}))
-
-vi.mock('./eventBulkCancellationMail.js', () => ({
-  sendEventBulkCancellationMails: (...args: unknown[]) => sendEventBulkCancellationMailsMock(...args),
+vi.mock('./finishBulkEventCancelPostProcessing.js', () => ({
+  finishBulkEventCancelPostProcessing: (...args: unknown[]) => finishBulkEventCancelPostProcessingMock(...args),
 }))
 
 vi.mock('firebase-admin/firestore', () => ({
@@ -75,17 +55,6 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
     event_status: { value: 'accepting_order', shop_comment: '' },
     calculatedEventStatus: 'accepting_order',
     members: [],
-    event_name: 'Test',
-    community_account: 'acc',
-    fullAddress: 'addr',
-    organizer_company: '',
-    organizer_fullname: '',
-    organizer_phone_personal: '',
-    organizer_phone_company: '',
-    organizer_email: '',
-    community_name: 'CN',
-    event_end_datetime: Date.now() + 3600000,
-    updateEvent: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
 }
@@ -93,20 +62,24 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   vi.clearAllMocks()
   recalcEventMembersMock.mockResolvedValue({ updated: false, memberCount: 0 })
-  getOrdersMock.mockResolvedValue([])
-  refundMemberOrdersStripeMock.mockResolvedValue({ refunds: [], refundErrors: [] })
-  sendEventBulkCancellationMailsMock.mockResolvedValue(undefined)
-  applyOrderCanceledSideEffectsMock.mockResolvedValue(undefined)
+  getEventBulkCancelPipelineMock.mockResolvedValue(null)
+  finishBulkEventCancelPostProcessingMock.mockResolvedValue({ orderCount: 0, refundErrorsCount: 0 })
+  applyBulkEventCancelInTransactionMock.mockResolvedValue([])
 })
 
 describe('cancelEventBulkCore', () => {
-  it('既に event_canceled なら冪等 return', async () => {
+  it('既に event_canceled で pipeline 未完了なら後処理を再開する', async () => {
     getEventInCommunityMock.mockResolvedValue(
       makeEvent({
         event_status: { value: 'event_canceled', shop_comment: '' },
         calculatedEventStatus: 'event_canceled',
       }),
     )
+    getEventBulkCancelPipelineMock.mockResolvedValue({
+      bulk_canceled_order_ids: ['o1', 'o2'],
+      isPostProcessingIncomplete: true,
+    })
+    finishBulkEventCancelPostProcessingMock.mockResolvedValue({ orderCount: 2, refundErrorsCount: 0 })
 
     const result = await cancelEventBulkCore({
       community_id: 'comm1',
@@ -117,13 +90,62 @@ describe('cancelEventBulkCore', () => {
       stripe,
     })
 
-    expect(result).toEqual({ outcome: 'already_canceled' })
-    expect(getOrdersMock).not.toHaveBeenCalled()
+    expect(result).toEqual({ outcome: 'already_canceled', orderCount: 2, refundErrorsCount: 0 })
+    expect(finishBulkEventCancelPostProcessingMock).toHaveBeenCalled()
+    expect(applyBulkEventCancelInTransactionMock).not.toHaveBeenCalled()
+  })
+
+  it('既に event_canceled で pipeline が無い（本機能以外の経路で中止済み）なら何もしない', async () => {
+    getEventInCommunityMock.mockResolvedValue(
+      makeEvent({
+        event_status: { value: 'event_canceled', shop_comment: '' },
+        calculatedEventStatus: 'event_canceled',
+      }),
+    )
+    getEventBulkCancelPipelineMock.mockResolvedValue(null)
+
+    const result = await cancelEventBulkCore({
+      community_id: 'comm1',
+      event_id: 'evt1',
+      cancel_reason: 'reason',
+      canceled_by: 'system',
+      initiator: 'minimum_participants',
+      stripe,
+    })
+
+    expect(result).toEqual({ outcome: 'already_canceled', orderCount: 0, refundErrorsCount: 0 })
+    expect(finishBulkEventCancelPostProcessingMock).not.toHaveBeenCalled()
+  })
+
+  it('既に event_canceled で pipeline 完了済みなら後処理を再実行しない', async () => {
+    getEventInCommunityMock.mockResolvedValue(
+      makeEvent({
+        event_status: { value: 'event_canceled', shop_comment: '' },
+        calculatedEventStatus: 'event_canceled',
+      }),
+    )
+    getEventBulkCancelPipelineMock.mockResolvedValue({
+      bulk_canceled_order_ids: ['o1'],
+      isPostProcessingIncomplete: false,
+    })
+
+    const result = await cancelEventBulkCore({
+      community_id: 'comm1',
+      event_id: 'evt1',
+      cancel_reason: 'reason',
+      canceled_by: 'system',
+      initiator: 'minimum_participants',
+      stripe,
+    })
+
+    expect(result).toEqual({ outcome: 'already_canceled', orderCount: 1, refundErrorsCount: 0 })
+    expect(finishBulkEventCancelPostProcessingMock).not.toHaveBeenCalled()
   })
 
   it('ordered 0 でもイベントを中止する', async () => {
-    const event = makeEvent()
-    getEventInCommunityMock.mockResolvedValue(event)
+    getEventInCommunityMock.mockResolvedValue(makeEvent())
+    applyBulkEventCancelInTransactionMock.mockResolvedValue([])
+    finishBulkEventCancelPostProcessingMock.mockResolvedValue({ orderCount: 0, refundErrorsCount: 0 })
 
     const result = await cancelEventBulkCore({
       community_id: 'comm1',
@@ -135,17 +157,15 @@ describe('cancelEventBulkCore', () => {
     })
 
     expect(result.outcome).toBe('canceled')
-    expect(event.updateEvent).toHaveBeenCalled()
-    expect(sendEventBulkCancellationMailsMock).toHaveBeenCalled()
+    expect(applyBulkEventCancelInTransactionMock).toHaveBeenCalled()
+    expect(finishBulkEventCancelPostProcessingMock).toHaveBeenCalled()
   })
 
   it('user_advance で stripe_id が一部欠落なら中止しない', async () => {
-    const event = makeEvent({ event_payment: 'user_advance' })
-    getEventInCommunityMock.mockResolvedValue(event)
-    getOrdersMock.mockResolvedValue([
-      { id: 'o1', user_id: 'u1', status: 'ordered', stripe_id: 'stripe-1' },
-      { id: 'o2', user_id: 'u2', status: 'ordered', stripe_id: null },
-    ])
+    getEventInCommunityMock.mockResolvedValue(makeEvent({ event_payment: 'user_advance' }))
+    applyBulkEventCancelInTransactionMock.mockRejectedValue(
+      new Error('先払い注文に決済情報（stripe_id）が紐づいていません'),
+    )
 
     await expect(
       cancelEventBulkCore({
@@ -158,7 +178,6 @@ describe('cancelEventBulkCore', () => {
       }),
     ).rejects.toThrow('先払い注文に決済情報（stripe_id）が紐づいていません')
 
-    expect(event.updateEvent).not.toHaveBeenCalled()
-    expect(sendEventBulkCancellationMailsMock).not.toHaveBeenCalled()
+    expect(finishBulkEventCancelPostProcessingMock).not.toHaveBeenCalled()
   })
 })
