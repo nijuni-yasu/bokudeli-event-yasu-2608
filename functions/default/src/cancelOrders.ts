@@ -1,14 +1,12 @@
-import { createHash } from 'crypto'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { defineSecret } from 'firebase-functions/params'
 import { getFirestore } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
 import Stripe from 'stripe'
-import { CancelOrdersRequest, CancelOrdersResponse, CancelOrdersRefundError } from '@shokujii/common/apis/stripe.js'
-import { getOrdersByIds, saveOrder, getStripe, saveStripe } from './stores/memberOrder.js'
+import { CancelOrdersRequest, CancelOrdersResponse } from '@shokujii/common/apis/stripe.js'
+import { getOrdersByIds, saveOrder } from './stores/memberOrder.js'
 import { getEventInCommunity } from './stores/event.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
-import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import {
   getEventEnterpriseId,
   revertEnterpriseSubsidyUsageOnCancel,
@@ -16,12 +14,12 @@ import {
 } from './utils/enterpriseSubsidyOrders.js'
 import { writeAuditLog } from './utils/auditLog.js'
 import { applyOrderCanceledSideEffects } from './orderCanceledSideEffects.js'
+import { refundMemberOrdersStripe } from './utils/refundMemberOrdersStripe.js'
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('cancelOrders')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
 
-const STRIPE_REFUND_WINDOW_DAYS = 180
 const REFUND_FAILURE_USER_MESSAGE =
   '注文のキャンセルは完了しています。返金の反映にお時間がかかる場合があります。問題が続く場合はサポートへお問い合わせください。'
 
@@ -159,122 +157,17 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
       return { canceled_count: canceledCount, refunds: [] }
     }
 
-    // Stripe 返金（user_advance または community_bill + discount で Stripe 決済済みの場合）
-    // stripe_id なしの注文は返金対象外（同一リクエストで混在し得る）
-    const stripeIdGroups = new Map<string, typeof orders>()
-    for (const order of orders) {
-      const sid = order.stripe_id ?? ''
-      const group = stripeIdGroups.get(sid)
-      if (group != null) {
-        group.push(order)
-      } else {
-        stripeIdGroups.set(sid, [order])
-      }
-    }
-
     const stripe = new Stripe(STRIPE_API_KEY.value(), {
       apiVersion: '2026-02-25.clover',
       maxNetworkRetries: 3,
     })
-    const refunds: CancelOrdersResponse['refunds'] = []
-    const refundErrors: CancelOrdersRefundError[] = []
-
-    for (const [stripeId, groupOrders] of stripeIdGroups) {
-      try {
-        if (stripeId === '') {
-          continue
-        }
-
-        const stripeDocPre = await getStripe(community_id, event_id, stripeId)
-        if (stripeDocPre == null) {
-          throw new Error(`stripes ドキュメントが見つかりません: ${stripeId}`)
-        }
-
-        const refundAmount = groupOrders.reduce((sum, o) => sum + o.menu_price - getMemberOrderDiscountAmount(o), 0)
-        if (refundAmount <= 0) {
-          logger.info('Skip Stripe refund (zero or negative amount)', {
-            stripeId,
-            orderIds: groupOrders.map((o) => o.id),
-            refundAmount,
-          })
-          continue
-        }
-        const existingRefundTotalPre = stripeDocPre.refunds.reduce((sum, r) => sum + r.amount, 0)
-        if (existingRefundTotalPre + refundAmount > stripeDocPre.pay_amount) {
-          throw new Error(
-            `返金累計額が決済額を超えます: existing=${existingRefundTotalPre} + new=${refundAmount} > pay_amount=${stripeDocPre.pay_amount}`,
-          )
-        }
-
-        const daysSincePayment = DateTime.now().diff(DateTime.fromMillis(stripeDocPre.created_at), 'days').days
-        if (daysSincePayment > STRIPE_REFUND_WINDOW_DAYS) {
-          throw new Error('返金期限を超過しています。運営にお問い合わせください')
-        }
-
-        const sortedOrderIds = groupOrders.map((o) => o.id).sort()
-        const orderIdsHash = createHash('sha256').update(sortedOrderIds.join('_')).digest('hex')
-        const idempotencyKey = `refund_${stripeId}_${orderIdsHash}`
-
-        const refund = await stripe.refunds.create(
-          {
-            payment_intent: stripeDocPre.payment_intent,
-            amount: refundAmount,
-            reason: 'requested_by_customer',
-          },
-          { idempotencyKey },
-        )
-
-        await db.runTransaction(async (transaction) => {
-          const stripeDoc = await getStripe(community_id, event_id, stripeId, transaction)
-          if (stripeDoc == null) {
-            throw new Error(`stripes ドキュメントが見つかりません: ${stripeId}`)
-          }
-          if (stripeDoc.refunds.some((r) => r.refund_id != null && r.refund_id === refund.id)) {
-            return
-          }
-          const existingRefundTotal = stripeDoc.refunds.reduce((sum, r) => sum + r.amount, 0)
-          if (existingRefundTotal + refundAmount > stripeDoc.pay_amount) {
-            throw new Error(
-              `返金累計額が決済額を超えます: existing=${existingRefundTotal} + new=${refundAmount} > pay_amount=${stripeDoc.pay_amount}`,
-            )
-          }
-          stripeDoc.refunds.push({
-            refund_id: refund.id,
-            amount: refundAmount,
-            order_ids: sortedOrderIds,
-            created_at: nowMillis,
-          })
-          await saveStripe(community_id, event_id, stripeDoc, transaction)
-        })
-
-        refunds.push({
-          stripe_id: stripeId,
-          refund_id: refund.id,
-          amount: refundAmount,
-        })
-
-        logger.info('Stripe refund succeeded', {
-          stripeId,
-          refundId: refund.id,
-          amount: refundAmount,
-          orderIds: sortedOrderIds,
-        })
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        const errorContext: Record<string, unknown> = {
-          stripeId,
-          orderIds: groupOrders.map((o) => o.id),
-          error: message,
-        }
-        if (error instanceof Stripe.errors.StripeError) {
-          errorContext.stripeErrorType = error.type
-          errorContext.stripeErrorCode = error.code
-          errorContext.stripeRequestId = error.requestId
-        }
-        logger.error('Stripe refund failed', errorContext)
-        refundErrors.push({ stripe_id: stripeId, message })
-      }
-    }
+    const { refunds, refundErrors } = await refundMemberOrdersStripe({
+      communityId: community_id,
+      eventId: event_id,
+      orders,
+      stripe,
+      nowMillis,
+    })
 
     const response: CancelOrdersResponse = {
       canceled_count: canceledCount,
