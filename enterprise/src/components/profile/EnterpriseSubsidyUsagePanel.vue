@@ -17,9 +17,7 @@ const data = ref<EnterpriseMemberMonthlyUsageView | null>(null)
 
 const formatYen = (amount: number) => `${priceString(amount)}円`
 
-const currentMonthLabel = computed(() =>
-  data.value != null ? formatYearMonthLabel(data.value.currentMonth) : '',
-)
+const currentMonthLabel = computed(() => (data.value != null ? formatYearMonthLabel(data.value.currentMonth) : ''))
 
 const usageProgressPercent = computed(() => {
   if (data.value == null || data.value.limit <= 0) {
@@ -87,12 +85,7 @@ onMounted(() => {
           :aria-label="$t('user_profile.usage.usage_progress_aria', [currentMonthLabel])"
         />
         <div class="text-body-2 text-medium-emphasis mb-4">
-          {{
-            $t('user_profile.usage.current_usage_vs_limit', [
-              formatYen(data.used),
-              formatYen(data.limit),
-            ])
-          }}
+          {{ $t('user_profile.usage.current_usage_vs_limit', [formatYen(data.used), formatYen(data.limit)]) }}
         </div>
         <div class="profile-stats-summary mb-2">
           <div class="profile-stats-item">
