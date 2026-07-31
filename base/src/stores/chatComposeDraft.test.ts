@@ -128,6 +128,26 @@ describe('useChatComposeDraftStore', () => {
     expect(revokeSpy).not.toHaveBeenCalledWith(newUrl)
   })
 
+  it('syncOwnerUserId clears drafts when owner user changes', () => {
+    const store = useChatComposeDraftStore()
+    store.syncOwnerUserId('user-a')
+    store.upsertDraft('room-1', { body: 'draft-a', attachments: [] })
+    store.syncOwnerUserId('user-b')
+    expect(store.getDraft('room-1')).toBeUndefined()
+  })
+
+  it('syncOwnerUserId on remount with different user does not keep previous drafts', () => {
+    const store = useChatComposeDraftStore()
+    store.syncOwnerUserId('user-a')
+    store.upsertDraft('room-1', { body: 'secret', attachments: [] })
+
+    setActivePinia(createPinia())
+    const remounted = useChatComposeDraftStore()
+    remounted.syncOwnerUserId('user-b')
+
+    expect(remounted.getDraft('room-1')).toBeUndefined()
+  })
+
   it('evicts oldest draft when exceeding max rooms', () => {
     const store = useChatComposeDraftStore()
     const now = Date.now()

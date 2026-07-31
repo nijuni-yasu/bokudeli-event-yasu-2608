@@ -49,6 +49,7 @@ const cloneDraftForRead = (draft: ChatComposeDraft): ChatComposeDraft => {
 
 export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
   const draftsByRoomId = ref(new Map<string, StoredDraft>())
+  const ownerUserId = ref<string | null>(null)
 
   const removeDraftEntry = (roomId: string): void => {
     const existing = draftsByRoomId.value.get(roomId)
@@ -125,6 +126,26 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
       revokeDraftAttachments(draft)
     }
     draftsByRoomId.value = new Map()
+    ownerUserId.value = null
+  }
+
+  /** ChatApp 未マウント中の UID 変更でも、再マウント時に他ユーザーの下書きを残さない */
+  const syncOwnerUserId = (userId: string): void => {
+    if (userId === '') {
+      clearAllDrafts()
+      return
+    }
+    if (ownerUserId.value == null) {
+      ownerUserId.value = userId
+      return
+    }
+    if (ownerUserId.value !== userId) {
+      for (const draft of draftsByRoomId.value.values()) {
+        revokeDraftAttachments(draft)
+      }
+      draftsByRoomId.value = new Map()
+      ownerUserId.value = userId
+    }
   }
 
   return {
@@ -132,6 +153,7 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
     getDraft,
     removeDraft,
     clearAllDrafts,
+    syncOwnerUserId,
   }
 })
 

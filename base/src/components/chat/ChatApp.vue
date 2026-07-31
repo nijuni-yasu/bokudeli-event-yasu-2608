@@ -47,7 +47,7 @@ const store = useChatStore()
 const composeDraftStore = useChatComposeDraftStore()
 const currentUserStore = useCurrentUserStore()
 const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? '')
-const lastComposeUserId = ref(currentUserId.value)
+composeDraftStore.syncOwnerUserId(currentUserId.value)
 
 const hasSpecifiedRoom = computed(() => props.roomId != null && props.roomId !== '')
 
@@ -323,15 +323,20 @@ const sendMessage = async () => {
   if (!canSendMessage.value) return
 
   isSending.value = true
+  const sentRoomId = roomId
+  const sentBody = msg.value
+  const sentImageFiles = selectedImages.value.map((image) => image.file)
   try {
-    await store.sendMessage(roomId, userId, {
-      body: msg.value,
-      imageFiles: selectedImages.value.map((image) => image.file),
+    await store.sendMessage(sentRoomId, userId, {
+      body: sentBody,
+      imageFiles: sentImageFiles,
     })
-    msg.value = ''
-    clearSelectedImages()
-    composeDraftStore.removeDraft(roomId)
-    scrollToBottomInChatLog()
+    composeDraftStore.removeDraft(sentRoomId)
+    if (store.activeRoomId === sentRoomId) {
+      msg.value = ''
+      clearSelectedImages()
+      scrollToBottomInChatLog()
+    }
   } catch (error) {
     notification.show(resolveSendMessageErrorMessage(error), resolveSendMessageErrorVariant(error))
   } finally {
@@ -395,13 +400,9 @@ const onActiveRoomAvatarClick = () => {
 watch(
   () => currentUserId.value,
   (userId) => {
-    if (lastComposeUserId.value === userId) {
-      return
-    }
-    composeDraftStore.clearAllDrafts()
+    composeDraftStore.syncOwnerUserId(userId)
     clearSelectedImages()
     msg.value = ''
-    lastComposeUserId.value = userId
   },
 )
 
