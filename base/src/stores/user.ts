@@ -151,5 +151,9 @@ export const useUserStore = (userId: string, options?: UseUserStoreOptions) => {
       },
     }
   })
-  return store()
+  const storeInstance = store()
+  if (options?.autoSubscribe !== false) {
+    storeInstance.subscribe()
+  }
+  return storeInstance
 }

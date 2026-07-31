@@ -21,6 +21,9 @@ export const useUserProfilePreviewStore = (targetUserId: string) => {
     const accessDenied = ref(false)
 
     const load = async () => {
+      if (targetUserId === '') {
+        return
+      }
       loading.value = true
       error.value = null
       notFound.value = false
@@ -48,7 +51,9 @@ export const useUserProfilePreviewStore = (targetUserId: string) => {
       load()
     }
 
-    load()
+    if (targetUserId !== '') {
+      load()
+    }
 
     return {
       data,

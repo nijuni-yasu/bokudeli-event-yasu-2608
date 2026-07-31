@@ -32,6 +32,11 @@
 | [x] | RC-26 | 3651880394 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | RC-24/25 と同一（セッション跨ぎ cache キー）<br>updated_at ベースに置換 |
 | [x] | RC-27 | 3651880391 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | useNavigateToEventChat 再利用提案<br>RC-14 で try/catch 済み。composable 化は任意 |
 | [x] | RC-28 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | /orders で loginUser 先読みにより useUserStore が先に subscribe<br>RC-17 autoSubscribe:false が Pinia 再利用で無効化 |
+| [x] | RC-29 | 5119902663 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | user UserProfile 外部リンクに rel 未指定<br>noopener noreferrer を追加 |
+| [ ] | RC-30 | 3675795403 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | cart の startOrderProcess が /orders を直指定<br>resolveOrdersPath を props 注入 |
+| [x] | RC-31 | 3675795410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | autoSubscribe:false 先行生成後 subscribe 未開始<br>useUserStore 再利用時に subscribe() を呼ぶ |
+| [x] | RC-32 | 3675741933 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | gateUserId 空で preview Callable 失敗<br>getAuth().currentUser 優先 + 空 ID は load 抑止 |
+| [x] | RC-33 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | userProfilePreview.reload が空 ID で Callable 呼び出し<br>load 先頭で targetUserId 空なら return |
 
 ---
 
@@ -1132,3 +1137,224 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 **判断理由**: `currentUser.user` computed が `useUserStore(uid)` を副作用付きで呼ぶ設計と、`profileUserId` が `loginUser` を先参照するため、初回 store 生成時に subscribe が開始される。`UserProfilePage` は route param を先に渡しており問題なし。
 
 **対応内容**: `firebaseUser.value?.uid` を `loginUser` 参照前に `gateUserId` として `useUserProfileAuthState` に渡すよう順序を入れ替え。
+
+---
+
+## 評価セッション（2026-07-31 16:52・review-comments-evaluate）
+
+- **評価日時**: 2026-07-31 16:52 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` manual）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型文×1・Codex connect 案内×1・Copilot 承知返信×1）
+- **手順 4a 自動修正**: RC-29・RC-31・RC-32（🚨 2件 / 🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-29 | 5119902663 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | user UserProfile 外部リンク rel 未指定<br>noopener noreferrer 追加 |
+| [ ] | RC-30 | 3675795403 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | cart が /orders 直指定<br>resolveOrdersPath props 注入 |
+| [x] | RC-31 | 3675795410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | autoSubscribe:false 後の subscribe 欠落<br>store 再利用時 subscribe() |
+| [x] | RC-32 | 3675741933 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | gateUserId 空で preview 失敗<br>getAuth uid + 空 ID load 抑止 |
+
+---
+
+**識別子**: RC-29（GitHub id: 5119902663・PR トップレベル）
+
+**レビュワー**: Copilot（copilot-pull-request-reviewer）
+
+**指摘箇所**: `user/src/components/UserProfile.vue:105`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `user/src/components/UserProfile.vue:105` の外部リンクで `target="_blank"` を使っていますが `rel="noopener noreferrer"` が未指定です。`window.opener` 経由のタブ乗っ取りリスクがあるため、`rel` を追加してください。
+
+**コメント要約**: Google Forms 外部リンクに `rel="noopener noreferrer"` が無い。shokujii-code-review のセキュリティチェック違反。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。enterprise 側は既に rel 付与済み。user のみ欠落。
+
+---
+
+**識別子**: RC-30（GitHub id: 3675795403）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/pages/cart.vue:301`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        await router.push({
++          path: '/orders',
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  注文履歴パスを app shell から注入してください**
+
+`startOrderProcess` が共有 `base` コンポーネント内で `/orders` を直接指定しているため、利用側アプリで注文履歴のルートを変更したり別の app から再利用した場合、注文成功後に存在しない画面へ遷移します。現在の user / enterprise が同じパスであることに依存させず、`resolveOrdersPath` のような props を各 app の cart shell から渡してください。プロジェクト指定のレビュー項目にも、base 内へルーティングパスをハードコードしない規約があります。
+
+**コメント要約**: base cart が `/orders` をハードコード。orders.vue と同様 path resolver を props 注入すべき。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘妥当。`profilePathResolvers.ts` に型追加 + user/enterprise cart shell から注入が必要。工数 M のため本セッションでは未実装。
+
+---
+
+**識別子**: RC-31（GitHub id: 3675795410）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/stores/user.ts:139`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    if (options?.autoSubscribe !== false) {
++      subscribe()
++    }
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  キャッシュ済みストアでも購読を開始してください**
+
+Enterprise で別ユーザーのプロフィールを最初に開くと `useUserStore(id, { autoSubscribe: false })` がこの ID の Pinia ストアを生成しますが、後から `useUserStore(id)` を通常モードで呼んでも同じキャッシュ済みインスタンスが返り、この初期化処理は再実行されないため `subscribe()` が一度も開始されません。その後に同じユーザーを含むコミュニティやイベント参加者画面を開くと、`getLoadedUser()` が解決せず、氏名やアバター、参加者行が欠落したままになります。通常モードで取得するたびに既存ストアの `subscribe()` を呼ぶか、認可ゲートでは同じ Pinia ストアを生成しないようにしてください。
+
+**コメント要約**: RC-17 の autoSubscribe:false 導入後、Pinia 再利用で subscribe が永久に開始されない regression。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`useUserStore` 取得時に `autoSubscribe !== false` なら `store.subscribe()` を毎回呼ぶよう修正（subscribe 内は idempotent）。
+
+---
+
+**識別子**: RC-32（GitHub id: 3675741933）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `enterprise/src/pages/orders.vue:21`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const gateUserId = firebaseUser.value?.uid ?? ''
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `gateUserId` を setup 時点の `firebaseUser.value?.uid` で固定しているため、ここが空文字のタイミングで評価されると `useUserProfileAuthState('', ...)` が走り、`getUserProfilePreview` Callable が空の `target_user_id` で呼ばれて `previewError` になったまま復帰できない可能性があります（`gateUserId` が以後更新されないため）。`getAuth().currentUser?.uid`（router guard が待っている認証確定値）を優先して初期化するか、少なくとも空文字ではゲート初期化しないようにしてください。
+
+**コメント要約**: RC-28 修正後も setup 時点 UID 固定で preview が空 ID 呼び出ししうる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `/orders` は login 必須で router guard 後にマウントされるが、防御として `getAuth().currentUser?.uid` を優先し、`userProfilePreview` は `targetUserId === ''` のとき load しないよう変更。UID のリアクティブ再初期化は未実装（実害低）。
+
+---
+
+## 評価セッション（2026-07-31 16:54・shokujii-code-review）
+
+- **評価日時**: 2026-07-31 16:54 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **対象**: 未コミット差分（RC-29〜32 自動修正 + evaluate 記録）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-33 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | reload 経由の空 target_user_id Callable<br>load 先頭 guard で抑止 |
+
+---
+
+**識別者**: RC-33（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/userProfilePreview.ts:23`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+     const reload = () => {
+       data.value = null
+       load()
+     }
+ 
+     if (targetUserId !== '') {
+       load()
+     }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 初期 `load()` のみ空 ID を抑止しており、`reload()` は `targetUserId === ''` でも `getUserProfilePreview({ target_user_id: '' })` を呼び得る。`load()` 先頭で空 ID なら return するよう統一すること。
+
+**コメント要約**: RC-32 防御の抜け道。reload が空 Callable を再発火しうる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-32 と同根。初期化ガードだけでは不十分。`load()` 先頭 guard で init / reload 双方をカバー。

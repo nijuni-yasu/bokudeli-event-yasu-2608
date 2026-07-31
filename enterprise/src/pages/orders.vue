@@ -7,6 +7,7 @@ import { getEventPath, getReceiptPath, getOrdersPath } from '@/router/utils'
 import EnterpriseSubsidyUsagePanel from '@/components/profile/EnterpriseSubsidyUsagePanel.vue'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
 import { fetchEnterpriseUsageTabEligible } from '@/composable/enterpriseMemberMonthlyUsage.js'
+import { getAuth } from 'firebase/auth'
 import { useUserProfileAuthState } from '@shokujii/base/composable/useUserProfileAuthState.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
@@ -16,7 +17,7 @@ const { enterpriseId } = useEnterpriseId()
 const { firebaseUser, user: loginUser } = storeToRefs(useCurrentUserStore())
 
 // loginUser を読む前にゲートを初期化する（先読みすると useUserStore が autoSubscribe:true で生成され RC-17 抑止が無効化される）
-const gateUserId = firebaseUser.value?.uid ?? ''
+const gateUserId = getAuth().currentUser?.uid ?? firebaseUser.value?.uid ?? ''
 const { isProfileGateLoading, isProfileAccessDenied, isInvalidProfile, isPreviewAccessGranted, previewError } =
   useUserProfileAuthState(gateUserId, 'enterprise-callable-gate')
 
