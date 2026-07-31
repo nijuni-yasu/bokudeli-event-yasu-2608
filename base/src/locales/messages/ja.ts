@@ -703,6 +703,8 @@ export default {
   user_profile: {
     profile_settings: 'プロフィール設定',
     user_description_placeholder: '自己紹介を追加しましょう。',
+    orders_page_lead:
+      '注文期限前であれば、キャンセルすることができます。\nまたお支払い済みのご注文は領収書をダウンロードできます。',
   },
   manage: {
     settings: {

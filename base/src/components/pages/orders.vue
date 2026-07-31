@@ -145,7 +145,10 @@ watch(
 <template>
   <v-row justify="center">
     <v-col cols="12" md="10" lg="9" class="pa-4 pa-md-6">
-      <div class="text-center text-h4 text-md-h3 my-4">{{ $t('user_profile.tab_orders') }}</div>
+      <div class="text-center text-h4 text-md-h3 mt-4 mb-2">{{ $t('user_profile.tab_orders') }}</div>
+      <p class="text-center text-body-2 text-medium-emphasis mb-4 px-4 pre-line">
+        {{ $t('user_profile.orders_page_lead') }}
+      </p>
       <slot name="prepend" />
       <div v-if="showOrdersEmpty" class="text-body-1 text-medium-emphasis pa-4">
         {{ $t('user_profile.empty.orders') }}
