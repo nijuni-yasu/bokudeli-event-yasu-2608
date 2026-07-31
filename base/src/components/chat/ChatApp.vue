@@ -13,7 +13,12 @@ import {
 import { isAllowedChatAttachmentMimeType } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { CHAT_SEND_MESSAGE_ERROR, useChatStore } from '@shokujii/base/stores/chat.js'
-import { type ChatComposeDraft, isChatComposeDraftEmpty, isSameDraftContent, useChatComposeDraftStore } from '@shokujii/base/stores/chatComposeDraft.js'
+import {
+  type ChatComposeDraft,
+  isChatComposeDraftEmpty,
+  isSameDraftContent,
+  useChatComposeDraftStore,
+} from '@shokujii/base/stores/chatComposeDraft.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import type { ResolveChatRoomPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
