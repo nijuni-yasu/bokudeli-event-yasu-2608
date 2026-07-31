@@ -156,6 +156,7 @@ const EnterpriseMemberDbSchema = z.object({
   department: NonEmptyStringSchema.optional(),
   monthly_usage: YearMonthRecordSchema.default({}),
   monthly_order_count: YearMonthRecordSchema.default({}),
+  monthly_user_paid: YearMonthRecordSchema.default({}),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
 })
@@ -171,6 +172,7 @@ const EnterpriseMemberAppSchema = z.object({
   department: z.string().optional(),
   monthly_usage: YearMonthRecordSchema.default({}),
   monthly_order_count: YearMonthRecordSchema.default({}),
+  monthly_user_paid: YearMonthRecordSchema.default({}),
 })
 
 const convertEnterpriseMemberToDb = (member: EnterpriseMember) => {
@@ -196,6 +198,7 @@ export class EnterpriseMember {
   department?: string
   monthly_usage!: Record<string, number>
   monthly_order_count!: Record<string, number>
+  monthly_user_paid!: Record<string, number>
   created_at: number
   updated_at: number
 
