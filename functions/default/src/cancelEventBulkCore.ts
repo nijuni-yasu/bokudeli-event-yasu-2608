@@ -95,8 +95,8 @@ export async function cancelEventBulkCore(params: CancelEventBulkCoreParams): Pr
       }
     }
 
-    // 先払いは決済に stripe_id が紐づくのが正常。全件欠落のままキャンセル成功にすると未返金が隠れる
-    if (eventPayment === 'user_advance' && ordered.length > 0 && ordered.every((o) => o.stripe_id == null)) {
+    // 先払いは全 ordered に stripe_id が必須。一部欠落のまま canceled にすると未返金が隠れる
+    if (eventPayment === 'user_advance' && ordered.length > 0 && ordered.some((o) => o.stripe_id == null)) {
       throw new Error('先払い注文に決済情報（stripe_id）が紐づいていません')
     }
 

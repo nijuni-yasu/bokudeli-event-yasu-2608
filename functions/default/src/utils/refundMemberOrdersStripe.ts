@@ -81,7 +81,9 @@ export async function refundMemberOrdersStripe(params: {
         )
       }
 
-      const daysSincePayment = DateTime.now().diff(DateTime.fromMillis(stripeDocPre.created_at), 'days').days
+      const daysSincePayment = DateTime.fromMillis(nowMillis)
+        .diff(DateTime.fromMillis(stripeDocPre.created_at), 'days')
+        .days
       if (daysSincePayment > STRIPE_REFUND_WINDOW_DAYS) {
         throw new Error('返金期限を超過しています。運営にお問い合わせください')
       }

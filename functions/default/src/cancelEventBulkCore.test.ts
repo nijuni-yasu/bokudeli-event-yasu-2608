@@ -138,4 +138,27 @@ describe('cancelEventBulkCore', () => {
     expect(event.updateEvent).toHaveBeenCalled()
     expect(sendEventBulkCancellationMailsMock).toHaveBeenCalled()
   })
+
+  it('user_advance で stripe_id が一部欠落なら中止しない', async () => {
+    const event = makeEvent({ event_payment: 'user_advance' })
+    getEventInCommunityMock.mockResolvedValue(event)
+    getOrdersMock.mockResolvedValue([
+      { id: 'o1', user_id: 'u1', status: 'ordered', stripe_id: 'stripe-1' },
+      { id: 'o2', user_id: 'u2', status: 'ordered', stripe_id: null },
+    ])
+
+    await expect(
+      cancelEventBulkCore({
+        community_id: 'comm1',
+        event_id: 'evt1',
+        cancel_reason: 'reason',
+        canceled_by: 'system',
+        initiator: 'minimum_participants',
+        stripe,
+      }),
+    ).rejects.toThrow('先払い注文に決済情報（stripe_id）が紐づいていません')
+
+    expect(event.updateEvent).not.toHaveBeenCalled()
+    expect(sendEventBulkCancellationMailsMock).not.toHaveBeenCalled()
+  })
 })

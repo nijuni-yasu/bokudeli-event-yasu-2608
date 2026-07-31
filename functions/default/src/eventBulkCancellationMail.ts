@@ -23,6 +23,7 @@ export async function sendEventBulkCancellationMails(params: {
   participantUserIds: string[]
 }): Promise<void> {
   const { event, cancelReason, participantUserIds } = params
+  const uniqueParticipantUserIds = [...new Set(participantUserIds)]
   const eventId = event.id
 
   try {
@@ -62,14 +63,14 @@ export async function sendEventBulkCancellationMails(params: {
     })
   }
 
-  if (participantUserIds.length === 0) {
+  if (uniqueParticipantUserIds.length === 0) {
     return
   }
 
   try {
     const memberEmails = (
       await Promise.all(
-        participantUserIds.map(async (userId) => (await getUserPersonalInformation(userId))?.user_email),
+        uniqueParticipantUserIds.map(async (userId) => (await getUserPersonalInformation(userId))?.user_email),
       )
     ).filter((email): email is string => email != null && email !== '')
     const dynamicTemplateData = {

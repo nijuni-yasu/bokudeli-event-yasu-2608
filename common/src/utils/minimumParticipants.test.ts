@@ -50,6 +50,16 @@ describe('applyMinimumParticipantsForEventSave', () => {
       MinimumParticipantsSaveError,
     )
   })
+
+  it('judgment_evaluated_at 済みなら過去判断日でも保存検証をスキップ', () => {
+    const event = baseEvent()
+    event.minimum_participants = {
+      ...createDefaultMinimumParticipants(event.event_deadline_datetime),
+      judgment_evaluated_at: Date.now() - 86400000,
+      judgment_datetime: Date.now() - 86400000,
+    }
+    expect(() => applyMinimumParticipantsForEventSave(event, Date.now())).not.toThrow()
+  })
 })
 
 describe('createDefaultMinimumParticipants', () => {

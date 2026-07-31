@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import { DEFAULT_TIME_ZONE } from './datetime.js'
 import type { Event, RawEventStatusType } from '../schemas/Event.js'
 import {
   MINIMUM_PARTICIPANTS_DEFAULT_COUNT,
@@ -11,8 +12,6 @@ export { MINIMUM_PARTICIPANTS_DEFAULT_COUNT, MINIMUM_PARTICIPANTS_DEFAULT_JUDGME
 /** 最小催行による自動中止時の `event_status.cancel_reason` */
 export const MINIMUM_PARTICIPANTS_CANCEL_REASON = '最小催行人数に達しなかったため自動中止'
 
-const JST = 'Asia/Tokyo'
-
 /**
  * 注文期限と判断日数から judgment_datetime（epoch ms、分 truncate）を算出する。
  * pollingTask の 1 分ウィンドウと整合させる。
@@ -21,7 +20,9 @@ export function computeMinimumParticipantsJudgmentDatetime(
   eventDeadlineDatetimeMillis: number,
   judgmentDaysBefore: number,
 ): number {
-  const dt = DateTime.fromMillis(eventDeadlineDatetimeMillis, { zone: JST }).minus({ days: judgmentDaysBefore })
+  const dt = DateTime.fromMillis(eventDeadlineDatetimeMillis, { zone: DEFAULT_TIME_ZONE }).minus({
+    days: judgmentDaysBefore,
+  })
   return Math.trunc(dt.toMillis() / 60_000) * 60_000
 }
 
@@ -53,6 +54,11 @@ export function applyMinimumParticipantsForEventSave(
 ): void {
   const mp = event.minimum_participants
   if (mp == null) {
+    return
+  }
+
+  // 評価済みは Scheduled が確定した設定。他項目保存時に判断日過去チェックでブロックしない
+  if (mp.judgment_evaluated_at != null) {
     return
   }
 
