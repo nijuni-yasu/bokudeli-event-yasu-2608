@@ -430,6 +430,26 @@ export const getAcceptingOrderEventsWithPastMinimumParticipantsJudgment = async 
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
 
+/**
+ * 最小催行で中止済みだが後処理未完了の候補（pipeline は呼び出し側で確認）。
+ * sinceMillis 以降に判定されたイベントに限定する（全期間スキャンを避けるための再開ウィンドウ）
+ */
+export const getEventCanceledMinimumParticipantsForPostProcessing = async (
+  sinceMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'event_canceled')
+    .where('is_deleted', '==', false)
+    .where('minimum_participants.enabled', '==', true)
+    .where('minimum_participants.judgment_evaluated_at', '>', Timestamp.fromMillis(sinceMillis))
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
+
 // イベント終了時間の範囲で注文受付中のイベントを取得
 export const getAcceptingOrderEventsByEndTime = async (
   startTimeMillis: number,
