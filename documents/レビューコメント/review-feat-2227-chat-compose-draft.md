@@ -26,6 +26,9 @@
 | [x] | RC-20 | 5142579309 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | DateTime imo（reflect 後 Copilot）<br>RC-7/11/16/19 と同根 |
 | [x] | RC-21 | 3690277364 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 復元前 revoke で共有 previewUrl が壊れる<br>同一内容スキップ・必要分のみ revoke |
 | [x] | RC-22 | 3690277375 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 再マウント後 in-flight 中も入力可→復元で上書き<br>isComposeInputLocked・空欄時のみ restore |
+| [x] | RC-23 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | isComposeInputLocked が isSending を含み他ルーム入力もロック<br>並行送信の競合回避を優先する Phase 1 の保守的設計として妥当 |
+| [x] | RC-24 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | toComposeDraftFromLocal の戻り値型がインラインで attachments 変換も重複<br>ChatComposeDraft 型を明示し persist / sendMessage で再利用 |
+| [x] | RC-25 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | in-flight ルーム離脱時 persist スキップ後の restore が共有 previewUrl を revoke<br>スキップ時に revoke なしでローカル compose をクリア |
 
 ---
 
@@ -957,5 +960,148 @@ shokujii-code-review チェックリストに沿って Files changed を確認�
 **想定工数**: S
 
 **判断理由**: `isComposeInputLocked`（`isSending` || `isInFlightSend`）。in-flight 解除 watch は空 compose のときのみ restore。
+
+---
+
+## 評価セッション（2026-07-31 21:37・shokujii-code-review）
+
+- **評価日時**: 2026-07-31 21:37 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: feat/2227-chat-compose-draft
+- **PR**: [#2228](https://github.com/nijuniinc/bokudeli-event-new/pull/2228)
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-23 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | isComposeInputLocked が isSending を含み他ルーム入力もロック<br>並行送信の競合回避を優先する Phase 1 の保守的設計として妥当 |
+| [x] | RC-24 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | toComposeDraftFromLocal の戻り値型がインラインで attachments 変換も重複<br>ChatComposeDraft 型を明示し persist / sendMessage で再利用 |
+| [x] | RC-25 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | in-flight ルーム離脱時 persist スキップ後の restore が共有 previewUrl を revoke<br>スキップ時に revoke なしでローカル compose をクリア |
+
+---
+
+**識別子**: RC-23（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:85`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const isComposeInputLocked = computed(() => {
++  if (isSending.value) {
++    return true
++  }
++  const roomId = store.activeRoomId
++  if (roomId == null) {
++    return false
++  }
++  return composeDraftStore.isInFlightSend(roomId)
++})
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: `isComposeInputLocked` が `isSending` を含むため、ルーム A の送信 await 中はルーム B に切り替えても入力・添付がロックされる → 送信は通常短時間であり、`isSending` を per-room 化すると多重送信・`isSending` 共有・送信ボタン loading 表示の競合など複雑化する。Phase 1 の保守的設計として妥当。
+
+**コメント要約**: 送信中は他ルームの compose も一時ロックされる。<br>並行送信の競合回避を優先する設計トレードオフとして許容。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: RC-13/RC-22 で意図的に導入された保守的ロック。解除にはルーム単位の送信状態管理と多重送信時の UI 整合が必要で、Phase 1 スコープに対し過剰。
+
+---
+
+**識別子**: RC-24（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:96`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const toComposeDraftFromLocal = (): { body: string; attachments: { id: string; file: File; previewUrl: string }[] } => {
+...
++  composeDraftStore.upsertDraft(roomId, {
++    body: msg.value,
++    attachments: selectedImages.value.map((image) => ({
++      id: image.id,
++      file: image.file,
++      previewUrl: image.previewUrl,
++    })),
++  })
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `toComposeDraftFromLocal` の戻り値型が `ChatComposeDraft` と同一内容のインライン記述になっており、`persistComposeForRoom` / `sendMessage` にも同じ attachments 変換が重複している → 戻り値型を `ChatComposeDraft` にし、両所で `toComposeDraftFromLocal()` を再利用する。
+
+**コメント要約**: compose スナップショット生成が 3 箇所に重複しインライン型も冗長。<br>`ChatComposeDraft` 型の明示と `toComposeDraftFromLocal()` の再利用に統一。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 挙動同一のまま可読性向上のみ。`import { type ChatComposeDraft, ... }` を追加し、`persistComposeForRoom` と `sendMessage` の変換を `toComposeDraftFromLocal()` に置換（手順 3b 自動修正）。
+
+---
+
+**識別子**: RC-25（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:136`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const persistComposeForRoom = (roomId: string | null): void => {
+...
++  if (composeDraftStore.isInFlightSend(roomId)) {
++    return
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `persistComposeForRoom` が in-flight ルームからの離脱時に early return するが、ローカル compose をクリアしないため、直後の `restoreComposeForRoom` の `clearSelectedImages()`（または保持セット外 revoke）が store の in-flight 下書きと共有している previewUrl を revoke してしまう。送信失敗後にルームへ戻ると添付プレビューが壊れる → in-flight で persist をスキップする分岐で `clearLocalComposeWithoutRevoke()` を呼ぶ（送信開始時の upsert で store 側が URL を所有済みのため revoke 不要）。
+
+**コメント要約**: 添付付き送信の in-flight 中に A→B へ切替→送信失敗→A へ戻ると復元プレビューが破損。<br>persist スキップ時に revoke なしでローカル compose をクリアして解消。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-2/RC-21 と同系統の共有 blob URL revoke バグ。in-flight 中は入力ロックによりローカル compose と store 下書きが同一内容のため、revoke なしのクリアで安全に解消できる（手順 3a 自動修正）。
 
 ---

@@ -13,7 +13,7 @@ import {
 import { isAllowedChatAttachmentMimeType } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { CHAT_SEND_MESSAGE_ERROR, useChatStore } from '@shokujii/base/stores/chat.js'
-import { isChatComposeDraftEmpty, isSameDraftContent, useChatComposeDraftStore } from '@shokujii/base/stores/chatComposeDraft.js'
+import { type ChatComposeDraft, isChatComposeDraftEmpty, isSameDraftContent, useChatComposeDraftStore } from '@shokujii/base/stores/chatComposeDraft.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import type { ResolveChatRoomPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
@@ -93,7 +93,7 @@ const isComposeInputLocked = computed(() => {
   return composeDraftStore.isInFlightSend(roomId)
 })
 
-const toComposeDraftFromLocal = (): { body: string; attachments: { id: string; file: File; previewUrl: string }[] } => {
+const toComposeDraftFromLocal = (): ChatComposeDraft => {
   return {
     body: msg.value,
     attachments: selectedImages.value.map((image) => ({
@@ -134,16 +134,11 @@ const persistComposeForRoom = (roomId: string | null): void => {
     return
   }
   if (composeDraftStore.isInFlightSend(roomId)) {
+    // in-flight 中は送信開始時の upsert で store 側が previewUrl を所有しているため、revoke せずにクリアする
+    clearLocalComposeWithoutRevoke()
     return
   }
-  composeDraftStore.upsertDraft(roomId, {
-    body: msg.value,
-    attachments: selectedImages.value.map((image) => ({
-      id: image.id,
-      file: image.file,
-      previewUrl: image.previewUrl,
-    })),
-  })
+  composeDraftStore.upsertDraft(roomId, toComposeDraftFromLocal())
   clearLocalComposeWithoutRevoke()
 }
 
@@ -375,29 +370,19 @@ const sendMessage = async () => {
 
   isSending.value = true
   const sentRoomId = roomId
-  const sentBody = msg.value
-  const sentAttachments = selectedImages.value.map((image) => ({
-    id: image.id,
-    file: image.file,
-    previewUrl: image.previewUrl,
-  }))
-  const sentImageFiles = sentAttachments.map((attachment) => attachment.file)
-  composeDraftStore.upsertDraft(sentRoomId, {
-    body: sentBody,
-    attachments: sentAttachments,
-  })
+  const sentCompose = toComposeDraftFromLocal()
+  composeDraftStore.upsertDraft(sentRoomId, sentCompose)
   const sentDraftUpdatedAt = composeDraftStore.getDraftUpdatedAt(sentRoomId)
   composeDraftStore.beginInFlightSend(sentRoomId)
   try {
     await store.sendMessage(sentRoomId, userId, {
-      body: sentBody,
-      imageFiles: sentImageFiles,
+      body: sentCompose.body,
+      imageFiles: sentCompose.attachments.map((attachment) => attachment.file),
     })
     if (sentDraftUpdatedAt != null) {
       composeDraftStore.removeDraftIfUpdatedAt(sentRoomId, sentDraftUpdatedAt)
     }
     if (store.activeRoomId === sentRoomId) {
-      const sentCompose = { body: sentBody, attachments: sentAttachments }
       if (isSameDraftContent(toComposeDraftFromLocal(), sentCompose)) {
         clearLocalComposeWithoutRevoke()
       }
