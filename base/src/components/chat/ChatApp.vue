@@ -342,8 +342,7 @@ const sendMessage = async () => {
       composeDraftStore.removeDraftIfUpdatedAt(sentRoomId, sentDraftUpdatedAt)
     }
     if (store.activeRoomId === sentRoomId) {
-      msg.value = ''
-      clearSelectedImages()
+      clearLocalComposeWithoutRevoke()
       scrollToBottomInChatLog()
     }
   } catch (error) {

@@ -57,6 +57,21 @@ describe('useChatComposeDraftStore', () => {
     expect(revokeSpy).toHaveBeenCalledWith(previewUrl)
   })
 
+  it('upsertDraft with unchanged content does not bump updatedAt', () => {
+    const store = useChatComposeDraftStore()
+    const now = Date.now()
+    vi.spyOn(Date, 'now').mockImplementation(() => now)
+    const draft = { body: 'same', attachments: [] }
+
+    store.upsertDraft('room-1', draft)
+    const firstUpdatedAt = store.getDraftUpdatedAt('room-1')
+
+    vi.spyOn(Date, 'now').mockImplementation(() => now + 5000)
+    store.upsertDraft('room-1', draft)
+
+    expect(store.getDraftUpdatedAt('room-1')).toBe(firstUpdatedAt)
+  })
+
   it('removeDraftIfUpdatedAt removes only when updatedAt matches', () => {
     const store = useChatComposeDraftStore()
     const now = Date.now()

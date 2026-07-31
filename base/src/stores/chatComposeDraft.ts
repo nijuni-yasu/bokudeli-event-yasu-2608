@@ -47,6 +47,23 @@ const cloneDraftForRead = (draft: ChatComposeDraft): ChatComposeDraft => {
   }
 }
 
+const isSameDraftContent = (left: ChatComposeDraft, right: ChatComposeDraft): boolean => {
+  if (left.body !== right.body) {
+    return false
+  }
+  if (left.attachments.length !== right.attachments.length) {
+    return false
+  }
+  for (let i = 0; i < left.attachments.length; i++) {
+    const leftAttachment = left.attachments[i]
+    const rightAttachment = right.attachments[i]
+    if (leftAttachment.id !== rightAttachment.id || leftAttachment.previewUrl !== rightAttachment.previewUrl) {
+      return false
+    }
+  }
+  return true
+}
+
 export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
   const draftsByRoomId = ref(new Map<string, StoredDraft>())
   const ownerUserId = ref<string | null>(null)
@@ -88,8 +105,12 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
       return
     }
 
-    const incomingPreviewUrls = new Set(draft.attachments.map((attachment) => attachment.previewUrl))
     const existing = draftsByRoomId.value.get(roomId)
+    if (existing != null && isSameDraftContent(existing, draft)) {
+      return
+    }
+
+    const incomingPreviewUrls = new Set(draft.attachments.map((attachment) => attachment.previewUrl))
     if (existing != null) {
       revokeAttachmentsNotInPreviewUrls(existing, incomingPreviewUrls)
     } else {
@@ -153,10 +174,7 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
       return
     }
     if (ownerUserId.value !== userId) {
-      for (const draft of draftsByRoomId.value.values()) {
-        revokeDraftAttachments(draft)
-      }
-      draftsByRoomId.value = new Map()
+      clearAllDrafts()
       ownerUserId.value = userId
     }
   }

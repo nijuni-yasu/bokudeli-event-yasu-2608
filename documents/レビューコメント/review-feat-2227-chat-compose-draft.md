@@ -12,6 +12,10 @@
 | [x] | RC-6 | 5141570613 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | restoreComposeForRoom の msg/images クリアが非対称<br>常に両方クリアしてから復元 |
 | [x] | RC-7 | 5141570613 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Date.now() を LRU 用に使用（Copilot 規約指摘）<br>表示・TZ 非依存の内部メタのみ |
 | [x] | RC-8 | 5141570613 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | currentUserId watch に flush 未指定<br>activeRoomId と同様 sync で意図を明確化 |
+| [x] | RC-9 | 3689782415 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信中の persist が updatedAt だけ進め送信済み下書きが残る<br>同一内容 upsert は updatedAt を更新しない |
+| [x] | RC-10 | 5141907053 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | 送信成功時 draft revoke 後に clearSelectedImages で二重 revoke<br>clearLocalComposeWithoutRevoke に変更 |
+| [x] | RC-11 | 5141907053 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Date.now() 規約指摘（RC-7 と同根）<br>LRU 内部メタのみ |
+| [x] | RC-12 | 5141907053 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | syncOwnerUserId の revoke 重複<br>clearAllDrafts に委譲 |
 
 ---
 
@@ -445,5 +449,129 @@ Useful? React with 👍 / 👎.
 **想定工数**: S
 
 **判断理由**: 機能上は clear で整合するが、watch 順序の読みやすさ向上。S 工数で `flush: 'sync'` 追加は妥当。
+
+---
+
+## 評価セッション（2026-07-31 19:34・review-comments-evaluate auto）
+
+- **評価日時**: 2026-07-31 19:34 JST
+- **PR**: #2228（wake `since` 2026-07-31T10:25:15Z）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 5141876198、Codex 接続案内 5141908043）
+- **partial**: false
+- **手順 4a 自動修正**: RC-9（🚨）・RC-10・RC-12
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-9 | 3689782415 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信中 persist で updatedAt のみ更新され送信済み下書きが残る<br>同一内容 upsert は no-op |
+| [x] | RC-10 | 5141907053 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | 成功時 clearSelectedImages の二重 revoke<br>clearLocalComposeWithoutRevoke |
+| [x] | RC-11 | 5141907053 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Date.now（RC-7 同根） |
+| [x] | RC-12 | 5141907053 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | syncOwnerUserId → clearAllDrafts |
+
+---
+
+**識別子**: RC-9（GitHub id: 3689782415）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:343`
+
+**該当コード（レビュー時点の diff）**: Codex コメント `diff_hunk`（sendMessage + removeDraftIfUpdatedAt）参照。
+
+**レビュワーのコメント（原文）**: P1「送信済み compose をルーム切替時に残さないでください」— 送信中の `persistComposeForRoom` が同一内容でも `updatedAt` を更新し、`removeDraftIfUpdatedAt` がスキップされ送信済み下書きが復元・再送され得る。
+
+**コメント要約**: RC-5 の updatedAt 照合と persist の組み合わせで送信済みが残る。<br>内容同一の upsert ではリビジョンを進めない。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 再現妥当。内容比較で upsert を no-op にすれば RC-5 の「新下書き保護」と両立。
+
+---
+
+**識別子**: RC-10（GitHub id: 5141907053・Copilot 内指摘 1）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:344`
+
+**該当コード（レビュー時点の diff）**: （インライン指摘なし・トップレベル）
+
+**レビュワーのコメント（原文）**: 送信成功時 `removeDraftIfUpdatedAt` で revoke 後、`clearSelectedImages` が同一 previewUrl を再 revoke（MDN 上 no-op だが所有権の整理として `clearLocalComposeWithoutRevoke` 推奨）。
+
+**コメント要約**: 成功パスの UI クリア方法の整理。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 実害は小さいが方針一意。draft が blob 所有後は revoke なしクリアが妥当。
+
+---
+
+**識別子**: RC-11（GitHub id: 5141907053・Copilot 内指摘 2）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts:107`
+
+**レビュワーのコメント（原文）**: Date.now / luxon（前回指摘継続）。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: RC-7 と同根。LRU 内部 number のみ。
+
+---
+
+**識別子**: RC-12（GitHub id: 5141907053・Copilot 内指摘 3）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts:155`
+
+**レビュワーのコメント（原文）**: `syncOwnerUserId` の revoke+Map クリアを `clearAllDrafts()` に委譲可能。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: S
+
+**判断理由**: 重複削除。直後に `ownerUserId` を新 UID に設定。
 
 ---
