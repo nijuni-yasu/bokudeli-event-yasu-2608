@@ -63,7 +63,12 @@ const UserAppSchema = z.object({
   ordered_food_count: NonNegativeIntSchema.default(0),
   counts_updated_at: EpochMillisSchema.optional(),
   user_type: z.enum(USER_TYPE_VALUES).optional(),
-  enterprise_id: z.string().optional(),
+  /** PF materialize 後の `enterprise_id: null` を read 互換（未所属は undefined） */
+  enterprise_id: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => v ?? undefined),
 })
 
 const convertToDb = (user: User) => {

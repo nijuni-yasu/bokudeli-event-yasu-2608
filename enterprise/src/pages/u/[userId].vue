@@ -8,22 +8,24 @@ import UserProfilePage from '@/components/profile/UserProfilePage.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { user: loginUser } = storeToRefs(useCurrentUserStore())
+const { user: loginUser, firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const userId = computed(() => String(route.params.userId ?? ''))
+
+const profileOwnerUid = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? '')
 
 const shouldShowProfile = ref(true)
 
 const redirectFromLegacyOrdersRoutes = (): boolean => {
-  const uid = loginUser.value?.user_id
-  const isOwner = uid != null && uid === userId.value
+  const uid = profileOwnerUid.value
+  const isOwner = uid !== '' && uid === userId.value
   const tab = String(route.query.tab ?? '')
 
   if (tab === 'orders' && isOwner) {
     void router.replace(getOrdersPath())
     return true
   }
-  if (tab === 'usage' && isOwner && uid != null) {
+  if (tab === 'usage' && isOwner && uid !== '') {
     const requestPath = route.fullPath
     void fetchEnterpriseUsageTabEligible(uid)
       .then((eligible) => {
@@ -59,7 +61,7 @@ watch(
       route.query.communityAccount,
       route.query.isPosted,
       route.query.session_id,
-      loginUser.value?.user_id,
+      profileOwnerUid.value,
       userId.value,
     ] as const,
   () => {

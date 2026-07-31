@@ -40,6 +40,10 @@
 | [x] | RC-34 | 3689139785 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | getOrdersPathAfterOrder が位置引数2個<br>ResolveOrdersPathFn と不一致で query 壊れ |
 | [x] | RC-35 | 3689139789 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 注文完了時に参加イベント一覧未 reload<br>userEventListStore.reload を orders watch に追加 |
 | [x] | RC-36 | 5140905153 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useUserStore の subscribe 二重呼び出し<br>setup 内と store 再利用時の意図整理 |
+| [x] | RC-37 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | エンプラ Checkout 戻り /orders replace が loginUser のみ<br>profileOwnerUid + firebaseUser で RC-19 同等 |
+| [x] | RC-38 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | user /orders の navigateToEventChat が loginUser のみ<br>firebaseUser.uid フォールバック |
+| [x] | RC-39 | なし・エージェントレビュー | 👌 修正不要 | — | — | — | 👀 確認のみ | — | PF 完了モーダルを [userId] shell に移した重複<br>RC-27 同様 composable 化は任意 |
+| [x] | RC-40 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | UserAppSchema enterprise_id null→undefined<br>PF ZodError 解消・vitest 追加で妥当 |
 
 ---
 
@@ -1462,5 +1466,139 @@ export const getOrdersPathAfterOrder = (eventId: string, communityAccount: strin
 **想定工数**: S
 
 **判断理由**: 指摘妥当。Pinia setup 内 subscribe は初回 options のみ効き RC-31 外側と重複。setup 内呼び出しを削除し `useUserStore` 出口の subscribe のみに統一。
+
+---
+
+## 評価セッション（2026-07-31 19:27・shokujii-code-review）
+
+- **評価日時**: 2026-07-31 19:27 JST
+- **ブランチ名**: dev/enterprise-mvp-v3
+- **PR**: 未作成
+- **Outdated**: 該当なし
+- **手順 3a/3b 自動修正**: RC-37・RC-38
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-37 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | エンプラ Checkout 戻り redirect が loginUser のみ<br>firebaseUser フォールバック |
+| [x] | RC-38 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | user /orders navigateToEventChat loginUser のみ<br>firebaseUser フォールバック |
+| [x] | RC-39 | なし・エージェントレビュー | 👌 修正不要 | — | — | — | 👀 確認のみ | — | PF 完了モーダル shell 重複<br>composable 化は任意 |
+| [x] | RC-40 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | enterprise_id null read 互換<br>transform + テストで妥当 |
+
+---
+
+**識別子**: RC-37（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/u/[userId].vue:19`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+const uid = loginUser.value?.user_id
+const isOwner = uid != null && uid === userId.value
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: エンプラ Stripe 成功 URL は PF 同様 `/u/{uid}?eventId=…` に着地するが、Checkout 直後の `/orders` への replace 判定が `loginUser.user_id` のみのため、Firestore ユーザ doc 未確定時は redirect が走らず注文完了モーダル（`base/orders.vue`）まで到達しない → PF `[userId].vue` / RC-19 と同様 `profileOwnerUid = loginUser.user_id ?? firebaseUser.uid` に揃える
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害, 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: エンプラはプロフィール上ではなく `/orders` でモーダル表示のため、redirect 遅延は PF と同種の UX 障害。同一セッションで修正済み。
+
+---
+
+**識別子**: RC-38（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `user/src/pages/orders.vue:16`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+const userId = loginUser.value?.user_id
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: PF の注文完了は主に `/u/` shell だが、legacy `?tab=orders` 等で `/orders` に query 付き着地した場合、`navigateToEventChat` が loginUser のみ参照し Auth 直後にチャット遷移が失敗しうる → `firebaseUser.uid` フォールバック
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: base `orders.vue` の `userId` は既に firebaseUser フォールバック済み。shell 側コールバックのみ揃えた。
+
+---
+
+**識別子**: RC-39（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `user/src/pages/u/[userId].vue:63`, `user/src/pages/orders.vue:15`
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: `navigateToEventChat` と Checkout reload watch が `user/[userId].vue` と `/orders` shell に重複 → RC-27 と同様 composable 化は任意。PF 主経路（マイページ上モーダル）のスコープ内では許容
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: 動作優先の shell 分割。リファクタは別 Issue 可。
+
+---
+
+**識別子**: RC-40（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/User.ts:66`
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: `enterprise_id` に `nullable().transform(v => v ?? undefined)` を追加し PF materialize 後の `null` read を App 型に正規化。DbSchema 方針と矛盾せず、vitest で回帰防止済み
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: Stripe 戻り時の User 読込 ZodError 解消に直結。backfill 不要（read 互換のみ）。
 
 ---

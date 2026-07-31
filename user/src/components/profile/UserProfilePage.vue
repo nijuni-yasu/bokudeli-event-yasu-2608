@@ -46,7 +46,7 @@ const profileFilter = { kind: 'pf-null' as const }
 
 const { t: $t } = useI18n()
 const currentUserStore = useCurrentUserStore()
-const { user: loginUser } = storeToRefs(currentUserStore)
+const { user: loginUser, firebaseUser } = storeToRefs(currentUserStore)
 
 const {
   displayUser,
@@ -59,7 +59,10 @@ const {
   previewError,
 } = useUserProfileAuthState(profileUserId, 'pf-firestore')
 
-const isOwner = computed(() => loginUser.value?.user_id === profileUserId)
+const isOwner = computed(() => {
+  const uid = loginUser.value?.user_id ?? firebaseUser.value?.uid
+  return uid != null && uid === profileUserId
+})
 const { canLinkToDetail } = useProfileLinkPolicy(isOwner)
 
 const userEventListStore = useUserEventListByUserId(profileUserId, 6, { profileFilter })

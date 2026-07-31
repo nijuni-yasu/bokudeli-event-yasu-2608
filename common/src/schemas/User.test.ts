@@ -100,6 +100,15 @@ describe('User', () => {
     expect(u.user_image_url).toBe('')
   })
 
+  it('enterprise_id が null の PF ユーザー doc を読み込める', () => {
+    const u = new User('uid-pf-null-ent', {
+      created_at: Date.now(),
+      user_name: 'PF',
+      enterprise_id: null,
+    } as unknown as Partial<User>)
+    expect(u.enterprise_id).toBeUndefined()
+  })
+
   it('null 正規化後の toFirestore でプロフィール optional フィールドは deleteField になる', () => {
     const u = new User('uid-null-roundtrip', {
       created_at: Date.now(),
