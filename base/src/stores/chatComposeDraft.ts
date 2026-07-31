@@ -15,7 +15,10 @@ export type ChatComposeDraft = {
 export const CHAT_COMPOSE_DRAFT_MAX_ROOMS = 15
 
 type StoredDraft = ChatComposeDraft & {
+  /** 送信競合判定用。内容変更時のみ更新 */
   updatedAt: number
+  /** LRU eviction 用。getDraft で復元参照時に更新 */
+  accessedAt: number
 }
 
 export const isChatComposeDraftEmpty = (draft: ChatComposeDraft): boolean => {
@@ -47,7 +50,7 @@ const cloneDraftForRead = (draft: ChatComposeDraft): ChatComposeDraft => {
   }
 }
 
-const isSameDraftContent = (left: ChatComposeDraft, right: ChatComposeDraft): boolean => {
+export const isSameDraftContent = (left: ChatComposeDraft, right: ChatComposeDraft): boolean => {
   if (left.body !== right.body) {
     return false
   }
@@ -66,6 +69,7 @@ const isSameDraftContent = (left: ChatComposeDraft, right: ChatComposeDraft): bo
 
 export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
   const draftsByRoomId = ref(new Map<string, StoredDraft>())
+  const inFlightSendRoomIds = ref(new Set<string>())
   const ownerUserId = ref<string | null>(null)
 
   const removeDraftEntry = (roomId: string): void => {
@@ -84,13 +88,13 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
       return
     }
     let oldestRoomId: string | null = null
-    let oldestUpdatedAt = Number.POSITIVE_INFINITY
+    let oldestAccessedAt = Number.POSITIVE_INFINITY
     for (const [roomId, draft] of draftsByRoomId.value) {
       if (roomId === exceptRoomId) {
         continue
       }
-      if (draft.updatedAt < oldestUpdatedAt) {
-        oldestUpdatedAt = draft.updatedAt
+      if (draft.accessedAt < oldestAccessedAt) {
+        oldestAccessedAt = draft.accessedAt
         oldestRoomId = roomId
       }
     }
@@ -110,6 +114,8 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
       return
     }
 
+    const now = Date.now()
+
     const incomingPreviewUrls = new Set(draft.attachments.map((attachment) => attachment.previewUrl))
     if (existing != null) {
       revokeAttachmentsNotInPreviewUrls(existing, incomingPreviewUrls)
@@ -125,17 +131,40 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
         file: attachment.file,
         previewUrl: attachment.previewUrl,
       })),
-      updatedAt: Date.now(),
+      updatedAt: now,
+      accessedAt: now,
     })
     draftsByRoomId.value = next
   }
 
   const getDraft = (roomId: string): ChatComposeDraft | undefined => {
+    if (inFlightSendRoomIds.value.has(roomId)) {
+      return undefined
+    }
     const stored = draftsByRoomId.value.get(roomId)
     if (stored == null) {
       return undefined
     }
+    const now = Date.now()
+    const next = new Map(draftsByRoomId.value)
+    next.set(roomId, { ...stored, accessedAt: now })
+    draftsByRoomId.value = next
     return cloneDraftForRead(stored)
+  }
+
+  const beginInFlightSend = (roomId: string): void => {
+    const next = new Set(inFlightSendRoomIds.value)
+    next.add(roomId)
+    inFlightSendRoomIds.value = next
+  }
+
+  const endInFlightSend = (roomId: string): void => {
+    if (!inFlightSendRoomIds.value.has(roomId)) {
+      return
+    }
+    const next = new Set(inFlightSendRoomIds.value)
+    next.delete(roomId)
+    inFlightSendRoomIds.value = next
   }
 
   const getDraftUpdatedAt = (roomId: string): number | undefined => {
@@ -160,6 +189,7 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
       revokeDraftAttachments(draft)
     }
     draftsByRoomId.value = new Map()
+    inFlightSendRoomIds.value = new Set()
     ownerUserId.value = null
   }
 
@@ -185,6 +215,8 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
     getDraftUpdatedAt,
     removeDraft,
     removeDraftIfUpdatedAt,
+    beginInFlightSend,
+    endInFlightSend,
     clearAllDrafts,
     syncOwnerUserId,
   }

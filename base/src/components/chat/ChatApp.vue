@@ -13,7 +13,7 @@ import {
 import { isAllowedChatAttachmentMimeType } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { CHAT_SEND_MESSAGE_ERROR, useChatStore } from '@shokujii/base/stores/chat.js'
-import { useChatComposeDraftStore } from '@shokujii/base/stores/chatComposeDraft.js'
+import { isSameDraftContent, useChatComposeDraftStore } from '@shokujii/base/stores/chatComposeDraft.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import type { ResolveChatRoomPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
@@ -106,6 +106,9 @@ const clearLocalComposeWithoutRevoke = (): void => {
 
 const persistComposeForRoom = (roomId: string | null): void => {
   if (roomId == null) {
+    return
+  }
+  if (isSending.value && store.activeRoomId === roomId) {
     return
   }
   composeDraftStore.upsertDraft(roomId, {
@@ -333,6 +336,7 @@ const sendMessage = async () => {
     attachments: sentAttachments,
   })
   const sentDraftUpdatedAt = composeDraftStore.getDraftUpdatedAt(sentRoomId)
+  composeDraftStore.beginInFlightSend(sentRoomId)
   try {
     await store.sendMessage(sentRoomId, userId, {
       body: sentBody,
@@ -342,12 +346,24 @@ const sendMessage = async () => {
       composeDraftStore.removeDraftIfUpdatedAt(sentRoomId, sentDraftUpdatedAt)
     }
     if (store.activeRoomId === sentRoomId) {
-      clearLocalComposeWithoutRevoke()
+      const currentCompose = {
+        body: msg.value,
+        attachments: selectedImages.value.map((image) => ({
+          id: image.id,
+          file: image.file,
+          previewUrl: image.previewUrl,
+        })),
+      }
+      const sentCompose = { body: sentBody, attachments: sentAttachments }
+      if (isSameDraftContent(currentCompose, sentCompose)) {
+        clearLocalComposeWithoutRevoke()
+      }
       scrollToBottomInChatLog()
     }
   } catch (error) {
     notification.show(resolveSendMessageErrorMessage(error), resolveSendMessageErrorVariant(error))
   } finally {
+    composeDraftStore.endInFlightSend(sentRoomId)
     isSending.value = false
   }
 }
@@ -693,7 +709,7 @@ onBeforeUnmount(() => {
                 variant="plain"
                 class="chat-compose-input"
                 :placeholder="t('chat.message_placeholder')"
-                :disabled="store.activeRoom.isReadonly"
+                :disabled="store.activeRoom.isReadonly || isSending"
                 :maxlength="CHAT_MESSAGE_BODY_MAX_LENGTH"
                 :aria-label="t('chat.message_input_label')"
                 auto-grow

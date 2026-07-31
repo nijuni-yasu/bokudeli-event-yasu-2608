@@ -182,22 +182,33 @@ describe('useChatComposeDraftStore', () => {
     expect(remounted.getDraft('room-1')).toBeUndefined()
   })
 
-  it('evicts oldest draft when exceeding max rooms', () => {
+  it('getDraft bumps accessedAt so recently opened draft is not evicted first', () => {
     const store = useChatComposeDraftStore()
     const now = Date.now()
-    vi.spyOn(Date, 'now').mockImplementation(() => now)
+    let mockNow = now
+    vi.spyOn(Date, 'now').mockImplementation(() => mockNow)
 
     for (let i = 0; i < CHAT_COMPOSE_DRAFT_MAX_ROOMS; i++) {
       store.upsertDraft(`room-${i}`, { body: `body-${i}`, attachments: [] })
     }
 
-    vi.spyOn(Date, 'now').mockImplementation(() => now + 1000)
+    mockNow = now + 500
+    store.getDraft('room-0')
+
+    mockNow = now + 1000
     store.upsertDraft('room-new', { body: 'new', attachments: [] })
 
-    expect(store.getDraft('room-0')).toBeUndefined()
+    expect(store.getDraft('room-0')?.body).toBe('body-0')
+    expect(store.getDraft('room-1')).toBeUndefined()
     expect(store.getDraft('room-new')?.body).toBe('new')
-    expect(store.getDraft(`room-${CHAT_COMPOSE_DRAFT_MAX_ROOMS - 1}`)?.body).toBe(
-      `body-${CHAT_COMPOSE_DRAFT_MAX_ROOMS - 1}`,
-    )
+  })
+
+  it('getDraft returns undefined while send is in flight for the room', () => {
+    const store = useChatComposeDraftStore()
+    store.upsertDraft('room-1', { body: 'sending', attachments: [] })
+    store.beginInFlightSend('room-1')
+    expect(store.getDraft('room-1')).toBeUndefined()
+    store.endInFlightSend('room-1')
+    expect(store.getDraft('room-1')?.body).toBe('sending')
   })
 })

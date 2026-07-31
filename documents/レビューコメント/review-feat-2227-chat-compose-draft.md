@@ -16,6 +16,10 @@
 | [x] | RC-10 | 5141907053 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | 送信成功時 draft revoke 後に clearSelectedImages で二重 revoke<br>clearLocalComposeWithoutRevoke に変更 |
 | [x] | RC-11 | 5141907053 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Date.now() 規約指摘（RC-7 と同根）<br>LRU 内部メタのみ |
 | [x] | RC-12 | 5141907053 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | syncOwnerUserId の revoke 重複<br>clearAllDrafts に委譲 |
+| [x] | RC-13 | 3690025793 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信中に同一ルームで入力更新→成功時に無条件 clear で本文消失<br>textarea 無効化＋送信時 compose 一致時のみ clear |
+| [x] | RC-14 | 3690025797 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | LRU が updatedAt のみで getDraft が access 更新しない<br>accessedAt 分離・getDraft で更新 |
+| [x] | RC-15 | 3690025802 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信中の画面離脱で下書き復元→再送可能<br>inFlightSend・送信中 persist スキップ |
+| [x] | RC-16 | 5142251246 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | DateTime.now 統一の imo（Copilot）<br>LRU 内部メタは RC-7/11 と同根 |
 
 ---
 
@@ -573,5 +577,145 @@ Useful? React with 👍 / 👎.
 **想定工数**: S
 
 **判断理由**: 重複削除。直後に `ownerUserId` を新 UID に設定。
+
+---
+
+## 評価セッション（2026-07-31 20:19・review-comments-evaluate）
+
+- **評価日時**: 2026-07-31 20:19 JST
+- **ブランチ名**: feat/2227-chat-compose-draft
+- **PR**: [#2228](https://github.com/nijuniinc/bokudeli-event-new/pull/2228)
+- **REVIEW_REQUEST_SINCE**: 2026-07-31T11:08:11Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼 5142206484、Codex connect 5142252535）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-13 | 3690025793 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信中の同一ルーム入力が成功時に消える<br>textarea 無効化・compose 一致時のみ clear |
+| [x] | RC-14 | 3690025797 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | LRU とリビジョン updatedAt の混同<br>accessedAt 分離・getDraft で touch |
+| [x] | RC-15 | 3690025802 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 再マウントで送信中 compose 復元→再送<br>inFlightSend・送信中 persist スキップ |
+| [x] | RC-16 | 5142251246 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | luxon 統一 imo<br>RC-7/11 と同根 |
+
+---
+
+**識別子**: RC-13（GitHub id: 3690025793・Codex）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue`（送信成功時 clear）
+
+**該当コード（レビュー時点の diff）**: `(diff_hunk 未取得)`
+
+**レビュワーのコメント（原文）**:
+
+送信中に更新された同一ルームの入力を消さないでください — 画像アップロード pending 中も VTextarea は isSending で無効化されていないため、送信成功時ルーム ID 一致だけで無条件クリアし新入力が失われる。送信開始 compose と一致する場合だけクリアするか送信中入力を無効化。
+
+**コメント要約**: 送信中のローカル編集が成功ハンドラで消える。<br>無効化または条件付き clear が必要。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `VTextarea` を `isSending` で無効化。成功時は `isSameDraftContent` で送信開始時点と一致するときのみ `clearLocalComposeWithoutRevoke`。
+
+---
+
+**識別子**: RC-14（GitHub id: 3690025797・Codex）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts`（LRU / getDraft）
+
+**該当コード（レビュー時点の diff）**: `(diff_hunk 未取得)`
+
+**レビュワーのコメント（原文）**:
+
+下書きの利用時刻をリビジョンと分けて更新してください — getDraft で利用時刻が更新されず同一内容 persist が no-op のため、直前ルームの下書きが即 eviction される。updatedAt とは別に最終アクセス時刻を持ち復元時に更新。
+
+**コメント要約**: eviction が編集リビジョン時刻ベースで LRU として誤動作。<br>accessedAt を分離。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `StoredDraft.accessedAt` を追加。eviction は `accessedAt` 最小。`getDraft` 参照時に `accessedAt` を更新。
+
+---
+
+**識別子**: RC-15（GitHub id: 3690025802・Codex）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue`（下書き復元）
+
+**該当コード（レビュー時点の diff）**: `(diff_hunk 未取得)`
+
+**レビュワーのコメント（原文）**:
+
+再マウント時に送信中の compose を再送させないでください — 送信中に画面離脱すると下書きとして復元され新インスタンスでは isSending が false。pending compose を通常下書きとして復元・送信可能にしない。
+
+**コメント要約**: 送信中 unmount で同一メッセージ再送リスク。<br>store で in-flight を共有するか復元禁止。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `beginInFlightSend` / `endInFlightSend` と `getDraft` の in-flight 非返却。`persistComposeForRoom` は送信中 active ルームをスキップ。
+
+---
+
+**識別子**: RC-16（GitHub id: 5142251246・Copilot）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts`
+
+**該当コード（レビュー時点の diff）**: `（インライン指摘なし）`
+
+**レビュワーのコメント（原文）**:
+
+shokujii-code-review チェックリストに沿って確認。重大な不具合（🚨 必須修正）はありません。[imo] `updatedAt: Date.now()` は luxon `DateTime.now().toMillis()` 統一を検討。
+
+**コメント要約**: 重大指摘なし。Date.now imo のみ。<br>RC-7/11 と同根。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: LRU / accessedAt 内部メタ。表示・TZ 非依存。
 
 ---
