@@ -5,8 +5,5 @@ import { getOrdersPathAfterOrder } from '@/router/utils'
 </script>
 
 <template>
-  <Cart
-    :monthly-usage-loader="enterpriseCartMonthlyUsageLoader"
-    :resolve-orders-path="getOrdersPathAfterOrder"
-  />
+  <Cart :monthly-usage-loader="enterpriseCartMonthlyUsageLoader" :resolve-orders-path="getOrdersPathAfterOrder" />
 </template>

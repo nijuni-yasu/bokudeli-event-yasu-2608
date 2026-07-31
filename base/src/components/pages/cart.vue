@@ -300,9 +300,7 @@ const startOrderProcess = async () => {
         return
       }
       try {
-        await router.push(
-          props.resolveOrdersPath({ eventId, communityAccount: event.community_account }),
-        )
+        await router.push(props.resolveOrdersPath({ eventId, communityAccount: event.community_account }))
       } catch (error) {
         console.error('Failed to navigate after order:', error)
       }
