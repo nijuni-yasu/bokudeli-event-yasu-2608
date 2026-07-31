@@ -35,11 +35,14 @@ import {
   normalizeCartMonthlyUsage,
   type CartMonthlyUsageLoader,
 } from '@shokujii/base/composable/cartMonthlyUsage.js'
+import type { ResolveOrdersPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 
 const props = withDefaults(
   defineProps<{
     /** 月次 usage 表示用ローダー。enterprise 側から注入 */
     monthlyUsageLoader?: CartMonthlyUsageLoader
+    /** 注文確定後の注文履歴 URL（各 app の cart shell から注入） */
+    resolveOrdersPath: ResolveOrdersPathFn
   }>(),
   {
     // Function prop はファクトリ () => fn ではなく関数を直接指定する（Vue withDefaults の仕様）
@@ -297,10 +300,9 @@ const startOrderProcess = async () => {
         return
       }
       try {
-        await router.push({
-          path: '/orders',
-          query: { eventId, communityAccount: event.community_account },
-        })
+        await router.push(
+          props.resolveOrdersPath({ eventId, communityAccount: event.community_account }),
+        )
       } catch (error) {
         console.error('Failed to navigate after order:', error)
       }

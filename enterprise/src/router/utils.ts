@@ -9,6 +9,11 @@ export const getEventPath = (communityAccount: string, eventId: string) => `/c/$
 export const getUserPath = (userId: string) => `/u/${userId}`
 export const getOrdersPath = (tab?: 'usage') =>
   tab === 'usage' ? { path: '/orders', query: { tab: 'usage' } } : '/orders'
+
+export const getOrdersPathAfterOrder = (eventId: string, communityAccount: string) => ({
+  path: '/orders',
+  query: { eventId, communityAccount },
+})
 export const getReceiptPath = (eventId: string, stripeId: string) => `/receipt?eventId=${eventId}&stripeId=${stripeId}`
 export const getEventCreatePath = (communityAccount: string) => `/manage/community/${communityAccount}/newevent`
 export const getEventEditPath = (eventId: string) => `/manage/event/${eventId}/settings`

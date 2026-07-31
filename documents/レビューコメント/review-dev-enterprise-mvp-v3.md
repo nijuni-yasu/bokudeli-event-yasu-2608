@@ -33,7 +33,7 @@
 | [x] | RC-27 | 3651880391 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | useNavigateToEventChat 再利用提案<br>RC-14 で try/catch 済み。composable 化は任意 |
 | [x] | RC-28 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | S | /orders で loginUser 先読みにより useUserStore が先に subscribe<br>RC-17 autoSubscribe:false が Pinia 再利用で無効化 |
 | [x] | RC-29 | 5119902663 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | user UserProfile 外部リンクに rel 未指定<br>noopener noreferrer を追加 |
-| [ ] | RC-30 | 3675795403 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | cart の startOrderProcess が /orders を直指定<br>resolveOrdersPath を props 注入 |
+| [x] | RC-30 | 3675795403 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | cart の startOrderProcess が /orders を直指定<br>resolveOrdersPath を props 注入 |
 | [x] | RC-31 | 3675795410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | autoSubscribe:false 先行生成後 subscribe 未開始<br>useUserStore 再利用時に subscribe() を呼ぶ |
 | [x] | RC-32 | 3675741933 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | gateUserId 空で preview Callable 失敗<br>getAuth().currentUser 優先 + 空 ID は load 抑止 |
 | [x] | RC-33 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | userProfilePreview.reload が空 ID で Callable 呼び出し<br>load 先頭で targetUserId 空なら return |
@@ -1155,7 +1155,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | [x] | RC-29 | 5119902663 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | user UserProfile 外部リンク rel 未指定<br>noopener noreferrer 追加 |
-| [ ] | RC-30 | 3675795403 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | cart が /orders 直指定<br>resolveOrdersPath props 注入 |
+| [x] | RC-30 | 3675795403 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | cart が /orders 直指定<br>resolveOrdersPath props 注入 |
 | [x] | RC-31 | 3675795410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | autoSubscribe:false 後の subscribe 欠落<br>store 再利用時 subscribe() |
 | [x] | RC-32 | 3675741933 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | gateUserId 空で preview 失敗<br>getAuth uid + 空 ID load 抑止 |
 
@@ -1218,7 +1218,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -1228,7 +1228,7 @@ Enterprise 版ではこの条件だけで注文画面をマウントするため
 
 **想定工数**: M
 
-**判断理由**: 指摘妥当。`profilePathResolvers.ts` に型追加 + user/enterprise cart shell から注入が必要。工数 M のため本セッションでは未実装。
+**判断理由**: 指摘妥当。`ResolveOrdersPathFn` を `profilePathResolvers.ts` に追加し、base cart は `resolveOrdersPath` props 経由で遷移。user / enterprise の cart shell と `getOrdersPathAfterOrder` で注入。
 
 ---
 
