@@ -86,6 +86,7 @@ const canShowOrders = computed(() => enterpriseId.value != null && isPreviewAcce
   <v-container v-else-if="previewError != null" class="d-flex align-center justify-center" style="min-height: 60vh">
     <p class="text-body-1 text-medium-emphasis">{{ $t('user_profile.failed_to_load') }}</p>
   </v-container>
+  <!-- navigateToEventChat 未注入: エンプラではイベントチャット導線を出さない（hide-share-sns と同様） -->
   <Orders
     v-else-if="canShowOrders"
     :profile-filter="profileFilter"

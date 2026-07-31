@@ -47,6 +47,9 @@
 | [x] | RC-41 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | usage パネル刷新後の未使用 i18n キー残存<br>`current_used` / `current_limit` / `history_used` |
 | [x] | RC-42 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | toEnterpriseMemberMonthlyUsageView の `monthly_user_paid ?? {}` が冗長<br>AppSchema default({}) で常に定義済み → 直接アクセスに修正 |
 | [x] | RC-43 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | リリース前確定注文の cancel で monthly_user_paid が未加算のまま減算されうる<br>Math.max(0,...) ガード + 仕様書に backfill 言及済みで許容 |
+| [x] | RC-44 | 5143396806 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | [userId].vue の v-if に profileOwnerUid 空チェックが冗長<br>isOwner に含まれるため削除 |
+| [x] | RC-45 | 5143396806 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | orders.vue の Dialog v-if が \|\| で setup の && と不整合<br>両方 null でないときのみマウントに揃えた |
+| [x] | RC-46 | 5143396806 | 👌 修正不要 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | エンプラ orders で navigateToEventChat 未注入<br>チャット導線不要の意図を template コメントで明示 |
 
 ---
 
@@ -1753,5 +1756,81 @@ const userId = loginUser.value?.user_id
 **想定工数**: —
 
 **判断理由**: 仕様書に既存データの扱い（0 表示 + batch 側 backfill）が明記済みで、減算は `Math.max(0, ...)` でガードされている。追加対応不要。
+
+---
+
+## 評価セッション（2026-07-31 · PR #2223 · wait-ai-pr-review auto · partial: Codex connect のみ）
+
+**REVIEW_REQUEST_SINCE**: 2026-07-31T13:23:38Z
+
+**スキップ**: 依頼定型文 1 件、Codex 接続案内 1 件。#2230 新規差分は Copilot が問題なし（RC 化なし）。
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-44 | 5143396806 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | profileOwnerUid 空チェック冗長 → v-if から削除 |
+| [x] | RC-45 | 5143396806 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | UserSuccessJoinEventDialog v-if を && に統一 |
+| [x] | RC-46 | 5143396806 | 👌 修正不要 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | navigateToEventChat 未注入意図をコメント追記 |
+
+**自動修正**: RC-44〜46 を同一ターンで反映（user/base/enterprise 3 ファイル + 本記録）。
+
+**識別子**: RC-44（GitHub id: 5143396806 · Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `user/src/pages/u/[userId].vue:102`
+
+**該当コード**:
+
+```html
+v-if="isOwner && hasCheckoutReturnQuery && profileOwnerUid !== ''"
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 [nits] `profileOwnerUid !== ''` が冗長（前回未修正）。`isOwner` が true なら常に true。
+
+**評価**: 🟡 修正提案 **ステータス**: ✅ 対応済み **PRスコープ**: 📌 スコープ内 **ラベル**: 📏 規約 **変更種別**: 🔧 微修正 **工数**: S
+
+**判断理由**: 指摘妥当。冗長条件を削除。
+
+---
+
+**識別子**: RC-45（GitHub id: 5143396806 · Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/pages/orders.vue:199`
+
+**該当コード**:
+
+```html
+v-if="userId !== '' && (route.query.eventId != null || route.query.communityAccount != null)"
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 [nits] v-if の `||` と初期化の `&&` が不整合。片方のみ query 時に空 store が走る可能性。
+
+**評価**: 🟡 修正提案 **ステータス**: ✅ 対応済み **PRスコープ**: 📌 スコープ内 **ラベル**: 🐛 実害 **変更種別**: 🔧 微修正 **工数**: S
+
+**判断理由**: setup / watch と同様 `eventId && communityAccount` のときのみマウントに揃えた。
+
+---
+
+**識別子**: RC-46（GitHub id: 5143396806 · Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `enterprise/src/pages/orders.vue:86`
+
+**レビュワーのコメント（原文）**:
+
+[ask] `navigateToEventChat` 未注入の意図確認。エンプラでチャット不要ならコメントで明示を。
+
+**評価**: 👌 修正不要 **ステータス**: ✅ 対応済み **PRスコープ**: 📌 スコープ内 **変更種別**: 📄 ドキュメントのみ **工数**: S
+
+**判断理由**: hide-share-sns と同様、意図を template コメントで明示。コード変更はコメントのみ。
 
 ---

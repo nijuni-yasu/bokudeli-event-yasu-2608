@@ -99,7 +99,7 @@ watch(
 <template>
   <UserProfilePage v-if="shouldShowProfile" :key="userId" :user-id="userId" />
   <UserSuccessJoinEventDialog
-    v-if="isOwner && hasCheckoutReturnQuery && profileOwnerUid !== ''"
+    v-if="isOwner && hasCheckoutReturnQuery"
     v-model="isUserSuccessJoinEventDialogVisible"
     :event-id="String(route.query.eventId ?? '')"
     :community-account="String(route.query.communityAccount ?? '')"
