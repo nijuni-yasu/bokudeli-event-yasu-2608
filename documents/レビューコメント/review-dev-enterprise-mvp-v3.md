@@ -44,6 +44,9 @@
 | [x] | RC-38 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | user /orders の navigateToEventChat が loginUser のみ<br>firebaseUser.uid フォールバック |
 | [x] | RC-39 | なし・エージェントレビュー | 👌 修正不要 | — | — | — | 👀 確認のみ | — | PF 完了モーダルを [userId] shell に移した重複<br>RC-27 同様 composable 化は任意 |
 | [x] | RC-40 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | UserAppSchema enterprise_id null→undefined<br>PF ZodError 解消・vitest 追加で妥当 |
+| [x] | RC-41 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | usage パネル刷新後の未使用 i18n キー残存<br>`current_used` / `current_limit` / `history_used` |
+| [x] | RC-42 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | toEnterpriseMemberMonthlyUsageView の `monthly_user_paid ?? {}` が冗長<br>AppSchema default({}) で常に定義済み → 直接アクセスに修正 |
+| [x] | RC-43 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | リリース前確定注文の cancel で monthly_user_paid が未加算のまま減算されうる<br>Math.max(0,...) ガード + 仕様書に backfill 言及済みで許容 |
 
 ---
 
@@ -1600,5 +1603,155 @@ const userId = loginUser.value?.user_id
 **想定工数**: —
 
 **判断理由**: Stripe 戻り時の User 読込 ZodError 解消に直結。backfill 不要（read 互換のみ）。
+
+---
+
+## 評価セッション（2026-07-31 22:05・shokujii-code-review）
+
+- **評価日時**: 2026-07-31 22:05 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: 未作成
+- **Outdated**: 該当なし
+- **レビュー非該当**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-41 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | usage パネル刷新後の未使用 i18n キー残存<br>`current_used` / `current_limit` / `history_used` |
+
+---
+
+**識別子**: RC-41（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/locales/messages/ja.ts:1011`
+
+**該当コード**:
+
+```typescript
+      current_used: '今月の利用額',
+      company_subsidy: '会社負担額',
+      user_paid: '自己負担額',
+      current_limit: '月額上限',
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `EnterpriseSubsidyUsagePanel.vue` の UI 刷新後、`current_used` / `current_limit` / `history_used` がテンプレートから参照されなくなった。`ja.ts` から削除するか、意図的に残すならコメントで理由を残すと dead key が増えない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `enterprise/src/locales/messages/ja.ts` から未参照の 3 キーを削除済み。
+
+---
+
+## 評価セッション（2026-07-31 22:12・shokujii-code-review）
+
+- **評価日時**: 2026-07-31 22:12 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: 未作成
+- **Outdated**: 該当なし
+- **レビュー非該当**: 該当なし
+- **レビュー対象**: `monthly_user_paid`（自己負担額）追加 + 利用状況パネル 1 カード化のステージ済み差分
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-42 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | toEnterpriseMemberMonthlyUsageView の `monthly_user_paid ?? {}` が冗長<br>AppSchema default({}) で常に定義済み → 直接アクセスに修正 |
+| [x] | RC-43 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | リリース前確定注文の cancel で monthly_user_paid が未加算のまま減算されうる<br>Math.max(0,...) ガード + 仕様書に backfill 言及済みで許容 |
+
+---
+
+**識別子**: RC-42（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/composable/enterpriseMemberMonthlyUsageHistory.ts:64`
+
+**該当コード**:
+
+```typescript
+  const userPaid = (member.monthly_user_paid ?? {})[currentMonth] ?? 0
+  // ...
+    history: buildMonthlyUsageHistory(
+      member.monthly_usage,
+      member.monthly_order_count,
+      member.monthly_user_paid ?? {},
+    ),
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `EnterpriseMember` は constructor で `EnterpriseMemberAppSchema.parse`（`monthly_user_paid` に `.default({})`）を通るため、`monthly_user_paid` は常に定義済み。同じ関数内の `monthly_usage` / `monthly_order_count` は直接アクセスしており、`?? {}` は冗長（チェックリスト「型で保証されているものを再チェックしない」）→ 直接アクセスに揃える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 3b の条件（📌 + S + 🔧 + 方針一意）を満たすため自動修正。`?? {}` を 2 箇所削除し、vitest 6 件（欠損時 0 のテスト含む）成功を確認。
+
+---
+
+**識別子**: RC-43（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/enterpriseSubsidyOrders.ts:363`
+
+**該当コード**:
+
+```typescript
+  const userPaidTotal = sumEnterpriseUserPaidAmounts(orders)
+  await adjustEnterpriseMemberMonthlyUsage(
+    enterpriseId,
+    userId,
+    eventMonth,
+    -subsidyTotal,
+    -orders.length,
+    -userPaidTotal,
+    transaction,
+  )
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: 本デプロイ前に確定した注文（`monthly_user_paid` 未加算）を cancel すると、同月内の他注文の加算分から自己負担額を誤って減算しうる → `Math.max(0, ...)` ガードで負値は防止済み。仕様書 §5.6.3 に「リリース前確定分は 0 表示のまま・backfill は `bokudeli-event-batch` で実施可」と明記されており、backfill 実施で整合する。エンプラ MVP は未リリースのため実害なし。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: 仕様書に既存データの扱い（0 表示 + batch 側 backfill）が明記済みで、減算は `Math.max(0, ...)` でガードされている。追加対応不要。
 
 ---
