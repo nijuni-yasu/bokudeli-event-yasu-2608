@@ -27,6 +27,26 @@ const CommunityBillSettingsDbSchema = CommunityBillSettingsAppSchema.transform((
 })
 export type CommunityBillSettingsType = z.infer<typeof CommunityBillSettingsAppSchema>
 
+export const MINIMUM_PARTICIPANTS_DEFAULT_COUNT = 3
+export const MINIMUM_PARTICIPANTS_DEFAULT_JUDGMENT_DAYS_BEFORE = 1
+
+export const MinimumParticipantsAppSchema = z.object({
+  enabled: z.literal(true),
+  count: z.number().int().min(1).max(5),
+  judgment_days_before: z.number().int().min(1).max(5),
+  judgment_datetime: EpochMillisSchema,
+  judgment_evaluated_at: EpochMillisSchema.optional(),
+})
+export type MinimumParticipantsType = z.infer<typeof MinimumParticipantsAppSchema>
+
+const MinimumParticipantsDbInnerSchema = z.object({
+  enabled: z.literal(true),
+  count: z.number().int().min(1).max(5),
+  judgment_days_before: z.number().int().min(1).max(5),
+  judgment_datetime: TimestampSchema,
+  judgment_evaluated_at: TimestampSchema.optional(),
+})
+
 /**
  * DB上に保存されるイベントステータス
  * 新しいステータスを追加した場合、以下の対応も必要:
@@ -117,6 +137,7 @@ export const EventDbSchema = z.object({
   enterprise_id: EnterpriseIdDbSchema,
   canceled_at: TimestampSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
+  minimum_participants: optionalDeleteField(MinimumParticipantsDbInnerSchema),
 })
 
 /** applying_reservation 遷移時に主催者連絡先を必須とするための追加バリデーション */
@@ -190,6 +211,7 @@ const EventAppSchema = z.object({
   enterprise_id: z.string().nullable().optional(),
   canceled_at: EpochMillisSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
+  minimum_participants: MinimumParticipantsAppSchema.optional(),
 })
 
 export const convertEventToDb = (event: Event, updated_by: string) => {
@@ -259,6 +281,7 @@ export class Event {
   sent_popular_event_mail_at?: number
   canceled_at?: number
   canceled_by?: string
+  minimum_participants?: MinimumParticipantsType
 
   constructor(id: string, src: Partial<Event>) {
     Object.assign(this, EventAppSchema.parse({ ...src, event_id: id }))
