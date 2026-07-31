@@ -170,6 +170,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
       ...(normalizedDepartment != null ? { department: normalizedDepartment } : {}),
       monthly_usage: {},
       monthly_order_count: {},
+      monthly_user_paid: {},
       created_at: now,
     })
 

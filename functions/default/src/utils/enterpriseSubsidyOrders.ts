@@ -313,12 +313,14 @@ export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
     )
   }
   const eventMonth = formatYearMonth(event.event_start_datetime)
+  const userPaidTotal = sumEnterpriseUserPaidAmounts(orders)
   await adjustEnterpriseMemberMonthlyUsage(
     enterpriseId,
     userId,
     eventMonth,
     replay.subsidyTotal,
     orders.length,
+    userPaidTotal,
     transaction,
   )
   for (const order of orders) {
@@ -344,6 +346,10 @@ export function sumEnterpriseSubsidyAmounts(orders: EventMemberOrder[]): number 
   return orders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
 }
 
+export function sumEnterpriseUserPaidAmounts(orders: EventMemberOrder[]): number {
+  return orders.reduce((sum, order) => sum + computeOrderSelfPayUnitAmount(order), 0)
+}
+
 /** cancelOrders: enterprise_subsidy の usage を減算 */
 export async function revertEnterpriseSubsidyUsageOnCancel(params: {
   enterpriseId: string
@@ -354,7 +360,16 @@ export async function revertEnterpriseSubsidyUsageOnCancel(params: {
 }): Promise<number> {
   const { enterpriseId, userId, eventMonth, orders, transaction } = params
   const subsidyTotal = sumEnterpriseSubsidyAmounts(orders)
-  await adjustEnterpriseMemberMonthlyUsage(enterpriseId, userId, eventMonth, -subsidyTotal, -orders.length, transaction)
+  const userPaidTotal = sumEnterpriseUserPaidAmounts(orders)
+  await adjustEnterpriseMemberMonthlyUsage(
+    enterpriseId,
+    userId,
+    eventMonth,
+    -subsidyTotal,
+    -orders.length,
+    -userPaidTotal,
+    transaction,
+  )
   return subsidyTotal
 }
 
@@ -388,12 +403,14 @@ export async function processEnterpriseSubsidyOrdersForWebhook(params: {
   const subsidyTotal = sumEnterpriseSubsidyAmounts(orders)
   if (ordersToConfirm.length > 0) {
     const eventMonth = formatYearMonth(event.event_start_datetime)
+    const userPaidToAdd = sumEnterpriseUserPaidAmounts(ordersToConfirm)
     await adjustEnterpriseMemberMonthlyUsage(
       enterpriseId,
       userId,
       eventMonth,
       subsidyToAdd,
       ordersToConfirm.length,
+      userPaidToAdd,
       transaction,
     )
     return {

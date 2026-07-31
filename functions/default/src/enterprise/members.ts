@@ -170,6 +170,7 @@ async function createSingleEnterpriseMember(
         department,
         monthly_usage: {},
         monthly_order_count: {},
+        monthly_user_paid: {},
         created_at: now,
       })
 
