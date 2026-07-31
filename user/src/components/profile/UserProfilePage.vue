@@ -31,6 +31,7 @@ import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
 import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline } from '@mdi/js'
 import type { UserFriendsSortBy } from '@shokujii/common/apis/userFriends.js'
+import { useDisplay } from 'vuetify'
 import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
 
 const props = defineProps<{
