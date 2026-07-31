@@ -223,6 +223,28 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "minimum_participants.enabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "minimum_participants.judgment_evaluated_at",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "event_end_datetime",
           "order": "ASCENDING"
         }

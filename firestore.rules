@@ -109,6 +109,40 @@ service cloud.firestore {
                 && request.resource.data.unread_count == 0
                 && request.resource.data.updated_at == request.time;
         }
+        function minimumParticipantsMapsEqual() {
+            return resource.data.get('minimum_participants', null)
+                == request.resource.data.get('minimum_participants', null);
+        }
+        function minimumParticipantsJudgmentEvaluatedAtUnchanged() {
+            let oldMp = resource.data.get('minimum_participants', null);
+            let newMp = request.resource.data.get('minimum_participants', null);
+            let oldEval = oldMp == null ? null : oldMp.get('judgment_evaluated_at', null);
+            let newEval = newMp == null ? null : newMp.get('judgment_evaluated_at', null);
+            return oldEval == newEval;
+        }
+        function minimumParticipantsEditableEventStatus() {
+            return resource.data.event_status.value == 'in_draft'
+                || resource.data.event_status.value == 'applying_reservation';
+        }
+        function resourceMinimumParticipantsAlreadyEvaluated() {
+            let oldMp = resource.data.get('minimum_participants', null);
+            return oldMp != null && oldMp.get('judgment_evaluated_at', null) != null;
+        }
+        function eventMinimumParticipantsCreateValid() {
+            let newMp = request.resource.data.get('minimum_participants', null);
+            let newEval = newMp == null ? null : newMp.get('judgment_evaluated_at', null);
+            return newEval == null;
+        }
+        function eventMinimumParticipantsManagerUpdateValid() {
+            return minimumParticipantsJudgmentEvaluatedAtUnchanged()
+                && (minimumParticipantsMapsEqual()
+                    || (minimumParticipantsEditableEventStatus()
+                        && !resourceMinimumParticipantsAlreadyEvaluated()));
+        }
+        function eventMinimumParticipantsWriteValid() {
+            return (resource == null && eventMinimumParticipantsCreateValid())
+                || (resource != null && eventMinimumParticipantsManagerUpdateValid());
+        }
         function hasValidChatMessageBody() {
             return 'body' in request.resource.data
                 && request.resource.data.body is string
@@ -212,12 +246,17 @@ service cloud.firestore {
                 allow read: if docEnterpriseId(resource.data) == null
                             || isSameEnterprise(resource.data);
                 // コミュマネ or サポートアカウントはイベントの作成・更新ができる
-                allow create, update: if isSupport()
+                allow create, update: if isSupport() && eventMinimumParticipantsWriteValid()
                 allow create, update: if isManager() && get(/databases/$(database)/documents/communities/$(community)).data.is_approved
+                                    && eventMinimumParticipantsWriteValid()
                 // コミュマネは下書きイベントの削除ができる
                 allow delete: if isManager() && get(/databases/$(database)/documents/communities/$(community)/events/$(event)).data.event_status.value == 'in_draft'
                 // 予約承認・予約却下などイベントステータスを店舗が変更できる
                 allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
+                            && minimumParticipantsMapsEqual()
+                match /system/{docId} {
+                    allow read, write: if false;
+                }
                 // 旧 orders（移行完了後に削除）
                 match /orders/{order} {
                     allow read, write: if false
