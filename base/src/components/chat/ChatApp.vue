@@ -13,6 +13,7 @@ import {
 import { isAllowedChatAttachmentMimeType } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { CHAT_SEND_MESSAGE_ERROR, useChatStore } from '@shokujii/base/stores/chat.js'
+import { useChatComposeDraftStore } from '@shokujii/base/stores/chatComposeDraft.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import type { ResolveChatRoomPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
@@ -43,8 +44,10 @@ const notification = useNotification()
 const vuetifyDisplays = useDisplay()
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar(vuetifyDisplays.smAndDown)
 const store = useChatStore()
+const composeDraftStore = useChatComposeDraftStore()
 const currentUserStore = useCurrentUserStore()
 const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? '')
+const lastComposeUserId = ref(currentUserId.value)
 
 const hasSpecifiedRoom = computed(() => props.roomId != null && props.roomId !== '')
 
@@ -91,6 +94,52 @@ const clearSelectedImages = (): void => {
   if (imageInputRef.value != null) {
     imageInputRef.value.value = ''
   }
+}
+
+const clearLocalComposeWithoutRevoke = (): void => {
+  msg.value = ''
+  selectedImages.value = []
+  if (imageInputRef.value != null) {
+    imageInputRef.value.value = ''
+  }
+}
+
+const persistComposeForRoom = (roomId: string | null): void => {
+  if (roomId == null) {
+    return
+  }
+  composeDraftStore.upsertDraft(roomId, {
+    body: msg.value,
+    attachments: selectedImages.value.map((image) => ({
+      id: image.id,
+      file: image.file,
+      previewUrl: image.previewUrl,
+    })),
+  })
+  clearLocalComposeWithoutRevoke()
+}
+
+const restoreComposeForRoom = (roomId: string | null): void => {
+  if (selectedImages.value.length > 0) {
+    clearSelectedImages()
+  } else {
+    msg.value = ''
+  }
+
+  if (roomId == null) {
+    return
+  }
+
+  const draft = composeDraftStore.getDraft(roomId)
+  if (draft == null) {
+    return
+  }
+  msg.value = draft.body
+  selectedImages.value = draft.attachments.map((attachment) => ({
+    id: attachment.id,
+    file: attachment.file,
+    previewUrl: attachment.previewUrl,
+  }))
 }
 
 const removeSelectedImage = (id: string): void => {
@@ -257,7 +306,6 @@ const openRoom = async (roomId: string) => {
     navigateToChatPath(roomId)
   }
   store.openRoom(roomId)
-  msg.value = ''
   if (vuetifyDisplays.smAndDown.value) {
     isLeftSidebarOpen.value = false
   }
@@ -282,6 +330,7 @@ const sendMessage = async () => {
     })
     msg.value = ''
     clearSelectedImages()
+    composeDraftStore.removeDraft(roomId)
     scrollToBottomInChatLog()
   } catch (error) {
     notification.show(resolveSendMessageErrorMessage(error), resolveSendMessageErrorVariant(error))
@@ -342,6 +391,30 @@ const onActiveRoomAvatarClick = () => {
   }
   emit('openEvent', { communityId: room.communityId, eventId: room.eventId })
 }
+
+watch(
+  () => currentUserId.value,
+  (userId) => {
+    if (lastComposeUserId.value === userId) {
+      return
+    }
+    composeDraftStore.clearAllDrafts()
+    clearSelectedImages()
+    msg.value = ''
+    lastComposeUserId.value = userId
+  },
+)
+
+watch(
+  () => store.activeRoomId,
+  (toRoomId, fromRoomId) => {
+    if (fromRoomId != null && fromRoomId !== toRoomId) {
+      persistComposeForRoom(fromRoomId)
+    }
+    restoreComposeForRoom(toRoomId)
+  },
+  { flush: 'sync', immediate: true },
+)
 
 watch(
   () => [store.membershipsLoaded, store.rooms, props.roomId, currentUserId.value] as const,
@@ -449,7 +522,7 @@ watch(
 
 onBeforeUnmount(() => {
   clearPendingRoomTimeout()
-  clearSelectedImages()
+  persistComposeForRoom(store.activeRoomId)
 })
 </script>
 
