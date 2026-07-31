@@ -13,6 +13,12 @@ import {
 import { isAllowedChatAttachmentMimeType } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { CHAT_SEND_MESSAGE_ERROR, useChatStore } from '@shokujii/base/stores/chat.js'
+import {
+  type ChatComposeDraft,
+  isChatComposeDraftEmpty,
+  isSameDraftContent,
+  useChatComposeDraftStore,
+} from '@shokujii/base/stores/chatComposeDraft.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import type { ResolveChatRoomPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
@@ -43,8 +49,10 @@ const notification = useNotification()
 const vuetifyDisplays = useDisplay()
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar(vuetifyDisplays.smAndDown)
 const store = useChatStore()
+const composeDraftStore = useChatComposeDraftStore()
 const currentUserStore = useCurrentUserStore()
 const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? '')
+composeDraftStore.syncOwnerUserId(currentUserId.value)
 
 const hasSpecifiedRoom = computed(() => props.roomId != null && props.roomId !== '')
 
@@ -79,6 +87,28 @@ const canAddMoreImages = computed(() => {
   return selectedImages.value.length < CHAT_ATTACHMENT_MAX_COUNT
 })
 
+const isComposeInputLocked = computed(() => {
+  if (isSending.value) {
+    return true
+  }
+  const roomId = store.activeRoomId
+  if (roomId == null) {
+    return false
+  }
+  return composeDraftStore.isInFlightSend(roomId)
+})
+
+const toComposeDraftFromLocal = (): ChatComposeDraft => {
+  return {
+    body: msg.value,
+    attachments: selectedImages.value.map((image) => ({
+      id: image.id,
+      file: image.file,
+      previewUrl: image.previewUrl,
+    })),
+  }
+}
+
 const revokeSelectedImagePreview = (image: SelectedImage): void => {
   URL.revokeObjectURL(image.previewUrl)
 }
@@ -91,6 +121,70 @@ const clearSelectedImages = (): void => {
   if (imageInputRef.value != null) {
     imageInputRef.value.value = ''
   }
+}
+
+const clearLocalComposeWithoutRevoke = (): void => {
+  msg.value = ''
+  selectedImages.value = []
+  if (imageInputRef.value != null) {
+    imageInputRef.value.value = ''
+  }
+}
+
+const persistComposeForRoom = (roomId: string | null): void => {
+  if (roomId == null) {
+    return
+  }
+  if (isSending.value && store.activeRoomId === roomId) {
+    return
+  }
+  if (composeDraftStore.isInFlightSend(roomId)) {
+    // in-flight 中は送信開始時の upsert で store 側が previewUrl を所有しているため、revoke せずにクリアする
+    clearLocalComposeWithoutRevoke()
+    return
+  }
+  composeDraftStore.upsertDraft(roomId, toComposeDraftFromLocal())
+  clearLocalComposeWithoutRevoke()
+}
+
+const restoreComposeForRoom = (roomId: string | null): void => {
+  if (roomId == null) {
+    clearSelectedImages()
+    msg.value = ''
+    return
+  }
+
+  const draft = composeDraftStore.getDraft(roomId)
+  const currentCompose = toComposeDraftFromLocal()
+
+  if (draft == null) {
+    clearSelectedImages()
+    msg.value = ''
+    return
+  }
+
+  if (isSameDraftContent(currentCompose, draft)) {
+    return
+  }
+
+  const keepPreviewUrls = new Set(draft.attachments.map((attachment) => attachment.previewUrl))
+  for (const image of selectedImages.value) {
+    if (!keepPreviewUrls.has(image.previewUrl)) {
+      revokeSelectedImagePreview(image)
+    }
+  }
+  selectedImages.value = []
+  msg.value = ''
+  if (imageInputRef.value != null) {
+    imageInputRef.value.value = ''
+  }
+
+  msg.value = draft.body
+  selectedImages.value = draft.attachments.map((attachment) => ({
+    id: attachment.id,
+    file: attachment.file,
+    previewUrl: attachment.previewUrl,
+  }))
 }
 
 const removeSelectedImage = (id: string): void => {
@@ -116,6 +210,9 @@ const validateImageFile = (file: File): string | null => {
 }
 
 const onImageSelected = (event: Event): void => {
+  if (isComposeInputLocked.value) {
+    return
+  }
   const input = event.target as HTMLInputElement
   const files = input.files
   if (files == null || files.length === 0) {
@@ -151,6 +248,9 @@ const onImageSelected = (event: Event): void => {
 }
 
 const openImagePicker = (): void => {
+  if (isComposeInputLocked.value) {
+    return
+  }
   if (!canAddMoreImages.value) {
     notification.show(t('chat.error.attachment_count_limit', { count: CHAT_ATTACHMENT_MAX_COUNT }), 'warning')
     return
@@ -257,7 +357,6 @@ const openRoom = async (roomId: string) => {
     navigateToChatPath(roomId)
   }
   store.openRoom(roomId)
-  msg.value = ''
   if (vuetifyDisplays.smAndDown.value) {
     isLeftSidebarOpen.value = false
   }
@@ -275,17 +374,29 @@ const sendMessage = async () => {
   if (!canSendMessage.value) return
 
   isSending.value = true
+  const sentRoomId = roomId
+  const sentCompose = toComposeDraftFromLocal()
+  composeDraftStore.upsertDraft(sentRoomId, sentCompose)
+  const sentDraftUpdatedAt = composeDraftStore.getDraftUpdatedAt(sentRoomId)
+  composeDraftStore.beginInFlightSend(sentRoomId)
   try {
-    await store.sendMessage(roomId, userId, {
-      body: msg.value,
-      imageFiles: selectedImages.value.map((image) => image.file),
+    await store.sendMessage(sentRoomId, userId, {
+      body: sentCompose.body,
+      imageFiles: sentCompose.attachments.map((attachment) => attachment.file),
     })
-    msg.value = ''
-    clearSelectedImages()
-    scrollToBottomInChatLog()
+    if (sentDraftUpdatedAt != null) {
+      composeDraftStore.removeDraftIfUpdatedAt(sentRoomId, sentDraftUpdatedAt)
+    }
+    if (store.activeRoomId === sentRoomId) {
+      if (isSameDraftContent(toComposeDraftFromLocal(), sentCompose)) {
+        clearLocalComposeWithoutRevoke()
+      }
+      scrollToBottomInChatLog()
+    }
   } catch (error) {
     notification.show(resolveSendMessageErrorMessage(error), resolveSendMessageErrorVariant(error))
   } finally {
+    composeDraftStore.endInFlightSend(sentRoomId)
     isSending.value = false
   }
 }
@@ -342,6 +453,49 @@ const onActiveRoomAvatarClick = () => {
   }
   emit('openEvent', { communityId: room.communityId, eventId: room.eventId })
 }
+
+watch(
+  () => currentUserId.value,
+  (userId) => {
+    composeDraftStore.syncOwnerUserId(userId)
+    clearSelectedImages()
+    msg.value = ''
+  },
+  { flush: 'sync' },
+)
+
+watch(
+  () => store.activeRoomId,
+  (toRoomId, fromRoomId) => {
+    if (fromRoomId != null && fromRoomId !== toRoomId) {
+      persistComposeForRoom(fromRoomId)
+    }
+    restoreComposeForRoom(toRoomId)
+  },
+  { flush: 'sync', immediate: true },
+)
+
+watch(
+  () => {
+    const roomId = store.activeRoomId
+    if (roomId == null) {
+      return false
+    }
+    return composeDraftStore.isInFlightSend(roomId)
+  },
+  (inFlight, wasInFlight) => {
+    if (wasInFlight === true && inFlight === false) {
+      const roomId = store.activeRoomId
+      if (roomId == null) {
+        return
+      }
+      if (!isChatComposeDraftEmpty(toComposeDraftFromLocal())) {
+        return
+      }
+      restoreComposeForRoom(roomId)
+    }
+  },
+)
 
 watch(
   () => [store.membershipsLoaded, store.rooms, props.roomId, currentUserId.value] as const,
@@ -449,7 +603,7 @@ watch(
 
 onBeforeUnmount(() => {
   clearPendingRoomTimeout()
-  clearSelectedImages()
+  persistComposeForRoom(store.activeRoomId)
 })
 </script>
 
@@ -547,6 +701,7 @@ onBeforeUnmount(() => {
             accept="image/png,image/jpeg,image/gif,image/webp"
             class="d-none"
             :aria-label="t('chat.attach_image')"
+            :disabled="isComposeInputLocked"
             @change="onImageSelected"
           />
 
@@ -559,6 +714,7 @@ onBeforeUnmount(() => {
               size="small"
               class="chat-compose-attach-btn flex-shrink-0"
               :aria-label="t('chat.attach_image')"
+              :disabled="isComposeInputLocked"
               @click="openImagePicker"
             >
               <VIcon :icon="mdiImageOutline" />
@@ -587,7 +743,7 @@ onBeforeUnmount(() => {
                       type="button"
                       class="chat-compose-remove"
                       :aria-label="t('chat.remove_attachment')"
-                      :disabled="isSending"
+                      :disabled="isComposeInputLocked"
                       @click="removeSelectedImage(image.id)"
                     >
                       <VIcon :icon="mdiClose" size="14" />
@@ -598,7 +754,7 @@ onBeforeUnmount(() => {
                     type="button"
                     class="chat-compose-add-btn rounded d-flex align-center justify-center"
                     :aria-label="t('chat.attach_image')"
-                    :disabled="isSending"
+                    :disabled="isComposeInputLocked"
                     @click="openImagePicker"
                   >
                     <VIcon :icon="mdiPlus" size="24" />
@@ -610,7 +766,7 @@ onBeforeUnmount(() => {
                 variant="plain"
                 class="chat-compose-input"
                 :placeholder="t('chat.message_placeholder')"
-                :disabled="store.activeRoom.isReadonly"
+                :disabled="store.activeRoom.isReadonly || isComposeInputLocked"
                 :maxlength="CHAT_MESSAGE_BODY_MAX_LENGTH"
                 :aria-label="t('chat.message_input_label')"
                 auto-grow
@@ -627,7 +783,7 @@ onBeforeUnmount(() => {
               color="primary"
               class="chat-compose-send-btn flex-shrink-0"
               :aria-label="t('chat.send')"
-              :disabled="store.activeRoom.isReadonly || isSending || !canSendMessage"
+              :disabled="store.activeRoom.isReadonly || isComposeInputLocked || !canSendMessage"
               :loading="isSending"
             >
               <VIcon :icon="mdiSend" />
