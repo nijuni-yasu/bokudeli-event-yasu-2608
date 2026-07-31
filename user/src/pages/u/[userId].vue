@@ -26,9 +26,7 @@ const isOwner = computed(() => profileOwnerUid.value !== '' && profileOwnerUid.v
 
 const shouldShowProfile = ref(true)
 
-const hasCheckoutReturnQuery = computed(
-  () => route.query.eventId != null && route.query.communityAccount != null,
-)
+const hasCheckoutReturnQuery = computed(() => route.query.eventId != null && route.query.communityAccount != null)
 
 const redirectFromLegacyOrdersRoutes = (): boolean => {
   if (!isOwner.value) {
@@ -48,12 +46,7 @@ const redirectFromLegacyOrdersRoutes = (): boolean => {
 }
 
 watch(
-  () =>
-    [
-      route.query.tab,
-      profileOwnerUid.value,
-      userId.value,
-    ] as const,
+  () => [route.query.tab, profileOwnerUid.value, userId.value] as const,
   () => {
     shouldShowProfile.value = !redirectFromLegacyOrdersRoutes()
   },
@@ -92,13 +85,7 @@ watch(
 )
 
 watch(
-  () =>
-    [
-      route.query.eventId,
-      route.query.communityAccount,
-      profileOwnerUid.value,
-      isOwner.value,
-    ] as const,
+  () => [route.query.eventId, route.query.communityAccount, profileOwnerUid.value, isOwner.value] as const,
   ([eventId, communityAccount, uid, owner]) => {
     if (!owner || uid === '') return
     if (eventId != null && communityAccount != null) {
