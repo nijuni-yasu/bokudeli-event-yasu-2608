@@ -107,6 +107,52 @@ export const getEnterpriseMemberInTransaction = async (
   return snapshot.exists ? snapshot.data() : undefined
 }
 
+export type EnterpriseMemberMonthlyUsageAdjustment = {
+  userId: string
+  eventMonth: string
+  subsidyDelta: number
+  orderCountDelta: number
+  userPaidDelta: number
+}
+
+/**
+ * 複数メンバーの monthly_usage / monthly_order_count / monthly_user_paid を Transaction 内で加減算（Math.max(0, ...) でガード）。
+ * Firestore Transaction は write 後の read を拒否するため、全メンバーを先に read してから write する。
+ */
+export const adjustEnterpriseMemberMonthlyUsageBulk = async (
+  enterpriseId: string,
+  adjustments: EnterpriseMemberMonthlyUsageAdjustment[],
+  transaction: Transaction,
+): Promise<void> => {
+  const memberRefs = adjustments.map((adjustment) => getEnterpriseMemberRef(enterpriseId, adjustment.userId))
+  const snapshots = await Promise.all(memberRefs.map((memberRef) => transaction.get(memberRef)))
+  for (const [index, adjustment] of adjustments.entries()) {
+    const memberRef = memberRefs[index]
+    const snapshot = snapshots[index]
+    if (memberRef == null || snapshot == null || !snapshot.exists) {
+      throw new Error(`EnterpriseMember not found: ${enterpriseId}/${adjustment.userId}`)
+    }
+    const member = snapshot.data()
+    if (member == null) {
+      throw new Error(`EnterpriseMember data is empty: ${enterpriseId}/${adjustment.userId}`)
+    }
+    const newUsage = Math.max(0, (member.monthly_usage[adjustment.eventMonth] ?? 0) + adjustment.subsidyDelta)
+    const newCount = Math.max(0, (member.monthly_order_count[adjustment.eventMonth] ?? 0) + adjustment.orderCountDelta)
+    const newUserPaid = Math.max(0, (member.monthly_user_paid[adjustment.eventMonth] ?? 0) + adjustment.userPaidDelta)
+    transaction.update(
+      memberRef,
+      new FieldPath('monthly_usage', adjustment.eventMonth),
+      newUsage,
+      new FieldPath('monthly_order_count', adjustment.eventMonth),
+      newCount,
+      new FieldPath('monthly_user_paid', adjustment.eventMonth),
+      newUserPaid,
+      'updated_at',
+      FieldValue.serverTimestamp(),
+    )
+  }
+}
+
 /** monthly_usage / monthly_order_count / monthly_user_paid を Transaction 内で加減算（Math.max(0, ...) でガード） */
 export const adjustEnterpriseMemberMonthlyUsage = async (
   enterpriseId: string,
@@ -117,28 +163,10 @@ export const adjustEnterpriseMemberMonthlyUsage = async (
   userPaidDelta: number,
   transaction: Transaction,
 ): Promise<void> => {
-  const memberRef = getEnterpriseMemberRef(enterpriseId, userId)
-  const snapshot = await transaction.get(memberRef)
-  if (!snapshot.exists) {
-    throw new Error(`EnterpriseMember not found: ${enterpriseId}/${userId}`)
-  }
-  const member = snapshot.data()
-  if (member == null) {
-    throw new Error(`EnterpriseMember data is empty: ${enterpriseId}/${userId}`)
-  }
-  const newUsage = Math.max(0, (member.monthly_usage[eventMonth] ?? 0) + subsidyDelta)
-  const newCount = Math.max(0, (member.monthly_order_count[eventMonth] ?? 0) + orderCountDelta)
-  const newUserPaid = Math.max(0, (member.monthly_user_paid[eventMonth] ?? 0) + userPaidDelta)
-  transaction.update(
-    memberRef,
-    new FieldPath('monthly_usage', eventMonth),
-    newUsage,
-    new FieldPath('monthly_order_count', eventMonth),
-    newCount,
-    new FieldPath('monthly_user_paid', eventMonth),
-    newUserPaid,
-    'updated_at',
-    FieldValue.serverTimestamp(),
+  await adjustEnterpriseMemberMonthlyUsageBulk(
+    enterpriseId,
+    [{ userId, eventMonth, subsidyDelta, orderCountDelta, userPaidDelta }],
+    transaction,
   )
 }
 
