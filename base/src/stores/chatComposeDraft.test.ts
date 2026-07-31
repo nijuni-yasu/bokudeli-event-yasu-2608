@@ -57,6 +57,25 @@ describe('useChatComposeDraftStore', () => {
     expect(revokeSpy).toHaveBeenCalledWith(previewUrl)
   })
 
+  it('removeDraftIfUpdatedAt removes only when updatedAt matches', () => {
+    const store = useChatComposeDraftStore()
+    const now = Date.now()
+    vi.spyOn(Date, 'now').mockImplementation(() => now)
+
+    store.upsertDraft('room-1', { body: 'sent', attachments: [] })
+    const revisionAtSend = store.getDraftUpdatedAt('room-1')
+    expect(revisionAtSend).toBe(now)
+
+    vi.spyOn(Date, 'now').mockImplementation(() => now + 1000)
+    store.upsertDraft('room-1', { body: 'new draft', attachments: [] })
+
+    store.removeDraftIfUpdatedAt('room-1', revisionAtSend!)
+    expect(store.getDraft('room-1')?.body).toBe('new draft')
+
+    store.removeDraftIfUpdatedAt('room-1', now + 1000)
+    expect(store.getDraft('room-1')).toBeUndefined()
+  })
+
   it('removeDraft revokes attachments', () => {
     const revokeSpy = vi.spyOn(URL, 'revokeObjectURL')
     const store = useChatComposeDraftStore()

@@ -120,11 +120,8 @@ const persistComposeForRoom = (roomId: string | null): void => {
 }
 
 const restoreComposeForRoom = (roomId: string | null): void => {
-  if (selectedImages.value.length > 0) {
-    clearSelectedImages()
-  } else {
-    msg.value = ''
-  }
+  clearSelectedImages()
+  msg.value = ''
 
   if (roomId == null) {
     return
@@ -325,13 +322,25 @@ const sendMessage = async () => {
   isSending.value = true
   const sentRoomId = roomId
   const sentBody = msg.value
-  const sentImageFiles = selectedImages.value.map((image) => image.file)
+  const sentAttachments = selectedImages.value.map((image) => ({
+    id: image.id,
+    file: image.file,
+    previewUrl: image.previewUrl,
+  }))
+  const sentImageFiles = sentAttachments.map((attachment) => attachment.file)
+  composeDraftStore.upsertDraft(sentRoomId, {
+    body: sentBody,
+    attachments: sentAttachments,
+  })
+  const sentDraftUpdatedAt = composeDraftStore.getDraftUpdatedAt(sentRoomId)
   try {
     await store.sendMessage(sentRoomId, userId, {
       body: sentBody,
       imageFiles: sentImageFiles,
     })
-    composeDraftStore.removeDraft(sentRoomId)
+    if (sentDraftUpdatedAt != null) {
+      composeDraftStore.removeDraftIfUpdatedAt(sentRoomId, sentDraftUpdatedAt)
+    }
     if (store.activeRoomId === sentRoomId) {
       msg.value = ''
       clearSelectedImages()
@@ -404,6 +413,7 @@ watch(
     clearSelectedImages()
     msg.value = ''
   },
+  { flush: 'sync' },
 )
 
 watch(

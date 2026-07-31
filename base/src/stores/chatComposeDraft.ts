@@ -117,7 +117,20 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
     return cloneDraftForRead(stored)
   }
 
+  const getDraftUpdatedAt = (roomId: string): number | undefined => {
+    return draftsByRoomId.value.get(roomId)?.updatedAt
+  }
+
   const removeDraft = (roomId: string): void => {
+    removeDraftEntry(roomId)
+  }
+
+  /** 送信完了時など、store 上の下書きが送信開始時点のリビジョンのままのときだけ削除する */
+  const removeDraftIfUpdatedAt = (roomId: string, updatedAt: number): void => {
+    const stored = draftsByRoomId.value.get(roomId)
+    if (stored == null || stored.updatedAt !== updatedAt) {
+      return
+    }
     removeDraftEntry(roomId)
   }
 
@@ -151,7 +164,9 @@ export const useChatComposeDraftStore = defineStore('chatComposeDraft', () => {
   return {
     upsertDraft,
     getDraft,
+    getDraftUpdatedAt,
     removeDraft,
+    removeDraftIfUpdatedAt,
     clearAllDrafts,
     syncOwnerUserId,
   }

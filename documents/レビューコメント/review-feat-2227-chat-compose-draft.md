@@ -8,6 +8,10 @@
 | [x] | RC-2 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | upsertDraft が既存添付を無条件 revoke し同一 previewUrl が無効化<br>ルーム往復で添付プレビューが壊れる。残す URL のみ revoke する |
 | [x] | RC-3 | 3689537597 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | ChatApp 未マウント中の UID 変更で他ユーザー下書きが残る<br>store に ownerUserId と syncOwnerUserId を追加 |
 | [x] | RC-4 | 3689537606 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 送信 await 中のルーム切替で B の compose が消える<br>送信元 roomId のみ draft 削除・表示 clear |
+| [x] | RC-5 | 3689651021 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 遅延送信完了が同一ルームの新下書きまで removeDraft する<br>updatedAt 一致時のみ削除 |
+| [x] | RC-6 | 5141570613 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | restoreComposeForRoom の msg/images クリアが非対称<br>常に両方クリアしてから復元 |
+| [x] | RC-7 | 5141570613 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Date.now() を LRU 用に使用（Copilot 規約指摘）<br>表示・TZ 非依存の内部メタのみ |
+| [x] | RC-8 | 5141570613 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | currentUserId watch に flush 未指定<br>activeRoomId と同様 sync で意図を明確化 |
 
 ---
 
@@ -239,5 +243,207 @@ Useful? React with 👍 / 👎.
 **想定工数**: S
 
 **判断理由**: ルーム切替と await の競合で再現可能なデータ消失。送信元ルームにスコープを限定すれば解消。
+
+---
+
+## 評価セッション（2026-07-31 19:16・review-comments-evaluate）
+
+- **評価日時**: 2026-07-31 19:16 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` manual）
+- **ブランチ名**: feat/2227-chat-compose-draft
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2228
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 5（レビュー依頼定型文 5141508546、Codex 接続案内 5141571594、Copilot overview 4827341950、Codex Review ボイラープレート 4827354827・4827520018）
+- **重複除外**: GitHub id 3689537597・3689537606（既存 RC-3/RC-4）
+- **手順 4a 自動修正**: RC-5・RC-6・RC-8
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-5 | 3689651021 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 遅延送信完了が同一ルームの新下書きまで removeDraft する<br>updatedAt 一致時のみ削除 |
+| [x] | RC-6 | 5141570613 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | restoreComposeForRoom の msg/images クリアが非対称<br>常に両方クリアしてから復元 |
+| [x] | RC-7 | 5141570613 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Date.now() を LRU 用に使用（Copilot 規約指摘）<br>表示・TZ 非依存の内部メタのみ |
+| [x] | RC-8 | 5141570613 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | currentUserId watch に flush 未指定<br>activeRoomId と同様 sync で意図を明確化 |
+
+---
+
+**識別子**: RC-5（GitHub id: 3689651021）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:334`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -275,14 +323,20 @@ const sendMessage = async () => {
+   if (!canSendMessage.value) return
+ 
+   isSending.value = true
++  const sentRoomId = roomId
++  const sentBody = msg.value
++  const sentImageFiles = selectedImages.value.map((image) => image.file)
+   try {
+-    await store.sendMessage(roomId, userId, {
+-      body: msg.value,
+-      imageFiles: selectedImages.value.map((image) => image.file),
++    await store.sendMessage(sentRoomId, userId, {
++      body: sentBody,
++      imageFiles: sentImageFiles,
+     })
+-    msg.value = ''
+-    clearSelectedImages()
+-    scrollToBottomInChatLog()
++    composeDraftStore.removeDraft(sentRoomId)
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  送信後に新しい同一ルーム下書きを削除しないでください**
+
+画像アップロードなどでルーム A の送信が pending の間に A→B→A と切り替え、A の本文・添付を更新して再び B へ移ると、2 回目の離脱で新しい A の下書きが保存されますが、古い送信の完了時にこの無条件の `removeDraft(sentRoomId)` がその新しい版まで削除し、添付の blob URL も revoke します。RC-4 対応後にも残る新しい根拠は、`activeRoomId` の確認が表示中入力の clear だけを保護し、送信開始後に作られた同一ルームの下書きを識別していない点です。送信開始時の下書きリビジョンを保持し、一致する場合だけ削除してください。
+
+AGENTS.md reference: [AGENTS.md:L241-L244](https://github.com/nijuniinc/bokudeli-event-new/blob/bab518abd443f802263c47c909852dbd137a2ea2/AGENTS.md#L241-L244)
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: RC-4 修正後も、遅延した送信成功が store 上の**新しい**同一ルーム下書きを無条件削除する。<br>送信開始時の `updatedAt` を控え、一致時のみ `removeDraftIfUpdatedAt` する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 再現シナリオは妥当。P2 だが同一ルーム下書き消失は RC-4 と同系統。リビジョン照合が最小修正。
+
+---
+
+**識別子**: RC-6（GitHub id: 5141570613・Copilot トップレベル内指摘 1）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:122`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const restoreComposeForRoom = (roomId: string | null): void => {
++  if (selectedImages.value.length > 0) {
++    clearSelectedImages()
++  } else {
++    msg.value = ''
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+**🟡 修正提案: `restoreComposeForRoom` のクリア処理が非対称**
+
+`selectedImages.value.length > 0` の分岐では `msg.value` がクリアされません。現在のコールパスでは `persistComposeForRoom` → `clearLocalComposeWithoutRevoke` で事前にクリアされるため実動作上は問題ないですが、`restoreComposeForRoom` 単独で見ると「画像がある場合、下書きがない新しいルームへ切り替えると `msg.value` が残る」という fragile な構造です。
+
+より堅牢にするため、両者を独立してクリアする形を推奨します。
+
+**コメント要約**: restore 前のローカル compose クリアが msg と images で排他的。<br>常に両方クリアしてから下書き復元する方が安全。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 現行コールパスでは顕在化しにくいが、将来の呼び出し変更に弱い。Copilot 提案どおり独立クリアが一意。
+
+---
+
+**識別子**: RC-7（GitHub id: 5141570613・Copilot トップレベル内指摘 2）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/chatComposeDraft.ts:106`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      updatedAt: Date.now(),
+```
+
+**レビュワーのコメント（原文）**:
+
+**🟡 修正提案: `Date.now()` の使用**
+
+チェックリスト「`Date` オブジェクトを直接使っていないか（`luxon` を使う）」に該当します。LRU 順序の比較のみに使うため表示・タイムゾーン依存は生じませんが、`luxon` の `DateTime.now().toMillis()` で統一する方がプロジェクト規約に沿います。
+
+**コメント要約**: LRU 用 epoch に `Date.now()` を使用。<br>luxon 統一を Copilot が提案。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: チェックリストの Date/luxon 指摘は主に表示・日時正規化向け。ここは Pinia 内 LRU 比較専用の number で `Date` オブジェクトは使っていない。base stores に luxon 先例もなく、依存追加のメリットが小さい。
+
+---
+
+**識別子**: RC-8（GitHub id: 5141570613・Copilot トップレベル内指摘 3）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/chat/ChatApp.vue:400`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++watch(
++  () => currentUserId.value,
++  (userId) => {
++    composeDraftStore.syncOwnerUserId(userId)
++    clearSelectedImages()
++    msg.value = ''
++  },
++)
+```
+
+**レビュワーのコメント（原文）**:
+
+**🟡 修正提案: `currentUserId` watch の `flush` 設定**
+
+`store.activeRoomId` の watch は `flush: 'sync'` で即時実行されます。アカウント切替と同時に `activeRoomId` が変化するケースでは、`activeRoomId` watch（sync）が `currentUserId` watch（pre）より先に実行され、`persistComposeForRoom` で古いユーザーの下書きが一時保存されてから `clearAllDrafts` で削除されます。機能的には問題ないですが、意図としてはアカウント変更検知を先に処理したい場合は `flush: 'sync'` を合わせる方が設計の意図が明確です。
+
+**コメント要約**: UID watch が default pre のため activeRoomId sync より後に走り得る。<br>`flush: 'sync'` でアカウント切替処理の順序意図を明確化。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 機能上は clear で整合するが、watch 順序の読みやすさ向上。S 工数で `flush: 'sync'` 追加は妥当。
 
 ---
