@@ -24,8 +24,12 @@ const community = ref(
 const isLoading = ref(false)
 
 const validateNewAccount = async (value: string) => {
-  const community = await communityListStore.getCommunityData(value)
-  return community == null
+  const enterpriseId = enterpriseStore.enterprise?.enterprise_id
+  if (enterpriseId == null || enterpriseId === '') {
+    return false
+  }
+  const existing = await communityListStore.getCommunityData(value, { enterpriseId })
+  return existing == null
 }
 
 const submit = async () => {

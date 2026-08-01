@@ -13,13 +13,16 @@ import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMenuList from '@shokujii/base/components/EventMenuList.vue'
 import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import type { CommunityStore } from '@shokujii/base/stores/community.js'
+import {
+  useEnterpriseCommunityMemberFlags,
+  useEnterpriseCommunityStore,
+} from '@/composable/useEnterpriseCommunityStore'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
-import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
@@ -38,7 +41,7 @@ if (enterpriseId.value == null) {
 }
 
 const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
-const communityStore = useCommunityStore(communityAccount) as CommunityStore
+const communityStore = useEnterpriseCommunityStore(communityAccount) as CommunityStore
 const eventEnterpriseId = computed(() => eventStore.event?.enterprise_id)
 const communityEnterpriseId = computed(() => communityStore.community?.enterprise_id)
 const { isTenantMismatch } = useEnterpriseTenantGuard([eventEnterpriseId, communityEnterpriseId])
@@ -53,7 +56,7 @@ const menuListRef = ref()
 let menuListObserver: IntersectionObserver | null = null
 
 // 共通の composable を使用してサポートアカウントのロール拡張を考慮（isManager のみ使用）
-const { isManager } = useCommunityMemberFlags(communityAccount)
+const { isManager } = useEnterpriseCommunityMemberFlags(communityAccount)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 

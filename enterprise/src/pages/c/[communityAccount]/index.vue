@@ -6,12 +6,14 @@ import { getEventPath, getManageCommunityPath, getLogin } from '@/router/utils'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useCommunityStore } from '@shokujii/base/stores/community'
+import {
+  useEnterpriseCommunityMemberFlags,
+  useEnterpriseCommunityStore,
+} from '@/composable/useEnterpriseCommunityStore'
 
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import type { EventStore, BokudeliEventMember } from '@shokujii/base/stores/event.js'
-import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useEventListStore } from '@shokujii/base/stores/eventList'
 import { where, orderBy } from 'firebase/firestore'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
@@ -30,14 +32,14 @@ if (enterpriseId.value == null) {
   throw new Error('Enterprise is not resolved')
 }
 
-const communityStore = useCommunityStore(communityAccount)
+const communityStore = useEnterpriseCommunityStore(communityAccount)
 
 const communityEnterpriseId = computed(() => communityStore.community?.enterprise_id)
 const { isTenantMismatch } = useEnterpriseTenantGuard([communityEnterpriseId])
 
 const userStore = useCurrentUserStore()
 
-const { isMember, isManager } = useCommunityMemberFlags(communityAccount)
+const { isMember, isManager } = useEnterpriseCommunityMemberFlags(communityAccount)
 
 // イベントリストストアを作成（ページサイズ6件）
 const eventListStore = computed(() =>

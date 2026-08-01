@@ -4,7 +4,7 @@ definePage({
     navActiveLink: '/manage/community/',
   },
 })
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useEnterpriseCommunityStore } from '@/composable/useEnterpriseCommunityStore'
 import CommunityHeader from '@shokujii/base/components/manage/community/CommunityHeader.vue'
 import CommunityEventsPanel from '@shokujii/base/components/manage/community/CommunityEventsPanel.vue'
 import CommunityMemberTable from '@shokujii/base/components/manage/community/CommunityMemberTable.vue'
@@ -30,7 +30,7 @@ type Tabs = (typeof tabs)[number]
 
 const communityAccount = useRoute().params.communityAccount as string
 const tabName = useRoute().params.tab as string
-const communityStore = useCommunityStore(communityAccount)
+const communityStore = useEnterpriseCommunityStore(communityAccount)
 const community = computed(() => communityStore.community)
 
 const tab = ref<Tabs>(tabs.find((t) => t === tabName) ?? tabs[0])

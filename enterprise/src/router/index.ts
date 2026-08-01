@@ -1,7 +1,8 @@
 import { type User, getAuth, onAuthStateChanged } from 'firebase/auth'
 import type { Router } from 'vue-router'
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useEnterpriseCommunityStore } from '@/composable/useEnterpriseCommunityStore'
+import type { CommunityStore } from '@shokujii/base/stores/community.js'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import {
   useEventStore,
@@ -170,7 +171,7 @@ export const setupRouter = (router: Router) => {
     }
     if (communityAccount != null) {
       const configStore = useConfigStore()
-      const communityStore = useCommunityStore(communityAccount) as CommunityStore
+      const communityStore = useEnterpriseCommunityStore(communityAccount) as CommunityStore
       const canView = await new Promise<boolean>((resolve) => {
         let unwatch: (() => void) | undefined
         unwatch = watch(

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@shokujii/base/firebase.js'
 import { getEventCreatePath, getManageEventPath } from '@/router/utils'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useEnterpriseCommunityStore } from '@/composable/useEnterpriseCommunityStore'
 import { useCommunityListStore, type CommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { getAuth } from 'firebase/auth'
 import { doc, orderBy, where } from 'firebase/firestore'
@@ -70,7 +70,7 @@ watch(communityList, (list) => {
   }
 })
 const community = computed(() =>
-  communityAccount.value == null ? null : useCommunityStore(communityAccount.value).community,
+  communityAccount.value == null ? null : useEnterpriseCommunityStore(communityAccount.value).community,
 )
 
 const eventListStore = computed(() =>

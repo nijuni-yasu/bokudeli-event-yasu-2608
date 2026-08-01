@@ -5,7 +5,7 @@ definePage({
   },
 })
 import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useEnterpriseCommunityStore } from '@/composable/useEnterpriseCommunityStore'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CopyEventDialog from '@shokujii/base/components/manage/community/CopyEventDialog.vue'
@@ -50,7 +50,7 @@ provide(injectionKeyEventEditHostActive, isSettingsTabActive)
 const communityStore = computed(() => {
   const account = eventStore.event?.community_account
   if (account) {
-    return useCommunityStore(account)
+    return useEnterpriseCommunityStore(account)
   }
   return null
 })

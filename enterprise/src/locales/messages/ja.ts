@@ -240,7 +240,8 @@ export default {
       load_failed: 'メンバー一覧の取得に失敗しました',
       import_title: 'アカウント一括作成',
       import_description: 'CSVでメンバーを一括作成します。',
-      import_format: 'CSV形式: email, display_name（氏名）, department, role（role は admin または member。省略時 member）',
+      import_format:
+        'CSV形式: email, display_name（氏名）, department, role（role は admin または member。省略時 member）',
       import_failed: '一括作成に失敗しました',
     },
     communities: {
