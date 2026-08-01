@@ -52,6 +52,8 @@
 | [x] | RC-46 | 5143396806 | 👌 修正不要 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | エンプラ orders で navigateToEventChat 未注入<br>チャット導線不要の意図を template コメントで明示 |
 | [x] | RC-47 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | 当月行挿入後に履歴が 12 件超えうる<br>EP-22 に合わせ slice(0, 12) を再適用 |
 | [x] | RC-48 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | settings_note の「最も先」が曖昧<br>「最も新しい開催月」に修正 |
+| [x] | RC-49 | 5151102953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterprise router / イベント詳細の冗長 as CommunityStore<br>戻り値型注釈済みのためキャスト削除 |
+| [x] | RC-50 | 5151102953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useCommunityMemberFlags の catch が console.error のみ<br>reportClientError severity warn を追加 |
 
 ---
 
@@ -1908,5 +1910,103 @@ v-if="userId !== '' && (route.query.eventId != null || route.query.communityAcco
 **想定工数**: S
 
 **判断理由**: i18n 文案のみ修正。
+
+---
+
+## 評価セッション（2026-08-01 20:47・review-comments-evaluate）
+
+- **評価日時**: 2026-08-01 20:47 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **REVIEW_REQUEST_SINCE**: 2026-08-01T10:44:42Z
+- **partial**: true（Codex は no_issues のみ。connect 案内ボイラープレートあり。実質レビューは Copilot トップレベル）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（依頼定型文 5151078763、Codex no_issues 5151102480、Copilot 承知・対応確認のみ部分は RC 化せず、connect 案内 5151103278）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-49 | 5151102953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterprise router / イベント詳細の冗長 as CommunityStore<br>キャスト削除 |
+| [x] | RC-50 | 5151102953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useCommunityMemberFlags catch に reportClientError warn<br>community store と揃えた |
+
+---
+
+**識別子**: RC-49（GitHub id: 5151102953）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `enterprise/src/router/index.ts:174` / `enterprise/src/pages/c/[communityAccount]/e/[eventId]/index.vue:44`
+
+**レビュワーのコメント（原文）**:
+
+### 🟡 [nits] `router/index.ts:174` / `c/[communityAccount]/e/[eventId]/index.vue:44` — 冗長な `as CommunityStore` キャスト
+
+```ts
+const communityStore = useEnterpriseCommunityStore(communityAccount) as CommunityStore
+```
+
+`useEnterpriseCommunityStore()` の戻り値型は明示的に `CommunityStore` と注釈されているため、`as CommunityStore` は冗長です。削除できます。
+
+**該当コード**:
+
+```ts
+const communityStore = useEnterpriseCommunityStore(communityAccount) as CommunityStore
+```
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: ラッパー戻り値型が CommunityStore のためキャストは不要。該当2箇所と未使用 import を削除。
+
+---
+
+**識別子**: RC-50（GitHub id: 5151102953）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/composable/useCommunityMemberFlags.ts:60`
+
+**レビュワーのコメント（原文）**:
+
+### 🟡 [nits] `base/src/composable/useCommunityMemberFlags.ts:60` — `console.error` のみで `reportClientError` 未使用
+
+```ts
+} catch (error) {
+  console.error('Failed to get current user roles:', error)
+```
+
+既存の `community.ts` では同様の catch 節で `reportClientError(err, { severity: 'warn' })` を使っています。一貫性のため `reportClientError` に揃えることを推奨します（`getCurrentUserRoles` 失敗は fatal ではないので `severity: 'warn'` が適切）。
+
+**該当コード**:
+
+```ts
+    } catch (error) {
+      console.error('Failed to get current user roles:', error)
+```
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: ロール取得失敗はフォールバックで継続するため warn で reportClientError を追加。
 
 ---

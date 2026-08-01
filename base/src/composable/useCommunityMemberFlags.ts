@@ -1,6 +1,7 @@
 import { ref, watchEffect, computed, type Ref } from 'vue'
-import { useCommunityStore, type CommunityStore, type CommunityStoreScope } from '@shokujii/base/stores/community'
+import { useCommunityStore, type CommunityStoreScope } from '@shokujii/base/stores/community'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 
 /**
  * コミュニティのメンバーシップフラグを計算する composable
@@ -13,7 +14,7 @@ export const useCommunityMemberFlags = (
   communityAccount: string,
   scope?: CommunityStoreScope,
 ): { isMember: Ref<boolean>; isManager: Ref<boolean> } => {
-  const communityStore = useCommunityStore(communityAccount, scope) as CommunityStore
+  const communityStore = useCommunityStore(communityAccount, scope)
   const currentUserStore = useCurrentUserStore()
   const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? null)
 
@@ -58,6 +59,7 @@ export const useCommunityMemberFlags = (
     } catch (error) {
       // エラーが発生した場合、community.members/community.managers のみを使用
       console.error('Failed to get current user roles:', error)
+      reportClientError(error, { severity: 'warn' })
       isMember.value = isMemberFromCommunity
       isManager.value = isManagerFromCommunity
     }

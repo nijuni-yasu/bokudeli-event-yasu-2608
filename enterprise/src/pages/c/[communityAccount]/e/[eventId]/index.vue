@@ -13,7 +13,6 @@ import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMenuList from '@shokujii/base/components/EventMenuList.vue'
 import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
-import type { CommunityStore } from '@shokujii/base/stores/community.js'
 import {
   useEnterpriseCommunityMemberFlags,
   useEnterpriseCommunityStore,
@@ -41,7 +40,7 @@ if (enterpriseId.value == null) {
 }
 
 const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
-const communityStore = useEnterpriseCommunityStore(communityAccount) as CommunityStore
+const communityStore = useEnterpriseCommunityStore(communityAccount)
 const eventEnterpriseId = computed(() => eventStore.event?.enterprise_id)
 const communityEnterpriseId = computed(() => communityStore.community?.enterprise_id)
 const { isTenantMismatch } = useEnterpriseTenantGuard([eventEnterpriseId, communityEnterpriseId])
