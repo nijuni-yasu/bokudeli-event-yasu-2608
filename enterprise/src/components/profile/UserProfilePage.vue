@@ -39,6 +39,7 @@ const props = defineProps<{
   userId: string
 }>()
 
+const route = useRoute()
 const profileUserId = props.userId
 const display = useDisplay()
 
@@ -75,7 +76,9 @@ const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
 })
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
 
-const friendSortBy = ref<UserFriendsSortBy>('meet_count')
+const friendSortBy = ref<UserFriendsSortBy>(
+  String(route.query.sort ?? '') === 'last_met_at' ? 'last_met_at' : 'meet_count',
+)
 
 const {
   USER_PROFILE_FRIEND_PREVIEW_AVATAR_SIZE,
@@ -103,7 +106,7 @@ const profileFriendsPreviewMaxTotal = computed(() => {
 
 const { tabs, goToTab, isFriendTab } = useUserProfileTabSync({
   profileUserId,
-  syncFriendSortToUrl: false,
+  syncFriendSortToUrl: true,
   friendSortBy,
   loginUserId: computed(() => loginUser.value?.user_id),
   onTabChanged: (tab) => {
@@ -148,6 +151,11 @@ const {
 
 const counts = computed(() => previewData.value?.counts ?? null)
 const isProfilePreviewInitialLoading = computed(() => previewLoading.value && previewData.value == null)
+
+const friendSortItems = computed(() => [
+  { title: $t('user.friend_sort_meet_count'), value: 'meet_count' as UserFriendsSortBy },
+  { title: $t('user.friend_sort_last_met_at'), value: 'last_met_at' as UserFriendsSortBy },
+])
 
 const profileStatRows = computed((): UserProfileStatRow[] => {
   const c = counts.value
@@ -324,8 +332,7 @@ const goToTabFromStat = (tab: UserProfileTabKey) => {
         <v-window-item :value="USER_PROFILE_TAB_FRIENDS">
           <UserProfileFriendsTabPanel
             v-model="friendSortBy"
-            sort-ui="toggle"
-            :friend-sort-items="[]"
+            :friend-sort-items="friendSortItems"
             :show-sort-toggle="showFriendSortToggle"
             :active-friends="activeFriends"
             :active-user-friends-store="activeUserFriendsStore"
