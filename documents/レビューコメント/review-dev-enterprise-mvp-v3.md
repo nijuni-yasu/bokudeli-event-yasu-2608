@@ -50,6 +50,8 @@
 | [x] | RC-44 | 5143396806 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | [userId].vue の v-if に profileOwnerUid 空チェックが冗長<br>isOwner に含まれるため削除 |
 | [x] | RC-45 | 5143396806 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | orders.vue の Dialog v-if が \|\| で setup の && と不整合<br>両方 null でないときのみマウントに揃えた |
 | [x] | RC-46 | 5143396806 | 👌 修正不要 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | エンプラ orders で navigateToEventChat 未注入<br>チャット導線不要の意図を template コメントで明示 |
+| [x] | RC-47 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | 当月行挿入後に履歴が 12 件超えうる<br>EP-22 に合わせ slice(0, 12) を再適用 |
+| [x] | RC-48 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | settings_note の「最も先」が曖昧<br>「最も新しい開催月」に修正 |
 
 ---
 
@@ -1832,5 +1834,79 @@ v-if="userId !== '' && (route.query.eventId != null || route.query.communityAcco
 **評価**: 👌 修正不要 **ステータス**: ✅ 対応済み **PRスコープ**: 📌 スコープ内 **変更種別**: 📄 ドキュメントのみ **工数**: S
 
 **判断理由**: hide-share-sns と同様、意図を template コメントで明示。コード変更はコメントのみ。
+
+---
+
+## 評価セッション（2026-07-31 23:09・shokujii-code-review）
+
+**評価日時**: 2026-07-31 23:09 JST  
+**ブランチ名**: dev/enterprise-mvp-v3  
+**PR**: #2223
+
+利用状況 UI 再構成（会社設定ブロック + テーブル上限・残り）の未コミット差分をセルフレビュー。
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-47 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 🔧 微修正 | S | 当月挿入で 13 行になりうる → 12 件に再 slice |
+| [x] | RC-48 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | settings_note 文言を「最も新しい開催月」に |
+
+**識別子**: RC-47（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/composable/enterpriseMemberMonthlyUsageHistory.ts:135`
+
+**該当コード**:
+
+```typescript
+  const withCurrentMonth = ensureCurrentMonthInHistory(rawHistory, currentMonth)
+  const history = applyBudgetColumnsToHistory(withCurrentMonth, currentMonth, monthlyLimit)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案**: `ensureCurrentMonthInHistory` で rawHistory（最大 12 件）に当月を足すと 13 件になり EP-22 に反する。挿入後に `slice(0, 12)` すること。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `HISTORY_MAX_MONTHS` 定数と `trimmedHistory` で再 slice。vitest で 12 件上限を追加。
+
+---
+
+**識別子**: RC-48（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/locales/messages/ja.ts`（`user_profile.usage.settings_note`）
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案**: 「最も先の開催月」は未来方向の意味が曖昧。仕様書どおり「最も新しい開催月」に揃える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: i18n 文案のみ修正。
 
 ---

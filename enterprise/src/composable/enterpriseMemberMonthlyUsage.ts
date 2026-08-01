@@ -11,7 +11,13 @@ export type {
   EnterpriseMemberMonthlyUsageHistoryRow,
   EnterpriseMemberMonthlyUsageView,
 } from './enterpriseMemberMonthlyUsageHistory.js'
-export { buildMonthlyUsageHistory, toEnterpriseMemberMonthlyUsageView } from './enterpriseMemberMonthlyUsageHistory.js'
+export {
+  applyBudgetColumnsToHistory,
+  buildMonthlyUsageHistory,
+  compareYearMonth,
+  formatYearMonthLabel,
+  toEnterpriseMemberMonthlyUsageView,
+} from './enterpriseMemberMonthlyUsageHistory.js'
 
 /** 利用状況タブ表示可否（monthly_limit_per_user が設定されているか） */
 export async function fetchEnterpriseUsageTabEligible(userId: string): Promise<boolean> {
@@ -46,7 +52,15 @@ export async function fetchEnterpriseMemberMonthlyUsage(
       return null
     }
     const currentMonth = formatYearMonth(Date.now())
-    return toEnterpriseMemberMonthlyUsageView(member, limit, currentMonth)
+    return toEnterpriseMemberMonthlyUsageView(
+      member,
+      {
+        monthlyLimit: limit,
+        discountType: enterprise.discount_type,
+        discountValue: enterprise.discount_value,
+      },
+      currentMonth,
+    )
   } catch (error) {
     console.warn('Failed to load enterprise member monthly usage', error)
     reportClientError(error, { componentInfo: 'enterpriseMemberMonthlyUsage', severity: 'warn' })
