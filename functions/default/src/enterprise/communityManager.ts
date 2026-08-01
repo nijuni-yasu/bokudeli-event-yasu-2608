@@ -8,11 +8,16 @@ import type {
   GetInvitationUrlForEnterpriseCommunityManagerRequest,
   GetInvitationUrlForEnterpriseCommunityManagerResponse,
 } from '@shokujii/common/apis/enterprise.js'
-import { getCommunity, getCommunityByAccount } from '../stores/community.js'
+import { getCommunity, getCommunityByAccountInEnterprise } from '../stores/community.js'
 import { getConfigGlobal } from '../stores/config.js'
 import { getEnterpriseById, getEnterpriseMember } from '../stores/enterprise.js'
 
 const ENTERPRISE_BASE_DOMAIN = defineString('ENTERPRISE_BASE_DOMAIN', { default: '' })
+
+function tokenEnterpriseIdFromAuth(token: Record<string, unknown> | undefined): string | undefined {
+  const raw = token?.enterprise_id
+  return typeof raw === 'string' ? raw : undefined
+}
 
 export function resolveEnterpriseHost(enterprise: Enterprise): string {
   const customDomain = enterprise.custom_domain?.trim().toLowerCase()
@@ -64,7 +69,7 @@ export const getInvitationUrlForEnterpriseCommunityManager = onCall<
     throw new HttpsError('permission-denied', 'The function must be called by a manager.')
   }
 
-  const tokenEnterpriseId = auth.token.enterprise_id as string | undefined
+  const tokenEnterpriseId = tokenEnterpriseIdFromAuth(auth.token)
   if (!isSupport && tokenEnterpriseId !== enterpriseId) {
     throw new HttpsError('permission-denied', 'enterprise mismatch')
   }
@@ -100,7 +105,12 @@ export const acceptInvitationForEnterpriseCommunityManager = onCall<
     )
   }
 
-  const community = await getCommunityByAccount(communityAccount)
+  const tokenEnterpriseId = tokenEnterpriseIdFromAuth(auth.token)
+  if (tokenEnterpriseId == null || tokenEnterpriseId === '') {
+    throw new HttpsError('permission-denied', 'enterprise mismatch')
+  }
+
+  const community = await getCommunityByAccountInEnterprise(tokenEnterpriseId, communityAccount)
   if (community === undefined) {
     throw new HttpsError('not-found', 'The community does not exist.')
   }
@@ -109,7 +119,6 @@ export const acceptInvitationForEnterpriseCommunityManager = onCall<
     throw new HttpsError('failed-precondition', 'The community is not an enterprise community.')
   }
 
-  const tokenEnterpriseId = auth.token.enterprise_id as string | undefined
   if (tokenEnterpriseId !== enterpriseId) {
     throw new HttpsError('permission-denied', 'enterprise mismatch')
   }

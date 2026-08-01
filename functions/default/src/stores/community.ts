@@ -194,17 +194,42 @@ export const getCommunitiesByIds = async (communityIds: readonly string[]): Prom
   return result
 }
 
-export const getCommunityByAccount = async (
+/**
+ * PF 名前空間（`enterprise_id == null`）のコミュニティを community_account で取得する。
+ */
+export const getPfCommunityByAccount = async (
   communityAccount: string,
   transaction?: Transaction,
 ): Promise<ShokujiiCommunity | undefined> => {
   const db = getFirestore()
-  const communityRef = db
+  const communityQuery = db
     .collection('communities')
+    .where('enterprise_id', '==', null)
     .where('community_account', '==', communityAccount)
+    .limit(1)
     .withConverter(communityConverter)
 
-  const snapshot = await (transaction === undefined ? communityRef.get() : transaction.get(communityRef))
+  const snapshot = await (transaction === undefined ? communityQuery.get() : transaction.get(communityQuery))
+  return snapshot.empty ? undefined : snapshot.docs[0].data()
+}
+
+/** @deprecated 名前は PF 専用。新規コードは getPfCommunityByAccount を使う */
+export const getCommunityByAccount = getPfCommunityByAccount
+
+export const getCommunityByAccountInEnterprise = async (
+  enterpriseId: string,
+  communityAccount: string,
+  transaction?: Transaction,
+): Promise<ShokujiiCommunity | undefined> => {
+  const db = getFirestore()
+  const communityQuery = db
+    .collection('communities')
+    .where('enterprise_id', '==', enterpriseId)
+    .where('community_account', '==', communityAccount)
+    .limit(1)
+    .withConverter(communityConverter)
+
+  const snapshot = await (transaction === undefined ? communityQuery.get() : transaction.get(communityQuery))
   return snapshot.empty ? undefined : snapshot.docs[0].data()
 }
 

@@ -12,12 +12,33 @@ vi.mock('firebase-functions/https', () => ({
   onCall: (...args: unknown[]) => (args.length === 1 ? args[0] : args[1]),
 }))
 
-vi.mock('../stores/community.js', () => ({
-  listCommunitiesByEnterpriseId: vi.fn(),
-}))
+vi.mock('../stores/community.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../stores/community.js')>()
+  return {
+    ...actual,
+    listCommunitiesByEnterpriseId: vi.fn(),
+    getCommunityByAccountInEnterprise: vi.fn(),
+    saveCommunity: vi.fn(),
+    setCommunityMemberWithRoles: vi.fn(),
+  }
+})
 
 vi.mock('../stores/enterprise.js', () => ({
   getEnterpriseMembersCollectionRef: vi.fn(),
+  getEnterpriseMemberUserIdByEmail: vi.fn(),
+  getEnterpriseMember: vi.fn(),
+}))
+
+vi.mock('../utils/auditLog.js', () => ({
+  writeAuditLog: vi.fn(),
+}))
+
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: () => ({
+    collection: () => ({
+      doc: () => ({ id: 'new-community-id' }),
+    }),
+  }),
 }))
 
 vi.mock('../stores/user.js', async (importOriginal) => {
@@ -30,16 +51,37 @@ vi.mock('../stores/user.js', async (importOriginal) => {
 
 vi.mock('../utils/enterpriseAuthHelpers.js', () => ({
   assertEnterpriseAdmin: vi.fn(),
+  getClientIp: vi.fn(),
+  normalizeEnterpriseEmail: (email: string) => email.trim().toLowerCase(),
 }))
 
-import { listCommunitiesByEnterpriseId } from '../stores/community.js'
-import { getEnterpriseMembersCollectionRef } from '../stores/enterprise.js'
+import {
+  getCommunityByAccountInEnterprise,
+  listCommunitiesByEnterpriseId,
+  saveCommunity,
+  setCommunityMemberWithRoles,
+} from '../stores/community.js'
+import {
+  getEnterpriseMember,
+  getEnterpriseMemberUserIdByEmail,
+  getEnterpriseMembersCollectionRef,
+} from '../stores/enterprise.js'
 import { getUsersByUserIds, ShokujiiUser } from '../stores/user.js'
-import { getEnterpriseCommunities } from './community.js'
+import { createEnterpriseCommunities, getEnterpriseCommunities } from './community.js'
 
-const callGetEnterpriseCommunities = getEnterpriseCommunities as unknown as (
-  request: { auth: { uid: string }; data: { enterprise_id: string } },
-) => Promise<{ communities: { manager_display_names?: string[] }[] }>
+const callGetEnterpriseCommunities = getEnterpriseCommunities as unknown as (request: {
+  auth: { uid: string }
+  data: { enterprise_id: string }
+}) => Promise<{ communities: { manager_display_names?: string[] }[] }>
+
+const callCreateEnterpriseCommunities = createEnterpriseCommunities as unknown as (request: {
+  auth: { uid: string }
+  data: {
+    enterprise_id: string
+    communities: { community_name: string; community_account: string; manager_email: string }[]
+  }
+  rawRequest: { ip?: string }
+}) => Promise<{ success_count: number; results: { status: string; error_message?: string }[] }>
 
 describe('getEnterpriseCommunities', () => {
   beforeEach(() => {
@@ -89,5 +131,58 @@ describe('getEnterpriseCommunities', () => {
     })
 
     expect(result.communities[0]?.manager_display_names).toEqual(['田中 太郎'])
+  })
+})
+
+describe('createEnterpriseCommunities', () => {
+  beforeEach(() => {
+    vi.mocked(getEnterpriseMemberUserIdByEmail).mockResolvedValue('mgr-1')
+    vi.mocked(getEnterpriseMember).mockResolvedValue({ is_active: true } as never)
+    vi.mocked(getCommunityByAccountInEnterprise).mockResolvedValue(undefined)
+    vi.mocked(saveCommunity).mockResolvedValue(undefined)
+    vi.mocked(setCommunityMemberWithRoles).mockResolvedValue(undefined)
+  })
+
+  it('同一 enterprise 内に既存スラッグがあるとエラー', async () => {
+    vi.mocked(getCommunityByAccountInEnterprise).mockResolvedValue({ id: 'existing' } as never)
+
+    const result = await callCreateEnterpriseCommunities({
+      auth: { uid: 'admin' },
+      data: {
+        enterprise_id: 'ent-a',
+        communities: [
+          {
+            community_name: 'Dev Lunch',
+            community_account: 'dev-lunch',
+            manager_email: 'mgr@example.com',
+          },
+        ],
+      },
+      rawRequest: {},
+    })
+
+    expect(result.success_count).toBe(0)
+    expect(result.results[0]?.error_message).toBe('このアカウント名は既に使用されています')
+    expect(getCommunityByAccountInEnterprise).toHaveBeenCalledWith('ent-a', 'dev-lunch')
+  })
+
+  it('getCommunityByAccountInEnterprise が未使用なら PF 同スラッグでも作成できる', async () => {
+    const result = await callCreateEnterpriseCommunities({
+      auth: { uid: 'admin' },
+      data: {
+        enterprise_id: 'ent-b',
+        communities: [
+          {
+            community_name: 'Dev Lunch',
+            community_account: 'dev-lunch',
+            manager_email: 'mgr@example.com',
+          },
+        ],
+      },
+      rawRequest: {},
+    })
+
+    expect(result.success_count).toBe(1)
+    expect(getCommunityByAccountInEnterprise).toHaveBeenCalledWith('ent-b', 'dev-lunch')
   })
 })

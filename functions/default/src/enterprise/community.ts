@@ -8,7 +8,7 @@ import {
   GetEnterpriseCommunitiesResponse,
 } from '@shokujii/common/apis/enterprise.js'
 import {
-  getCommunityByAccount,
+  getCommunityByAccountInEnterprise,
   listCommunitiesByEnterpriseId,
   saveCommunity,
   setCommunityMemberWithRoles,
@@ -65,7 +65,7 @@ async function validateCreateCommunityRow(
   }
   seenAccounts.add(account)
 
-  const existing = await getCommunityByAccount(account)
+  const existing = await getCommunityByAccountInEnterprise(enterpriseId, account)
   if (existing != null) {
     return 'このアカウント名は既に使用されています'
   }

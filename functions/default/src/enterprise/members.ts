@@ -28,7 +28,7 @@ import {
   listEnterpriseMembers,
   saveEnterpriseMember,
 } from '../stores/enterprise.js'
-import { deleteUserDocuments, getUser, saveUser, ShokujiiUser } from '../stores/user.js'
+import { deleteUserDocuments, saveUser, ShokujiiUser } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import {
   assertEnterpriseAdmin,
