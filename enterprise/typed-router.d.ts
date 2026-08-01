@@ -35,6 +35,8 @@ declare module 'vue-router/auto-routes' {
     '/c/[communityAccount]/e/[eventId]/members': RouteRecordInfo<'/c/[communityAccount]/e/[eventId]/members', '/c/:communityAccount/e/:eventId/members', { communityAccount: ParamValue<true>, eventId: ParamValue<true> }, { communityAccount: ParamValue<false>, eventId: ParamValue<false> }>,
     '/c/[communityAccount]/invites': RouteRecordInfo<'/c/[communityAccount]/invites', '/c/:communityAccount/invites', { communityAccount: ParamValue<true> }, { communityAccount: ParamValue<false> }>,
     '/cart': RouteRecordInfo<'/cart', '/cart', Record<never, never>, Record<never, never>>,
+    '/chat/': RouteRecordInfo<'/chat/', '/chat', Record<never, never>, Record<never, never>>,
+    '/chat/[roomId]': RouteRecordInfo<'/chat/[roomId]', '/chat/:roomId', { roomId: ParamValue<true> }, { roomId: ParamValue<false> }>,
     '/communitylist/': RouteRecordInfo<'/communitylist/', '/communitylist', Record<never, never>, Record<never, never>>,
     '/flyer': RouteRecordInfo<'/flyer', '/flyer', Record<never, never>, Record<never, never>>,
     '/login': RouteRecordInfo<'/login', '/login', Record<never, never>, Record<never, never>>,

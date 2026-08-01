@@ -3,7 +3,8 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import Orders from '@shokujii/base/components/pages/orders.vue'
-import { getEventPath, getReceiptPath, getOrdersPath } from '@/router/utils'
+import { getChatPath, getEventPath, getReceiptPath, getOrdersPath } from '@/router/utils'
+import { useNavigateToEventChat } from '@shokujii/base/composable/useNavigateToEventChat.js'
 import EnterpriseSubsidyUsagePanel from '@/components/profile/EnterpriseSubsidyUsagePanel.vue'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
 import { fetchEnterpriseUsageTabEligible } from '@/composable/enterpriseMemberMonthlyUsage.js'
@@ -71,6 +72,11 @@ const profileFilter = computed(() => {
 })
 
 const canShowOrders = computed(() => enterpriseId.value != null && isPreviewAccessGranted.value)
+
+const { navigateToEventChat } = useNavigateToEventChat({
+  getChatPath,
+  userId: () => loginUser.value?.user_id ?? firebaseUser.value?.uid,
+})
 </script>
 
 <template>
@@ -86,12 +92,12 @@ const canShowOrders = computed(() => enterpriseId.value != null && isPreviewAcce
   <v-container v-else-if="previewError != null" class="d-flex align-center justify-center" style="min-height: 60vh">
     <p class="text-body-1 text-medium-emphasis">{{ $t('user_profile.failed_to_load') }}</p>
   </v-container>
-  <!-- navigateToEventChat 未注入: エンプラではイベントチャット導線を出さない（hide-share-sns と同様） -->
   <Orders
     v-else-if="canShowOrders"
     :profile-filter="profileFilter"
     :resolve-event-path="getEventPath"
     :resolve-receipt-path="getReceiptPath"
+    :navigate-to-event-chat="navigateToEventChat"
     hide-share-sns
   >
     <template v-if="showUsage" #prepend>

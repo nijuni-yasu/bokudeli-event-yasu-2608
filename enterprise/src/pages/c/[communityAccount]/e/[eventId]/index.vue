@@ -27,6 +27,8 @@ import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storage
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
 import { useEnterpriseTenantGuard } from '@/composable/useEnterpriseTenantGuard'
 import EnterpriseErrorPage from '@/components/EnterpriseErrorPage.vue'
+import { getChatPath } from '@/router/utils'
+import { useNavigateToEventChat } from '@shokujii/base/composable/useNavigateToEventChat.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,6 +60,28 @@ let menuListObserver: IntersectionObserver | null = null
 const { isManager } = useEnterpriseCommunityMemberFlags(communityAccount)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
+
+const canOpenChat = computed(() => {
+  const uid = currentUserStore.firebaseUser?.uid
+  const currentEvent = event.value
+  if (uid == null || uid === '' || currentEvent == null) {
+    return false
+  }
+  return currentEvent.members.includes(uid)
+})
+
+const { navigateToEventChat, isNavigatingToChat } = useNavigateToEventChat({
+  getChatPath,
+  userId: () => currentUserStore.firebaseUser?.uid,
+})
+
+const onOpenChat = (): void => {
+  const currentEvent = event.value
+  if (currentEvent == null) {
+    return
+  }
+  void navigateToEventChat({ communityId: currentEvent.community_id, eventId: currentEvent.id })
+}
 
 /** 表示ステータスが下書き・予約申請中・注文受付中・満席のときイベント編集。それ以外はコミュニティ管理画面へ */
 const showManagerEventEditButton = computed(
@@ -309,6 +333,9 @@ onUnmounted(() => {
           :community="communityStore.community"
           :album-image-urls="albumImageUrls"
           hide-share-sns
+          :show-open-chat-button="canOpenChat"
+          :open-chat-loading="isNavigatingToChat"
+          @open-chat="onOpenChat"
         />
         <!-- メニュ -->
         <event-menu-list
