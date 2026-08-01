@@ -117,7 +117,7 @@ async function validateCreateMemberRow(
     return '許可されていないメールドメインです'
   }
   if (row.display_name.trim() === '') {
-    return '表示名は必須です'
+    return '氏名は必須です'
   }
   const role = row.role ?? 'member'
   if (!ENTERPRISE_MEMBER_ROLE_VALUES.includes(role)) {
@@ -465,12 +465,6 @@ export const updateEnterpriseMember = onCall<UpdateEnterpriseMemberRequest, Prom
     member.display_name = trimmedName
     member.department = trimmedDepartment
     await saveEnterpriseMember(member, enterpriseId)
-
-    const user = await getUser(userId, true)
-    if (user != null) {
-      user.user_name = trimmedName
-      await saveUser(user)
-    }
 
     const tenantAuth = await authForEnterprise(enterpriseId)
     await tenantAuth.updateUser(userId, { displayName: trimmedName })

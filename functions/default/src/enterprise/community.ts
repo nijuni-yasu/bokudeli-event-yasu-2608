@@ -19,6 +19,7 @@ import {
   getEnterpriseMemberUserIdByEmail,
   getEnterpriseMembersCollectionRef,
 } from '../stores/enterprise.js'
+import { getUsersByUserIds } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { assertEnterpriseAdmin, getClientIp, normalizeEnterpriseEmail } from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
@@ -28,6 +29,20 @@ const logger = createModuleLogger('enterpriseCommunity')
 const MAX_COMMUNITIES_PER_REQUEST = 100
 const DEFAULT_PAGE_SIZE = 50
 const COMMUNITY_ACCOUNT_PATTERN = /^[a-z0-9-]+$/
+
+/** アプリ表示名（`users.user_name`）。未設定時は人事氏名（`display_name`）にフォールバック */
+function resolveAppDisplayName(
+  userId: string,
+  usersById: Map<string, { user_name: string }>,
+  memberDisplayNameByUserId: Map<string, string>,
+): string | undefined {
+  const userName = usersById.get(userId)?.user_name.trim() ?? ''
+  if (userName !== '') {
+    return userName
+  }
+  const displayName = memberDisplayNameByUserId.get(userId)?.trim() ?? ''
+  return displayName !== '' ? displayName : undefined
+}
 
 type CreateCommunityInput = CreateEnterpriseCommunitiesRequest['communities'][number] & { row: number }
 
@@ -132,11 +147,14 @@ export const getEnterpriseCommunities = onCall<
   const records = await listCommunitiesByEnterpriseId(enterpriseId)
   records.sort((a, b) => b.created_at - a.created_at)
 
-  const memberNameByUserId = new Map<string, string>()
+  const managerIds = [...new Set(records.flatMap((record) => record.manager_ids))]
+  const usersById = await getUsersByUserIds(managerIds)
+
+  const memberDisplayNameByUserId = new Map<string, string>()
   const membersSnapshot = await getEnterpriseMembersCollectionRef(enterpriseId).get()
   for (const doc of membersSnapshot.docs) {
     const data = doc.data()
-    memberNameByUserId.set(data.user_id, data.display_name ?? '')
+    memberDisplayNameByUserId.set(data.user_id, data.display_name ?? '')
   }
 
   const communities = records.map((record) => ({
@@ -146,7 +164,7 @@ export const getEnterpriseCommunities = onCall<
     community_num_members: record.community_num_members,
     created_at: record.created_at,
     manager_display_names: record.manager_ids
-      .map((id) => memberNameByUserId.get(id))
+      .map((id) => resolveAppDisplayName(id, usersById, memberDisplayNameByUserId))
       .filter((name): name is string => name != null && name !== ''),
   }))
 
