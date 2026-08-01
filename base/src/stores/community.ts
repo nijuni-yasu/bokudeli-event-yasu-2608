@@ -189,15 +189,26 @@ export const checkSoleManagerCommunity = async (userId: string): Promise<boolean
 
 export type CommunityStore = ReturnType<typeof useCommunityStore>
 
+/** PF は省略（`enterprise_id == null` 名前空間）。Enterprise では `enterpriseId` を指定する */
+export type CommunityStoreScope = {
+  enterpriseId?: string
+}
+
+function resolveCommunityStoreKey(enterpriseId: string | null | undefined): string {
+  return enterpriseId != null && enterpriseId !== '' ? enterpriseId : 'pf'
+}
+
 /**
  * コミュニティ store。文字列を渡す場合は community_account（URL スラッグ）で検索する。
- * Pinia store ID は `/communities/${communityAccount}` だが、Firestore path は `_communityRef.id`（community_id）。
+ * Pinia store ID は `/communities/${scope}/${communityAccount}` だが、Firestore path は `_communityRef.id`（community_id）。
  */
-export const useCommunityStore = (target: string | BokudeliCommunity) => {
+export const useCommunityStore = (target: string | BokudeliCommunity, scope?: CommunityStoreScope) => {
   const communityAccount: string = target instanceof BokudeliCommunity ? target.community_account : target
-  // store の Identifier が firestore の path と異なるのは危険だが、この store 内に閉じている場合は問題ないはず
-  const store = defineStore(`/communities/${communityAccount}`, () => {
-    const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${communityAccount}`
+  const resolvedEnterpriseId =
+    target instanceof BokudeliCommunity ? (target.enterprise_id ?? scope?.enterpriseId) : scope?.enterpriseId
+  const storeKey = resolveCommunityStoreKey(resolvedEnterpriseId)
+  const store = defineStore(`/communities/${storeKey}/${communityAccount}`, () => {
+    const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${storeKey}_${communityAccount}`
     const community = ref<BokudeliCommunity | null>(target instanceof BokudeliCommunity ? target : null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
     const _communityRef = ref<DocumentReference<BokudeliCommunity> | null>(null)
@@ -554,32 +565,35 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
     }
 
     let retry = 0
-    const subscribe = () =>
-      getDocs(
-        query(collection(db, 'communities'), where('community_account', '==', communityAccount)).withConverter(
-          communityConverter,
-        ),
-      ).then((querySnapshot) => {
-        const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
-        if (communityRef == null) {
-          if (retry++ < 10) {
-            console.warn(
-              `The community "${communityAccount}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
-            )
-            window.setTimeout(subscribe, 500)
+    const subscribe = () => {
+      const queryConstraints = [
+        where('enterprise_id', '==', resolvedEnterpriseId ?? null),
+        where('community_account', '==', communityAccount),
+      ]
+      return getDocs(query(collection(db, 'communities'), ...queryConstraints).withConverter(communityConverter)).then(
+        (querySnapshot) => {
+          const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
+          if (communityRef == null) {
+            if (retry++ < 10) {
+              console.warn(
+                `The community "${communityAccount}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
+              )
+              window.setTimeout(subscribe, 500)
+              return
+            }
+            console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
+            // TODO: マイページ動作しないため、一時的にコメントアウト
+            // router.replace('/404')
             return
           }
-          console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
-          // TODO: マイページ動作しないため、一時的にコメントアウト
-          // router.replace('/404')
-          return
-        }
-        retry = 0
-        _communityRef.value = communityRef
-        subscribeCommunity(communityRef)
-        // 他の Store は遅延評価なので、以下を呼ぶ必要はない
-        // subscribeEvents(communityRef)
-      })
+          retry = 0
+          _communityRef.value = communityRef
+          subscribeCommunity(communityRef)
+          // 他の Store は遅延評価なので、以下を呼ぶ必要はない
+          // subscribeEvents(communityRef)
+        },
+      )
+    }
 
     const unsubscribe = () => {
       retry = 0

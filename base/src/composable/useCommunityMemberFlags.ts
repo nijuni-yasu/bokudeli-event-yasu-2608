@@ -1,5 +1,5 @@
 import { ref, watchEffect, computed, type Ref } from 'vue'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { useCommunityStore, type CommunityStore, type CommunityStoreScope } from '@shokujii/base/stores/community'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 
 /**
@@ -11,8 +11,9 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
  */
 export const useCommunityMemberFlags = (
   communityAccount: string,
+  scope?: CommunityStoreScope,
 ): { isMember: Ref<boolean>; isManager: Ref<boolean> } => {
-  const communityStore = useCommunityStore(communityAccount) as CommunityStore
+  const communityStore = useCommunityStore(communityAccount, scope) as CommunityStore
   const currentUserStore = useCurrentUserStore()
   const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? null)
 

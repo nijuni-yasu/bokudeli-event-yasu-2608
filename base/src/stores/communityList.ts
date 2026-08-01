@@ -69,9 +69,17 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
         next()
       }
 
-      const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> => {
+      const getCommunityData = async (
+        communityAccount: string,
+        options?: { enterpriseId?: string },
+      ): Promise<DocumentData | null> => {
+        const enterpriseId = options?.enterpriseId ?? null
         const duplicatedCommunity = await getDocs(
-          query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
+          query(
+            collection(db, 'communities'),
+            where('enterprise_id', '==', enterpriseId),
+            where('community_account', '==', communityAccount),
+          ),
         )
         if (duplicatedCommunity.empty) {
           return null
