@@ -54,6 +54,12 @@
 | [x] | RC-48 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | settings_note の「最も先」が曖昧<br>「最も新しい開催月」に修正 |
 | [x] | RC-49 | 5151102953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterprise router / イベント詳細の冗長 as CommunityStore<br>戻り値型注釈済みのためキャスト削除 |
 | [x] | RC-50 | 5151102953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useCommunityMemberFlags の catch が console.error のみ<br>reportClientError severity warn を追加 |
+| [x] | RC-51 | 3695670677 | 🟡 修正提案 | 📤 #2236 別Issue化 | 📤 スコープ外 | 📏 規約 | 📐 リファクタ | M | チャット onOpenEvent の getDoc を store 関数へ<br>#2236 で user/enterprise 横断対応 |
+| [x] | RC-52 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventEdit computed/非同期の useAppEventStore<br>inject 外 → useCreateAppEventStore |
+| [x] | RC-53 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | 公開/管理 base を useAppCommunityStore 化<br>続き PR で event 横断・LetterTable 等も完了 |
+| [x] | RC-54 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventDetailsCard が useEventStore のまま<br>useAppEventStore に統一 |
+| [x] | RC-55 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | enterprise 導線の event/community store 置換漏れ<br>EventCard 等 + LetterTable factory |
+| [x] | RC-56 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | injection key ファイル名・buildEnterpriseCommunityScope<br>useCreateAppCommunityStore 追加 |
 
 ---
 
@@ -2008,5 +2014,267 @@ const communityStore = useEnterpriseCommunityStore(communityAccount) as Communit
 **想定工数**: S
 
 **判断理由**: ロール取得失敗はフォールバックで継続するため warn で reportClientError を追加。
+
+---
+
+## 評価セッション（2026-08-02 20:16・review-comments-evaluate）
+
+- **評価日時**: 2026-08-02 20:16 JST
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **REVIEW_REQUEST_SINCE**: 2026-08-01T12:59:52Z（直近 reflect 時のレビュー依頼以降）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼定型文 5151528215、Codex connect 5151546842、Copilot トップレベル「新規指摘なし」5151546464）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-51 | 3695670677 | 🟡 修正提案 | 📤 #2236 別Issue化 | 📤 スコープ外 | 📏 規約 | 📐 リファクタ | M | チャット onOpenEvent の getDoc を store 関数へ<br>#2236 で user/enterprise 横断対応 |
+| [x] | RC-52 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventEdit computed/非同期の useAppEventStore<br>inject 外 → useCreateAppEventStore |
+| [x] | RC-53 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | 公開/管理 base を useAppCommunityStore 化<br>続き PR で event 横断・LetterTable 等も完了 |
+| [x] | RC-54 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventDetailsCard が useEventStore のまま<br>useAppEventStore に統一 |
+| [x] | RC-55 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | enterprise 導線の event/community store 置換漏れ<br>EventCard 等 + LetterTable factory |
+| [x] | RC-56 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | injection key ファイル名・buildEnterpriseCommunityScope<br>useCreateAppCommunityStore 追加 |
+
+---
+
+**識別子**: RC-51（GitHub id: 3695670677）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `enterprise/src/pages/chat/index.vue:25`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -0,0 +1,92 @@
++<script setup lang="ts">
++import { getDoc } from 'firebase/firestore'
++import ChatApp from '@shokujii/base/components/chat/ChatApp.vue'
++import { getEventInCommunityRef } from '@shokujii/base/stores/event.js'
++import { getChatPath, getEventPath, getUserPath } from '@/router/utils'
++
++definePage({
++  meta: {
++    layoutWrapperClasses: 'layout-content-height-fixed chat-layout-stretch',
++  },
++})
++
++const router = useRouter()
++
++const onNavigateRoom = (payload: { path: Parameters<typeof router.push>[0]; replace?: boolean }) => {
++  if (payload.replace === true) {
++    void router.replace(payload.path)
++  } else {
++    void router.push(payload.path)
++  }
++}
++
++const onOpenEvent = async (payload: { communityId: string; eventId: string }) => {
++  try {
++    const snapshot = await getDoc(getEventInCommunityRef(payload.communityId, payload.eventId))
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  Firestore 読み取りを store に移してください**
+
+Enterprise チャットでイベントを開く際、このページと `enterprise/src/pages/chat/[roomId].vue` が `getDoc` を直接実行しており、Firestore 操作を store 関数へ集約するプロジェクトの必須境界を迂回しています。現在も両ページで取得・例外処理が重複し、失敗を握りつぶしているため、`base/src/stores/event.ts` に読み取り関数を設けて双方から呼び出してください。
+
+AGENTS.md reference: [AGENTS.md:L186-L190](https://github.com/nijuniinc/bokudeli-event-new/blob/c6af6662abee0793394c62d6d5a3a4a094a72bbe/AGENTS.md#L186-L190)
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: チャット画面の `onOpenEvent` が `getDoc(getEventInCommunityRef(...))` をページ内で直接呼んでおり、store 経由の読み取り関数化を求めている。<br>`index.vue` / `[roomId].vue` で処理が重複。ref は store 由来だが read 本体はページ側。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 📤 #2236 別Issue化
+
+**PRスコープ**: 📤 スコープ外
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: AGENTS.md の「store 経由」原則には沿う改善だが、`user/src/pages/chat/*.vue` も同一実装（#2235 は PF parity で enterprise フロントのみ追加）。`getEventInCommunityRef` は store の withConverter 付き ref を使用しており、今回差分だけを enterprise に store 読み取り関数を足すと user/enterprise で非対称になる。横断リファクタ（`fetchEventInCommunity` 等 + user/enterprise 両方）が自然なため本 PR（#2235）スコープ外とし、https://github.com/nijuniinc/bokudeli-event-new/issues/2236 に切り出した。Copilot トップレベル（5151546464）は当該チャット実装に問題なしと確認済み。
+
+---
+
+## 評価セッション（2026-08-02 20:45 JST・shokujii-code-review）
+
+- **評価日時**: 2026-08-02 20:45 JST
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: 未作成（#2237 対応差分）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-52 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventEdit computed/非同期の useAppEventStore が inject 外 |
+| [x] | RC-53 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | 公開/管理 base を useAppCommunityStore 化 |
+
+---
+
+**識別子**: RC-52（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventEdit.vue:169`（computed 内の event store 取得）
+
+**該当コード（レビュー時点）**:
+
+```typescript
+const eventStore = useAppEventStore(props.eventId) as EventStore
+```
+
+（`existingMenus` computed・`updateEventDraft`・`onUnmounted` 等でも同様）
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `useAppEventStore` は内部で `inject()` するため、**setup 外**（computed getter・非同期ハンドラ）から呼ぶと enterprise スコープが取れず PF 用 `buildEventStoreOptions` に戻る。コミュニティ store は setup 一回呼び出しで #2237 の主症状は解消するが、保存・予約申請時の event store / draftPreparer が enterprise 向けにならない恐れがある → setup で `useCreateAppEventStore()` を一度呼び、返却クロージャを各所で使う。
+
+**コメント要約**: inject コンテキストと Pinia store オプションの一貫性。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `useCreateAppEventStore` を追加し EventEdit は setup で factory を保持。同一レビュー内で修正済み。
+
+---
+
+**識別子**: RC-53（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/manage/community/CommunitySettings.vue:10` 等
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/M]: #2237 はイベント編集経路（EventEdit / EventLetter 等）を `useAppCommunityStore` 化した。コミュニティ管理タブの `CommunitySettings`・`CommunityMemberTable` 等は依然 `useCommunityStore(account)` のままで、enterprise テナントでは同種の「存在しない community」問題が残る。Issue #2237 の完了条件外として別途横断置換を検討。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: `CommunityBioPanel` / `EventDetailsCard` / `CommunityMembershipButton` / `CommunityCardMini` および manage/community/* を `useAppCommunityStore` に置換。続く横断 PR（RC-54〜56）で event store・LetterTable・命名整理まで完了。
+
+---
+
+## 評価セッション（2026-08-02 21:15 JST・shokujii-code-review）
+
+- **評価日時**: 2026-08-02 21:15 JST
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: 未作成
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-54 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventDetailsCard の event store PF 固定 |
+| [x] | RC-55 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | enterprise 導線 component の useApp* 横断 |
+| [x] | RC-56 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | communityInjectionKeys・factory・buildEnterpriseCommunityScope |
+
+---
+
+**識別子**: RC-54（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventDetailsCard.vue:79`
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: community は `useAppCommunityStore` 化済みだが event は `useEventStore(event_id)` のままで、enterprise 公開イベント詳細のメンバー・注文が PF Pinia スコープになる → `useAppEventStore(props.event)` に統一。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 本セッションで `useAppEventStore` に置換済み。
+
+---
+
+**識別子**: RC-55（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventCard.vue` 等（enterprise トップ・イベント詳細・管理）
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/M]: inject スコープ対応の置換漏れ（EventCard / EventMenuList / EventCartDialog / EventFlyer / members / invites / UserSuccessJoinEventDialog / ProfileEventCard / LetterCard）。LetterTable は computed 内 store のため `useCreateAppCommunityStore` + `useCreateAppEventStore` を使用。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 計画どおり横断置換。`community.ts` の `subscribeEvents` も `buildEventStoreOptions(resolvedEnterpriseId)` を渡すよう修正。
+
+---
+
+**識別子**: RC-56（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/communityScopeSymbols.ts` / `useEnterpriseCommunityScope`
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/S]: `communityInjectionKeys.ts` へリネーム、`resolveInjectedCommunityScope` export、`useCreateAppCommunityStore` 追加、`useEnterpriseCommunityScope` → `buildEnterpriseCommunityScope`、冗長 `as CommunityStore` 削除。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: S
+
+**判断理由**: 本セッションで実装済み。
 
 ---
