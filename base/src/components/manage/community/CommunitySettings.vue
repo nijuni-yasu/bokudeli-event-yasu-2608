@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 
@@ -7,7 +7,7 @@ const notification = useNotification()
 const { t: $t } = useI18n()
 
 const communityAccount = useRoute().params.communityAccount as string
-const communityStore = useCommunityStore(communityAccount) as CommunityStore
+const communityStore = useAppCommunityStore(communityAccount)
 const community = computed({
   get: () => communityStore.community,
   set: (value) => {

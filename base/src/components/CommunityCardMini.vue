@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { type BokudeliCommunity, useCommunityStore } from '../stores/community'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { type BokudeliCommunity } from '../stores/community'
 
 const props = defineProps<{
   community: BokudeliCommunity
 }>()
-const communityStore = useCommunityStore(props.community.community_account)
+const communityStore = useAppCommunityStore(props.community)
 </script>
 
 <template>

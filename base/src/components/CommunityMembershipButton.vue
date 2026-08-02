@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getLogin } from '@/router/utils'
 import { useI18n } from 'vue-i18n'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { useCommunityStore } from '@shokujii/base/stores/community'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
 type ButtonProps = Record<string, unknown>
@@ -25,7 +25,7 @@ const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const userStore = useCurrentUserStore()
-const communityStore = useCommunityStore(props.communityAccount)
+const communityStore = useAppCommunityStore(props.communityAccount)
 
 const isMember = ref(false)
 const isManager = ref(false)

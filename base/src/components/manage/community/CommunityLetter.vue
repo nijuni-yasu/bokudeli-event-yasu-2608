@@ -9,7 +9,7 @@ import LetterEdit from '@shokujii/base/components/LetterEdit.vue'
 import { BokudeliLetter, useLetterStore } from '@shokujii/base/stores/letter.js'
 import { getManageEventPath, getManageCommunitySettingsPath, getUserPath } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const notification = useNotification()
@@ -21,7 +21,7 @@ const router = useRouter()
 const communityAccount = route.params.communityAccount as string
 const letterId = route.query.letterId as string | undefined
 
-const communityStore = useCommunityStore(communityAccount)
+const communityStore = useAppCommunityStore(communityAccount)
 const community = computed(() => communityStore.community)
 
 const letterListStore = useLetterListStore(communityAccount)

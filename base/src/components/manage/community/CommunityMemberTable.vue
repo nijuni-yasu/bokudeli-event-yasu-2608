@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import {
-  useCommunityStore,
-  type BokudeliCommunityMember,
-  type CommunityStore,
-} from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { type BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
 import MemberListRow from '@shokujii/base/components/manage/shared/MemberListRow.vue'
@@ -36,7 +33,7 @@ const { t: $t } = useI18n()
 const notification = useNotification()
 
 const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
-const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
+const communityStore = useAppCommunityStore(props.communityAccount)
 
 const members = computed(
   () =>
