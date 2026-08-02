@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import EventCard from './EventCard.vue'
-import { useEventStore, type BokudeliEvent } from '../stores/event.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
+import { type BokudeliEvent } from '../stores/event.js'
 
 const props = defineProps<{
   event: BokudeliEvent
 }>()
 
-const eventStore = useEventStore(props.event)
+const eventStore = useAppEventStore(props.event)
 </script>
 
 <template>

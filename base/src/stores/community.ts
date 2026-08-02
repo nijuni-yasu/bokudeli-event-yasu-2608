@@ -35,7 +35,7 @@ import {
 import { AlbumItem } from '@shokujii/common/schemas/AlbumItem.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getUserRef, useUserStore } from '@shokujii/base/stores/user.js'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { uploadAlbumImage, uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
@@ -557,7 +557,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
           querySnapshot.docs.forEach((doc) => {
             const eventId = doc.id
             const stores = eventStores.value || new Map()
-            stores.set(eventId, useEventStore(eventId) as EventStore)
+            stores.set(eventId, useEventStore(eventId, buildEventStoreOptions(resolvedEnterpriseId)) as EventStore)
             eventStores.value = stores
           })
         })

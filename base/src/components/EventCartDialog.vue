@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'
 import EventMenuImage from '@shokujii/base/components/EventMenuImage.vue'
@@ -11,7 +11,7 @@ const props = defineProps<{
   eventId: string
 }>()
 
-const eventStore = useEventStore(props.eventId) as EventStore
+const eventStore = useAppEventStore(props.eventId)
 
 const isOpen = defineModel<boolean>()
 

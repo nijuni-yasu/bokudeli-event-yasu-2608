@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type BokudeliEvent, type BokudeliEventMember, useEventStore } from '@shokujii/base/stores/event.js'
+import { type BokudeliEvent, type BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import UserAvatar from './UserAvatar.vue'
 import { useDisplay } from 'vuetify'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import { convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
 
 const props = defineProps<{ event: BokudeliEvent; members?: BokudeliEventMember[] }>()
-const eventStore = useEventStore(props.event.event_id)
+const eventStore = useAppEventStore(props.event)
 
 const display = useDisplay()
 const avatarSize = computed(() => {

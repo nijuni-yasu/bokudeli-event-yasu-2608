@@ -3,8 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { mdiCloseCircle, mdiSend, mdiCalendar, mdiMessageTextOutline } from '@mdi/js'
 import type { NavigateToEventChatFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { useEventStore } from '@shokujii/base/stores/event'
-import { useCommunityStore } from '@shokujii/base/stores/community'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
 import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
@@ -45,8 +45,8 @@ const props = withDefaults(
 
 const model = defineModel<boolean>()
 
-const eventStore = useEventStore(props.eventId)
-const communityStore = useCommunityStore(props.communityAccount)
+const eventStore = useAppEventStore(props.eventId)
+const communityStore = useAppCommunityStore(props.communityAccount)
 const isPosted = props.isPosted
 
 const event = computed(() => eventStore.event)

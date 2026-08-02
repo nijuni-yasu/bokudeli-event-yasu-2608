@@ -2,8 +2,8 @@
 import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { type CommunityStore, useCommunityStore } from '@shokujii/base/stores/community'
-import { type EventStore, useEventStore } from '@shokujii/base/stores/event'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
@@ -15,7 +15,7 @@ const props = defineProps<{
 
 const router = useRouter()
 
-const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
+const communityStore = useAppCommunityStore(props.communityAccount)
 const isShowMember: boolean = await new Promise((resolve) => {
   watch(
     () => communityStore.community?.is_show_member,
@@ -31,7 +31,7 @@ const isShowMember: boolean = await new Promise((resolve) => {
   )
 })
 
-const eventStore = useEventStore(props.eventId) as EventStore
+const eventStore = useAppEventStore(props.eventId)
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 const members = computed(() =>
   [...(eventStore.members ?? [])].sort(

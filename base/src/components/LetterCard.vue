@@ -2,18 +2,19 @@
 import { ref, computed } from 'vue'
 import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliLetter } from '@shokujii/base/stores/letter.js'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
+import { type EventStore } from '@shokujii/base/stores/event.js'
 
 const props = defineProps<{ letter: BokudeliLetter }>()
 
 // 表示用コンポーネントの中で pinia を直接叩くのは望ましくないが、
 // それを避けるためだけに新たなレイヤを作るより、現状ではこの方が良いと判断した
 // より複雑になる場合は、データ構造の変更から検討する必要がある
-const communityStore = useCommunityStore(props.letter.community_account) as CommunityStore
+const communityStore = useAppCommunityStore(props.letter.community_account)
 let eventStore: EventStore | null = null
 if (props.letter.event_id != null) {
-  eventStore = useEventStore(props.letter.event_id) as EventStore
+  eventStore = useAppEventStore(props.letter.event_id)
 }
 
 const numberOfTargets = computed(() => {
