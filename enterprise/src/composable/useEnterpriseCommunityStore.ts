@@ -9,15 +9,16 @@ function requireEnterpriseId(enterpriseId: string | null | undefined): string {
   return enterpriseId
 }
 
-export function useEnterpriseCommunityScope(): CommunityStoreScope {
+/** setup 内で呼ぶ。解決済み enterpriseId から community store 用スコープを組み立てる。 */
+export function buildEnterpriseCommunityScope(): CommunityStoreScope {
   const { enterpriseId } = useEnterpriseId()
   return { enterpriseId: requireEnterpriseId(enterpriseId.value) }
 }
 
 export function useEnterpriseCommunityStore(communityAccount: string): CommunityStore {
-  return useCommunityStore(communityAccount, useEnterpriseCommunityScope())
+  return useCommunityStore(communityAccount, buildEnterpriseCommunityScope())
 }
 
 export function useEnterpriseCommunityMemberFlags(communityAccount: string) {
-  return useCommunityMemberFlags(communityAccount, useEnterpriseCommunityScope())
+  return useCommunityMemberFlags(communityAccount, buildEnterpriseCommunityScope())
 }

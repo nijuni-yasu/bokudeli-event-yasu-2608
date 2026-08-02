@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { onMounted, provide, watch } from 'vue'
+import { injectionKeyCommunityStoreScope } from '@shokujii/base/stores/communityInjectionKeys.js'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { useTheme } from 'vuetify'
 import { useSessionTimeout } from '@/composable/useSessionTimeout'
@@ -42,6 +44,15 @@ watch(
 )
 
 const sessionTimeout = useSessionTimeout()
+
+const { enterpriseId } = useEnterpriseId()
+provide(injectionKeyCommunityStoreScope, () => {
+  const id = enterpriseId.value
+  if (id == null || id === '') {
+    return undefined
+  }
+  return { enterpriseId: id }
+})
 
 onMounted(() => {
   onAuthStateChanged(getAuth(), (user) => {

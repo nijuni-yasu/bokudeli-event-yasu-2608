@@ -4,13 +4,13 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import LetterTable from '@shokujii/base/components/LetterTable.vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import LetterEdit from '@shokujii/base/components/LetterEdit.vue'
-import { useEventStore } from '@shokujii/base/stores/event.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import { useLetterListStore } from '@shokujii/base/stores/letterList.js'
 import { useLetterStore, type BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { getManageCommunityPath, getManageCommunitySettingsPath, getUserPath } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
 
 const notification = useNotification()
 const { t: $t } = useI18n()
@@ -21,7 +21,7 @@ const router = useRouter()
 const eventId = route.params.eventId as string
 const letterId = route.query.letterId as string | undefined
 
-const eventStore = useEventStore(eventId)
+const eventStore = useAppEventStore(eventId)
 const event: BokudeliEvent = await new Promise((resolve) => {
   watch(
     () => eventStore.event,
@@ -34,7 +34,7 @@ const event: BokudeliEvent = await new Promise((resolve) => {
   )
 })
 
-const communityStore = useCommunityStore(event.community_account)
+const communityStore = useAppCommunityStore(event.community_account)
 const community = computed(() => communityStore.community)
 
 const letterListStore = useLetterListStore(event.community_account)

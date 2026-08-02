@@ -22,8 +22,9 @@ import { eventPaymentUiStrategyFromEnterpriseId } from '@shokujii/base/composabl
 import { eventDraftPreparerFromEnterpriseId } from '@shokujii/base/stores/eventDraft.js'
 import { BokudeliEvent, createNewEvent, updateEventMenus } from '@shokujii/base/stores/event.js'
 import { usePartnerStore, type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
-import { useEventStore, type EventStore, BokudeliEventMenu } from '@shokujii/base/stores/event'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { BokudeliEventMenu } from '@shokujii/base/stores/event'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useCreateAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useShopListStore } from '@shokujii/base/stores/shopList'
 import {
@@ -122,7 +123,8 @@ const shopNoticeRef = shallowRef<{
   validateForm: () => Promise<{ valid: boolean } | undefined>
 } | null>(null)
 
-const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
+const communityStore = useAppCommunityStore(props.communityAccount)
+const createAppEventStore = useCreateAppEventStore()
 
 const paymentUiStrategy = computed(() =>
   eventPaymentUiStrategyFromEnterpriseId(communityStore.community?.enterprise_id),
@@ -193,7 +195,7 @@ watch(
 const event = computed<BokudeliEvent | null>({
   get: () => {
     if (props.eventId != null) {
-      const eventStore = useEventStore(props.eventId) as EventStore
+      const eventStore = createAppEventStore(props.eventId)
       return eventStore.event
     } else {
       return _event.value
@@ -204,7 +206,7 @@ const event = computed<BokudeliEvent | null>({
       return
     }
     if (props.eventId != null) {
-      const eventStore = useEventStore(props.eventId) as EventStore
+      const eventStore = createAppEventStore(props.eventId)
       eventStore.event = value
     } else {
       _event.value = value
@@ -340,7 +342,7 @@ const existingMenus = computed<BokudeliEventMenu[] | null>(() => {
   if (id == null) {
     return []
   }
-  const eventStore = useEventStore(id) as EventStore
+  const eventStore = createAppEventStore(id)
   return eventStore.menus ?? null
 })
 
@@ -559,10 +561,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (props.eventId != null) {
-    const eventStore = useEventStore(props.eventId) as EventStore
+    const eventStore = createAppEventStore(props.eventId)
     eventStore.$reset()
   } else if (hasFirestoreDraft.value && _event.value?.event_id != null) {
-    const eventStore = useEventStore(_event.value.event_id) as EventStore
+    const eventStore = createAppEventStore(_event.value.event_id)
     eventStore.$reset()
   }
 })
@@ -652,7 +654,7 @@ const updateEventDraft = async (): Promise<BokudeliEvent | null> => {
     return null
   }
 
-  const eventStore = useEventStore(persistId) as EventStore
+  const eventStore = createAppEventStore(persistId)
   await eventStore.updateEvent(event.value)
   if (coverImage.value != null) {
     await eventStore.updateCoverImage(coverImage.value)
@@ -702,7 +704,7 @@ const submitReservation = async () => {
       return
     }
     ev.event_status = { value: 'applying_reservation', shop_comment: '' }
-    const eventStore = useEventStore(ev.event_id) as EventStore
+    const eventStore = createAppEventStore(ev.event_id)
     await eventStore.updateEvent(ev)
     showNotification($t('manage.event.reserve_success', { name: ev.shop_name }), 'success')
     emits('updated', ev.event_id)

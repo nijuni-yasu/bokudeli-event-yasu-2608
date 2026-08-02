@@ -10,7 +10,7 @@ import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useEventStore } from '@shokujii/base/stores/event'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
@@ -76,7 +76,7 @@ const eventUrl = computed(() => {
 
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
-const eventStore = useEventStore(props.event.event_id)
+const eventStore = useAppEventStore(props.event)
 
 const members = computed(() =>
   [...(eventStore.members ?? [])].sort(

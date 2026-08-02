@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, toRaw } from 'vue'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import DateInput from '@shokujii/base/components/DateInput.vue'
 import type { BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { useLetterListStore } from '@shokujii/base/stores/letterList'
@@ -33,8 +33,8 @@ const emit = defineEmits<{
 const _letter = ref<BokudeliLetter>(props.letter)
 
 const letterListStore = useLetterListStore(props.letter.community_account)
-const communityStore = useCommunityStore(props.letter.community_account) as CommunityStore
-const eventStore = props.letter.event_id == null ? null : (useEventStore(props.letter.event_id) as EventStore)
+const communityStore = useAppCommunityStore(props.letter.community_account)
+const eventStore = props.letter.event_id == null ? null : useAppEventStore(props.letter.event_id)
 
 const numCommunityMembers = computed(() => communityStore.community?.members?.length)
 const numEventMembers = computed(() => eventStore?.event?.members?.length)
