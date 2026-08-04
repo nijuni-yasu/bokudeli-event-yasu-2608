@@ -60,6 +60,9 @@
 | [x] | RC-54 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventDetailsCard が useEventStore のまま<br>useAppEventStore に統一 |
 | [x] | RC-55 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | enterprise 導線の event/community store 置換漏れ<br>EventCard 等 + LetterTable factory |
 | [x] | RC-56 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | injection key ファイル名・buildEnterpriseCommunityScope<br>useCreateAppCommunityStore 追加 |
+| [x] | RC-57 | 3711453831 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | /orders 同一コンポーネント再利用時に完了ダイアログが開かない<br>query watcher 内で visible を true に |
+| [x] | RC-58 | 4853112013・suppressed | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | normalizeCartEnterpriseSubsidyBudget が値型未検証<br>monthlyUsage 各 entry を number 検証 |
+| [x] | RC-59 | 4853112013・suppressed | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getCommunityData 重複チェックに limit(1) なし<br>読み取りコスト削減 |
 
 ---
 
@@ -2276,5 +2279,82 @@ const eventStore = useAppEventStore(props.eventId) as EventStore
 **想定工数**: S
 
 **判断理由**: 本セッションで実装済み。
+
+---
+
+## 評価セッション（2026-08-04 19:30・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-04 19:30 JST
+- **評価者**: Cursor Agent（`wait-ai-pr-review` sentinel → auto）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: #2223
+- **REVIEW_REQUEST_SINCE**: 2026-08-04T10:13:13Z
+- **partial**: false
+- **新規 RC**: RC-57〜59（依頼コメント 1 件・Copilot overview 1 件はスキップ）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-57 | 3711453831 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | クライアント遷移で /orders?eventId=… 時に完了ダイアログ未表示 |
+| [x] | RC-58 | 4853112013・suppressed | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | cart monthlyUsage 正規化の値型検証不足 |
+| [x] | RC-59 | 4853112013・suppressed | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | community 重複チェック query に limit(1) |
+
+**自動修正**: RC-57〜59 を同一セッションでコード反映（`orders.vue` / `cartMonthlyUsage.ts` / `communityList.ts` + vitest）
+
+### RC-57
+
+**識別子**: RC-57（GitHub id: 3711453831）
+
+**指摘箇所**: `base/src/components/pages/orders.vue`（L126-129 付近）
+
+**diff_hunk**（抜粋）:
+
+```diff
++const isUserSuccessJoinEventDialogVisible = ref(false)
++if (route.query.eventId != null && route.query.communityAccount != null) {
++  isUserSuccessJoinEventDialogVisible.value = true
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+クエリ変更時にも注文完了ダイアログを開いてください。同じ `/orders` コンポーネント再利用のままクライアントサイド遷移で query が付与された場合、初期化が再実行されずダイアログが開かない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**判断理由**: `route.query` watcher 内で `isUserSuccessJoinEventDialogVisible = true` を設定。
+
+### RC-58
+
+**識別子**: RC-58（GitHub id: 4853112013・Copilot suppressed）
+
+**指摘箇所**: `base/src/composable/cartMonthlyUsage.ts:39`
+
+**レビュワーのコメント（原文）**:
+
+[must] `normalizeCartEnterpriseSubsidyBudget` が `monthlyUsage` の値型を検証していないため、想定外データで下流計算が壊れる可能性。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+### RC-59
+
+**識別子**: RC-59（GitHub id: 4853112013・Copilot suppressed）
+
+**指摘箇所**: `base/src/stores/communityList.ts:81`
+
+**レビュワーのコメント（原文）**:
+
+[imo] 重複チェック query に `limit(1)` を付けて読み取りコストを抑える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
 
 ---

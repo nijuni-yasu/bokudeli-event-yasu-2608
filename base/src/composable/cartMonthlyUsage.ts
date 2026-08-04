@@ -35,7 +35,14 @@ export function normalizeCartEnterpriseSubsidyBudget(value: unknown): CartEnterp
   if (typeof monthlyUsage !== 'object' || monthlyUsage === null) {
     return null
   }
-  return { monthlyUsage }
+  const normalized: Record<string, number> = {}
+  for (const [key, entry] of Object.entries(monthlyUsage)) {
+    if (typeof entry !== 'number' || Number.isNaN(entry)) {
+      return null
+    }
+    normalized[key] = entry
+  }
+  return { monthlyUsage: normalized }
 }
 
 /** PF / user 版: 福利厚生 budget なし */

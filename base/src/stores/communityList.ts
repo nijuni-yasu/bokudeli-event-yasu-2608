@@ -79,6 +79,7 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
             collection(db, 'communities'),
             where('enterprise_id', '==', enterpriseId),
             where('community_account', '==', communityAccount),
+            limit(1),
           ),
         )
         if (duplicatedCommunity.empty) {

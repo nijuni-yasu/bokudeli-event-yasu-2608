@@ -124,13 +124,13 @@ const downloadReceipt = (eventId: string, stripeId: string) => {
 }
 
 const isUserSuccessJoinEventDialogVisible = ref(false)
-if (route.query.eventId != null && route.query.communityAccount != null) {
-  isUserSuccessJoinEventDialogVisible.value = true
-}
 
 watch(
   () => [route.query.eventId, route.query.communityAccount, userId.value] as const,
   ([eventId, communityAccount, uid]) => {
+    if (eventId != null && communityAccount != null) {
+      isUserSuccessJoinEventDialogVisible.value = true
+    }
     const store = userOrderHistoryStore.value
     if (uid === '' || store == null) return
     if (eventId != null && communityAccount != null) {
