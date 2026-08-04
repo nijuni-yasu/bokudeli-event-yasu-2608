@@ -24,7 +24,7 @@ export default {
     },
     pass_code: {
       title: 'パスコード入力',
-      description: 'メールに記載された6桁のパスコードを入力してください。',
+      description: '6桁のパスコードを入力してください。',
       label: 'パスコード',
       submit: 'ログイン',
       invalid: 'パスコードが正しくありません。',

@@ -83,32 +83,39 @@ const submit = async (code: string) => {
 
 <template>
   <LoginBackgroundLayout>
-    <LoginBrandingHeader :title="t('enterprise.pass_code.title')" :subtitle="t('enterprise.pass_code.description')">
-      <p class="text-body-2 text-medium-emphasis text-center mb-4">{{ email }}</p>
+    <LoginBrandingHeader :title="t('enterprise.pass_code.title')">
+      <div class="pass-code-intro text-center">
+        <p class="text-body-1 text-medium-emphasis mb-2">{{ t('enterprise.pass_code.description') }}</p>
+        <p class="text-body-1 font-weight-medium text-high-emphasis text-break mb-0">{{ email }}</p>
+      </div>
 
-      <v-otp-input v-model="passCode" autofocus :disabled="isValidating" :loading="isValidating" />
+      <div class="pass-code-otp my-8">
+        <v-otp-input v-model="passCode" autofocus :disabled="isValidating" :loading="isValidating" />
+      </div>
 
-      <v-btn
-        size="large"
-        color="primary"
-        variant="text"
-        block
-        :disabled="isValidating"
-        :loading="isLoading"
-        @click="reSendPassCode"
-      >
-        {{ t('enterprise.pass_code.resend') }}
-      </v-btn>
-      <v-btn
-        size="large"
-        color="grey-900"
-        variant="text"
-        block
-        :disabled="isValidating"
-        @click="router.push(getLogin())"
-      >
-        {{ t('passcode.back') }}
-      </v-btn>
+      <div class="pass-code-actions d-flex flex-column ga-1">
+        <v-btn
+          size="default"
+          color="primary"
+          variant="text"
+          block
+          :disabled="isValidating"
+          :loading="isLoading"
+          @click="reSendPassCode"
+        >
+          {{ t('enterprise.pass_code.resend') }}
+        </v-btn>
+        <v-btn
+          size="default"
+          color="grey-900"
+          variant="text"
+          block
+          :disabled="isValidating"
+          @click="router.push(getLogin())"
+        >
+          {{ t('passcode.back') }}
+        </v-btn>
+      </div>
     </LoginBrandingHeader>
   </LoginBackgroundLayout>
 
@@ -118,6 +125,21 @@ const submit = async (code: string) => {
     </v-card-text>
   </confirm-dialog>
 </template>
+
+<style scoped lang="scss">
+.pass-code-intro {
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+.pass-code-otp :deep(.v-otp-input__content) {
+  gap: 0.5rem;
+}
+
+.pass-code-otp :deep(.v-field) {
+  --v-field-border-opacity: 0.38;
+}
+</style>
 
 <route lang="yaml">
 meta:
