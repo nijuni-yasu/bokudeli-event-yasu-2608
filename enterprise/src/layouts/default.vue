@@ -146,7 +146,7 @@ onMounted(() => {
         v-if="currentUser != null"
         :model-value="chatUnreadCount > 0"
         :content="chatBadgeContent"
-        color="success"
+        color="primary"
         location="top end"
         offset-x="6"
         offset-y="6"

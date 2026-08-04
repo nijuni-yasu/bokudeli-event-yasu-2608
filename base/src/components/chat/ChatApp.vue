@@ -33,11 +33,17 @@ type SelectedImage = {
   previewUrl: string
 }
 
-const props = defineProps<{
-  roomId?: string
-  resolveProfilePath?: ResolveUserPathFn
-  resolveChatRoomPath: ResolveChatRoomPathFn
-}>()
+const props = withDefaults(
+  defineProps<{
+    roomId?: string
+    resolveProfilePath?: ResolveUserPathFn
+    resolveChatRoomPath: ResolveChatRoomPathFn
+    unreadBadgeColor?: string
+  }>(),
+  {
+    unreadBadgeColor: 'success',
+  },
+)
 
 const emit = defineEmits<{
   openEvent: [payload: { communityId: string; eventId: string }]
@@ -621,6 +627,7 @@ onBeforeUnmount(() => {
     >
       <ChatLeftSidebarContent
         :is-drawer-open="isLeftSidebarOpen"
+        :unread-badge-color="unreadBadgeColor"
         @open-room="openRoom"
         @open-event="emit('openEvent', $event)"
         @close="isLeftSidebarOpen = false"

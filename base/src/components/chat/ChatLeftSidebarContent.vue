@@ -4,9 +4,15 @@ import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import ChatContact from './ChatContact.vue'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
 
-defineProps<{
-  isDrawerOpen: boolean
-}>()
+withDefaults(
+  defineProps<{
+    isDrawerOpen: boolean
+    unreadBadgeColor?: string
+  }>(),
+  {
+    unreadBadgeColor: 'success',
+  },
+)
 
 const emit = defineEmits<{
   openRoom: [roomId: string]
@@ -50,6 +56,7 @@ const filteredRooms = computed(() => {
       v-for="room in filteredRooms"
       :key="room.roomId"
       :room="room"
+      :unread-badge-color="unreadBadgeColor"
       @open-room="emit('openRoom', $event)"
       @open-event="emit('openEvent', $event)"
     />

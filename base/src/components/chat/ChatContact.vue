@@ -4,10 +4,16 @@ import { avatarText } from '@shokujii/base/utils/avatarText.js'
 import { formatChatListTimestamp } from '@shokujii/common/utils/datetime.js'
 import type { ChatRoomListItem } from './types.js'
 
-const props = defineProps<{
-  room: ChatRoomListItem
-  active?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    room: ChatRoomListItem
+    active?: boolean
+    unreadBadgeColor?: string
+  }>(),
+  {
+    unreadBadgeColor: 'success',
+  },
+)
 
 const emit = defineEmits<{
   openRoom: [roomId: string]
@@ -84,7 +90,13 @@ const onAvatarClick = (event: MouseEvent) => {
       <span v-if="room.lastMessageAt != null" class="d-block text-disabled text-xs whitespace-no-wrap">
         {{ formatChatListTimestamp(room.lastMessageAt) }}
       </span>
-      <VBadge v-if="unreadLabel != null" color="success" inline :content="unreadLabel" class="ms-auto" />
+      <VBadge
+        v-if="unreadLabel != null"
+        :color="unreadBadgeColor"
+        inline
+        :content="unreadLabel"
+        class="ms-auto"
+      />
     </div>
   </li>
 </template>

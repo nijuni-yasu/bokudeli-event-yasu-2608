@@ -38,6 +38,7 @@ const onOpenEvent = async (payload: { communityId: string; eventId: string }) =>
   <div class="chat-page d-flex flex-column overflow-hidden">
     <VCard class="chat-page-card d-flex flex-column flex-grow-1 overflow-hidden" elevation="2">
       <ChatApp
+        unread-badge-color="primary"
         :resolve-profile-path="getUserPath"
         :resolve-chat-room-path="getChatPath"
         @navigate-room="onNavigateRoom"
