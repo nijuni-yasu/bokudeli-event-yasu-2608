@@ -551,14 +551,8 @@ const isOpenCancelpolicyDialog = ref(false)
                     <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.unit_price') }}</th>
-                    <th
-                      v-if="hasCartCommunityBill(cartItem.event) || hasCartEnterpriseSubsidy(cartItem.event)"
-                      class="text-center"
-                      style="padding: 1px"
-                    >
-                      {{
-                        hasCartEnterpriseSubsidy(cartItem.event) ? $t('cart.company_subsidy') : $t('cart.off_amount')
-                      }}
+                    <th v-if="hasCartCommunityBill(cartItem.event)" class="text-center" style="padding: 1px">
+                      {{ $t('cart.off_amount') }}
                     </th>
                   </tr>
                 </thead>
@@ -595,7 +589,7 @@ const isOpenCancelpolicyDialog = ref(false)
                     </td>
                     <td class="text-center" style="padding: 1px">¥{{ priceString(menu.menu_price) }}</td>
                     <td
-                      v-if="hasCartCommunityBill(cartItem.event) || hasCartEnterpriseSubsidy(cartItem.event)"
+                      v-if="hasCartCommunityBill(cartItem.event)"
                       class="text-center"
                       style="padding: 1px"
                       :class="menu.totalDiscount > 0 ? 'text-caption text-discount' : ''"
@@ -609,32 +603,55 @@ const isOpenCancelpolicyDialog = ref(false)
             </v-card>
           </v-col>
         </v-row>
-        <v-card-text v-if="hasCartEnterpriseSubsidy(cartItem.event)" class="card-text-style pt-0">
-          <div class="text-body-2">
-            <div>{{ $t('cart.order_total') }}: ¥{{ priceString(cartItem.totalMenuPrice) }}</div>
-            <div v-if="cartItem.totalDiscount > 0" class="text-discount">
-              {{ $t('cart.company_subsidy_total') }}: -¥{{ priceString(cartItem.totalDiscount) }}
-            </div>
-            <div class="font-weight-bold">{{ $t('cart.your_payment') }}: ¥{{ priceString(cartItem.totalPrice) }}</div>
-            <div v-if="cartItem.totalPrice === 0" class="mt-2">
-              {{ $t('cart.enterprise_subsidy_zero_payment') }}
-            </div>
-            <div v-else-if="cartItem.totalDiscount > 0 && cartItem.totalPrice > 0" class="mt-2">
-              {{ $t('cart.enterprise_subsidy_month', [cartItem.eventMonthLabel]) }}
-            </div>
-            <div
-              v-if="
-                cartItem.totalDiscount > 0 && cartItem.totalMenuPrice > cartItem.totalDiscount + cartItem.totalPrice
-              "
-              class="mt-1"
-            >
-              {{ $t('cart.enterprise_subsidy_partial', [cartItem.eventMonthLabel]) }}
-            </div>
-            <div v-if="cartItem.totalDiscount === 0 && cartItem.totalMenuPrice > 0" class="mt-1">
-              {{ $t('cart.enterprise_subsidy_exceeded', [cartItem.eventMonthLabel]) }}
-            </div>
-          </div>
-        </v-card-text>
+        <v-row v-if="hasCartEnterpriseSubsidy(cartItem.event)" class="text-center align-center">
+          <v-col cols="12" class="px-8 pb-2">
+            <v-sheet rounded="lg" class="pa-4 cart-enterprise-subsidy-summary" border>
+              <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-2">
+                <span>{{ $t('cart.order_total') }}</span>
+                <span class="cart-subsidy-amount">¥{{ priceString(cartItem.totalMenuPrice) }}</span>
+              </div>
+              <div
+                v-if="cartItem.totalDiscount > 0"
+                class="d-flex justify-space-between text-body-2 text-discount mb-2"
+              >
+                <span>{{ $t('cart.company_subsidy_total') }}</span>
+                <span class="cart-subsidy-amount">-¥{{ priceString(cartItem.totalDiscount) }}</span>
+              </div>
+              <v-divider class="my-3" />
+              <div class="d-flex justify-space-between align-end">
+                <span class="text-body-1 font-weight-medium">{{ $t('cart.your_payment') }}</span>
+                <span class="text-h5 text-md-h4 font-weight-bold cart-subsidy-amount">
+                  ¥{{ priceString(cartItem.totalPrice) }}
+                </span>
+              </div>
+              <div v-if="cartItem.totalPrice === 0" class="mt-3">
+                <v-alert variant="tonal" color="success" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_zero_payment') }}
+                </v-alert>
+              </div>
+              <div v-else-if="cartItem.totalDiscount > 0 && cartItem.totalPrice > 0" class="mt-3">
+                <v-alert variant="tonal" color="discount" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_month', [cartItem.eventMonthLabel]) }}
+                </v-alert>
+              </div>
+              <div
+                v-if="
+                  cartItem.totalDiscount > 0 && cartItem.totalMenuPrice > cartItem.totalDiscount + cartItem.totalPrice
+                "
+                class="mt-2"
+              >
+                <v-alert variant="tonal" color="warning" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_partial', [cartItem.eventMonthLabel]) }}
+                </v-alert>
+              </div>
+              <div v-if="cartItem.totalDiscount === 0 && cartItem.totalMenuPrice > 0" class="mt-2">
+                <v-alert variant="tonal" color="warning" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_exceeded', [cartItem.eventMonthLabel]) }}
+                </v-alert>
+              </div>
+            </v-sheet>
+          </v-col>
+        </v-row>
         <v-card-text v-else class="text-right">
           <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
           <span class="text-right my-2 ml-2 text-h6">¥</span>
@@ -744,8 +761,17 @@ const isOpenCancelpolicyDialog = ref(false)
   border-radius: 8px;
 }
 
+.cart-subsidy-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-enterprise-subsidy-summary {
+  text-align: left;
+}
+
 /* Materio が .v-alert__content に font-size を直指定するため text-body-2 が効かない。本文相当に揃える */
-.cart-community-bill-banner :deep(.v-alert__content) {
+.cart-community-bill-banner :deep(.v-alert__content),
+.cart-subsidy-summary-alert :deep(.v-alert__content) {
   font-size: 0.875rem;
   line-height: 1.375rem;
 }
@@ -756,7 +782,8 @@ const isOpenCancelpolicyDialog = ref(false)
     padding-bottom: 12px !important;
   }
 
-  .cart-community-bill-banner :deep(.v-alert__content) {
+  .cart-community-bill-banner :deep(.v-alert__content),
+  .cart-subsidy-summary-alert :deep(.v-alert__content) {
     font-size: 0.75rem;
     line-height: 1.25rem;
   }
