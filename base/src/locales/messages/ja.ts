@@ -132,6 +132,8 @@ export default {
     enterprise_subsidy_exceeded: '⚠ {0}分の割引上限に達しました。全額自己負担となります',
     enterprise_subsidy_zero_payment: '✓ 全額会社負担のため、決済は不要です',
     monthly_usage_label: '今月の割引利用',
+    event_month_subsidy_heading: '{0}分の福利厚生',
+    event_month_subsidy_remaining_limit: '残り予算 {0}円 / 月間上限 {1}円',
     confirm_order_enterprise_subsidy_checkout: '福利厚生割引適用後の差額をオンライン決済でお支払いします。続きますか？',
     confirm_order_enterprise_subsidy_zero: '全額会社負担のため、決済なしで注文を確定します。よろしいですか？',
     price: '金額',

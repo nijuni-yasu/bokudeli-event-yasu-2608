@@ -13,6 +13,7 @@ import { computeTotalPayment } from '@shokujii/common/utils/paymentCommunityBill
 import {
   computeMemberOrdersTotalPayment,
   getMemberOrderDiscountAmount,
+  replayEnterpriseSubsidyAmountsForOrders,
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
@@ -31,22 +32,21 @@ import {
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 import {
-  pfCartMonthlyUsageLoader,
-  normalizeCartMonthlyUsage,
-  type CartMonthlyUsageLoader,
+  pfCartEnterpriseSubsidyBudgetLoader,
+  normalizeCartEnterpriseSubsidyBudget,
+  type CartEnterpriseSubsidyBudgetLoader,
 } from '@shokujii/base/composable/cartMonthlyUsage.js'
 import type { ResolveOrdersPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 
 const props = withDefaults(
   defineProps<{
-    /** 月次 usage 表示用ローダー。enterprise 側から注入 */
-    monthlyUsageLoader?: CartMonthlyUsageLoader
+    /** 福利厚生: 開催月別確定 usage（enterprise 注入） */
+    enterpriseSubsidyBudgetLoader?: CartEnterpriseSubsidyBudgetLoader
     /** 注文確定後の注文履歴 URL（各 app の cart shell から注入） */
     resolveOrdersPath: ResolveOrdersPathFn
   }>(),
   {
-    // Function prop はファクトリ () => fn ではなく関数を直接指定する（Vue withDefaults の仕様）
-    monthlyUsageLoader: pfCartMonthlyUsageLoader,
+    enterpriseSubsidyBudgetLoader: pfCartEnterpriseSubsidyBudgetLoader,
   },
 )
 
@@ -122,11 +122,16 @@ type EnrichedCartItem = CartItem & {
   totalDiscount: number
   totalPrice: number
   eventMonthLabel: string
+  /** 開催月の確定済み利用額（budget ロード後） */
+  eventMonthUsed: number | null
+  eventMonthLimit: number | null
+  /** 開催月の残り予算（確定済み利用を差し引いた値。この注文前） */
+  eventMonthRemaining: number | null
+  /** replay ベースの合計を表示している */
+  subsidyTotalsFromReplay: boolean
 }
 
-const monthlyUsage = ref<{ used: number; limit: number } | null>(null)
-
-const monthlyUsageDisplay = computed(() => normalizeCartMonthlyUsage(monthlyUsage.value))
+const enterpriseSubsidyBudget = ref<Record<string, number> | null>(null)
 
 onMounted(async () => {
   const uid = userId.value
@@ -134,13 +139,51 @@ onMounted(async () => {
     return
   }
   try {
-    const result = await props.monthlyUsageLoader(uid)
-    monthlyUsage.value = normalizeCartMonthlyUsage(result)
+    const result = await props.enterpriseSubsidyBudgetLoader(uid)
+    const normalized = normalizeCartEnterpriseSubsidyBudget(result)
+    enterpriseSubsidyBudget.value = normalized?.monthlyUsage ?? null
   } catch (error) {
-    console.warn('[cart] monthlyUsageLoader failed', error)
-    monthlyUsage.value = null
+    console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)
+    enterpriseSubsidyBudget.value = null
   }
 })
+
+const computeEnterpriseSubsidyCartTotals = (
+  event: BokudeliEvent,
+  orders: EventMemberOrder[],
+  monthlyUsageByMonth: Record<string, number> | null,
+): Pick<
+  EnrichedCartItem,
+  'totalMenuPrice' | 'totalDiscount' | 'totalPrice' | 'eventMonthUsed' | 'eventMonthLimit' | 'eventMonthRemaining' | 'subsidyTotalsFromReplay'
+> => {
+  const totalMenuPrice = orders.reduce((sum, o) => sum + o.menu_price, 0)
+  const settings = event.enterprise_subsidy_settings
+  if (settings == null || monthlyUsageByMonth == null) {
+    const totalDiscount = orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0)
+    return {
+      totalMenuPrice,
+      totalDiscount,
+      totalPrice: computeMemberOrdersTotalPayment(orders),
+      eventMonthUsed: null,
+      eventMonthLimit: null,
+      eventMonthRemaining: null,
+      subsidyTotalsFromReplay: false,
+    }
+  }
+  const eventMonth = formatYearMonth(event.event_start_datetime)
+  const monthlyUsed = monthlyUsageByMonth[eventMonth] ?? 0
+  const monthlyLimit = settings.monthly_limit_per_user
+  const replay = replayEnterpriseSubsidyAmountsForOrders('enterprise_subsidy', settings, orders, monthlyUsed)
+  return {
+    totalMenuPrice,
+    totalDiscount: replay.subsidyTotal,
+    totalPrice: replay.totalPayment,
+    eventMonthUsed: monthlyUsed,
+    eventMonthLimit: monthlyLimit,
+    eventMonthRemaining: Math.max(0, monthlyLimit - monthlyUsed),
+    subsidyTotalsFromReplay: true,
+  }
+}
 
 /** 主催者請求かつおごり設定ありのとき、カート注文テーブルに「おごり」列を出す */
 const hasCartCommunityBill = (event: BokudeliEvent): boolean =>
@@ -169,17 +212,6 @@ const needsCommunityBillStripe = (event: BokudeliEvent, orders: EventMemberOrder
   return computeTotalPayment(orders) > 0
 }
 
-/** enterprise_subsidy で自己負担あり Stripe 決済が必要か */
-const needsEnterpriseSubsidyStripe = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean => {
-  if (event.event_payment !== 'enterprise_subsidy') return false
-  return computeMemberOrdersTotalPayment(orders) > 0
-}
-
-const needsStripeCheckout = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean =>
-  event.event_payment === 'user_advance' ||
-  needsCommunityBillStripe(event, orders) ||
-  needsEnterpriseSubsidyStripe(event, orders)
-
 const getEventMonthLabel = (event: BokudeliEvent): string => {
   const month = formatYearMonth(event.event_start_datetime)
   const [, m] = month.split('-')
@@ -188,19 +220,39 @@ const getEventMonthLabel = (event: BokudeliEvent): string => {
 
 const enrichedCart = computed<EnrichedCartItem[] | null>(() => {
   if (cart.value == null) return null
+  const budget = enterpriseSubsidyBudget.value
   return cart.value.map((cartItem) => {
-    const totalMenuPrice = cartItem.orders.reduce((sum, o) => sum + o.menu_price, 0)
-    const totalDiscount = cartItem.orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0)
+    const subsidyTotals =
+      cartItem.event.event_payment === 'enterprise_subsidy'
+        ? computeEnterpriseSubsidyCartTotals(cartItem.event, cartItem.orders, budget)
+        : {
+            totalMenuPrice: cartItem.orders.reduce((sum, o) => sum + o.menu_price, 0),
+            totalDiscount: cartItem.orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0),
+            totalPrice: computeMemberOrdersTotalPayment(cartItem.orders),
+            eventMonthUsed: null,
+            eventMonthLimit: null,
+            eventMonthRemaining: null,
+            subsidyTotalsFromReplay: false,
+          }
     return {
       ...cartItem,
       groupedMenus: groupOrdersByMenu(cartItem.orders),
-      totalMenuPrice,
-      totalDiscount,
-      totalPrice: computeMemberOrdersTotalPayment(cartItem.orders),
+      ...subsidyTotals,
       eventMonthLabel: getEventMonthLabel(cartItem.event),
     }
   })
 })
+
+const findEnrichedCartItem = (cartItem: CartItem): EnrichedCartItem | undefined =>
+  enrichedCart.value?.find((item) => item.event.event_id === cartItem.event.event_id)
+
+const needsStripeCheckoutForItem = (item: EnrichedCartItem): boolean => {
+  const { event, orders } = item
+  if (event.event_payment === 'user_advance') return true
+  if (needsCommunityBillStripe(event, orders)) return true
+  if (event.event_payment === 'enterprise_subsidy') return item.totalPrice > 0
+  return false
+}
 
 const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople' | 'unselectedMenu'> => {
   const { event, orders } = cartItem
@@ -268,12 +320,15 @@ const startOrderProcess = async () => {
     const cartItem = selectedCartItem.value
     if (cartItem === undefined) return
 
+    const enriched = findEnrichedCartItem(cartItem)
+    if (enriched === undefined) return
+
     const { event, orders } = cartItem
     const orderIds = orders.map((o) => o.order_id)
     const communityId = event.community_id
     const eventId = event.event_id
 
-    if (needsStripeCheckout(event, orders)) {
+    if (needsStripeCheckoutForItem(enriched)) {
       try {
         const response = await createStripeCheckoutSession({
           community_id: communityId,
@@ -310,11 +365,12 @@ const startOrderProcess = async () => {
   }
 }
 
-const paymentMessage = (event: BokudeliEvent, orders: EventMemberOrder[]) => {
+const paymentMessageForItem = (item: EnrichedCartItem) => {
+  const { event, orders, totalPrice } = item
   if (event.event_payment === 'user_advance') return $t('cart.confirm_order_credit_card')
   if (event.event_payment === 'user_on_day') return $t('cart.confirm_order_participant_on_day')
   if (event.event_payment === 'enterprise_subsidy') {
-    if (needsEnterpriseSubsidyStripe(event, orders)) {
+    if (totalPrice > 0) {
       return $t('cart.confirm_order_enterprise_subsidy_checkout')
     }
     return $t('cart.confirm_order_enterprise_subsidy_zero')
@@ -352,12 +408,15 @@ const showConfirm = async (cartItem: CartItem) => {
   }
 
   selectedCartItem.value = cartItem
-  const { event, orders } = cartItem
-  if (needsStripeCheckout(event, orders)) {
+  const enriched = findEnrichedCartItem(cartItem)
+  if (enriched === undefined) {
+    return
+  }
+  if (needsStripeCheckoutForItem(enriched)) {
     await startOrderProcess()
     return
   }
-  confirmDialogMessage.value = paymentMessage(event, orders)
+  confirmDialogMessage.value = paymentMessageForItem(enriched)
   openConfirmOrder.value = true
 }
 
@@ -454,10 +513,6 @@ const isOpenCancelpolicyDialog = ref(false)
     <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
       <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
       <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
-      <div v-if="monthlyUsageDisplay != null" class="text-center text-body-1 my-2">
-        {{ $t('cart.monthly_usage_label') }}: {{ priceString(monthlyUsageDisplay.used) }}円 /
-        {{ priceString(monthlyUsageDisplay.limit) }}円
-      </div>
     </v-col>
     <v-col v-for="cartItem in enrichedCart" :key="cartItem.event.event_id" cols="12" md="8" sm="8">
       <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
@@ -606,6 +661,22 @@ const isOpenCancelpolicyDialog = ref(false)
         <v-row v-if="hasCartEnterpriseSubsidy(cartItem.event)" class="text-center align-center">
           <v-col cols="12" class="px-8 pb-2">
             <v-sheet rounded="lg" class="pa-4 cart-enterprise-subsidy-summary" border>
+              <div
+                v-if="cartItem.eventMonthLimit != null && cartItem.eventMonthRemaining != null"
+                class="text-body-2 text-medium-emphasis mb-3 cart-enterprise-subsidy-month-budget"
+              >
+                <div class="font-weight-medium mb-1">
+                  {{ $t('cart.event_month_subsidy_heading', [cartItem.eventMonthLabel]) }}
+                </div>
+                <div>
+                  {{
+                    $t('cart.event_month_subsidy_remaining_limit', [
+                      priceString(cartItem.eventMonthRemaining),
+                      priceString(cartItem.eventMonthLimit),
+                    ])
+                  }}
+                </div>
+              </div>
               <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-2">
                 <span>{{ $t('cart.order_total') }}</span>
                 <span class="cart-subsidy-amount">¥{{ priceString(cartItem.totalMenuPrice) }}</span>
@@ -673,7 +744,7 @@ const isOpenCancelpolicyDialog = ref(false)
               @click="showConfirm(cartItem)"
             >
               {{
-                needsStripeCheckout(cartItem.event, cartItem.orders)
+                needsStripeCheckoutForItem(cartItem)
                   ? $t('cart.proceed_to_payment')
                   : $t('cart.order_and_attend_event')
               }}

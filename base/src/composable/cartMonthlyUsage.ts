@@ -19,3 +19,24 @@ export function normalizeCartMonthlyUsage(value: unknown): CartMonthlyUsage | nu
 
 /** PF 版: 月次 usage 表示なし */
 export const pfCartMonthlyUsageLoader: CartMonthlyUsageLoader = async () => null
+
+/** 福利厚生: 開催月 bucket ごとの確定済み利用額（EnterpriseMember.monthly_usage） */
+export type CartEnterpriseSubsidyBudget = {
+  monthlyUsage: Record<string, number>
+}
+
+export type CartEnterpriseSubsidyBudgetLoader = (userId: string) => Promise<CartEnterpriseSubsidyBudget | null>
+
+export function normalizeCartEnterpriseSubsidyBudget(value: unknown): CartEnterpriseSubsidyBudget | null {
+  if (typeof value !== 'object' || value === null) {
+    return null
+  }
+  const { monthlyUsage } = value as CartEnterpriseSubsidyBudget
+  if (typeof monthlyUsage !== 'object' || monthlyUsage === null) {
+    return null
+  }
+  return { monthlyUsage }
+}
+
+/** PF / user 版: 福利厚生 budget なし */
+export const pfCartEnterpriseSubsidyBudgetLoader: CartEnterpriseSubsidyBudgetLoader = async () => null
