@@ -8,9 +8,7 @@ const props = defineProps<{
 
 const { logoUrl, companyName } = useEnterpriseLogoUrl()
 
-const companyNameClass = computed(() =>
-  props.title != null ? 'text-h5 font-weight-bold' : 'text-h4 font-weight-bold',
-)
+const companyNameClass = computed(() => (props.title != null ? 'text-h5 font-weight-bold' : 'text-h4 font-weight-bold'))
 </script>
 
 <template>
@@ -33,7 +31,10 @@ const companyNameClass = computed(() =>
         </p>
       </v-row>
     </header>
-    <div class="login-branding-header__body" :class="{ 'login-branding-header__body--after-subtitle': subtitle != null }">
+    <div
+      class="login-branding-header__body"
+      :class="{ 'login-branding-header__body--after-subtitle': subtitle != null }"
+    >
       <slot />
     </div>
   </v-card>

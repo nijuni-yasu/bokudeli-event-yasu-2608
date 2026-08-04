@@ -154,7 +154,13 @@ const computeEnterpriseSubsidyCartTotals = (
   monthlyUsageByMonth: Record<string, number> | null,
 ): Pick<
   EnrichedCartItem,
-  'totalMenuPrice' | 'totalDiscount' | 'totalPrice' | 'eventMonthUsed' | 'eventMonthLimit' | 'eventMonthRemaining' | 'subsidyTotalsFromReplay'
+  | 'totalMenuPrice'
+  | 'totalDiscount'
+  | 'totalPrice'
+  | 'eventMonthUsed'
+  | 'eventMonthLimit'
+  | 'eventMonthRemaining'
+  | 'subsidyTotalsFromReplay'
 > => {
   const totalMenuPrice = orders.reduce((sum, o) => sum + o.menu_price, 0)
   const settings = event.enterprise_subsidy_settings
@@ -744,9 +750,7 @@ const isOpenCancelpolicyDialog = ref(false)
               @click="showConfirm(cartItem)"
             >
               {{
-                needsStripeCheckoutForItem(cartItem)
-                  ? $t('cart.proceed_to_payment')
-                  : $t('cart.order_and_attend_event')
+                needsStripeCheckoutForItem(cartItem) ? $t('cart.proceed_to_payment') : $t('cart.order_and_attend_event')
               }}
             </v-btn>
           </v-col>
