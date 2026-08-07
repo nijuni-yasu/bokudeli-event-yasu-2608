@@ -38,6 +38,8 @@ resource "google_identity_platform_config" "auth" {
       "localhost",
       "${var.project}.web.app",
       "${var.project}.firebaseapp.com",
+      "${var.project}-enterprise.web.app",
+      "${var.project}-enterprise.firebaseapp.com",
     ],
     var.auth_authorized_domains_extra,
   ))

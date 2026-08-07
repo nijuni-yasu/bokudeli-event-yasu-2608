@@ -34,7 +34,7 @@ chmod +x init.sh
 
 `init.sh` は `project` と `github_repo` のみ書き出します。Firebase Auth の **Authorized domains** で本番カスタムドメイン等が必要な場合は、手動で `auth_authorized_domains_extra` を追加してください（[firebase.tf](firebase.tf)）。
 
-全プロジェクト共通で常に含まれるドメイン: `localhost`, `{project}.web.app`, `{project}.firebaseapp.com`
+全プロジェクト共通で常に含まれるドメイン: `localhost`, `{project}.web.app`, `{project}.firebaseapp.com`, `{project}-enterprise.web.app`, `{project}-enterprise.firebaseapp.com`（Auth。Storage CORS 既定 origin も [locals_storage_cors.tf](locals_storage_cors.tf) 参照）
 
 本番 `bokudeli-event-dev` の例:
 
@@ -54,6 +54,12 @@ auth_authorized_domains_extra = [
 ブラウザから Firebase Storage SDK（`uploadBytes` / `getBlob`）で直接アクセスする機能には **GCS バケット CORS** が必要です。`firebase deploy --only storage` では CORS は設定されません。**`terraform apply` で付与**されます（[storage.tf](storage.tf) の `google_storage_bucket.default`）。
 
 `auth_authorized_domains_extra` に登録したカスタムドメイン（例: `shokujii.jp`）は **CORS origin にも `https://` 付きで自動反映**されます。Auth に無い origin（Preview Channel URL 等）のみ `storage_cors_origins_extra` に追加してください。
+
+**エンプラテナント URL**（例: `company-a.test.tabete.co`）は GCS CORS **ワイルドカード不可**のため、テナント追加ごとに `auth_authorized_domains_extra` へ **FQDN を列挙**し `terraform apply` する（[08_カスタムドメイン.md](../documents/08_エンタープライズ/10_仕様/08_カスタムドメイン.md) §5.5、[Issue #2241](https://github.com/nijuniinc/bokudeli-event-new/issues/2241)）。FQDN 行の半自動出力:
+
+```bash
+./scripts/print-enterprise-tenant-fqdns.sh --subdomain company-a --base-domain test.tabete.co
+```
 
 ```hcl
 # auth_authorized_domains_extra に shokujii.jp 等があれば CORS にも https:// 付きで自動反映される。
