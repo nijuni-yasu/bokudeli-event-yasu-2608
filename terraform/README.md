@@ -49,6 +49,22 @@ auth_authorized_domains_extra = [
 
 テスト・sandbox では未設定（空リスト）で問題ありません。既存プロジェクトで Console に独自ドメインがある場合、**apply 前に** [Firebase Console](https://console.firebase.google.com/) → Authentication → Settings → Authorized domains、または Identity Platform API で一覧を確認し、不足分を `auth_authorized_domains_extra` に含めること（含めないと apply で削除される可能性があります）。
 
+**エンプラ sandbox（`tabete.co` ベースドメイン）の tfvars 例**（プロジェクト固有の値はローカルのみ。リポジトリに個人 sandbox の `terraform.tfvars` はコミットしない）:
+
+```hcl
+project = "bokudeli-event-yasu-2510"
+github_repo = "your-org/your-repo"
+
+enterprise_base_domain = "sandbox2510.tabete.co"
+
+auth_authorized_domains_extra = [
+  "sandbox2510.tabete.co",              # user サイトのカスタムドメイン
+  "company-a.sandbox2510.tabete.co",   # テナント FQDN（追加テナントごとに列挙）
+]
+```
+
+`enterprise_base_domain` は reCAPTCHA App Check（[recaptcha_enterprise.tf](recaptcha_enterprise.tf)）用。Storage CORS / Auth authorized domains は上記 extra と Terraform 既定ドメインから組み立てる。
+
 ### Storage CORS（チャット画像添付等）
 
 ブラウザから Firebase Storage SDK（`uploadBytes` / `getBlob`）で直接アクセスする機能には **GCS バケット CORS** が必要です。`firebase deploy --only storage` では CORS は設定されません。**`terraform apply` で付与**されます（[storage.tf](storage.tf) の `google_storage_bucket.default`）。
@@ -72,6 +88,32 @@ auth_authorized_domains_extra = [
 **import 前の一時適用**: Terraform 未適用、または `google_storage_bucket.default` import 前に CORS だけ先に当てる場合は、[locals_storage_cors.tf](locals_storage_cors.tf) の origin 定義に合わせた JSON をローカルで用意し、`gcloud storage buckets update gs://<bucket> --cors-file=/path/to/cors.json` で適用する。正本は Terraform のためリポジトリに環境別 JSON は置かない。
 
 **確認**: `gsutil cors get gs://<bucket>`、またはブラウザ Network で画像 GET レスポンスに `access-control-allow-origin` が含まれること。
+
+#### テナント FQDN 追加時の apply（Auth と Storage）
+
+| 目的 | 推奨操作 |
+| ---- | -------- |
+| **Auth authorized domains + Storage CORS** をまとめて更新 | `auth_authorized_domains_extra` 更新 → **`terraform plan`**（下記 Auth チェック合格）→ **`terraform apply`** |
+| **Storage CORS のみ**先に当てる（Auth plan に別差分が残る場合） | `-target=google_storage_bucket.default` で apply。必要なら `-target=google_recaptcha_enterprise_key.enterprise_app_check`（`enterprise_base_domain` 変更時） |
+| Auth domains のみ Console で追加 | [Firebase Console](https://console.firebase.google.com/) → Authentication → Authorized domains。**CORS は Terraform 側の extra 更新が必要**（GCS は Console と連動しない） |
+
+`google_storage_bucket.default` を **import 済み**で CORS が一度反映されていれば、**同じ origin 集合の削除差分は通常出ない**。新テナント URL を使うたびに **FQDN を extra に足して Storage を更新**する運用は変わらない。フル `terraform plan` には **CORS 以外**（未 import バケット、IAM 等）の add/change/destroy が出ることがあるので、**plan 全体を見ずに apply しない**。
+
+#### Identity Platform マルチテナント（`multi_tenant`）
+
+エンプラの `createEnterprise` / `authForTenant` には **`allow_tenants = true`** が必要。[firebase.tf](firebase.tf) の `google_identity_platform_config.auth` に `multi_tenant` を定義している。
+
+**apply 前の必須確認**（Auth リソースを含む plan / apply 全般）:
+
+| チェック | 不合格時のリスク |
+| -------- | ---------------- |
+| plan に `multi_tenant` の **削除**（`- allow_tenants = true` 等）が **無い** | Auth apply で IdP マルチテナントが無効化され、エンプラ tenant ログインに影響 |
+| `multi_tenant` 内の **`default_tenant_location` 等** | 意図しない `-` / 変更が無い（GCP で org/folder が設定済みなら [firebase.tf](firebase.tf) に同値を書くか、plan を確認してから apply） |
+| `authorized_domains` | 本番・sandbox のカスタム / テナント FQDN が **削除（`-`）されない** |
+
+`default_tenant_location` の確認例: [Firebase Console](https://console.firebase.google.com/) → Authentication → Settings、または Identity Platform API `projects.getConfig`（`multiTenant` / `defaultTenantLocation`）で実値を確認し、plan の `multi_tenant` ブロックと突き合わせる。差分がある場合は [firebase.tf](firebase.tf) に同値を追記してから apply する。
+
+古い Terraform コード（`multi_tenant` 未定義）で Auth を apply した sandbox では、**targeted apply で Storage のみ**当て、Authorized domains は Console 追加に頼った事例がある（[#2241](https://github.com/nijuniinc/bokudeli-event-new/issues/2241)）。**本リポジトリの `firebase.tf` を pull 済み**なら Auth も plan 合格後に apply してよい。
 
 ## 既存プロジェクトの初回セットアップ（本番・テスト）
 
@@ -164,6 +206,7 @@ import は **Terraform state のみ**更新する。本番サービスは停止�
 | チェック | 合格基準 |
 | -------- | -------- |
 | Destroy | **0** |
+| `google_identity_platform_config.auth` / `multi_tenant` | **`allow_tenants` が削除される差分が無い**（`- multi_tenant { ... }` が出たら Auth apply 禁止）。`default_tenant_location` 等の意図しない `-` も無いこと |
 | `authorized_domains` | 本番カスタムドメイン（例: `shokujii.jp`）が **削除（`-`）されない** |
 | 新規 Secret | **5 件**の Add のみ（`SLACK_*` 4 + `LINE_CHANNEL_ACCESS_TOKEN` 1。既存 7 件が Add なら import 漏れ） |
 | Hosting / Web App | create のままなら import 漏れ（409 リスク）。user / admin / **enterprise**（`PROJECT-enterprise`）を確認 |
