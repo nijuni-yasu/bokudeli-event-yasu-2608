@@ -26,7 +26,7 @@ const isLoading = ref(false)
 const validateNewAccount = async (value: string) => {
   const enterpriseId = enterpriseStore.enterprise?.enterprise_id
   if (enterpriseId == null || enterpriseId === '') {
-    return false
+    return true
   }
   const existing = await communityListStore.getCommunityData(value, { enterpriseId })
   return existing == null

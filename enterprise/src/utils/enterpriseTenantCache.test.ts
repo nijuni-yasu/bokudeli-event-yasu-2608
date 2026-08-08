@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import {
   readCachedEnterpriseTenantId,
   writeEnterpriseTenantCache,
@@ -23,6 +23,10 @@ describe('enterpriseTenantCache', () => {
         storage.delete(key)
       },
     })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('write 後に tenant_id を read できる', () => {
