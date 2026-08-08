@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { where, orderBy } from 'firebase/firestore'
 import { useDisplay } from 'vuetify'
 import { mdiPlus, mdiHelp, mdiContentCopy } from '@mdi/js'
-import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CopyEventDialog from '@shokujii/base/components/manage/community/CopyEventDialog.vue'
 import EventCardGrid from '@shokujii/base/components/manage/shared/EventCardGrid.vue'
 import { useCopyEventFeedback } from '@shokujii/base/composable/useCopyEventFeedback.js'
+import { useCreateAppCommunityEventListStore } from '@shokujii/base/composable/useAppEventListStore.js'
 import type { EventCreatePathResolver, ManageEventPathResolver } from '@shokujii/base/composable/managePathResolvers.js'
 
 const props = defineProps<{
@@ -14,6 +13,8 @@ const props = defineProps<{
   getEventCreatePath: EventCreatePathResolver
   getManageEventPath: ManageEventPathResolver
 }>()
+
+const createEventListStore = useCreateAppCommunityEventListStore()
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -32,11 +33,7 @@ const numOfColumns = computed(() => {
   }
 })
 
-const eventListStore = useEventListStore(
-  [where('community_account', '==', props.communityAccount), orderBy('event_start_datetime', 'desc')],
-  numOfColumns.value,
-  { autoContinue: true },
-)
+const eventListStore = createEventListStore(props.communityAccount, numOfColumns.value, { autoContinue: true })
 
 const events = computed(
   () =>

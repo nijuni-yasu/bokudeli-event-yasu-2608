@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, toRaw } from 'vue'
 import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useCreateAppLetterListStore } from '@shokujii/base/composable/useAppLetterStore.js'
 import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import DateInput from '@shokujii/base/components/DateInput.vue'
 import type { BokudeliLetter } from '@shokujii/base/stores/letter.js'
-import { useLetterListStore } from '@shokujii/base/stores/letterList'
 import {
   hourList,
   minutesList,
@@ -32,7 +32,8 @@ const emit = defineEmits<{
 
 const _letter = ref<BokudeliLetter>(props.letter)
 
-const letterListStore = useLetterListStore(props.letter.community_account)
+const createLetterListStore = useCreateAppLetterListStore()
+const letterListStore = createLetterListStore(props.letter.community_account)
 const communityStore = useAppCommunityStore(props.letter.community_account)
 const eventStore = props.letter.event_id == null ? null : useAppEventStore(props.letter.event_id)
 

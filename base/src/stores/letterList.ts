@@ -7,23 +7,27 @@ import {
   limit,
   startAfter,
   getCountFromServer,
-  type QueryDocumentSnapshot,
-  where,
-  CollectionReference,
   doc,
   setDoc,
   deleteDoc,
+  type QueryDocumentSnapshot,
   orderBy,
 } from 'firebase/firestore'
-import { db } from '@shokujii/base/firebase.js'
 import { TaskExecutor } from '@shokujii/base/utils/executors.js'
 import { BokudeliLetter, useLetterStore, type LetterStore, letterConverter } from '@shokujii/base/stores/letter.js'
 import { LetterTypeType } from '@shokujii/common/schemas/CommunityLetter.js'
+import {
+  resolveCommunityDocumentRef,
+  resolveCommunityStoreKey,
+  type CommunityStoreScope,
+} from '@shokujii/base/stores/community.js'
+import type { CollectionReference } from 'firebase/firestore'
 
 export type LetterListStore = ReturnType<typeof useLetterListStore>
 
-export const useLetterListStore = (communityAccount: string, pageSize: number = 3) => {
-  const store = defineStore(`letterList/${communityAccount}/${pageSize}`, () => {
+export const useLetterListStore = (communityAccount: string, pageSize: number = 3, scope?: CommunityStoreScope) => {
+  const storeKey = resolveCommunityStoreKey(scope?.enterpriseId)
+  const store = defineStore(`letterList/${storeKey}/${communityAccount}/${pageSize}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const letterStores = ref<LetterStore[] | null>(null)
     const totalCount = ref<number | null>(null)
@@ -33,10 +37,8 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
     let _letterListRef: CollectionReference<BokudeliLetter> | null = null
     const getLettersRef = async () => {
       if (_letterListRef == null) {
-        const communitySnapshot = await getDocs(
-          query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
-        )
-        _letterListRef = collection(communitySnapshot.docs[0].ref, 'letters').withConverter(letterConverter)
+        const communityRef = await resolveCommunityDocumentRef(communityAccount, scope)
+        _letterListRef = collection(communityRef, 'letters').withConverter(letterConverter)
       }
       return _letterListRef
     }
@@ -60,7 +62,7 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
         lettersSnapsthot.push(...querySnapshot.docs)
         window.setTimeout(() => {
           letterStores.value = lettersSnapsthot.map(
-            (doc) => useLetterStore(communityAccount, doc.data()) as LetterStore,
+            (doc) => useLetterStore(communityAccount, doc.data(), scope) as LetterStore,
           )
         })
       })
@@ -76,12 +78,14 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
     }
 
     const updateLetter = async (data: BokudeliLetter) => {
-      const letterRef = doc(await getLettersRef(), data.letter_id)
+      const lettersRef = await getLettersRef()
+      const letterRef = doc(lettersRef, data.letter_id)
       await setDoc(letterRef, data, { merge: true })
     }
 
     const deleteLetter = async (letterId: string) => {
-      const letterRef = doc(await getLettersRef(), letterId)
+      const lettersRef = await getLettersRef()
+      const letterRef = doc(lettersRef, letterId)
       await deleteDoc(letterRef)
     }
 

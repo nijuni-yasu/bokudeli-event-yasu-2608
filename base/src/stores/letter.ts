@@ -7,9 +7,6 @@ import {
   setDoc,
   DocumentReference,
   type Unsubscribe,
-  where,
-  query,
-  getDocs,
   doc,
   collection,
   DocumentData,
@@ -19,6 +16,11 @@ import {
 } from 'firebase/firestore'
 
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
+import {
+  resolveCommunityDocumentRef,
+  resolveCommunityStoreKey,
+  type CommunityStoreScope,
+} from '@shokujii/base/stores/community.js'
 
 const db = getFirestore()
 
@@ -41,7 +43,11 @@ export const letterConverter: FirestoreDataConverter<BokudeliLetter> = {
 }
 
 export type LetterStore = ReturnType<typeof useLetterStore>
-export const useLetterStore = (communityAccount: string, target: string | BokudeliLetter) => {
+export const useLetterStore = (
+  communityAccount: string,
+  target: string | BokudeliLetter,
+  scope?: CommunityStoreScope,
+) => {
   let _letterRef: DocumentReference<BokudeliLetter> | null = null
   let letterId: string
   if (target instanceof BokudeliLetter) {
@@ -49,13 +55,12 @@ export const useLetterStore = (communityAccount: string, target: string | Bokude
   } else {
     letterId = target
   }
-  const store = defineStore(`/communities/${communityAccount}/letters/${letterId}`, () => {
+  const storeKey = resolveCommunityStoreKey(scope?.enterpriseId)
+  const store = defineStore(`/communities/${storeKey}/${communityAccount}/letters/${letterId}`, () => {
     const getLetterRef = async () => {
       if (_letterRef == null) {
-        const communitySnapshot = await getDocs(
-          query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
-        )
-        _letterRef = doc(collection(communitySnapshot.docs[0]!.ref, 'letters'), letterId).withConverter(letterConverter)
+        const communityRef = await resolveCommunityDocumentRef(communityAccount, scope)
+        _letterRef = doc(collection(communityRef, 'letters'), letterId).withConverter(letterConverter)
       }
       return _letterRef
     }

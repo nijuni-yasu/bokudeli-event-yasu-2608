@@ -1,6 +1,6 @@
 import { inject } from 'vue'
 import {
-  buildEventStoreOptions,
+  resolveEventStoreOptionsFromInjectedEnterpriseId,
   useEventStore,
   type BokudeliEvent,
   type EventStore,
@@ -16,16 +16,16 @@ export function useCreateAppEventStore(): (target: string | BokudeliEvent) => Ev
   const scopeFromApp = inject(injectionKeyCommunityStoreScope, undefined)
   return (target: string | BokudeliEvent) => {
     const enterpriseId = scopeFromApp?.()?.enterpriseId
-    return useEventStore(target, buildEventStoreOptions(enterpriseId))
+    return useEventStore(target, resolveEventStoreOptionsFromInjectedEnterpriseId(enterpriseId))
   }
 }
 
 /**
  * アプリ注入の enterpriseId で event store オプションを組み立てる。
- * - user: provide なし → PF
+ * - user/partner: provide なし → `{}`（main の default merge）
  * - enterprise: App.vue の provide 経由
  */
 export function useAppEventStore(target: string | BokudeliEvent): EventStore {
   const enterpriseId = resolveInjectedCommunityScope()?.enterpriseId
-  return useEventStore(target, buildEventStoreOptions(enterpriseId))
+  return useEventStore(target, resolveEventStoreOptionsFromInjectedEnterpriseId(enterpriseId))
 }

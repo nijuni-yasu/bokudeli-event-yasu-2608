@@ -24,6 +24,15 @@ export function useAppCommunityStore(target: string | BokudeliCommunity): Commun
 }
 
 /**
+ * setup 内で一度だけ呼び、返却関数から inject スコープを都度解決する。
+ * （computed / 非同期ハンドラから `resolveInjectedCommunityScope` を直接呼ぶと setup 時点のスナップショットになる）
+ */
+export function useCreateAppCommunityScope(): () => CommunityStoreScope | undefined {
+  const scopeFromApp = inject(injectionKeyCommunityStoreScope, undefined)
+  return () => scopeFromApp?.()
+}
+
+/**
  * setup 内で一度だけ呼び、返却関数を computed / 非同期処理から使う。
  * （computed 等から `useAppCommunityStore` を直接呼ぶと inject コンテキスト外になる）
  */

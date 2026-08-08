@@ -90,7 +90,7 @@ const onManagerSelfRemoved = () => {
             <CommunityAlbum />
           </v-tabs-window-item>
           <v-tabs-window-item value="invoice">
-            <CommunityInvoice />
+            <CommunityInvoice :community-account="communityAccount" />
           </v-tabs-window-item>
           <v-tabs-window-item value="slackSetting">
             <CommunitySlackSetting />

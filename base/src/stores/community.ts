@@ -42,6 +42,18 @@ import { uploadAlbumImage, uploadImage, convertStoragePathToURL } from '@shokuji
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { useConfigStore } from './config.js'
 import { TaskExecutor } from '../utils/executors.js'
+import {
+  buildCommunityLookupConstraints,
+  resolveCommunityStoreKey,
+  type CommunityStoreScope,
+} from '@shokujii/base/stores/communityScope.js'
+
+export type { CommunityStoreScope } from '@shokujii/base/stores/communityScope.js'
+export {
+  buildCommunityLookupConstraints,
+  resolveCommunityStoreKey,
+  resolveCommunityEnterpriseIdForQuery,
+} from '@shokujii/base/stores/communityScope.js'
 
 const MEMBER_LOAD_BATCH_SIZE = 10
 
@@ -189,13 +201,25 @@ export const checkSoleManagerCommunity = async (userId: string): Promise<boolean
 
 export type CommunityStore = ReturnType<typeof useCommunityStore>
 
-/** PF は省略（`enterprise_id == null` 名前空間）。Enterprise では `enterpriseId` を指定する */
-export type CommunityStoreScope = {
-  enterpriseId?: string
-}
-
-function resolveCommunityStoreKey(enterpriseId: string | null | undefined): string {
-  return enterpriseId != null && enterpriseId !== '' ? enterpriseId : 'pf'
+export async function resolveCommunityDocumentRef(
+  communityAccount: string,
+  scope?: CommunityStoreScope,
+): Promise<DocumentReference<BokudeliCommunity>> {
+  const querySnapshot = await getDocs(
+    query(
+      collection(db, 'communities').withConverter(communityConverter),
+      ...buildCommunityLookupConstraints(communityAccount, scope),
+      limit(2),
+    ),
+  )
+  if (querySnapshot.docs.length === 0) {
+    throw new Error(`Community "${communityAccount}" was not found for the given scope.`)
+  }
+  if (querySnapshot.docs.length > 1) {
+    console.warn(`Multiple communities matched account "${communityAccount}" for scope; expected at most one document.`)
+    throw new Error(`Community "${communityAccount}" is ambiguous for the given scope.`)
+  }
+  return querySnapshot.docs[0].ref.withConverter(communityConverter)
 }
 
 /**
@@ -557,7 +581,11 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
           querySnapshot.docs.forEach((doc) => {
             const eventId = doc.id
             const stores = eventStores.value || new Map()
-            stores.set(eventId, useEventStore(eventId, buildEventStoreOptions(resolvedEnterpriseId)) as EventStore)
+            const eventStoreOptions =
+              resolvedEnterpriseId != null && resolvedEnterpriseId !== ''
+                ? buildEventStoreOptions(resolvedEnterpriseId)
+                : {}
+            stores.set(eventId, useEventStore(eventId, eventStoreOptions) as EventStore)
             eventStores.value = stores
           })
         })
@@ -566,12 +594,19 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
 
     let retry = 0
     const subscribe = () => {
-      const queryConstraints = [
-        where('enterprise_id', '==', resolvedEnterpriseId ?? null),
-        where('community_account', '==', communityAccount),
-      ]
-      return getDocs(query(collection(db, 'communities'), ...queryConstraints).withConverter(communityConverter)).then(
-        (querySnapshot) => {
+      const queryConstraints = buildCommunityLookupConstraints(communityAccount, {
+        enterpriseId: resolvedEnterpriseId,
+      })
+      return getDocs(
+        query(collection(db, 'communities'), ...queryConstraints, limit(2)).withConverter(communityConverter),
+      ).then((querySnapshot) => {
+          if (querySnapshot.docs.length > 1) {
+            console.warn(
+              `Multiple communities matched account "${communityAccount}" for scope; expected at most one document.`,
+            )
+            console.error(`The community "${communityAccount}" is ambiguous for the given scope.`)
+            return
+          }
           const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
           if (communityRef == null) {
             if (retry++ < 10) {
@@ -591,8 +626,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
           subscribeCommunity(communityRef)
           // 他の Store は遅延評価なので、以下を呼ぶ必要はない
           // subscribeEvents(communityRef)
-        },
-      )
+        })
     }
 
     const unsubscribe = () => {

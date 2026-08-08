@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { getAuth } from 'firebase/auth'
@@ -133,20 +133,32 @@ type EnrichedCartItem = CartItem & {
 
 const enterpriseSubsidyBudget = ref<Record<string, number> | null>(null)
 
-onMounted(async () => {
-  const uid = userId.value
-  if (uid === '') {
-    return
-  }
-  try {
-    const result = await props.enterpriseSubsidyBudgetLoader(uid)
-    const normalized = normalizeCartEnterpriseSubsidyBudget(result)
-    enterpriseSubsidyBudget.value = normalized?.monthlyUsage ?? null
-  } catch (error) {
-    console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)
-    enterpriseSubsidyBudget.value = null
-  }
-})
+let subsidyBudgetLoadGeneration = 0
+watch(
+  userId,
+  async (uid) => {
+    if (uid === '') {
+      enterpriseSubsidyBudget.value = null
+      return
+    }
+    const generation = ++subsidyBudgetLoadGeneration
+    try {
+      const result = await props.enterpriseSubsidyBudgetLoader(uid)
+      if (generation !== subsidyBudgetLoadGeneration) {
+        return
+      }
+      const normalized = normalizeCartEnterpriseSubsidyBudget(result)
+      enterpriseSubsidyBudget.value = normalized?.monthlyUsage ?? null
+    } catch (error) {
+      if (generation !== subsidyBudgetLoadGeneration) {
+        return
+      }
+      console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)
+      enterpriseSubsidyBudget.value = null
+    }
+  },
+  { immediate: true },
+)
 
 const computeEnterpriseSubsidyCartTotals = (
   event: BokudeliEvent,
