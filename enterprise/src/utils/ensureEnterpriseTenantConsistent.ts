@@ -23,12 +23,19 @@ export function applyKnownEnterpriseAuthTenantId(): void {
 /**
  * テナント bootstrap 後の Auth 状態を待つ。
  * キャッシュ tenant ありで初回 null のときは永続化復元を最大 2 秒待つ。
+ * 同一ナビゲーション内の複数 beforeEach から呼ばれても待機は 1 回にまとめる。
  */
+let pendingAuthWait: Promise<User | null> | null = null
+
 export function waitEnterpriseAuthentication(): Promise<User | null> {
+  if (pendingAuthWait != null) {
+    return pendingAuthWait
+  }
+
   applyKnownEnterpriseAuthTenantId()
   const hasCache = readCachedEnterpriseTenantEntry() != null
 
-  return new Promise((resolve) => {
+  pendingAuthWait = new Promise((resolve) => {
     const auth = getAuth()
     let settled = false
     let unsubscribe: (() => void) | undefined
@@ -60,6 +67,12 @@ export function waitEnterpriseAuthentication(): Promise<User | null> {
       }
     })
   })
+
+  void pendingAuthWait.finally(() => {
+    pendingAuthWait = null
+  })
+
+  return pendingAuthWait
 }
 
 function parseTokenEnterpriseId(claims: Record<string, unknown>): string | undefined {
