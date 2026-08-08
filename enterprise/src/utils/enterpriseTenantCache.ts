@@ -56,7 +56,9 @@ export function readCachedEnterpriseTenantEntry(): EnterpriseTenantCacheEntry | 
   return readValidatedEntry()
 }
 
-export function writeEnterpriseTenantCache(enterprise: Pick<GetEnterpriseByDomainResponse, 'tenant_id' | 'enterprise_id'>): void {
+export function writeEnterpriseTenantCache(
+  enterprise: Pick<GetEnterpriseByDomainResponse, 'tenant_id' | 'enterprise_id'>,
+): void {
   if (typeof localStorage === 'undefined') {
     return
   }
