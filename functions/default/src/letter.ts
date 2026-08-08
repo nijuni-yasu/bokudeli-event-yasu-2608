@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { sendIndividualLetterRequestSchema, sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
-import { getCommunity, getCommunityByAccount } from './stores/community.js'
+import { getCommunity } from './stores/community.js'
 import { getEventInCommunity } from './stores/event.js'
 import { getMemberIds } from './stores/memberOrder.js'
 import { getLetter, getLetterRef, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
@@ -170,15 +170,29 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         return
       }
 
-      // コミュニティ情報の取得
-      const community = await getCommunityByAccount(communityAccount)
-
-      if (!community) {
-        logger.warn('Community not found for account', { communityAccount, letterId: letter.id })
+      // レターは communities/{communityId}/letters 配下。account だけでは enterprise / PF を区別できないため ID で取得
+      const communityId = ref.parent.parent?.id
+      if (communityId == null || communityId === '') {
+        logger.warn('Invalid letter document path', { letterId: letter.id })
         return
       }
 
-      const communityId = community.id
+      const community = await getCommunity(communityId)
+
+      if (!community) {
+        logger.warn('Community not found for letter', { communityId, communityAccount, letterId: letter.id })
+        return
+      }
+
+      if (community.community_account !== communityAccount) {
+        logger.warn('Community account mismatch on letter', {
+          communityId,
+          communityAccount,
+          expected: community.community_account,
+          letterId: letter.id,
+        })
+        return
+      }
       const communityEmail =
         community.community_email != null && community.community_email !== '' ? community.community_email : DEFAULT_FROM
       const communityData = {

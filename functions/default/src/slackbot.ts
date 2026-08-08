@@ -2,7 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https'
 import { defineSecret, defineString } from 'firebase-functions/params'
 import bolt from '@slack/bolt'
 import type { Installation, InstallProviderOptions } from '@slack/bolt'
-import { getCommunityByAccount } from './stores/community.js'
+import { getCommunity } from './stores/community.js'
 import {
   addCommunityBot,
   deleteSlackInstallation,
@@ -53,8 +53,8 @@ const registerCommands = (boltApp: InstanceType<typeof App>, commandName: string
       return
     }
 
-    const community = await getCommunityByAccount(communityAccount)
-    if (community == null || community.id !== communityId) {
+    const community = await getCommunity(communityId)
+    if (community == null || community.community_account !== communityAccount) {
       await respond('入力された値があっていません')
       return
     }
