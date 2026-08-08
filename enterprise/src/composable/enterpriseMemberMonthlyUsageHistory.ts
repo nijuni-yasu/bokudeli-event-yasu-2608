@@ -92,6 +92,31 @@ function ensureCurrentMonthInHistory(
 }
 
 /**
+ * EP-22: 最大 maxMonths 件に抑えつつ、カレンダー当月行は slice から落とさない。
+ * （未来月のみ 12 件埋まっていると降順 slice で当月が脱落する edge case 対策）
+ */
+export function trimMonthlyUsageHistoryPreservingCurrentMonth(
+  history: EnterpriseMemberMonthlyUsageHistoryRow[],
+  currentMonth: string,
+  maxMonths = HISTORY_MAX_MONTHS,
+): EnterpriseMemberMonthlyUsageHistoryRow[] {
+  const sorted = [...history].sort((a, b) => compareYearMonthDesc(a.yearMonth, b.yearMonth))
+  if (sorted.length <= maxMonths) {
+    return sorted
+  }
+  const top = sorted.slice(0, maxMonths)
+  if (top.some((row) => row.yearMonth === currentMonth)) {
+    return top
+  }
+  const currentRow = sorted.find((row) => row.yearMonth === currentMonth)
+  if (currentRow == null) {
+    return top
+  }
+  const others = sorted.filter((row) => row.yearMonth !== currentMonth).slice(0, maxMonths - 1)
+  return [...others, currentRow].sort((a, b) => compareYearMonthDesc(a.yearMonth, b.yearMonth))
+}
+
+/**
  * カレンダー当月〜テーブル内の最も新しい未来月まで、上限・残りを付与する（過去月は null）。
  */
 export function applyBudgetColumnsToHistory(
@@ -135,7 +160,7 @@ export function toEnterpriseMemberMonthlyUsageView(
     member.monthly_user_paid,
   )
   const withCurrentMonth = ensureCurrentMonthInHistory(rawHistory, currentMonth)
-  const trimmedHistory = withCurrentMonth.slice(0, HISTORY_MAX_MONTHS)
+  const trimmedHistory = trimMonthlyUsageHistoryPreservingCurrentMonth(withCurrentMonth, currentMonth)
   const history = applyBudgetColumnsToHistory(trimmedHistory, currentMonth, monthlyLimit)
   return {
     currentMonth,

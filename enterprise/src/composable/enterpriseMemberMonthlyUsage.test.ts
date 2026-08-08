@@ -5,6 +5,7 @@ import {
   buildMonthlyUsageHistory,
   compareYearMonth,
   formatYearMonthLabel,
+  trimMonthlyUsageHistoryPreservingCurrentMonth,
   toEnterpriseMemberMonthlyUsageView,
 } from './enterpriseMemberMonthlyUsageHistory.js'
 
@@ -133,6 +134,31 @@ describe('toEnterpriseMemberMonthlyUsageView', () => {
     expect(view.history.some((r) => r.yearMonth === '2026-07')).toBe(true)
   })
 
+  it('未来月 12 件のみでもカレンダー当月が slice から脱落しない', () => {
+    const futureMonths = [
+      '2026-08',
+      '2026-09',
+      '2026-10',
+      '2026-11',
+      '2026-12',
+      '2027-01',
+      '2027-02',
+      '2027-03',
+      '2027-04',
+      '2027-05',
+      '2027-06',
+      '2027-07',
+    ]
+    const monthlyUsage = Object.fromEntries(futureMonths.map((ym) => [ym, 100]))
+    const member = new EnterpriseMember('user-1', {
+      user_email: 'a@example.com',
+      monthly_usage: monthlyUsage,
+    })
+    const view = toEnterpriseMemberMonthlyUsageView(member, defaultSettings, '2026-07')
+    expect(view.history).toHaveLength(12)
+    expect(view.history.some((r) => r.yearMonth === '2026-07')).toBe(true)
+  })
+
   it('treats missing monthly_user_paid as zero', () => {
     const member = new EnterpriseMember('user-1', {
       user_email: 'a@example.com',
@@ -140,5 +166,37 @@ describe('toEnterpriseMemberMonthlyUsageView', () => {
     })
     const view = toEnterpriseMemberMonthlyUsageView(member, { ...defaultSettings, monthlyLimit: 3000 }, '2026-06')
     expect(view.userPaid).toBe(0)
+  })
+})
+
+describe('trimMonthlyUsageHistoryPreservingCurrentMonth', () => {
+  it('当月が top12 外でも必ず残す', () => {
+    const rows = buildMonthlyUsageHistory(
+      Object.fromEntries(
+        Array.from({ length: 12 }, (_, i) => {
+          const absoluteMonth = 8 + i
+          const year = 2026 + Math.floor((absoluteMonth - 1) / 12)
+          const month = ((absoluteMonth - 1) % 12) + 1
+          return [`${year}-${String(month).padStart(2, '0')}`, 1]
+        }),
+      ),
+      {},
+      {},
+      12,
+    )
+    const withCurrent = [
+      {
+        yearMonth: '2026-07',
+        used: 0,
+        userPaid: 0,
+        orderMenuCount: 0,
+        limit: null,
+        remaining: null,
+      },
+      ...rows,
+    ]
+    const trimmed = trimMonthlyUsageHistoryPreservingCurrentMonth(withCurrent, '2026-07', 12)
+    expect(trimmed).toHaveLength(12)
+    expect(trimmed.some((r) => r.yearMonth === '2026-07')).toBe(true)
   })
 })
