@@ -20,6 +20,10 @@ import {
   ensureEnterpriseTenantConsistent,
   waitEnterpriseAuthentication,
 } from '@/utils/ensureEnterpriseTenantConsistent'
+import {
+  evaluateManageCommunityCanView,
+  MANAGE_COMMUNITY_GUARD_TIMEOUT_MS,
+} from '@/router/manageCommunityCanView.js'
 
 const EVENT_GUARD_LOAD_TIMEOUT_MS = 8000
 
@@ -165,35 +169,38 @@ export const setupRouter = (router: Router) => {
       const configStore = useConfigStore()
       const communityStore = useEnterpriseCommunityStore(communityAccount)
       const canView = await new Promise<boolean>((resolve) => {
+        let settled = false
         let unwatch: (() => void) | undefined
+
+        const finish = (value: boolean) => {
+          if (settled) {
+            return
+          }
+          settled = true
+          unwatch?.()
+          window.clearTimeout(timeoutId)
+          resolve(value)
+        }
+
+        const timeoutId = window.setTimeout(() => finish(false), MANAGE_COMMUNITY_GUARD_TIMEOUT_MS)
+
         unwatch = watch(
           () => [configStore.config, communityStore.community],
           () => {
-            if (
-              configStore.config !== FIRESTORE_LOADING &&
-              configStore.config?.isSupport(getAuth().currentUser?.uid as string) === true
-            ) {
-              unwatch?.()
-              resolve(true)
-              return
-            }
-            const community = communityStore.community
+            const config = configStore.config
             const currentUserId = getAuth().currentUser?.uid
             const enterpriseStore = useEnterpriseStore()
             const enterpriseId = enterpriseStore.enterprise?.enterprise_id
-
-            if (community != null && enterpriseId != null && community.enterprise_id != null) {
-              if (community.enterprise_id !== enterpriseId) {
-                unwatch?.()
-                resolve(false)
-                return
-              }
-            }
-
-            if (community != null && currentUserId != null) {
-              const canView = community.managers.some((managerRef) => managerRef.id === currentUserId)
-              unwatch?.()
-              resolve(canView)
+            const result = evaluateManageCommunityCanView({
+              config,
+              community: communityStore.community,
+              currentUserId,
+              enterpriseId,
+              isSupport:
+                config !== FIRESTORE_LOADING && config?.isSupport(currentUserId as string) === true,
+            })
+            if (result != null) {
+              finish(result)
             }
           },
           { immediate: true },
