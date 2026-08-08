@@ -600,33 +600,33 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
       return getDocs(
         query(collection(db, 'communities'), ...queryConstraints, limit(2)).withConverter(communityConverter),
       ).then((querySnapshot) => {
-          if (querySnapshot.docs.length > 1) {
+        if (querySnapshot.docs.length > 1) {
+          console.warn(
+            `Multiple communities matched account "${communityAccount}" for scope; expected at most one document.`,
+          )
+          console.error(`The community "${communityAccount}" is ambiguous for the given scope.`)
+          return
+        }
+        const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
+        if (communityRef == null) {
+          if (retry++ < 10) {
             console.warn(
-              `Multiple communities matched account "${communityAccount}" for scope; expected at most one document.`,
+              `The community "${communityAccount}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
             )
-            console.error(`The community "${communityAccount}" is ambiguous for the given scope.`)
+            window.setTimeout(subscribe, 500)
             return
           }
-          const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
-          if (communityRef == null) {
-            if (retry++ < 10) {
-              console.warn(
-                `The community "${communityAccount}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
-              )
-              window.setTimeout(subscribe, 500)
-              return
-            }
-            console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
-            // TODO: マイページ動作しないため、一時的にコメントアウト
-            // router.replace('/404')
-            return
-          }
-          retry = 0
-          _communityRef.value = communityRef
-          subscribeCommunity(communityRef)
-          // 他の Store は遅延評価なので、以下を呼ぶ必要はない
-          // subscribeEvents(communityRef)
-        })
+          console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
+          // TODO: マイページ動作しないため、一時的にコメントアウト
+          // router.replace('/404')
+          return
+        }
+        retry = 0
+        _communityRef.value = communityRef
+        subscribeCommunity(communityRef)
+        // 他の Store は遅延評価なので、以下を呼ぶ必要はない
+        // subscribeEvents(communityRef)
+      })
     }
 
     const unsubscribe = () => {
