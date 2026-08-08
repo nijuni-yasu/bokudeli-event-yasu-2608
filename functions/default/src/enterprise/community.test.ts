@@ -18,8 +18,7 @@ vi.mock('../stores/community.js', async (importOriginal) => {
     ...actual,
     listCommunitiesByEnterpriseId: vi.fn(),
     getCommunityByAccountInEnterprise: vi.fn(),
-    saveCommunity: vi.fn(),
-    setCommunityMemberWithRoles: vi.fn(),
+    createEnterpriseCommunityWithManager: vi.fn(),
   }
 })
 
@@ -58,8 +57,7 @@ vi.mock('../utils/enterpriseAuthHelpers.js', () => ({
 import {
   getCommunityByAccountInEnterprise,
   listCommunitiesByEnterpriseId,
-  saveCommunity,
-  setCommunityMemberWithRoles,
+  createEnterpriseCommunityWithManager,
 } from '../stores/community.js'
 import {
   getEnterpriseMember,
@@ -139,8 +137,7 @@ describe('createEnterpriseCommunities', () => {
     vi.mocked(getEnterpriseMemberUserIdByEmail).mockResolvedValue('mgr-1')
     vi.mocked(getEnterpriseMember).mockResolvedValue({ is_active: true } as never)
     vi.mocked(getCommunityByAccountInEnterprise).mockResolvedValue(undefined)
-    vi.mocked(saveCommunity).mockResolvedValue(undefined)
-    vi.mocked(setCommunityMemberWithRoles).mockResolvedValue(undefined)
+    vi.mocked(createEnterpriseCommunityWithManager).mockResolvedValue(undefined)
   })
 
   it('同一 enterprise 内に既存スラッグがあるとエラー', async () => {
@@ -184,5 +181,6 @@ describe('createEnterpriseCommunities', () => {
 
     expect(result.success_count).toBe(1)
     expect(getCommunityByAccountInEnterprise).toHaveBeenCalledWith('ent-b', 'dev-lunch')
+    expect(createEnterpriseCommunityWithManager).toHaveBeenCalledTimes(1)
   })
 })

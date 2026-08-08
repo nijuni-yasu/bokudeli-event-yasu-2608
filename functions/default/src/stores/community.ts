@@ -360,6 +360,49 @@ export const saveCommunity = async (community: ShokujiiCommunity): Promise<void>
   await db.collection('communities').doc(community.id).withConverter(communityConverter).set(community, { merge: true })
 }
 
+/** エンタープライズ CSV 作成時、同一 enterprise 内の community_account が既に存在する */
+export class CommunityAccountAlreadyExistsInEnterpriseError extends Error {
+  constructor() {
+    super('Community account already exists in enterprise')
+    this.name = 'CommunityAccountAlreadyExistsInEnterpriseError'
+  }
+}
+
+/**
+ * エンタープライズ向けコミュニティ作成と manager 付与を 1 トランザクションで原子的に行う。
+ * 親 `managers` 配列は onCommunityMemberWritten が再集計する。
+ */
+export const createEnterpriseCommunityWithManager = async (
+  community: ShokujiiCommunity,
+  managerUserId: string,
+): Promise<void> => {
+  const enterpriseId = community.enterprise_id
+  if (enterpriseId == null || enterpriseId === '') {
+    throw new Error('enterprise_id is required')
+  }
+  const db = getFirestore()
+  await db.runTransaction(async (transaction) => {
+    const existing = await getCommunityByAccountInEnterprise(
+      enterpriseId,
+      community.community_account,
+      transaction,
+    )
+    if (existing != null) {
+      throw new CommunityAccountAlreadyExistsInEnterpriseError()
+    }
+    const communityRef = db.collection('communities').doc(community.id).withConverter(communityConverter)
+    // saveCommunity と同様 merge: true（toFirestore の FieldValue.delete 対策）
+    transaction.set(communityRef, community, { merge: true })
+    const memberRef = db
+      .collection('communities')
+      .doc(community.id)
+      .collection('members')
+      .doc(managerUserId)
+      .withConverter(communityMemberConverter)
+    transaction.set(memberRef, new CommunityMember(managerUserId, { roles: ['manager'] }))
+  })
+}
+
 export type EnterpriseCommunityRecord = {
   community_id: string
   community_name: string

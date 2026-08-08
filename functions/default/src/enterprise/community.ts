@@ -8,10 +8,10 @@ import {
   GetEnterpriseCommunitiesResponse,
 } from '@shokujii/common/apis/enterprise.js'
 import {
+  CommunityAccountAlreadyExistsInEnterpriseError,
+  createEnterpriseCommunityWithManager,
   getCommunityByAccountInEnterprise,
   listCommunitiesByEnterpriseId,
-  saveCommunity,
-  setCommunityMemberWithRoles,
   ShokujiiCommunity,
 } from '../stores/community.js'
 import {
@@ -122,11 +122,18 @@ async function createSingleEnterpriseCommunity(
       created_at: now,
     })
 
-    await saveCommunity(community)
-    await setCommunityMemberWithRoles(communityId, managerUserId, ['manager'])
+    await createEnterpriseCommunityWithManager(community, managerUserId)
 
     return { row: row.row, community_name: communityName, status: 'success' }
   } catch (error) {
+    if (error instanceof CommunityAccountAlreadyExistsInEnterpriseError) {
+      return {
+        row: row.row,
+        community_name: communityName,
+        status: 'error',
+        error_message: 'このアカウント名は既に使用されています',
+      }
+    }
     logger.error('createEnterpriseCommunityRowFailed', { enterpriseId, communityAccount, error })
     return {
       row: row.row,
