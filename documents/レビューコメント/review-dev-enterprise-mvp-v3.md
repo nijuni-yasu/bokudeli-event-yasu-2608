@@ -63,6 +63,19 @@
 | [x] | RC-57 | 3711453831 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | /orders 同一コンポーネント再利用時に完了ダイアログが開かない<br>query watcher 内で visible を true に |
 | [x] | RC-58 | 4853112013・suppressed | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | normalizeCartEnterpriseSubsidyBudget が値型未検証<br>monthlyUsage 各 entry を number 検証 |
 | [x] | RC-59 | 4853112013・suppressed | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getCommunityData 重複チェックに limit(1) なし<br>読み取りコスト削減 |
+| [x] | RC-60 | 3736796647 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | M | CommunityLetter が account のみで communities 先頭取得<br>enterprise scope をレター store へ渡す |
+| [x] | RC-61 | 3736796632 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 🔧 微修正 | M | カート onMounted が UID 確定前に終了<br>福利厚生予算・replay が欠落 |
+| [x] | RC-62 | 3736796642 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | partner で provider 未設定時 PF 固定クエリ<br>enterprise イベントが購読不能 |
+| [x] | RC-63 | 3740504522 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | community store が scope 省略を null 固定<br>partner 1 引数呼び出しが誤検索 |
+| [x] | RC-64 | 3740504524 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | robots が /chat/ のみ Disallow<br>/chat 一覧を追加 |
+| [x] | RC-65 | 3736796651 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 未来月 12 件で当月行が slice から脱落<br>当月を必ず残す |
+| [x] | RC-66 | 3740504526 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 📋 仕様追加 | M | 管理タブのイベント一覧に enterprise scope 未注入<br>EventsPanel / Invoice 等が account のみ |
+| [x] | RC-67 | Copilot suppressed 2026-08-08 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | enterprise 未解決時 validateNewAccount が false<br>誤ってアカウント名重複表示 |
+| [x] | RC-68 | 3740504520 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | waitEnterpriseAuthentication が beforeEach 二重で最大 4 秒<br>pending 共有で 1 回に集約 |
+| [x] | RC-69 | Copilot suppressed 2026-08-08 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | tenantCache test の localStorage stub 未解除<br>afterEach で unstubAllGlobals |
+| [x] | RC-70 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | S | EventList が collectionGroup に enterprise_id 未付与<br>CommunityLetter のイベント選択が RC-66 漏れ |
+| [x] | RC-71 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolveCommunityDocumentRef が limit なし全件 read<br>limit(2) でコストと曖昧性検知を両立 |
+| [x] | RC-72 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | community subscribe 初回 lookup が limit なし<br>docs[0] 採用で RC-71 と不整合 |
 
 ---
 
@@ -2358,3 +2371,104 @@ const eventStore = useAppEventStore(props.eventId) as EventStore
 **ステータス**: ✅ 対応済み
 
 ---
+
+## 評価セッション（2026-08-08 20:55・review-comments-evaluate）
+
+- **評価日時**: 2026-08-08 20:55 JST
+- **評価者**: Cursor Agent（review-comments-evaluate manual）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼 2 行・Codex 接続案内・Copilot 承知返信・Codex 問題なしサマリ）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-60 | 3736796647 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | M | CommunityLetter のレター store に enterprise scope 未伝播 |
+| [x] | RC-61 | 3736796632 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 🔧 微修正 | M | カート福利厚生予算取得が Auth UID 確定前にスキップ |
+| [x] | RC-62 | 3736796642 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | partner で useAppEventStore が PF 固定フィルタ |
+| [x] | RC-63 | 3740504522 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | community subscribe の scope 省略が null 固定 |
+| [x] | RC-64 | 3740504524 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | robots.txt に Disallow: /chat を追加 |
+| [x] | RC-65 | 3736796651 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 利用履歴 12 件 slice で当月行脱落の edge case |
+| [x] | RC-66 | 3740504526 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 📋 仕様追加 | M | 管理コミュニティタブのイベント系 panel に scope 未注入 |
+| [x] | RC-67 | Copilot suppressed | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | newcommunity validateNewAccount を未解決時 true |
+| [x] | RC-68 | 3740504520 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | waitEnterpriseAuthentication の二重待機を pending 共有 |
+| [x] | RC-69 | Copilot suppressed | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterpriseTenantCache.test afterEach unstub |
+
+**自動修正（手順 4a）**: RC-64 / RC-67 / RC-68 / RC-69 をコード反映。enterprise vitest 38 件成功。
+
+---
+
+## 評価セッション（2026-08-08 21:30・shokujii-code-review）
+
+- **評価日時**: 2026-08-08 21:30 JST
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: 未作成（ステージ済み差分を対象）
+- **Outdated / レビュー非該当**: 該当なし
+
+| 対応 | RC | 評価 | ステータス | PRスコープ | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-70 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔧 微修正 | S | EventList の enterprise scope 漏れ |
+| [x] | RC-71 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔧 微修正 | S | resolveCommunityDocumentRef の limit |
+
+### RC-70
+
+- **識別子**: RC-70（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/components/EventList.vue:21`
+- **評価**: 🚨 必須修正
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 💾 データ, 🔒 セキュリティ
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🚨 **必須修正** [🔧微修正/S]: `CommunityEventsPanel` / `CommunityInvoice` は `useCreateAppCommunityEventListStore` で `enterprise_id` 付き collectionGroup クエリに切り替わった一方、`CommunityLetter` が使う `EventList.vue` は引き続き `community_account` のみで `useEventListStore` を呼んでいる。Enterprise 管理のレタータブで PF 側と同一 `community_account` のイベントが混在しうる（RC-66 と同種）。→ `useCreateAppCommunityEventListStore()` で pageSize 5 の一覧を組み立てる。
+- **判断理由**: テナント分離の穴がレター作成 UI に残る。→ EventList.vue を `useCreateAppCommunityEventListStore` に変更済み。
+
+### RC-71
+
+- **識別子**: RC-71（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/stores/community.ts:208`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: 新設 `resolveCommunityDocumentRef` が一致件数分をすべて `getDocs` してから件数判定している。RC-59 と同様、`limit(2)` 等で読み取りを抑えつつ 2 件以上で曖昧エラーにできる。→ クエリに `limit(2)` を付与し、`docs.length > 1` で throw。
+- **判断理由**: レター store 解決のたびに呼ばれ、データ異常時の read コストが増える。→ `limit(2)` 追加済み。
+
+---
+
+## 評価セッション（2026-08-08 21:34・shokujii-code-review）
+
+- **評価日時**: 2026-08-08 21:34 JST
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **対象**: ステージ済み差分 + 本セッション追修正（community subscribe）
+- **Outdated / レビュー非該当**: 該当なし
+
+| 対応 | RC | 評価 | ステータス | PRスコープ | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-72 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔧 微修正 | S | community subscribe の communities クエリに limit(2) |
+
+### RC-72
+
+- **識別子**: RC-72（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/stores/community.ts:600`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: `resolveCommunityDocumentRef` は RC-71 で `limit(2)` + 複数件 throw に揃えたが、`useCommunityStore` の `subscribe()` 初回 lookup は依然 limit なしで `docs[0]` を採用する。データ異常時の read コストと、意図しない community への購読リスクが残る → `resolveCommunityDocumentRef` と同様 `limit(2)` と `docs.length > 1` 時の停止を入れる。
+- **判断理由**: RC-71 と対称にすべき。本セッションで subscribe クエリに `limit(2)` と曖昧時 early return を追加済み。
+
+**その他（RC 化せず）**: `useCreateAppCommunityScope` は現状未参照。letter/event factory と inject パターンが重複するが、公開 API として残す判断も可能（害は小さい）。
+
+---
+
