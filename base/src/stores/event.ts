@@ -565,7 +565,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
         (querySnapshot) => {
           const eventRef = querySnapshot.docs[0]?.ref?.withConverter(eventConverter)
           if (eventRef == null) {
-            if (retry++ < 10) {
+            if (retry++ < 16) {
               console.warn(
                 `The event "${eventId}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
               )

@@ -6,6 +6,7 @@ import { getRedirectPath } from '@shokujii/base/utils/redirect'
 import { confirmEnterpriseEmailLogin, requestEnterpriseEmailLogin } from '@/apis/enterprise'
 import { useEnterpriseStore } from '@/stores/enterprise'
 import { setEnterpriseAuthTenantId } from '@/utils/enterpriseAuth'
+import { writeEnterpriseTenantCache } from '@/utils/enterpriseTenantCache'
 import { getHomePath, getLogin } from '@/router/utils'
 import LoginBrandingHeader from '@/components/login/LoginBrandingHeader.vue'
 import LoginBackgroundLayout from '@/components/login/LoginBackgroundLayout.vue'
@@ -67,6 +68,7 @@ const submit = async (code: string) => {
     })
     if (enterprise.tenant_id != null && enterprise.tenant_id !== '') {
       setEnterpriseAuthTenantId(enterprise.tenant_id)
+      writeEnterpriseTenantCache(enterprise)
     }
     await signInWithCustomToken(getAuth(), result.data.token)
     const redirectPath = getRedirectPath() ?? getHomePath()

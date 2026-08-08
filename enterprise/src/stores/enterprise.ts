@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import type { GetEnterpriseByDomainResponse } from '@shokujii/common/apis/enterprise.js'
 import { getEnterpriseByDomain } from '@/apis/enterprise'
 import { resolveTenantHost } from '@/utils/tenantHost'
+import { writeEnterpriseTenantCache } from '@/utils/enterpriseTenantCache'
+import { setEnterpriseAuthTenantId } from '@/utils/enterpriseAuth'
 
 export type EnterpriseResolveStatus = 'loading' | 'ready' | 'not_found' | 'error'
 
@@ -20,6 +22,10 @@ export const useEnterpriseStore = defineStore('enterprise', () => {
       const result = await getEnterpriseByDomain({ hostname })
       enterprise.value = result.data
       status.value = 'ready'
+      writeEnterpriseTenantCache(result.data)
+      if (result.data.tenant_id !== '') {
+        setEnterpriseAuthTenantId(result.data.tenant_id)
+      }
     } catch (error: unknown) {
       enterprise.value = null
       const code =

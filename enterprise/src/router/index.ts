@@ -15,23 +15,30 @@ import { getManageCommunityListPath } from './utils'
 import { ZodError } from 'zod'
 import { setPendingToast } from '@/utils/pendingToast'
 import { useEnterpriseStore } from '@/stores/enterprise'
-import { isEnterpriseAuthTenantConsistent } from '@/utils/enterpriseAuth'
 import { isLoginRequired } from '@/router/authGuards.js'
+import {
+  ensureEnterpriseTenantConsistent,
+  waitEnterpriseAuthentication,
+} from '@/utils/ensureEnterpriseTenantConsistent'
 
-const waitAdminAuthentication = async (): Promise<User | null> => {
-  return new Promise<User | null>((resolve) => {
-    const unsubscribe = onAuthStateChanged(getAuth(), async (user: User | null) => {
-      unsubscribe()
-      resolve(user)
-    })
-  })
+const EVENT_GUARD_LOAD_TIMEOUT_MS = 8000
+
+async function loadEventForRouteGuard(eventStore: EventStore): Promise<BokudeliEvent> {
+  try {
+    return await eventStore.getLoadedEvent(EVENT_GUARD_LOAD_TIMEOUT_MS)
+  } catch (first) {
+    if (first instanceof ZodError) {
+      throw first
+    }
+    return await eventStore.getLoadedEvent(EVENT_GUARD_LOAD_TIMEOUT_MS)
+  }
 }
 
 export const setupRouter = (router: Router) => {
   let lastUser: User | null = null
 
   router.beforeEach(async (to) => {
-    await waitAdminAuthentication()
+    await waitEnterpriseAuthentication()
 
     const configStore = useConfigStore()
     const config = await configStore.getResolvedConfig()
@@ -76,7 +83,7 @@ export const setupRouter = (router: Router) => {
   router.beforeEach(async (to) => {
     let user: User | null = null
     try {
-      user = await waitAdminAuthentication()
+      user = await waitEnterpriseAuthentication()
     } catch {
       // Do nothing
     }
@@ -87,23 +94,9 @@ export const setupRouter = (router: Router) => {
     } else if (to.path === '/login') {
       return (to.query?.redirect as string) ?? '/'
     } else if (isLoginRequired(to.path)) {
-      const enterpriseStore = useEnterpriseStore()
-      if (enterpriseStore.status !== 'ready') {
-        await enterpriseStore.resolveEnterprise()
-      }
-      const tokenResult = await user.getIdTokenResult()
-      if (tokenResult.claims.user_type === 'enterprise') {
-        const rawEnterpriseId = tokenResult.claims.enterprise_id
-        const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
-        const tenantOk = isEnterpriseAuthTenantConsistent(
-          enterpriseStore.enterprise?.tenant_id,
-          enterpriseStore.enterprise?.enterprise_id,
-          tokenEnterpriseId,
-          user.tenantId,
-        )
-        if (!tenantOk) {
-          return { path: '/404' }
-        }
+      const tenantOk = await ensureEnterpriseTenantConsistent(user)
+      if (!tenantOk) {
+        return { path: '/404' }
       }
     }
   })
@@ -149,7 +142,7 @@ export const setupRouter = (router: Router) => {
       const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId)) as EventStore
       let event: BokudeliEvent
       try {
-        event = await eventStore.getLoadedEvent(5000)
+        event = await loadEventForRouteGuard(eventStore)
         if (event.is_deleted) {
           return '/404'
         }
@@ -239,20 +232,8 @@ export const setupRouter = (router: Router) => {
     const config = await configStore.getResolvedConfig()
     const isSupport = config?.isSupport(user.uid) ?? false
     if (!isSupport) {
-      const enterpriseStore = useEnterpriseStore()
-      if (enterpriseStore.status !== 'ready') {
-        await enterpriseStore.resolveEnterprise()
-      }
-      const resolvedEnterpriseId = enterpriseStore.enterprise?.enterprise_id
-      const rawEnterpriseId = tokenResult.claims.enterprise_id
-      const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
-      const tenantOk = isEnterpriseAuthTenantConsistent(
-        enterpriseStore.enterprise?.tenant_id,
-        resolvedEnterpriseId,
-        tokenEnterpriseId,
-        user.tenantId,
-      )
-      if (resolvedEnterpriseId == null || tokenEnterpriseId == null || !tenantOk) {
+      const tenantOk = await ensureEnterpriseTenantConsistent(user)
+      if (!tenantOk) {
         setPendingToast('管理者権限が必要です', 'error')
         return { path: '/' }
       }
