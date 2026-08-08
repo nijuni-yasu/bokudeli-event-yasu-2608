@@ -76,6 +76,9 @@
 | [x] | RC-70 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | S | EventList が collectionGroup に enterprise_id 未付与<br>CommunityLetter のイベント選択が RC-66 漏れ |
 | [x] | RC-71 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolveCommunityDocumentRef が limit なし全件 read<br>limit(2) でコストと曖昧性検知を両立 |
 | [x] | RC-72 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | community subscribe 初回 lookup が limit なし<br>docs[0] 採用で RC-71 と不整合 |
+| [x] | RC-73 | 5226250696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | createSingleEnterpriseCommunity が save と manager 付与を非原子的<br>後段失敗で管理者不在 community が残る |
+| [x] | RC-74 | 5226250696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | M | 管理ガード canView が community null のまま pending<br>timeout / 404 分岐が必要 |
+| [x] | RC-75 | 3695636873 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | sendLetter が PF 固定 getCommunityByAccount<br>enterprise レター送信が not found |
 
 ---
 
@@ -2472,3 +2475,100 @@ const eventStore = useAppEventStore(props.eventId) as EventStore
 
 ---
 
+## 評価セッション（2026-08-08 22:15・review-comments-evaluate auto · partial）
+
+- **評価日時**: 2026-08-08 22:15 JST
+- **評価者**: Cursor Agent（wait-ai-pr-review auto）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **REVIEW_REQUEST_SINCE**: 2026-08-08T13:08:07Z
+- **partial**: true（Codex は connect 案内ののち no_issues のみ。実質レビュー指摘なし）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼定型文 5226238671、Codex connect 5226251398、Codex no_issues 5226261322）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-73 | 5226250696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | enterprise community 作成と manager 付与の原子的化 |
+| [x] | RC-74 | 5226250696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | M | 管理ルート canView の community 未解決 pending |
+
+**自動修正（手順 4a）**: 対象外（🚨 2 件とも工数 M・transaction / ルータ設計の判断が必要）
+
+### RC-73
+
+- **識別子**: RC-73（GitHub id: 5226250696・Copilot トップレベル）
+- **レビュワー**: Copilot
+- **指摘箇所**: `functions/default/src/enterprise/community.ts:125`
+- **評価**: 🚨 必須修正
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 💾 データ, 🐛 実害
+- **変更種別**: 仕様追加
+- **想定工数**: M
+- **レビュワーのコメント（原文）**: [must] createSingleEnterpriseCommunity が saveCommunity 成功後に setCommunityMemberWithRoles を別実行。後段だけ失敗すると管理者不在の communities が残り、重複チェックのせいで再試行もしづらい。作成と manager 付与は transaction / batched write で原子的に扱うか、失敗時の補償削除が必要。
+- **判断理由**: 指摘妥当。`createEnterpriseCommunityWithManager` で transaction 内に community set + manager member set と enterprise 内 account 再チェックを集約（RC-73 対応）。
+
+### RC-74
+
+- **識別子**: RC-74（GitHub id: 5226250696・Copilot トップレベル・2 点目）
+- **レビュワー**: Copilot
+- **指摘箇所**: `enterprise/src/router/index.ts:167`
+- **評価**: 🚨 必須修正
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 🐛 実害, 👤 UX
+- **変更種別**: 微修正
+- **想定工数**: M
+- **レビュワーのコメント（原文）**: [must] 管理画面ガードの canView 判定は、別テナント / 未存在で communityStore.community が null のまま終わる経路を考慮できていない。subscribe 側はリトライ打ち切り後も null のままなので Promise が resolve されず遷移 pending のまま。timeout か not-found 分岐で false / 404 へ倒す必要がある。
+- **判断理由**: 指摘妥当。→ evaluateManageCommunityCanView + 8 秒タイムアウトで false に倒し、コミュニティ一覧へリダイレクト。
+
+---
+
+## 評価セッション（2026-08-08 22:21・review-comments-evaluate manual）
+
+- **評価日時**: 2026-08-08 22:21 JST
+- **評価者**: Cursor Agent（review-comments-evaluate manual）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 依頼定型文・Codex connect・Codex no_issues・Copilot 5226250696 と同一内容の重複指摘（RC-73/74 済）を除き多数スキップ
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-75 | 3695636873 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | Functions の getCommunityByAccount PF 固定化の漏れ<br>sendLetter / Slack が enterprise を解決できない |
+
+**継続未着手（再掲）**: なし（RC-73 対応済み）
+
+**自動修正（手順 4a）**: 本 manual セッションでは RC-75 のみ新規。実装は別タスクで RC-74/75 対応済み。
+
+### RC-75
+
+- **識別子**: RC-75（GitHub id: 3695636873）
+- **レビュワー**: Codex（chatgpt-codex-connector[bot]）。Copilot 5225683075 の 3 点目（sendLetter）と同一論点
+- **指摘箇所**: `functions/default/src/stores/community.ts:217`
+- **該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -194,17 +194,42 @@ export const getCommunitiesByIds = async (communityIds: readonly string[]): Prom
+ …（diff 先頭省略）
++/** @deprecated 名前は PF 専用。新規コードは getPfCommunityByAccount を使う */
++export const getCommunityByAccount = getPfCommunityByAccount
+```
+
+- **レビュワーのコメント（原文）**: **<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  サーバーの Enterprise コミュニティ参照を PF 固定にしないでください**
+
+この別名変更により、既存の `getCommunityByAccount` 呼び出しはすべて `enterprise_id == null` 固定になりますが、`functions/default/src/letter.ts:174` の予約レター送信と `functions/default/src/slackbot.ts:56` の Enterprise Slack コマンドは未移行です。Enterprise 管理画面にはレター／Slack 設定タブが存在するため、Enterprise コミュニティでは予約レターが `Community not found` として送信されず、Slack の add/remove も常に拒否されます。レター側は community ID 等、Slack 側はコマンドの enterprise ID を使ってスコープ付きで取得してください。
+
+- **コメント要約**: getCommunityByAccount が PF 専用 alias になった一方、予約レター送信と Enterprise Slack コマンドが未移行のため enterprise コミュニティで community not found になる。<br>letter は community 参照を enterprise スコープ付きに、Slack は enterprise ID 付き lookup へ切替が必要。
+- **評価**: 🚨 必須修正
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 💾 データ, 🐛 実害
+- **変更種別**: 仕様追加
+- **想定工数**: M
+- **判断理由**: #2234 方針と整合。sendLetter は letter ref から communityId を取得し getCommunity。Slack は getCommunity(communityId) + account 照合。
+
+---
