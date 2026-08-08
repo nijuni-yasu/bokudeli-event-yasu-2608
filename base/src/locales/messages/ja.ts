@@ -488,6 +488,7 @@ export default {
     menu: '【注文内容】',
     menu_item: '{0} ({1}個)',
     total_price: '【支払い金額】{0}',
+    total_self_pay: '【自己負担額】{0}',
     event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
@@ -506,6 +507,10 @@ export default {
                       キャンセルはイベントの注文期限まで可能です。<br />
                       お支払い済みの差額分は、キャンセル手続き完了後、ご利用の明細に反映されるまで5～10日かかります。<br />
                       キャンセルの取り消しはできません。あらかじめご了承ください。`,
+      description_enterprise_subsidy: `注文したメニューを選択してキャンセルを実行してください。<br />
+                      キャンセルはイベントの注文期限まで可能です。<br />
+                      返金額は自己負担分のみです。キャンセル手続き完了後、ご利用の明細に反映されるまで5～10日かかります。<br />
+                      キャンセルの取り消しはできません。あらかじめご了承ください。`,
       not_cancel: 'キャンセルしない',
       submit: 'キャンセルを実行する',
       select_all: 'すべて選択',
@@ -514,6 +519,7 @@ export default {
       column_order_date: '注文日',
       column_menu_price: 'メニュー金額',
       column_amount: '支払い金額',
+      column_self_pay: '自己負担額',
       refund_total: '返金額 {0}',
     },
     download_invoice: '領収書をダウンロード',
