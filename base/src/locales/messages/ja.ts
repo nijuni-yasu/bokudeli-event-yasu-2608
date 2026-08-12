@@ -343,8 +343,7 @@ export default {
     shop_list_loading: '店舗一覧を読み込み中です。しばらくしてから再度お試しください。',
     shop_not_deliverable_before_save:
       '開催場所と開催日時に対して、選択中の店舗は配達・営業条件を満たしていません。店舗を選び直してください。',
-    step1_validation_modal_title: '入力内容をご確認ください',
-    step1_validation_intro: '以下の項目を入力のうえ、再度お試しください。',
+    validation_modal_title: '入力内容をご確認ください',
     step1_validation: {
       postalcode_missing: '郵便番号が未入力です。',
       postalcode_invalid: '郵便番号は7桁の数字で入力してください。',
@@ -809,7 +808,7 @@ export default {
       reserve_success: '「{name}」に予約申請しました。店舗からの予約承認をお待ちください。',
       reserve_error: '予約申請中にエラーが発生しました: {error}',
       reserve_validation_modal_title: '予約申請できません',
-      reserve_validation_intro: '以下の項目をご確認のうえ、再度お試しください。下書きの内容は保存されています。',
+      reserve_validation_intro: '以下の項目をご確認のうえ、再度お試しください。',
       community_not_approved: 'コミュニティが承認されていません',
       not_manager: 'コミュニティ運営者ではありません',
       menu_update_failed: 'メニューの更新に失敗しました',

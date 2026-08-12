@@ -62,8 +62,14 @@ const emits = defineEmits<{
   updated: [id: string]
 }>()
 
-const { requiredValidator, postalCodeValidator, urlValidator, requiredHtmlValidator, positiveIntegerValidator, emailValidator } =
-  useValidators()
+const {
+  requiredValidator,
+  postalCodeValidator,
+  urlValidator,
+  requiredHtmlValidator,
+  positiveIntegerValidator,
+  emailValidator,
+} = useValidators()
 
 const alertDialog = reactive({
   visible: false,
@@ -812,8 +818,7 @@ const resolveHasEventCoverImage = (): boolean => {
   if (communityCover != null && communityCover !== '') {
     return true
   }
-  const eventId =
-    props.eventId ?? (hasFirestoreDraft.value && event.value != null ? event.value.event_id : null)
+  const eventId = props.eventId ?? (hasFirestoreDraft.value && event.value != null ? event.value.event_id : null)
   if (eventId == null) {
     return false
   }
@@ -906,7 +911,7 @@ const handleReserveButtonClick = async () => {
   }
 
   try {
-    await shopNoticeRef.value?.validateForm?.()
+    const formResult = await shopNoticeRef.value?.validateForm?.()
 
     const result = validateCurrentReservationRequest(ev)
     if (result == null) {
@@ -915,6 +920,9 @@ const handleReserveButtonClick = async () => {
     }
     if (!result.ok) {
       showReserveValidationFailure(result.reasonCodes)
+      return
+    }
+    if (formResult?.valid !== true) {
       return
     }
     openReserveConfirm()
@@ -1191,26 +1199,30 @@ const stepperItems = computed(() => [
 
   <confirm-dialog
     v-model="step4ValidationDialog.visible"
-    :title="$t('event_edit.step1_validation_modal_title')"
+    :title="$t('event_edit.validation_modal_title')"
     role="alertdialog"
     ok-text="OK"
+    ok-variant="text"
   >
-    <p class="mb-3">{{ $t('event_edit.step1_validation_intro') }}</p>
-    <ul class="event-edit-reserve-validation-list">
-      <li v-for="(message, idx) in step4ValidationDialog.messages" :key="idx">{{ message }}</li>
-    </ul>
+    <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
+      <ul class="event-edit-reserve-validation-list mb-0">
+        <li v-for="(message, idx) in step4ValidationDialog.messages" :key="idx">{{ message }}</li>
+      </ul>
+    </v-alert>
   </confirm-dialog>
 
   <confirm-dialog
     v-model="step1ValidationDialog.visible"
-    :title="$t('event_edit.step1_validation_modal_title')"
+    :title="$t('event_edit.validation_modal_title')"
     role="alertdialog"
     ok-text="OK"
+    ok-variant="text"
   >
-    <p class="mb-3">{{ $t('event_edit.step1_validation_intro') }}</p>
-    <ul class="event-edit-reserve-validation-list">
-      <li v-for="(message, idx) in step1ValidationDialog.messages" :key="idx">{{ message }}</li>
-    </ul>
+    <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
+      <ul class="event-edit-reserve-validation-list mb-0">
+        <li v-for="(message, idx) in step1ValidationDialog.messages" :key="idx">{{ message }}</li>
+      </ul>
+    </v-alert>
   </confirm-dialog>
 
   <confirm-dialog
@@ -1218,11 +1230,14 @@ const stepperItems = computed(() => [
     :title="$t('manage.event.reserve_validation_modal_title')"
     role="alertdialog"
     ok-text="OK"
+    ok-variant="text"
   >
     <p class="mb-3">{{ $t('manage.event.reserve_validation_intro') }}</p>
-    <ul class="event-edit-reserve-validation-list">
-      <li v-for="(message, idx) in reserveValidationDialog.messages" :key="idx">{{ message }}</li>
-    </ul>
+    <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
+      <ul class="event-edit-reserve-validation-list mb-0">
+        <li v-for="(message, idx) in reserveValidationDialog.messages" :key="idx">{{ message }}</li>
+      </ul>
+    </v-alert>
   </confirm-dialog>
 </template>
 

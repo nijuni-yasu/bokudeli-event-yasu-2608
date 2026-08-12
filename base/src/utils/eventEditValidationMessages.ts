@@ -25,9 +25,7 @@ export type CollectEventBasicInfoValidationMessagesInput = {
 /**
  * Step 1 開催場所の v-form ルールと同等のチェックを行い、モーダル表示用メッセージを返す。
  */
-export function collectEventBasicInfoValidationMessages(
-  input: CollectEventBasicInfoValidationMessagesInput,
-): string[] {
+export function collectEventBasicInfoValidationMessages(input: CollectEventBasicInfoValidationMessagesInput): string[] {
   const { event, requiredValidator, postalCodeValidator, urlValidator, t } = input
   const messages: string[] = []
 

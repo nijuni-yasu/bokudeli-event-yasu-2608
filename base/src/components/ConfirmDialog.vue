@@ -5,20 +5,28 @@
  */
 import { computed } from 'vue'
 
-const props = defineProps<{
-  modelValue: boolean
-  isConfirm?: boolean
-  title?: string
-  okText?: string
-  cancelText?: string
-  okClick?: () => void
-  cancelClick?: () => void | Promise<void>
-  okLoadingState?: boolean
-  cancelLoadingState?: boolean
-  maxWidth?: string
-  persistent?: boolean
-  role?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    isConfirm?: boolean
+    title?: string
+    okText?: string
+    cancelText?: string
+    okClick?: () => void
+    cancelClick?: () => void | Promise<void>
+    okLoadingState?: boolean
+    cancelLoadingState?: boolean
+    maxWidth?: string
+    persistent?: boolean
+    role?: string
+    /** OK ボタンの variant。alertdialog 等の了承系では `text` を指定 */
+    okVariant?: 'flat' | 'text' | 'elevated' | 'tonal' | 'outlined' | 'plain'
+    okColor?: string
+  }>(),
+  {
+    okColor: 'primary',
+  },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -70,7 +78,8 @@ const clickCancelHandler = () => {
           {{ props.cancelText ?? 'キャンセル' }}
         </v-btn>
         <v-btn
-          color="primary"
+          :color="props.okVariant === 'text' ? undefined : props.okColor"
+          :variant="props.okVariant"
           :loading="props.okLoadingState"
           :disabled="props.cancelLoadingState"
           @click="clickOkHandler()"
