@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, type PropType } from 'vue'
-import { registerVerticalOverlayNavClose } from '@/composable/useVerticalOverlayNavClose'
+import { onBeforeUnmount, onMounted } from 'vue'
+import {
+  registerVerticalOverlayNavClose,
+  type VerticalOverlayNavToggleFn,
+} from '@/composable/useVerticalOverlayNavClose'
 
-const props = defineProps({
-  toggle: {
-    // eslint-disable-next-line no-unused-vars -- PropType コールバックの引数名（型定義のみ）
-    type: Function as PropType<(value: boolean) => void>,
-    required: true,
-  },
-})
+const props = defineProps<{
+  toggle: VerticalOverlayNavToggleFn
+}>()
 
 onMounted(() => {
   registerVerticalOverlayNavClose(props.toggle)

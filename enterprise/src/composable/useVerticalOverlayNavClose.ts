@@ -1,6 +1,8 @@
-let toggleVerticalOverlayNavActive: ((value: boolean) => void) | null = null
+export type VerticalOverlayNavToggleFn = (value: boolean) => void
 
-export function registerVerticalOverlayNavClose(toggle: ((value: boolean) => void) | null): void {
+let toggleVerticalOverlayNavActive: VerticalOverlayNavToggleFn | null = null
+
+export function registerVerticalOverlayNavClose(toggle: VerticalOverlayNavToggleFn | null): void {
   toggleVerticalOverlayNavActive = toggle
 }
 

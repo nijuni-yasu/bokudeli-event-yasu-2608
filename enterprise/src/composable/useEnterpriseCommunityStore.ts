@@ -1,3 +1,4 @@
+import type { Ref } from 'vue'
 import { useCommunityStore, type CommunityStore, type CommunityStoreScope } from '@shokujii/base/stores/community.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
@@ -19,6 +20,9 @@ export function useEnterpriseCommunityStore(communityAccount: string): Community
   return useCommunityStore(communityAccount, buildEnterpriseCommunityScope())
 }
 
-export function useEnterpriseCommunityMemberFlags(communityAccount: string) {
+export function useEnterpriseCommunityMemberFlags(communityAccount: string): {
+  isMember: Ref<boolean>
+  isManager: Ref<boolean>
+} {
   return useCommunityMemberFlags(communityAccount, buildEnterpriseCommunityScope())
 }

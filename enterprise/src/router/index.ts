@@ -193,7 +193,8 @@ export const setupRouter = (router: Router) => {
               community: communityStore.community,
               currentUserId,
               enterpriseId,
-              isSupport: config !== FIRESTORE_LOADING && config?.isSupport(currentUserId as string) === true,
+              isSupport:
+                config !== FIRESTORE_LOADING && currentUserId != null && config?.isSupport(currentUserId) === true,
             })
             if (result != null) {
               finish(result)

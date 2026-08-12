@@ -12,7 +12,7 @@ import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
 import { useNavItems } from '@/navigation'
 import type { Notification } from '@shokujii/base/types/index.js'
-import { getLogin } from '@/router/utils'
+import { getChatPath, getLogin } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
 import { getAuth, type User } from 'firebase/auth'
@@ -114,10 +114,10 @@ const handleChatHeaderClick = (): void => {
     return
   }
   if (smAndDown.value) {
-    void router.push({ path: '/chat', state: { openChatList: true } })
+    void router.push({ path: getChatPath(), state: { openChatList: true } })
     return
   }
-  void router.push('/chat')
+  void router.push(getChatPath())
 }
 
 onMounted(() => {
