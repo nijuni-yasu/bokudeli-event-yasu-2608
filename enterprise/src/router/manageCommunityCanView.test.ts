@@ -46,6 +46,30 @@ describe('evaluateManageCommunityCanView', () => {
     ).toBe(false)
   })
 
+  it('enterpriseId 未解決のとき pending', () => {
+    expect(
+      evaluateManageCommunityCanView({
+        config: {} as never,
+        community: communityWithManager('u1'),
+        currentUserId: 'u1',
+        enterpriseId: undefined,
+        isSupport: false,
+      }),
+    ).toBeNull()
+  })
+
+  it('enterprise_id が null の community は false', () => {
+    expect(
+      evaluateManageCommunityCanView({
+        config: {} as never,
+        community: communityWithManager('u1', null),
+        currentUserId: 'u1',
+        enterpriseId: 'ent-1',
+        isSupport: false,
+      }),
+    ).toBe(false)
+  })
+
   it('管理者なら true', () => {
     expect(
       evaluateManageCommunityCanView({

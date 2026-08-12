@@ -23,10 +23,12 @@ export function evaluateManageCommunityCanView(snapshot: ManageCommunityGuardSna
   const currentUserId = snapshot.currentUserId
   const enterpriseId = snapshot.enterpriseId
 
-  if (community != null && enterpriseId != null && community.enterprise_id != null) {
-    if (community.enterprise_id !== enterpriseId) {
-      return false
-    }
+  if (enterpriseId == null || enterpriseId === '') {
+    return null
+  }
+
+  if (community != null && community.enterprise_id !== enterpriseId) {
+    return false
   }
 
   if (community != null && currentUserId != null) {

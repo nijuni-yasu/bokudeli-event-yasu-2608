@@ -95,6 +95,7 @@
 | [x] | RC-89 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventsTabPanel の void ?? で二重 next |
 | [x] | RC-90 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | UserEventCard の subsidy 計算を common へ |
 | [x] | RC-91 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | profile プレビューカードのタイル markup 重複 |
+| [x] | RC-92 | 3766045327 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | manageCommunityCanView が tenant 未解決・enterprise_id null を許容<br>enterpriseId 解決待ちと tenant 不一致拒否を厳格化 |
 
 ---
 
@@ -2866,5 +2867,33 @@ const eventStore = useAppEventStore(props.eventId) as EventStore
 **自動修正（手順 3a/3b）**: 該当なし（評価セッション 22:37 の指摘を一括実装）
 
 各 RC ブロックの **ステータス** を ✅ 対応済み に更新済み。
+
+## 評価セッション（2026-08-12 20:48・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-12 20:48 JST
+- **PR**: #2223
+- **REVIEW_REQUEST_SINCE**: 2026-08-12T11:35:55Z
+- **partial**: true（Codex substantive なし。Copilot 1 件のみ）
+- **手順 4a 自動修正**: RC-92（🚨 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | 要約 |
+| --- | --- | --- | --- | --- | --- |
+| [x] | RC-92 | 3766045327 | 🚨 必須修正 | ✅ 対応済み | manageCommunityCanView の tenant ガード厳格化 |
+
+### RC-92
+
+- **識別子**: RC-92（GitHub id: 3766045327）
+- **レビュワー**: Copilot
+- **指摘箇所**: enterprise/src/router/manageCommunityCanView.ts:36
+- **評価**: 🚨 必須修正
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 🔒 セキュリティ
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: [must] tenant 判定が未完了（enterpriseId 未解決）でも managers 判定に進んで true/false が確定し得ます。また enterpriseId が解決済みでも community.enterprise_id == null の場合に tenant mismatch 判定がスキップされます。support 以外は enterpriseId 解決まで pending にし、解決後は enterprise_id が一致しない null/undefined 含むコミュニティを明確に拒否するのが安全です。
+- **判断理由**: enterpriseId 未解決時は null を返し、community.enterprise_id !== enterpriseId で PF/null コミュニティを拒否。テスト 2 件追加。
 
 
