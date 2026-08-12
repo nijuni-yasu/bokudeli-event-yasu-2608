@@ -63,13 +63,8 @@ const emits = defineEmits<{
   updated: [id: string]
 }>()
 
-const {
-  requiredValidator,
-  postalCodeValidator,
-  urlValidator,
-  requiredHtmlValidator,
-  positiveIntegerValidator,
-} = useValidators()
+const { requiredValidator, postalCodeValidator, urlValidator, requiredHtmlValidator, positiveIntegerValidator } =
+  useValidators()
 
 const alertDialog = reactive({
   visible: false,
