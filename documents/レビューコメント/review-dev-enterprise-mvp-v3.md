@@ -79,6 +79,22 @@
 | [x] | RC-73 | 5226250696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | createSingleEnterpriseCommunity が save と manager 付与を非原子的<br>後段失敗で管理者不在 community が残る |
 | [x] | RC-74 | 5226250696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | M | 管理ガード canView が community null のまま pending<br>timeout / 404 分岐が必要 |
 | [x] | RC-75 | 3695636873 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | sendLetter が PF 固定 getCommunityByAccount<br>enterprise レター送信が not found |
+| [x] | RC-76 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | M | enterprise プロフィールで preview ゲート前に<br>コミュニティ所属クエリが無条件実行 |
+| [x] | RC-77 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | community subscribe 曖昧一致が console のみ<br>reportClientError なし・永久ローディング |
+| [x] | RC-78 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 空 profileUserId で useUserStore('') が throw |
+| [x] | RC-79 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useProfileLinkPolicy の computed が依存未追跡 |
+| [x] | RC-80 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | useAutoLoadWhenEmpty に immediate なし |
+| [x] | RC-81 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | preview 再読込で failedFoodMenuImageIds が残る |
+| [x] | RC-82 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | acceptInvitation 後の enterprise 照合がデッドコード |
+| [x] | RC-83 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | テナント整合リトライ 2 回目以降 force なし token |
+| [x] | RC-84 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | M | 未ログイン+キャッシュ有で遷移ごと 2 秒待機 |
+| [x] | RC-85 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | usage パネル背景 #f6f7fb 直指定 |
+| [x] | RC-86 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | UserProfilePage の enterpriseId.value! |
+| [x] | RC-87 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | vertical-nav の render 中副作用登録 |
+| [x] | RC-88 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventList の冗長 as EventListStore |
+| [x] | RC-89 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventsTabPanel の void ?? で二重 next |
+| [x] | RC-90 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | UserEventCard の subsidy 計算を common へ |
+| [x] | RC-91 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | profile プレビューカードのタイル markup 重複 |
 
 ---
 
@@ -2572,3 +2588,283 @@ const eventStore = useAppEventStore(props.eventId) as EventStore
 - **判断理由**: #2234 方針と整合。sendLetter は letter ref から communityId を取得し getCommunity。Slack は getCommunity(communityId) + account 照合。
 
 ---
+
+## 評価セッション（2026-08-08 22:37・shokujii-code-review）
+
+- **評価日時**: 2026-08-08 22:37 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **対象**: `git diff origin/development...HEAD` ブランチ全体（179 ファイル、+9,488/−3,553）。functions/common・base stores/composable・enterprise・base/user UI を領域分割レビュー後に統合。
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **補足**: RC-73〜75 は本セッションの新規採番対象外（記録上 ✅ 対応済み）。RC-75 論点は HEAD で `letter.ts` / `slackbot.ts` が community ID 解決済みであることを再確認し、記録内容と整合。
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-76 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 💾 データ | 🔧 微修正 | M | preview ゲート前のコミュニティ所属クエリ |
+| [x] | RC-77 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | subscribe 曖昧一致の reportClientError 漏れ |
+| [x] | RC-78 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 空 ID の useUserStore |
+| [x] | RC-79 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useProfileLinkPolicy computed 冗長 |
+| [x] | RC-80 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | useAutoLoadWhenEmpty immediate |
+| [x] | RC-81 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 料理画像失敗キャッシュ未リセット |
+| [x] | RC-82 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | communityManager デッドコード |
+| [x] | RC-83 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | テナント整合リトライの force なし token |
+| [x] | RC-84 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | M | 未ログイン時の遷移ごと 2 秒待機 |
+| [x] | RC-85 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | usage パネル #f6f7fb |
+| [x] | RC-86 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | UserProfilePage enterpriseId! |
+| [x] | RC-87 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | vertical-nav render 副作用 |
+| [x] | RC-88 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventList as キャスト |
+| [x] | RC-89 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventsTabPanel void ?? 二重 next |
+| [x] | RC-90 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | UserEventCard subsidy を common へ |
+| [x] | RC-91 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | プレビューカード markup 重複 |
+
+**自動修正（手順 3a/3b）**: 本ターンは記録のみ（実装は別依頼）
+
+### RC-76
+
+- **識別子**: RC-76（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/composable/useUserProfileCommunityLists.ts:20`
+- **評価**: 🚨 必須修正
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📑 仕様書, 💾 データ
+- **変更種別**: 微修正
+- **想定工数**: M
+- **レビュワーのコメント（原文）**: 🚨 **必須修正** [🔧微修正/M]: `useUserProfileFriendsStores` は `canInitTabStores`（preview Callable ゲート）で store 生成を遅延させているのに対し、`useUserProfileCommunityLists` はゲートを受け取らず setup 時点で `useCommunityListStore` → `reload()` が走る。`useAutoLoadWhenEmpty` の watch が computed を即時評価するため、preview 許可前に `getCountFromServer` / `getDocs` が実行される。RC-17 と同種の「ゲート前 Firestore 直読」漏れ。→ friends 側と同様 `canInitTabStores` を受け取りゲート通過後に store を生成（PF は常時 true）。
+- **判断理由**: `enterprise/src/components/profile/UserProfilePage.vue:133` が無条件呼び出し。アクセス拒否対象プロフィールでも所属コミュニティクエリが到達しうる。
+
+### RC-77
+
+- **識別子**: RC-77（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/stores/community.ts:603`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: community subscribe で `docs.length > 1` の曖昧一致時、console のみで `reportClientError` なし。`return` により `community` が null のまま永久ローディング。`resolveCommunityDocumentRef` は throw する非対称。→ `reportClientError` 追加、warn/error 出力は 1 本に集約。
+- **判断理由**: データ異常時の監視不能と UX 停滞。`communityList.ts` では `reportClientError` 済みで不整合。
+
+### RC-78
+
+- **識別子**: RC-78（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/composable/useUserProfileAuthState.ts:38`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 🐛 実害
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: 空 `profileUserId` のまま `useUserStore('')` に到達すると `doc(db, 'users', '')` が同期 throw し、composable 内の空文字ガードより先に setup が落ちる。→ 空 ID 時は store を生成せず null 固定 ref を返す、または呼び出し側で空 ID を排除。
+- **判断理由**: RC-32/33 は preview store 側のみ。`useUserStore` 経路は未ガード。
+
+### RC-79
+
+- **識別子**: RC-79（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/composable/useProfileLinkPolicy.ts:5`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: computed がクロージャを返すだけで `toValue(isOwner)` を追跡外で評価。computed 層が無意味な中継。→ computed を外し `ProfileLinkPolicyFn` を直接返す。
+- **判断理由**: 規約「不要な中継」に該当。挙動は同一のまま簡潔化可能。
+
+### RC-80
+
+- **識別子**: RC-80（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/composable/useAutoLoadWhenEmpty.ts:7`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 🐛 実害
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: `watch(deps, ...)` に `immediate: true` がなく、マウント時点で既に `shouldLoad()` が true のケース（store 再利用再訪等）で自動ロードが発火しない。→ `{ immediate: true }` を付与（load 側は冪等）。
+- **判断理由**: 安全側に倒す 1 行修正。
+
+### RC-81
+
+- **識別子**: RC-81（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/composable/useProfilePreviewMedia.ts:24`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 👤 UX
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: `previewDataVersion` 変更時に `failedEventCoverIds` のみリセットされ `failedFoodMenuImageIds` が残る。再読込後も料理画像がデフォルトのまま。→ 両 Set をリセットし更新方法を統一。
+- **判断理由**: 再読込後の表示不整合。
+
+### RC-82
+
+- **識別子**: RC-82（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `functions/default/src/enterprise/communityManager.ts:117`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: `getCommunityByAccountInEnterprise(tokenEnterpriseId, communityAccount)` 取得後、`enterprise_id` null チェックと `tokenEnterpriseId !== enterpriseId` が到達不能なデッドコード。→ 117〜124 行削除し `assertActiveEnterpriseMember` 等は `tokenEnterpriseId` を直接使用。
+- **判断理由**: 冗長チェック・誤解を招くエラーメッセージの除去。
+
+### RC-83
+
+- **識別子**: RC-83（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `enterprise/src/utils/ensureEnterpriseTenantConsistent.ts:110`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 🐛 実害
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: テナント整合リトライの attempt 2 以降が force なし `getIdTokenResult()` のためキャッシュ token を返すだけで実質デッドコード。→ attempt 2 以降も `getIdTokenResult(true)` にするか maxAttempts を 2 に縮める。
+- **判断理由**: sleep のみ増える無効リトライ。
+
+### RC-84
+
+- **識別子**: RC-84（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `enterprise/src/utils/ensureEnterpriseTenantConsistent.ts:56`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 👤 UX
+- **変更種別**: 微修正
+- **想定工数**: M
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/M]: tenant キャッシュがログアウト後も残るため、未ログインユーザーがナビゲーションのたびに最大 2 秒待たされる（RC-68 は同一ナビ内二重待機のみ）。→ 2 秒グレースはページロード後初回のみに限定。
+- **判断理由**: 遷移横断の UX ペナルティ。
+
+### RC-85
+
+- **識別子**: RC-85（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `enterprise/src/components/profile/EnterpriseSubsidyUsagePanel.vue:144`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 👤 UX
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: 背景 `#f6f7fb` 直指定。dark テーマで視認性が壊れる。→ `--v-theme-*` / surface 系変数へ。
+- **判断理由**: チェックリスト「テーマカラー直指定禁止」。
+
+### RC-86
+
+- **識別子**: RC-86（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `enterprise/src/components/profile/UserProfilePage.vue:51`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: `enterpriseId.value!` 非 null アサーション。→ `orders.vue` と同様 null 時 `{ kind: 'none' }` フォールバック。
+- **判断理由**: `as`/`!` 回避規約。再 resolve 失敗時のクエリ漏れリスク。
+
+### RC-87
+
+- **識別子**: RC-87（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `enterprise/src/components/layouts/DefaultLayoutWithVerticalNav.vue:47`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: リファクタ
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [📐リファクタ/S]: `<template v-if="ensureVerticalOverlayNavToggleRegistered(...)">` で render 中副作用。→ ref を非 reactive 変数にするか watchEffect 中継コンポーネントへ。
+- **判断理由**: Vue render 純粋性・可読性。
+
+### RC-88
+
+- **識別子**: RC-88（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/components/EventList.vue:22`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: `as EventListStore` 冗長。ファクトリ戻り値型は既に `EventListStore`。→ キャスト削除（RC-49 同種）。
+- **判断理由**: `as` 禁止規約。
+
+### RC-89
+
+- **識別子**: RC-89（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/components/profile/UserProfileEventsTabPanel.vue:20`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 🐛 実害
+- **変更種別**: 微修正
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [🔧微修正/S]: `props.onLoadMore?.() ?? props.eventListStore?.next()` は `void` 戻り値のため右辺も常に評価され二重 next しうる。→ if/else 分岐または props 統一。
+- **判断理由**: 両 props 注入時の潜在バグ。
+
+### RC-90
+
+- **識別子**: RC-90（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/components/UserEventCard.vue:52`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: リファクタ
+- **想定工数**: S
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [📐リファクタ/S]: `enterprise_subsidy` の net 計算をコンポーネント直書き。→ `common` の `computeOrderLineNet` に分岐集約 + vitest。
+- **判断理由**: 金額ロジック分散の回避。
+
+### RC-91
+
+- **識別子**: RC-91（GitHub id: なし・エージェントレビュー）
+- **レビュワー**: Cursor Agent（shokujii-code-review）
+- **指摘箇所**: `base/src/components/profile/UserProfileCommunitiesPreviewCard.vue:69`
+- **評価**: 🟡 修正提案
+- **ステータス**: ✅ 対応済み
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📏 規約
+- **変更種別**: リファクタ
+- **想定工数**: M
+- **レビュワーのコメント（原文）**: 🟡 **修正提案** [📐リファクタ/M]: コミュニティ/イベントプレビュータイル markup が link/static × セクションで 4〜2 重複。→ 子コンポーネント抽出または `<component :is>` で 1 定義化（任意対応）。
+- **判断理由**: monolith 移設時の重複。修正漏れ温床。
+
+---
+
+## 評価セッション（2026-08-08 23:05・RC-76〜91 実装）
+
+- **評価日時**: 2026-08-08 23:05 JST
+- **ブランチ名**: dev/enterprise-mvp-v3
+- **PR**: 未作成
+- **種別**: 実装対応（計画 RC-76〜91）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | 評価 | ステータス | 要約 |
+| --- | --- | --- | --- | --- |
+| [x] | RC-76 | 🚨 必須修正 | ✅ 対応済み | canInitTabStores で community list store 遅延生成 |
+| [x] | RC-77〜91 | 🟡 修正提案 | ✅ 対応済み | 計画どおり composable / functions / enterprise UI / common / タイル抽出 |
+
+**自動修正（手順 3a/3b）**: 該当なし（評価セッション 22:37 の指摘を一括実装）
+
+各 RC ブロックの **ステータス** を ✅ 対応済み に更新済み。
+
+
