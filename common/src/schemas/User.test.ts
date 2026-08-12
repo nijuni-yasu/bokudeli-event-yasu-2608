@@ -109,6 +109,26 @@ describe('User', () => {
     expect(u.enterprise_id).toBeUndefined()
   })
 
+  it('enterprise_id が null の PF ユーザー doc を書き戻しても undefined キーが残らない', () => {
+    const u = new User('uid-pf-null-ent-roundtrip', {
+      created_at: Date.now(),
+      user_name: 'PF',
+      enterprise_id: null,
+    } as unknown as Partial<User>)
+    const out = u.toFirestore()
+    expect('enterprise_id' in out).toBe(false)
+    expect(Object.values(out).some((v) => v === undefined)).toBe(false)
+  })
+
+  it('enterprise_id を持つエンプラユーザーは書き戻しでも保持される', () => {
+    const u = new User('uid-ent', {
+      created_at: Date.now(),
+      user_name: 'エンプラ',
+      enterprise_id: 'ent-1',
+    })
+    expect(u.toFirestore().enterprise_id).toBe('ent-1')
+  })
+
   it('null 正規化後の toFirestore でプロフィール optional フィールドは deleteField になる', () => {
     const u = new User('uid-null-roundtrip', {
       created_at: Date.now(),

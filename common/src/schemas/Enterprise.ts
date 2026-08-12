@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import { omitUndefined } from '../utils/object.js'
 
 export const ENTERPRISE_DISCOUNT_TYPE_VALUES = ['fixed', 'percentage'] as const
 export type EnterpriseDiscountType = (typeof ENTERPRISE_DISCOUNT_TYPE_VALUES)[number]
@@ -83,10 +84,6 @@ const EnterpriseAppSchema = z.object({
   billing_settings: EnterpriseBillingSettingsAppSchema.optional(),
   is_active: z.boolean().default(true),
 })
-
-function omitUndefined<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined)) as T
-}
 
 const convertEnterpriseToDb = (enterprise: Enterprise) => {
   return omitUndefined({

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
 import { USER_TYPE_VALUES } from './Enterprise.js'
+import { omitUndefined } from '../utils/object.js'
 
 const NonNegativeIntSchema = z.number().int().nonnegative()
 
@@ -72,10 +73,11 @@ const UserAppSchema = z.object({
 })
 
 const convertToDb = (user: User) => {
-  return {
+  // AppSchema で null → undefined に正規化した enterprise_id はキーが残るため落とす
+  return omitUndefined({
     ...user,
     updated_at: Date.now(),
-  }
+  })
 }
 
 export class User {
