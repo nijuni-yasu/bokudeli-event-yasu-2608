@@ -3,6 +3,7 @@ import { mdiAccountGroup } from '@mdi/js'
 import type { UserProfileCommunityPreviewItem } from '@shokujii/common/apis/userProfile.js'
 import type { ProfileCommunityIconUrlFn } from '@shokujii/base/composable/useProfilePreviewMedia.js'
 import type { ProfileLinkPolicyFn, ResolveCommunityPathFn } from '@shokujii/base/types/profilePathResolvers.js'
+import UserProfileCommunityPreviewTile from '@shokujii/base/components/profile/UserProfileCommunityPreviewTile.vue'
 
 defineProps<{
   joinedCommunities: UserProfileCommunityPreviewItem[]
@@ -19,6 +20,13 @@ defineProps<{
 const emit = defineEmits<{
   showMore: []
 }>()
+
+const communityLinkTo = (
+  c: UserProfileCommunityPreviewItem,
+  canLinkToDetail: ProfileLinkPolicyFn,
+  resolveCommunityPath: ResolveCommunityPathFn,
+): string | undefined =>
+  canLinkToDetail(c.is_public, c.is_linkable) ? resolveCommunityPath(c.community_account) : undefined
 </script>
 
 <template>
@@ -45,82 +53,12 @@ const emit = defineEmits<{
           </h3>
           <v-row dense class="mb-6">
             <v-col v-for="c in joinedCommunities" :key="`joined_${c.community_id}`" cols="6" sm="4" md="3">
-              <router-link
-                v-if="canLinkToDetail(c.is_public, c.is_linkable)"
-                class="preview-event-link d-block"
-                :to="resolveCommunityPath(c.community_account)"
-              >
-                <v-card variant="outlined" class="pa-3 h-100 preview-card">
-                  <div class="community-preview-tile d-flex align-stretch ga-3">
-                    <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
-                      <v-img
-                        v-if="communityIconUrl(c.community_id) != null"
-                        :src="communityIconUrl(c.community_id)!"
-                        :alt="c.community_name"
-                        cover
-                      />
-                      <v-icon v-else :icon="mdiAccountGroup" />
-                    </v-avatar>
-                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
-                      <div
-                        class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
-                      >
-                        <div
-                          class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
-                          :title="c.community_name"
-                        >
-                          {{ c.community_name }}
-                        </div>
-                        <v-chip
-                          v-if="!c.is_public"
-                          size="x-small"
-                          variant="flat"
-                          class="profile-preview-private-chip flex-shrink-0"
-                          label
-                        >
-                          {{ $t('user_profile.private_event_chip') }}
-                        </v-chip>
-                      </div>
-                    </div>
-                  </div>
-                </v-card>
-              </router-link>
-              <div v-else class="preview-event-link preview-event-link--static d-block">
-                <v-card variant="outlined" class="pa-3 h-100 preview-card">
-                  <div class="community-preview-tile d-flex align-stretch ga-3">
-                    <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
-                      <v-img
-                        v-if="communityIconUrl(c.community_id) != null"
-                        :src="communityIconUrl(c.community_id)!"
-                        :alt="c.community_name"
-                        cover
-                      />
-                      <v-icon v-else :icon="mdiAccountGroup" />
-                    </v-avatar>
-                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
-                      <div
-                        class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
-                      >
-                        <div
-                          class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
-                          :title="c.community_name"
-                        >
-                          {{ c.community_name }}
-                        </div>
-                        <v-chip
-                          v-if="!c.is_public"
-                          size="x-small"
-                          variant="flat"
-                          class="profile-preview-private-chip flex-shrink-0"
-                          label
-                        >
-                          {{ $t('user_profile.private_event_chip') }}
-                        </v-chip>
-                      </div>
-                    </div>
-                  </div>
-                </v-card>
-              </div>
+              <UserProfileCommunityPreviewTile
+                :community-name="c.community_name"
+                :is-public="c.is_public"
+                :icon-url="communityIconUrl(c.community_id)"
+                :link-to="communityLinkTo(c, canLinkToDetail, resolveCommunityPath)"
+              />
             </v-col>
           </v-row>
         </template>
@@ -131,82 +69,12 @@ const emit = defineEmits<{
           </h3>
           <v-row dense>
             <v-col v-for="c in managedCommunities" :key="`managed_${c.community_id}`" cols="6" sm="4" md="3">
-              <router-link
-                v-if="canLinkToDetail(c.is_public, c.is_linkable)"
-                class="preview-event-link d-block"
-                :to="resolveCommunityPath(c.community_account)"
-              >
-                <v-card variant="outlined" class="pa-3 h-100 preview-card">
-                  <div class="community-preview-tile d-flex align-stretch ga-3">
-                    <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
-                      <v-img
-                        v-if="communityIconUrl(c.community_id) != null"
-                        :src="communityIconUrl(c.community_id)!"
-                        :alt="c.community_name"
-                        cover
-                      />
-                      <v-icon v-else :icon="mdiAccountGroup" />
-                    </v-avatar>
-                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
-                      <div
-                        class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
-                      >
-                        <div
-                          class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
-                          :title="c.community_name"
-                        >
-                          {{ c.community_name }}
-                        </div>
-                        <v-chip
-                          v-if="!c.is_public"
-                          size="x-small"
-                          variant="flat"
-                          class="profile-preview-private-chip flex-shrink-0"
-                          label
-                        >
-                          {{ $t('user_profile.private_event_chip') }}
-                        </v-chip>
-                      </div>
-                    </div>
-                  </div>
-                </v-card>
-              </router-link>
-              <div v-else class="preview-event-link preview-event-link--static d-block">
-                <v-card variant="outlined" class="pa-3 h-100 preview-card">
-                  <div class="community-preview-tile d-flex align-stretch ga-3">
-                    <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
-                      <v-img
-                        v-if="communityIconUrl(c.community_id) != null"
-                        :src="communityIconUrl(c.community_id)!"
-                        :alt="c.community_name"
-                        cover
-                      />
-                      <v-icon v-else :icon="mdiAccountGroup" />
-                    </v-avatar>
-                    <div class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center">
-                      <div
-                        class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
-                      >
-                        <div
-                          class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
-                          :title="c.community_name"
-                        >
-                          {{ c.community_name }}
-                        </div>
-                        <v-chip
-                          v-if="!c.is_public"
-                          size="x-small"
-                          variant="flat"
-                          class="profile-preview-private-chip flex-shrink-0"
-                          label
-                        >
-                          {{ $t('user_profile.private_event_chip') }}
-                        </v-chip>
-                      </div>
-                    </div>
-                  </div>
-                </v-card>
-              </div>
+              <UserProfileCommunityPreviewTile
+                :community-name="c.community_name"
+                :is-public="c.is_public"
+                :icon-url="communityIconUrl(c.community_id)"
+                :link-to="communityLinkTo(c, canLinkToDetail, resolveCommunityPath)"
+              />
             </v-col>
           </v-row>
         </template>

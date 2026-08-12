@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { computeOrderLineNet } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
-import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { convertToDate, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
@@ -48,13 +47,9 @@ const cancelDialogOpen = computed({
   },
 })
 
-/** 参加者の実支払額（福利厚生は pay_enterprise_subsidy_amount、主催者負担割引は community_bill ロジック） */
-const orderLineNet = (o: EventMemberOrder) => {
-  if (props.event.event_payment === 'enterprise_subsidy') {
-    return o.menu_price - getMemberOrderDiscountAmount(o)
-  }
-  return computeOrderLineNet(o, props.event.event_payment, props.event.community_bill_settings)
-}
+/** 参加者の実支払額（福利厚生・主催者負担割引は common の computeOrderLineNet） */
+const orderLineNet = (o: EventMemberOrder) =>
+  computeOrderLineNet(o, props.event.event_payment, props.event.community_bill_settings)
 
 const groupedMenus = computed(() => {
   const map = new Map<string, { menu_name: string; count: number }>()

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { mdiCalendarHeart } from '@mdi/js'
 import type { UserProfileEventPreviewItem } from '@shokujii/common/apis/userProfile.js'
-import { formatProfilePreviewDate } from '@shokujii/base/components/profile/userProfileConstants.js'
 import type {
   ProfileEventCoverUrlFn,
   ProfileOnEventCoverErrorFn,
   ProfileShowEventCoverImageFn,
 } from '@shokujii/base/composable/useProfilePreviewMedia.js'
 import type { ProfileLinkPolicyFn, ResolveEventPathFn } from '@shokujii/base/types/profilePathResolvers.js'
+import UserProfileEventPreviewTile from '@shokujii/base/components/profile/UserProfileEventPreviewTile.vue'
 
 defineProps<{
   events: UserProfileEventPreviewItem[]
@@ -22,6 +22,15 @@ defineProps<{
 const emit = defineEmits<{
   showMore: []
 }>()
+
+const eventLinkTo = (
+  event: UserProfileEventPreviewItem,
+  canLinkToDetail: ProfileLinkPolicyFn,
+  resolveEventPath: ResolveEventPathFn,
+): string | undefined =>
+  canLinkToDetail(event.is_public, event.is_linkable)
+    ? resolveEventPath(event.community_account, event.event_id)
+    : undefined
 </script>
 
 <template>
@@ -43,98 +52,17 @@ const emit = defineEmits<{
       </div>
       <v-row v-else dense>
         <v-col v-for="event in events" :key="event.event_id" cols="6" sm="4" md="3">
-          <router-link
-            v-if="canLinkToDetail(event.is_public, event.is_linkable)"
-            class="preview-event-link d-block"
-            :to="resolveEventPath(event.community_account, event.event_id)"
-          >
-            <v-card variant="outlined" class="h-100 preview-card overflow-hidden">
-              <div class="event-preview-tile">
-                <div class="event-preview-tile__cover overflow-hidden">
-                  <v-img
-                    v-if="showEventCoverImage(event.community_id, event.event_id)"
-                    :src="eventCoverUrl(event.community_id, event.event_id)"
-                    :alt="event.event_name"
-                    cover
-                    aspect-ratio="1.91"
-                    @error="onEventCoverError(event.community_id, event.event_id)"
-                  />
-                  <div
-                    v-else
-                    class="event-preview-tile__cover-placeholder d-flex align-center justify-center bg-surface-variant"
-                  >
-                    <v-icon :icon="mdiCalendarHeart" size="28" class="text-medium-emphasis" />
-                  </div>
-                </div>
-                <v-card-text class="pa-3 pt-2">
-                  <div class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0">
-                    <div
-                      class="profile-preview-tile__meta text-medium-emphasis text-truncate min-width-0"
-                      :title="formatProfilePreviewDate(event.event_start_datetime, 'withWeekday')"
-                    >
-                      {{ formatProfilePreviewDate(event.event_start_datetime, 'withWeekday') }}
-                    </div>
-                    <v-chip
-                      v-if="!event.is_public"
-                      size="x-small"
-                      variant="flat"
-                      class="profile-preview-private-chip flex-shrink-0"
-                      label
-                    >
-                      {{ $t('user_profile.private_event_chip') }}
-                    </v-chip>
-                  </div>
-                  <div class="text-body-2 mt-1 text-truncate" :title="event.event_name">
-                    {{ event.event_name }}
-                  </div>
-                </v-card-text>
-              </div>
-            </v-card>
-          </router-link>
-          <div v-else class="preview-event-link preview-event-link--static d-block">
-            <v-card variant="outlined" class="h-100 preview-card overflow-hidden">
-              <div class="event-preview-tile">
-                <div class="event-preview-tile__cover overflow-hidden">
-                  <v-img
-                    v-if="showEventCoverImage(event.community_id, event.event_id)"
-                    :src="eventCoverUrl(event.community_id, event.event_id)"
-                    :alt="event.event_name"
-                    cover
-                    aspect-ratio="1.91"
-                    @error="onEventCoverError(event.community_id, event.event_id)"
-                  />
-                  <div
-                    v-else
-                    class="event-preview-tile__cover-placeholder d-flex align-center justify-center bg-surface-variant"
-                  >
-                    <v-icon :icon="mdiCalendarHeart" size="28" class="text-medium-emphasis" />
-                  </div>
-                </div>
-                <v-card-text class="pa-3 pt-2">
-                  <div class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0">
-                    <div
-                      class="profile-preview-tile__meta text-medium-emphasis text-truncate min-width-0"
-                      :title="formatProfilePreviewDate(event.event_start_datetime, 'withWeekday')"
-                    >
-                      {{ formatProfilePreviewDate(event.event_start_datetime, 'withWeekday') }}
-                    </div>
-                    <v-chip
-                      v-if="!event.is_public"
-                      size="x-small"
-                      variant="flat"
-                      class="profile-preview-private-chip flex-shrink-0"
-                      label
-                    >
-                      {{ $t('user_profile.private_event_chip') }}
-                    </v-chip>
-                  </div>
-                  <div class="text-body-2 mt-1 text-truncate" :title="event.event_name">
-                    {{ event.event_name }}
-                  </div>
-                </v-card-text>
-              </div>
-            </v-card>
-          </div>
+          <UserProfileEventPreviewTile
+            :event-name="event.event_name"
+            :event-start-datetime="event.event_start_datetime"
+            :is-public="event.is_public"
+            :community-id="event.community_id"
+            :event-id="event.event_id"
+            :link-to="eventLinkTo(event, canLinkToDetail, resolveEventPath)"
+            :show-cover-image="showEventCoverImage(event.community_id, event.event_id)"
+            :cover-url="eventCoverUrl(event.community_id, event.event_id)"
+            @cover-error="onEventCoverError(event.community_id, event.event_id)"
+          />
         </v-col>
       </v-row>
     </v-card-text>

@@ -5,7 +5,6 @@ import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import IncrementalLoader from './IncrementalLoader.vue'
 import EventStatusChip from './EventStatusChip.vue'
 import { useCreateAppCommunityEventListStore } from '@shokujii/base/composable/useAppEventListStore.js'
-import type { EventListStore } from '@shokujii/base/stores/eventList'
 
 const props = defineProps<{
   communityAccount: string
@@ -19,7 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const createEventListStore = useCreateAppCommunityEventListStore()
-const eventListStore = createEventListStore(props.communityAccount, 5) as EventListStore
+const eventListStore = createEventListStore(props.communityAccount, 5)
 const events = computed(() => {
   return (
     eventListStore.eventStores?.flatMap((s) => {
