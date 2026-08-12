@@ -33,7 +33,7 @@ const emit = defineEmits<{
 const friendUserOf = (item: { user_id: string; user_name: string; user_image_url: string }) =>
   new User(item.user_id, { user_name: item.user_name, user_image_url: item.user_image_url })
 
-const canLink = (friend: UserProfileFriendPreviewItem) => props.canLinkFriendPreview?.(friend) ?? true
+const canLink = (friend: UserProfileFriendPreviewItem): boolean => props.canLinkFriendPreview(friend)
 </script>
 
 <template>

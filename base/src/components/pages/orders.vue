@@ -106,8 +106,9 @@ const cancel = async (orderIds: string[], communityId: string, eventId: string) 
     cancelDialogEventId.value = null
 
     const hasRefundIssues = data.refund_errors != null && data.refund_errors.length > 0
-    if (hasRefundIssues || data.user_message) {
-      notification.show(data.user_message ?? $t('user.canceled'), 'warning')
+    const userMessage = data.user_message != null && data.user_message !== '' ? data.user_message : null
+    if (hasRefundIssues || userMessage != null) {
+      notification.show(userMessage ?? $t('user.canceled'), 'warning')
     } else {
       notification.show($t('user.canceled'), 'success')
     }

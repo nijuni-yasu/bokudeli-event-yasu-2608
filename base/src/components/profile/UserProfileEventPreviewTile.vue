@@ -6,8 +6,6 @@ defineProps<{
   eventName: string
   eventStartDatetime: number
   isPublic: boolean
-  communityId: string
-  eventId: string
   linkTo: string | undefined
   showCoverImage: boolean
   coverUrl: string | undefined

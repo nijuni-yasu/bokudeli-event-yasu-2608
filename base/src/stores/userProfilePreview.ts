@@ -51,9 +51,7 @@ export const useUserProfilePreviewStore = (targetUserId: string) => {
       load()
     }
 
-    if (targetUserId !== '') {
-      load()
-    }
+    load()
 
     return {
       data,

@@ -28,10 +28,10 @@ export type CartEnterpriseSubsidyBudget = {
 export type CartEnterpriseSubsidyBudgetLoader = (userId: string) => Promise<CartEnterpriseSubsidyBudget | null>
 
 export function normalizeCartEnterpriseSubsidyBudget(value: unknown): CartEnterpriseSubsidyBudget | null {
-  if (typeof value !== 'object' || value === null) {
+  if (typeof value !== 'object' || value === null || !('monthlyUsage' in value)) {
     return null
   }
-  const { monthlyUsage } = value as CartEnterpriseSubsidyBudget
+  const { monthlyUsage } = value
   if (typeof monthlyUsage !== 'object' || monthlyUsage === null) {
     return null
   }
