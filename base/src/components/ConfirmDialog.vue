@@ -78,7 +78,7 @@ const clickCancelHandler = () => {
           {{ props.cancelText ?? 'キャンセル' }}
         </v-btn>
         <v-btn
-          :color="props.okVariant === 'text' ? undefined : props.okColor"
+          :color="props.okColor"
           :variant="props.okVariant"
           :loading="props.okLoadingState"
           :disabled="props.cancelLoadingState"

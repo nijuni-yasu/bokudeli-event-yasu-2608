@@ -8,9 +8,14 @@
 | [x] | RC-2 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | Step 4 モーダルが `step1_validation_modal_title` を流用<br>共通キー化または step4 用キー追加を推奨 |
 | [x] | RC-3 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | RC-1 対応で v-form を先に return し未入力時モーダルが出ない<br>集約バリデーションを先に実行し form ゲートは確認ダイアログ直前へ |
 | [x] | RC-4 | なし | 👌 修正不要 | — | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | S | `reserve_validation_intro` から下書き保存済み文言を削除し submitReservation 失敗時に §8.1 不整合<br>保存前後で intro キーを出し分け（ユーザー判断で intro 出し分けは見送り） |
-| [ ] | RC-5 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | Step 1 の `validate()` 結果を見ずに `stepper` を進める<br>`collectEventBasicInfoValidationMessages` で拾えない v-form エラーがあっても遷移する |
-| [ ] | RC-6 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | Step 4 の `validate()` 結果を見ずに `stepper` を進める<br>`collectEventDetailValidationMessages` と v-form 差分時に不正状態で次へ進める |
-| [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | `okVariant="text"` だと `okColor` が常に無視される<br>`ConfirmDialog` の prop 意図と実装がずれている |
+| [x] | RC-5 | 3766744567 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | `okVariant=text` 時に `okColor` を無視<br>常に `okColor` を bind |
+| [x] | RC-6 | 3766744594 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 1「進む」で v-form の valid 未参照<br>モーダル後に `formResult.valid` ゲート追加 |
+| [x] | RC-7 | 3766744513 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 4「進む」で v-form の valid 未参照<br>モーダル後に `formResult.valid` ゲート追加 |
+| [x] | RC-8 | 3766748398 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 削除済みカバー URL を hasCoverImage が true と判定<br>RC-7 と同じ v-form ゲートで解消 |
+| [x] | RC-9 | 3766748407 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | バリデーションモーダルの OK がハードコード<br>既存 `$t('ok')` に置換 |
+| [x] | RC-10 | 3766748382 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 📏 規約 | 🔧 微修正 | S | `bill_email` の検証器が EventDetailCard と不一致<br>モーダルのみ形式エラーになる |
+| [x] | RC-11 | 3766748393 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 集約側のみ trim して v-form と判定不一致<br>未加工値で形式チェック |
+| [x] | RC-12 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `ok-text="$t('ok')"` が文字列リテラルになる<br>`:ok-text` に v-bind 修正 |
 
 ---
 
@@ -201,9 +206,6 @@
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | [x] | RC-4 | なし | 👌 修正不要 | — | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | S | `reserve_validation_intro` から下書き保存済み文言を削除し submitReservation 失敗時に §8.1 不整合<br>保存前後で intro キーを出し分け（ユーザー判断で intro 出し分けは見送り） |
-| [ ] | RC-5 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | Step 1 の `validate()` 結果を見ずに `stepper` を進める<br>`collectEventBasicInfoValidationMessages` で拾えない v-form エラーがあっても遷移する |
-| [ ] | RC-6 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | Step 4 の `validate()` 結果を見ずに `stepper` を進める<br>`collectEventDetailValidationMessages` と v-form 差分時に不正状態で次へ進める |
-| [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | `okVariant="text"` だと `okColor` が常に無視される<br>`ConfirmDialog` の prop 意図と実装がずれている |
 
 ---
 
@@ -243,157 +245,57 @@
 **想定工数**: S
 
 **判断理由**: ユーザーが RC-4 対応を修正不要と判断。intro 出し分け実装を revert し、短い intro 一本のままとする。
-
-
----
-
-## 評価セッション（2026-08-12 22:20・shokujii-code-review）
+## 評価セッション（2026-08-12 22:20・review-comments-evaluate）
 
 - **評価日時**: 2026-08-12 22:20 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
+- **評価者**: Cursor Agent（review-comments-evaluate）
 - **ブランチ名**: fix/2246
-- **PR**: #2247
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 0
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2247
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（GitHub id: 5267237900 レビュー依頼定型文、Copilot/Codex トップレベルレビュー概要）
+- **手順 4a 自動修正**: RC-5〜9, RC-11（🚨 3件 / 🟡 4件）
 
 ### RC 一覧（サマリ）
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-5 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | Step 1 の `validate()` 結果を見ずに `stepper` を進める<br>`collectEventBasicInfoValidationMessages` で拾えない v-form エラーがあっても遷移する |
-| [ ] | RC-6 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | Step 4 の `validate()` 結果を見ずに `stepper` を進める<br>`collectEventDetailValidationMessages` と v-form 差分時に不正状態で次へ進める |
-| [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | `okVariant="text"` だと `okColor` が常に無視される<br>`ConfirmDialog` の prop 意図と実装がずれている |
+| [x] | RC-5 | 3766744567 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | `okVariant=text` 時に `okColor` を無視<br>常に `okColor` を bind |
+| [x] | RC-6 | 3766744594 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 1「進む」で v-form の valid 未参照<br>モーダル後に `formResult.valid` ゲート追加 |
+| [x] | RC-7 | 3766744513 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 4「進む」で v-form の valid 未参照<br>モーダル後に `formResult.valid` ゲート追加 |
+| [x] | RC-8 | 3766748398 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 削除済みカバー URL を hasCoverImage が true と判定<br>RC-7 と同じ v-form ゲートで解消 |
+| [x] | RC-9 | 3766748407 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | バリデーションモーダルの OK がハードコード<br>既存 `$t('ok')` に置換 |
+| [x] | RC-10 | 3766748382 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 📏 規約 | 🔧 微修正 | S | `bill_email` の検証器が EventDetailCard と不一致<br>モーダルのみ形式エラーになる |
+| [x] | RC-11 | 3766748393 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 集約側のみ trim して v-form と判定不一致<br>未加工値で形式チェック |
 
 ---
 
-**識別子**: RC-5（GitHub id: なし・エージェントレビュー）
+**識別子**: RC-5（GitHub id: 3766744567）
 
-**レビュワー**: Cursor Agent（shokujii-code-review）
+**レビュワー**: Copilot
 
-**指摘箇所**: `base/src/components/EventEdit.vue:840`
+**指摘箇所**: `base/src/components/ConfirmDialog.vue:82`
 
 **該当コード（レビュー時点の diff）**:
 
 ```diff
-   try {
--    await step1FormRef.value?.validate?.()
-+    await step1FormRef.value?.validate?.()
- 
-     const messages = collectEventBasicInfoValidationMessages({
-       event: ev,
-@@
-     if (messages.length > 0) {
-       step1ValidationDialog.messages = messages
-       step1ValidationDialog.visible = true
-       return
-     }
-     stepper.value++
-```
-
-**レビュワーのコメント（原文）**:
-
-🚨 **必須修正** [🔧微修正/S]: `handleStep1Next` が `v-form.validate()` の戻り値 `valid` を参照していないため、`collectEventBasicInfoValidationMessages` 側で拾っていないエラーが残っていても `stepper` が進みます。→ モーダル表示を優先したうえで、最後に `formResult?.valid !== true` の場合は遷移を止めてください。
-
-**コメント要約**:
-
-1行目: Step 1 の「進む」で v-form の最終妥当性を見ずに次ステップへ進める。
-
-2行目: モーダル用集約チェックと v-form ルールに差分が出た場合でも遷移できてしまうため、`valid` 判定が必要。
-
-**評価**: 🚨 必須修正
-
-**ステータス**: 未着手
-
-**PRスコープ**: 📌 スコープ内
-
-**ラベル**: 🐛 実害
-
-**変更種別**: 🔧 微修正
-
-**想定工数**: S
-
-**判断理由**: Issue #2246 は未入力理由をモーダル表示する改善だが、v-form 側の妥当性ゲートを外す意図はない。現在の実装では `validate()` を呼ぶだけで結果を使っておらず、フォーム不正でも遷移しうる。
-
----
-
-**識別子**: RC-6（GitHub id: なし・エージェントレビュー）
-
-**レビュワー**: Cursor Agent（shokujii-code-review）
-
-**指摘箇所**: `base/src/components/EventEdit.vue:871`
-
-**該当コード（レビュー時点の diff）**:
-
-```diff
-   try {
--    await step4FormRef.value?.validate?.()
-+    await step4FormRef.value?.validate?.()
- 
-     const messages = collectEventDetailValidationMessages({
-       event: ev,
-@@
-     if (messages.length > 0) {
-       step4ValidationDialog.messages = messages
-       step4ValidationDialog.visible = true
-       return
-     }
-     stepper.value++
-```
-
-**レビュワーのコメント（原文）**:
-
-🚨 **必須修正** [🔧微修正/S]: `handleStep4Next` も `v-form.validate()` の戻り値を無視しているため、`collectEventDetailValidationMessages` と v-form 側の判定差があるケースで不正状態のまま Step 5 に進めます。→ Step 1 と同様に、モーダル表示後の最終ゲートとして `formResult?.valid !== true` を確認してください。
-
-**コメント要約**:
-
-1行目: Step 4 の「進む」で v-form の戻り値未判定のまま Step 5 に遷移する。
-
-2行目: 集約メッセージと実フィールドバリデーションの差分があると、不正状態でも次へ進めてしまう。
-
-**評価**: 🚨 必須修正
-
-**ステータス**: 未着手
-
-**PRスコープ**: 📌 スコープ内
-
-**ラベル**: 🐛 実害
-
-**変更種別**: 🔧 微修正
-
-**想定工数**: S
-
-**判断理由**: Step 4 では `ImageInput` や個別ルールを含むため、集約関数だけで v-form の全結果を完全代替できる保証がない。`validate()` の戻り値を無視するのは実害につながる。
-
----
-
-**識別子**: RC-7（GitHub id: なし・エージェントレビュー）
-
-**レビュワー**: Cursor Agent（shokujii-code-review）
-
-**指摘箇所**: `base/src/components/ConfirmDialog.vue:81`
-
-**該当コード（レビュー時点の diff）**:
-
-```diff
-         <v-btn
--          :color="props.okVariant === 'text' ? undefined : props.okColor"
+-          color="primary"
 +          :color="props.okVariant === 'text' ? undefined : props.okColor"
-           :variant="props.okVariant"
++          :variant="props.okVariant"
 ```
 
 **レビュワーのコメント（原文）**:
 
-🟡 **修正提案** [🔧微修正/S]: `okColor` prop を追加した一方で、`okVariant="text"` のときは `color` を常に `undefined` にしているため、呼び出し側が `text + 任意色` を指定できません。→ `variant` に関係なく `:color="props.okColor"` を渡す実装に寄せると、prop の意味と実装が一致します。
+[imo] `okVariant="text"` のときに `okColor` が常に無視されており、呼び出し側が「text + 任意の色」を指定できません（`okColor` prop を追加した意図と不整合になりえます）。variant による見た目調整に寄せて、color は常に `okColor` を渡す方が扱いやすいです。
 
 **コメント要約**:
 
-1行目: `okColor` を公開したのに `text` variant では無効化している。
+1行目: text variant 時に okColor prop が無視される。
 
-2行目: 呼び出し側の指定自由度と prop 意図を揃えるなら、常に `okColor` を渡す方が自然。
+2行目: `:color="props.okColor"` に統一してよい。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -403,4 +305,303 @@
 
 **想定工数**: S
 
-**判断理由**: 機能破綻ではないが、今回の PR で `okColor` を追加した設計意図と実装が一致していない。軽微に直せるため、このタイミングで揃えておくと保守しやすい。
+**判断理由**: prop 追加意図と実装が不一致。1行修正で解消。
+
+---
+
+**識別子**: RC-6（GitHub id: 3766744594）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/EventEdit.vue:855`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    await step1FormRef.value?.validate?.()
++    ...
++    stepper.value++
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] Step 1/4 の「進む」で `v-form.validate()` の戻り値（valid）を参照していないため、`collectEventBasicInfoValidationMessages` 側で拾えないバリデーションがある場合にフォーム不正でも次のステップへ進めてしまいます。モーダル表示（messages がある場合）を優先した上で、最終的に `valid === false` の場合は stepper を進めないようにしてください。
+
+**コメント要約**:
+
+1行目: Step 1 で validate 戻り値未使用のため v-form 独自ルールをすり抜けうる。
+
+2行目: モーダル優先のうえ `formResult.valid !== true` で stepper 停止。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: Step 5 と同様、集約チェックと v-form の二段構えが必要。妥当。
+
+---
+
+**識別子**: RC-7（GitHub id: 3766744513）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/EventEdit.vue:889`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    await step4FormRef.value?.validate?.()
++    ...
++    stepper.value++
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] Step 4/4 の「進む」で `v-form.validate()` の結果を無視して `stepper` を進めているため、`collectEventDetailValidationMessages` と v-form ルールに差分が出た場合（例: ImageInput の URL ロード失敗等）でも次ステップへ進めてしまいます。モーダル表示を優先した上で、最後に `valid === false` の場合は遷移を止めてください。
+
+**コメント要約**:
+
+1行目: Step 4 でも validate 戻り値未使用。
+
+2行目: ImageInput 失敗等は v-form のみ捕捉。formResult ゲートで停止。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-6 と同根。Step 5 予約申請フローと整合。
+
+---
+
+**識別子**: RC-8（GitHub id: 3766748398）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/EventEdit.vue:819`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const resolveHasEventCoverImage = (): boolean => {
++  if (coverImage.value != null) {
++    return true
++  }
++  const communityCover = communityStore.coverImageUrl
++  if (communityCover != null && communityCover !== '') {
++    return true
+```
+
+**レビュワーのコメント（原文）**:
+
+**実在するカバー画像だけを有効と判定する** — イベントまたはコミュニティのカバー画像が Storage から削除されている場合でも、各 store の `coverImageUrl` は ID から URL を無条件に生成するため、ここで画像ありと判定されます。`ImageInput` は画像読み込み失敗後に `iconImageUrl` を `null` にして v-form を無効化しますが、`handleStep4Next` は `validate()` の結果を確認せず、この判定だけを使うので、カバー未入力のモーダルを出さず Step 5 へ進めてしまいます。フォームの `valid` もゲートに使うか、実際に読み込み可能な画像の状態を共有してください。
+
+**コメント要約**:
+
+1行目: resolveHasEventCoverImage が URL 存在のみ見て ImageInput 失敗を見逃す。
+
+2行目: RC-7 の v-form valid ゲートで ImageInput 失敗時に stepper 停止可能。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。hasCoverImage 単体修正より v-form ゲートが Step 5 と一貫。
+
+---
+
+**識別子**: RC-9（GitHub id: 3766748407）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/EventEdit.vue:1204`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    ok-text="OK"
+```
+
+**レビュワーのコメント（原文）**:
+
+**新しいダイアログの OK 文言を ja.ts に移す** — 今回追加された Step 1/4 の確認ダイアログで `OK` を直接埋め込んでおり、UI 文字列を `ja.ts` にのみ追加するプロジェクト規約から外れています。同じ変更内で追加したタイトルやエラーメッセージと同様に共通の日本語 locale キーを定義して参照してください。
+
+**コメント要約**:
+
+1行目: バリデーションモーダルの ok-text がハードコード。
+
+2行目: 既存ルートキー `$t('ok')` で参照。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: AGENTS.md i18n 規約どおり。新規キー不要で `$t('ok')` 利用。
+
+---
+
+**識別子**: RC-10（GitHub id: 3766748382）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/utils/eventEditValidationMessages.ts:129`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    } else if (emailValidator(event.bill_email) !== true) {
++      messages.push(t('event_edit.step4_validation.bill_email_invalid'))
+```
+
+**レビュワーのコメント（原文）**:
+
+**Step 4 と同じメール検証器を使用する** — PF の請求書払いで `bill_email` に `"foo"@example.com` などを入力すると、`EventDetailCard.vue` の `@core` 版 `emailValidator` は有効と判定する一方、ここへ渡される `useValidators()` 版は無効と判定します。そのためフィールド上はエラーがないのに「進む」で形式エラーモーダルが表示され、先へ進めません。フォームとメッセージ収集処理で同じ共通バリデータを使用してください。
+
+**コメント要約**:
+
+1行目: EventDetailCard は @core emailValidator、モーダル収集は useValidators（common 経由）で不一致。
+
+2行目: 同一 validator を渡すか core 版に揃える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。`collectEventDetailValidationMessages` に `@core/utils/validators` の `emailValidator` を渡し EventDetailCard と一致させた（shokujii-code-review セッション 2026-08-12 22:22）。
+
+---
+
+**識別子**: RC-11（GitHub id: 3766748393）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `common/src/utils/validateReservationRequest.ts:190`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const email = event.organizer_email?.trim() ?? ''
++  if (email !== '' && !isValidEmail(email)) {
+```
+
+**レビュワーのコメント（原文）**:
+
+**主催者連絡先をフォームと同じ未加工値で検証する** — `organizer_email` に `user@example.com ` のような末尾空白がある場合、店舗連絡フォームは未加工値を検証して `valid: false` を返しますが、集約側はここで `trim()` した値を有効と判定します。その結果 `handleReserveButtonClick` は理由モーダルを開かず、最後の `formResult` 判定で黙って終了するため、この変更の目的である形式エラーのモーダル表示が行われません。電話番号も同様なので、両経路で同じ値を検証するか、検証前にモデル自体を共通の方法で正規化してください。
+
+**コメント要約**:
+
+1行目: 集約側 trim により v-form より寛い判定。
+
+2行目: trim 削除で ORGANIZER_*_INVALID を v-form と一致。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: #2246 のモーダル表示意図に反する実害。未加工値で検証が正しい。
+
+---
+
+## 評価セッション（2026-08-12 22:22・shokujii-code-review）
+
+- **評価日時**: 2026-08-12 22:22 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: fix/2246
+- **PR**: #2247
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **手順 4a 自動修正**: RC-12（🚨 1件）、RC-10 手動修正（evaluate 残）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-12 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `ok-text="$t('ok')"` が文字列リテラルになる<br>`:ok-text` に v-bind 修正 |
+
+---
+
+**識別子**: RC-12（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventEdit.vue:1211`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-    ok-text="OK"
++    ok-text="$t('ok')"
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: RC-9 対応で `ok-text="$t('ok')"` と記述されているが v-bind なしのため prop 値が文字列 `"$t('ok')"` のまま渡り、ボタンラベルが i18n されない → `:ok-text="$t('ok')"` に修正する。
+
+**コメント要約**:
+
+1行目: `ok-text` prop に v-bind がなく `$t('ok')` が評価されない。
+
+2行目: 他コンポーネント同様 `:ok-text="$t('ok')"` に修正。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: Vue の prop バインディング規約違反。RC-9 実装の取りこぼし。同一セッションで `:ok-text` に修正済み。あわせて RC-10（`coreEmailValidator` 注入）も対応済み。
+
+---

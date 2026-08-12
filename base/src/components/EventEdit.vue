@@ -42,6 +42,7 @@ import {
 } from '@shokujii/common/utils/partnerShopDeliverable.js'
 import { isAddressBaseValidForPostalcode } from '@shokujii/base/utils/isAddressBaseValidForPostalcode'
 import { useValidators } from '@shokujii/base/composable/validators'
+import { emailValidator as coreEmailValidator } from '@core/utils/validators'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { mdiChevronLeft, mdiChevronRight, mdiEmailOutline } from '@mdi/js'
@@ -68,7 +69,6 @@ const {
   urlValidator,
   requiredHtmlValidator,
   positiveIntegerValidator,
-  emailValidator,
 } = useValidators()
 
 const alertDialog = reactive({
@@ -837,7 +837,7 @@ const handleStep1Next = async () => {
   }
 
   try {
-    await step1FormRef.value?.validate?.()
+    const formResult = await step1FormRef.value?.validate?.()
 
     const messages = collectEventBasicInfoValidationMessages({
       event: ev,
@@ -849,6 +849,9 @@ const handleStep1Next = async () => {
     if (messages.length > 0) {
       step1ValidationDialog.messages = messages
       step1ValidationDialog.visible = true
+      return
+    }
+    if (formResult?.valid !== true) {
       return
     }
     stepper.value++
@@ -868,7 +871,7 @@ const handleStep4Next = async () => {
   }
 
   try {
-    await step4FormRef.value?.validate?.()
+    const formResult = await step4FormRef.value?.validate?.()
 
     const messages = collectEventDetailValidationMessages({
       event: ev,
@@ -877,12 +880,15 @@ const handleStep4Next = async () => {
       requiredValidator,
       requiredHtmlValidator,
       positiveIntegerValidator,
-      emailValidator,
+      emailValidator: coreEmailValidator,
       t: $t,
     })
     if (messages.length > 0) {
       step4ValidationDialog.messages = messages
       step4ValidationDialog.visible = true
+      return
+    }
+    if (formResult?.valid !== true) {
       return
     }
     stepper.value++
@@ -1201,7 +1207,7 @@ const stepperItems = computed(() => [
     v-model="step4ValidationDialog.visible"
     :title="$t('event_edit.validation_modal_title')"
     role="alertdialog"
-    ok-text="OK"
+    :ok-text="$t('ok')"
     ok-variant="text"
   >
     <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
@@ -1215,7 +1221,7 @@ const stepperItems = computed(() => [
     v-model="step1ValidationDialog.visible"
     :title="$t('event_edit.validation_modal_title')"
     role="alertdialog"
-    ok-text="OK"
+    :ok-text="$t('ok')"
     ok-variant="text"
   >
     <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
@@ -1229,7 +1235,7 @@ const stepperItems = computed(() => [
     v-model="reserveValidationDialog.visible"
     :title="$t('manage.event.reserve_validation_modal_title')"
     role="alertdialog"
-    ok-text="OK"
+    :ok-text="$t('ok')"
     ok-variant="text"
   >
     <p class="mb-3">{{ $t('manage.event.reserve_validation_intro') }}</p>

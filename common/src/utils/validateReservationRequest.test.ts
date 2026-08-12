@@ -364,6 +364,15 @@ describe('validateReservationRequest - 主催者連絡先', () => {
     expect(result.reasonCodes).toContain('ORGANIZER_EMAIL_MISSING')
     expect(result.reasonCodes).not.toContain('ORGANIZER_EMAIL_INVALID')
   })
+
+  it('末尾空白付き organizer_email は v-form と同様に形式エラーになる', () => {
+    const result = validateReservationRequest(
+      buildInput({ event: makeEvent({ organizer_email: 'user@example.com ' }) }),
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reasonCodes).toContain('ORGANIZER_EMAIL_INVALID')
+  })
 })
 
 describe('validateReservationRequest - DB 整合', () => {
