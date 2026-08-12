@@ -2,7 +2,10 @@
 import { ref, shallowRef, reactive, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
 import { DateTime } from 'luxon'
 import { isInShopTime } from '@shokujii/common/utils/datetime.js'
-import { validateReservationRequest } from '@shokujii/common/utils/validateReservationRequest.js'
+import {
+  validateReservationRequest,
+  type ReservationRequestReasonCode,
+} from '@shokujii/common/utils/validateReservationRequest.js'
 import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
 import { reasonCodesToMessages } from '@shokujii/base/utils/reservationRequestMessages'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
@@ -90,8 +93,10 @@ const isProcessing = computed(() => processingState.value != null)
 /** 新規ウィザードで Step 3 の初回 Firestore 作成が完了したか */
 const hasFirestoreDraft = ref(false)
 
-const shopNoticeFormValid = ref(false)
-const shopNoticeRef = shallowRef<{ openReserveConfirmDialog: () => void } | null>(null)
+const shopNoticeRef = shallowRef<{
+  openReserveConfirmDialog: () => void
+  validateForm: () => Promise<{ valid: boolean } | undefined>
+} | null>(null)
 
 const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
 
@@ -456,6 +461,42 @@ const selectedMenuIds = computed(() => {
 
 const selectedMenuCount = computed(() => selectedMenuIds.value.length)
 
+/** 予約申請ボタンの事前無効化（データ未取得・処理中・下書き以外） */
+const isReserveButtonDisabled = computed(() => {
+  return (
+    event.value?.event_status?.value !== 'in_draft' ||
+    isProcessing.value ||
+    isLoadingMenu.value ||
+    isReserveDataMissing.value
+  )
+})
+
+const showReserveValidationFailure = (reasonCodes: ReservationRequestReasonCode[]) => {
+  reserveValidationDialog.messages = reasonCodesToMessages(reasonCodes, $t)
+  reserveValidationDialog.visible = true
+}
+
+const validateCurrentReservationRequest = (ev: BokudeliEvent) => {
+  const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
+  const user = currentUserStore.user
+  const personalInformation = currentUserStore.personalInformation
+  const loc = location.value
+  if (handleUserId === '' || user == null || personalInformation == null || loc == null) {
+    return null
+  }
+  return validateReservationRequest({
+    event: ev,
+    handleUserId,
+    user,
+    personalInformation,
+    authEmail: currentUserStore.firebaseUser?.email ?? null,
+    eventMenus: eventMenus.value,
+    partnerShops: partnerShopListStore.shops ?? [],
+    location: { latitude: loc.latitude, longitude: loc.longitude },
+    nowMillis: DateTime.now().toMillis(),
+  })
+}
+
 const canUseSecondarySave = computed(() => {
   if (event.value == null) {
     return false
@@ -614,10 +655,7 @@ const submitReservation = async () => {
     showAlertDialog($t('manage.event.save_failed'))
     return
   }
-  const user = currentUserStore.user
-  const personalInformation = currentUserStore.personalInformation
-  const loc = location.value
-  if (user == null || personalInformation == null || loc == null) {
+  if (isReserveDataMissing.value) {
     showAlertDialog($t('event_edit.shop_list_loading'))
     return
   }
@@ -630,20 +668,13 @@ const submitReservation = async () => {
       showAlertDialog($t('manage.event.save_failed'))
       return
     }
-    const result = validateReservationRequest({
-      event: ev,
-      handleUserId,
-      user,
-      personalInformation,
-      authEmail: currentUserStore.firebaseUser?.email ?? null,
-      eventMenus: eventMenus.value,
-      partnerShops: partnerShopListStore.shops ?? [],
-      location: { latitude: loc.latitude, longitude: loc.longitude },
-      nowMillis: DateTime.now().toMillis(),
-    })
+    const result = validateCurrentReservationRequest(ev)
+    if (result == null) {
+      showAlertDialog($t('event_edit.shop_list_loading'))
+      return
+    }
     if (!result.ok) {
-      reserveValidationDialog.messages = reasonCodesToMessages(result.reasonCodes, $t)
-      reserveValidationDialog.visible = true
+      showReserveValidationFailure(result.reasonCodes)
       return
     }
     ev.event_status = { value: 'applying_reservation', shop_comment: '' }
@@ -753,6 +784,43 @@ const submit = async () => {
 
 const openReserveConfirm = () => {
   shopNoticeRef.value?.openReserveConfirmDialog()
+}
+
+const handleReserveButtonClick = async () => {
+  if (isReserveButtonDisabled.value) {
+    return
+  }
+  const ev = event.value
+  if (ev == null) {
+    return
+  }
+  const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
+  if (handleUserId === '') {
+    showAlertDialog($t('manage.event.save_failed'))
+    return
+  }
+  if (isReserveDataMissing.value) {
+    showAlertDialog($t('event_edit.shop_list_loading'))
+    return
+  }
+
+  try {
+    await shopNoticeRef.value?.validateForm?.()
+
+    const result = validateCurrentReservationRequest(ev)
+    if (result == null) {
+      showAlertDialog($t('event_edit.shop_list_loading'))
+      return
+    }
+    if (!result.ok) {
+      showReserveValidationFailure(result.reasonCodes)
+      return
+    }
+    openReserveConfirm()
+  } catch (error) {
+    console.error('Failed to validate reservation request:', error)
+    showAlertDialog($t('manage.event.save_failed'))
+  }
 }
 
 const stepperItems = computed(() => [
@@ -959,7 +1027,6 @@ const stepperItems = computed(() => [
           ref="shopNoticeRef"
           v-model="event"
           v-model:shop="selectedShop"
-          v-model:form-valid="shopNoticeFormValid"
           @send-reserve-mail="submitReservation"
         />
         <event-edit-step-nav :visible="stepper === 5">
@@ -992,19 +1059,13 @@ const stepperItems = computed(() => [
             <div class="event-edit-step-nav__step5-reserve-row">
               <v-btn
                 class="event-shop-notice-footer__reserve"
-                :disabled="
-                  !shopNoticeFormValid ||
-                  event.event_status?.value !== 'in_draft' ||
-                  isProcessing ||
-                  isLoadingMenu ||
-                  isReserveDataMissing
-                "
+                :disabled="isReserveButtonDisabled"
                 :loading="processingState === 'reserving'"
                 color="grey-900"
                 size="x-large"
                 rounded="xl"
                 :prepend-icon="mdiEmailOutline"
-                @click="openReserveConfirm"
+                @click="handleReserveButtonClick"
               >
                 {{ $t('shop_notice.send_reserve_mail') }}
               </v-btn>
