@@ -1,9 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { User } from 'firebase/auth'
-import { ensureEnterpriseTenantConsistent } from './ensureEnterpriseTenantConsistent'
+import { ensureEnterpriseTenantConsistent, waitEnterpriseAuthentication } from './ensureEnterpriseTenantConsistent'
 
 const mockGetIdTokenResult = vi.fn()
 const mockResolveEnterprise = vi.fn()
+const mockOnAuthStateChanged = vi.fn()
+const mockReadCachedEnterpriseTenantEntry = vi.fn(() => null as { tenant_id: string } | null)
 const mockEnterpriseRef = vi.hoisted(() => ({
   enterprise: {
     tenant_id: 'tenant-a',
@@ -14,7 +16,7 @@ const mockEnterpriseRef = vi.hoisted(() => ({
 
 vi.mock('firebase/auth', () => ({
   getAuth: () => ({ tenantId: 'tenant-a', currentUser: null }),
-  onAuthStateChanged: vi.fn(),
+  onAuthStateChanged: (...args: unknown[]) => mockOnAuthStateChanged(...args),
 }))
 
 vi.mock('@/stores/enterprise', () => ({
@@ -46,7 +48,7 @@ vi.mock('@/utils/enterpriseAuth', () => ({
 }))
 
 vi.mock('@/utils/enterpriseTenantCache', () => ({
-  readCachedEnterpriseTenantEntry: vi.fn(() => null),
+  readCachedEnterpriseTenantEntry: () => mockReadCachedEnterpriseTenantEntry(),
   writeEnterpriseTenantCache: vi.fn(),
 }))
 
@@ -102,6 +104,35 @@ describe('ensureEnterpriseTenantConsistent', () => {
     await vi.runAllTimersAsync()
     await expect(promise).resolves.toBe(false)
     expect(mockGetIdTokenResult).toHaveBeenCalledTimes(4)
+    expect(mockGetIdTokenResult).toHaveBeenNthCalledWith(1)
+    expect(mockGetIdTokenResult).toHaveBeenNthCalledWith(2, true)
+    expect(mockGetIdTokenResult).toHaveBeenNthCalledWith(3, true)
+    expect(mockGetIdTokenResult).toHaveBeenNthCalledWith(4, true)
+    vi.useRealTimers()
+  })
+})
+
+describe('waitEnterpriseAuthentication', () => {
+  beforeEach(() => {
+    mockOnAuthStateChanged.mockReset()
+    mockReadCachedEnterpriseTenantEntry.mockReset()
+    mockReadCachedEnterpriseTenantEntry.mockReturnValue(null)
+  })
+
+  it('キャッシュありで 2 回目以降の待機は未ログインなら即 null', async () => {
+    mockReadCachedEnterpriseTenantEntry.mockReturnValue({ tenant_id: 'tenant-a' })
+    mockOnAuthStateChanged.mockImplementation((_auth, callback: (user: User | null) => void) => {
+      callback(null)
+      return () => undefined
+    })
+
+    vi.useFakeTimers()
+    const first = waitEnterpriseAuthentication()
+    await vi.runAllTimersAsync()
+    await expect(first).resolves.toBeNull()
+
+    const second = waitEnterpriseAuthentication()
+    await expect(second).resolves.toBeNull()
     vi.useRealTimers()
   })
 })

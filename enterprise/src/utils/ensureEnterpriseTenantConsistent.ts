@@ -22,10 +22,12 @@ export function applyKnownEnterpriseAuthTenantId(): void {
 
 /**
  * テナント bootstrap 後の Auth 状態を待つ。
- * キャッシュ tenant ありで初回 null のときは永続化復元を最大 2 秒待つ。
+ * キャッシュ tenant ありで初回 null のときのみ永続化復元を最大 2 秒待つ（以降のナビゲーションでは即 null）。
  * 同一ナビゲーション内の複数 beforeEach から呼ばれても待機は 1 回にまとめる。
  */
 let pendingAuthWait: Promise<User | null> | null = null
+/** セッション内で初回 waitEnterpriseAuthentication が完了したら true（RC-84） */
+let authRestoreGraceConsumed = false
 
 export function waitEnterpriseAuthentication(): Promise<User | null> {
   if (pendingAuthWait != null) {
@@ -45,6 +47,7 @@ export function waitEnterpriseAuthentication(): Promise<User | null> {
         return
       }
       settled = true
+      authRestoreGraceConsumed = true
       unsubscribe?.()
       if (timeoutId != null) {
         clearTimeout(timeoutId)
@@ -53,7 +56,7 @@ export function waitEnterpriseAuthentication(): Promise<User | null> {
     }
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined
-    if (hasCache) {
+    if (hasCache && !authRestoreGraceConsumed) {
       timeoutId = setTimeout(() => finish(auth.currentUser), 2000)
     }
 
@@ -62,7 +65,7 @@ export function waitEnterpriseAuthentication(): Promise<User | null> {
         finish(user)
         return
       }
-      if (!hasCache) {
+      if (!hasCache || authRestoreGraceConsumed) {
         finish(null)
       }
     })
@@ -108,10 +111,8 @@ export async function ensureEnterpriseTenantConsistent(user: User): Promise<bool
 
   const maxAttempts = 4
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    if (attempt === 1) {
+    if (attempt > 0) {
       tokenResult = await user.getIdTokenResult(true)
-    } else if (attempt > 0) {
-      tokenResult = await user.getIdTokenResult()
     }
 
     const tokenEnterpriseId = parseTokenEnterpriseId(tokenResult.claims)

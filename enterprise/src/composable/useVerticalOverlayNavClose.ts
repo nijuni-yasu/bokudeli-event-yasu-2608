@@ -1,11 +1,9 @@
-import { ref, type Ref } from 'vue'
-
-const toggleVerticalOverlayNavActiveRef: Ref<((value: boolean) => void) | null> = ref(null)
+let toggleVerticalOverlayNavActive: ((value: boolean) => void) | null = null
 
 export function registerVerticalOverlayNavClose(toggle: ((value: boolean) => void) | null): void {
-  toggleVerticalOverlayNavActiveRef.value = toggle
+  toggleVerticalOverlayNavActive = toggle
 }
 
 export function closeVerticalOverlayNav(): void {
-  toggleVerticalOverlayNavActiveRef.value?.(false)
+  toggleVerticalOverlayNavActive?.(false)
 }

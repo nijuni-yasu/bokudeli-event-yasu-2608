@@ -4,7 +4,7 @@ import { VerticalNavLayout } from '@layouts'
 import type { VerticalNavItems } from '@layouts/types'
 import { mdiMenu } from '@mdi/js'
 import EnterpriseVerticalNavHeader from '@/components/EnterpriseVerticalNavHeader.vue'
-import { registerVerticalOverlayNavClose } from '@/composable/useVerticalOverlayNavClose'
+import RegisterVerticalOverlayNavToggle from '@/components/layouts/RegisterVerticalOverlayNavToggle.vue'
 
 defineProps({
   navItems: {
@@ -27,13 +27,6 @@ watch(
   { immediate: true },
 )
 // !SECTION
-
-function ensureVerticalOverlayNavToggleRegistered(
-  toggle: NonNullable<Parameters<typeof registerVerticalOverlayNavClose>[0]>,
-): boolean {
-  registerVerticalOverlayNavClose(toggle)
-  return false
-}
 </script>
 
 <template>
@@ -44,7 +37,7 @@ function ensureVerticalOverlayNavToggleRegistered(
 
     <!-- 👉 navbar -->
     <template #navbar="{ toggleVerticalOverlayNavActive }">
-      <template v-if="ensureVerticalOverlayNavToggleRegistered(toggleVerticalOverlayNavActive)" />
+      <RegisterVerticalOverlayNavToggle :toggle="toggleVerticalOverlayNavActive" />
       <div class="d-flex h-100 align-center">
         <IconBtn id="vertical-nav-toggle-btn" class="ms-n2 d-lg-none" @click="toggleVerticalOverlayNavActive(true)">
           <VIcon :icon="mdiMenu" />

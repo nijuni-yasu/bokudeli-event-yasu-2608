@@ -141,7 +141,7 @@ onMounted(() => {
   th {
     font-weight: 600;
     white-space: nowrap;
-    background-color: #f6f7fb;
+    background-color: rgba(var(--v-theme-on-surface), 0.04);
   }
 }
 
@@ -158,7 +158,7 @@ onMounted(() => {
 .usage-settings-block {
   padding: 16px;
   border-radius: 8px;
-  background-color: #f6f7fb;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .usage-settings-amount {

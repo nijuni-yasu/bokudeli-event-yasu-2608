@@ -20,10 +20,7 @@ import {
   ensureEnterpriseTenantConsistent,
   waitEnterpriseAuthentication,
 } from '@/utils/ensureEnterpriseTenantConsistent'
-import {
-  evaluateManageCommunityCanView,
-  MANAGE_COMMUNITY_GUARD_TIMEOUT_MS,
-} from '@/router/manageCommunityCanView.js'
+import { evaluateManageCommunityCanView, MANAGE_COMMUNITY_GUARD_TIMEOUT_MS } from '@/router/manageCommunityCanView.js'
 
 const EVENT_GUARD_LOAD_TIMEOUT_MS = 8000
 
@@ -196,8 +193,7 @@ export const setupRouter = (router: Router) => {
               community: communityStore.community,
               currentUserId,
               enterpriseId,
-              isSupport:
-                config !== FIRESTORE_LOADING && config?.isSupport(currentUserId as string) === true,
+              isSupport: config !== FIRESTORE_LOADING && config?.isSupport(currentUserId as string) === true,
             })
             if (result != null) {
               finish(result)
