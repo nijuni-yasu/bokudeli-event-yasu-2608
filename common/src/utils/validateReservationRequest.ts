@@ -187,17 +187,17 @@ function validateEventDbAndOrganizer(event: Event, handleUserId: string, reasons
 
 function validateOrganizerFormats(event: Event, reasons: Set<ReservationRequestReasonCode>) {
   const email = event.organizer_email ?? ''
-  if (email !== '' && !isValidEmail(email)) {
+  if (email.trim() !== '' && !isValidEmail(email)) {
     reasons.add('ORGANIZER_EMAIL_INVALID')
   }
 
   const phonePersonal = event.organizer_phone_personal ?? ''
-  if (phonePersonal !== '' && !isValidPhone(phonePersonal)) {
+  if (phonePersonal.trim() !== '' && !isValidPhone(phonePersonal)) {
     reasons.add('ORGANIZER_PHONE_PERSONAL_INVALID')
   }
 
   const phoneCompany = event.organizer_phone_company ?? ''
-  if (phoneCompany !== '' && !isValidPhone(phoneCompany)) {
+  if (phoneCompany.trim() !== '' && !isValidPhone(phoneCompany)) {
     reasons.add('ORGANIZER_PHONE_COMPANY_INVALID')
   }
 }

@@ -884,6 +884,8 @@ const handleStep4Next = async () => {
       return
     }
     if (formResult?.valid !== true) {
+      step4ValidationDialog.messages = [$t('event_edit.step4_validation.form_fields_invalid')]
+      step4ValidationDialog.visible = true
       return
     }
     stepper.value++

@@ -16,6 +16,8 @@
 | [x] | RC-10 | 3766748382 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 📏 規約 | 🔧 微修正 | S | `bill_email` の検証器が EventDetailCard と不一致<br>モーダルのみ形式エラーになる |
 | [x] | RC-11 | 3766748393 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 集約側のみ trim して v-form と判定不一致<br>未加工値で形式チェック |
 | [x] | RC-12 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `ok-text="$t('ok')"` が文字列リテラルになる<br>`:ok-text` に v-bind 修正 |
+| [x] | RC-13 | 3766914550 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 空白のみ連絡先に MISSING+INVALID 二重表示<br>形式チェック前に trim で非空判定 |
+| [x] | RC-14 | 5267584519 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 📑 仕様書 | 🔧 微修正 | S | カバー読込失敗時 v-form のみ NG でモーダル無表示<br>form invalid 時に汎用モーダル追加 |
 
 ---
 
@@ -603,5 +605,125 @@
 **想定工数**: S
 
 **判断理由**: Vue の prop バインディング規約違反。RC-9 実装の取りこぼし。同一セッションで `:ok-text` に修正済み。あわせて RC-10（`coreEmailValidator` 注入）も対応済み。
+
+---
+
+## 評価セッション（2026-08-12 22:37・review-comments-evaluate）
+
+- **評価日時**: 2026-08-12 22:37 JST
+- **評価者**: Cursor Agent（review-comments-evaluate）
+- **ブランチ名**: fix/2246
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2247
+- **Outdated 除外件数**: 4（GitHub id: 3766744513, 3766744594, 3766748393, 3766748407）
+- **レビュー非該当スキップ件数**: 4（5267237900・5267510949 レビュー依頼定型文、5267378643 Codex 接続案内、5267377144 Copilot トップレベル要約＝RC-5/6/7 と同一指摘）
+- **新規 RC なし**（RC-5〜12 評価済み・対応済み。未 Outdated の 3766744567 / 3766748382 / 3766748398 もコード上は解消済み）
+- **補足**: reflect 後の AI レビュー監視（`REVIEW_REQUEST_SINCE=2026-08-12T13:32:37Z`）は評価時点で進行中。新規インラインが追加されたら再 evaluate
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| — | — | — | — | — | — | — | — | — | **新規 RC なし** |
+
+---
+
+## 評価セッション（2026-08-12 22:43・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-08-12 22:43 JST
+- **評価者**: Cursor Agent（review-comments-evaluate・auto）
+- **ブランチ名**: fix/2246
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2247
+- **REVIEW_REQUEST_SINCE**: 2026-08-12T13:32:37Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（5267510949 レビュー依頼定型文、5267586202 Codex 接続案内）
+- **手順 4a 自動修正**: RC-13, RC-14（🚨 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-13 | 3766914550 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 空白のみ連絡先に MISSING+INVALID 二重表示<br>形式チェック前に trim で非空判定 |
+| [x] | RC-14 | 5267584519 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 📑 仕様書 | 🔧 微修正 | S | カバー読込失敗時 v-form のみ NG でモーダル無表示<br>form invalid 時に汎用モーダル追加 |
+
+---
+
+**識別子**: RC-13（GitHub id: 3766914550）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `common/src/utils/validateReservationRequest.ts:191`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const email = event.organizer_email ?? ''
++  if (email !== '' && !isValidEmail(email)) {
++    reasons.add('ORGANIZER_EMAIL_INVALID')
+```
+
+**レビュワーのコメント（原文）**:
+
+**空白のみの必須連絡先に形式エラーを重ねない** — `organizer_email` が空白のみの場合、`ReservationRequiredSchema` は `trim().min(1)` により `ORGANIZER_EMAIL_MISSING` を追加しますが、この条件は未加工値を非空とみなして `ORGANIZER_EMAIL_INVALID` も追加するため、モーダルに「未入力」と「形式不正」が同時表示されます。`organizer_phone_personal` でも同様なので、形式チェックは `trim()` 後が非空の場合だけ実行しつつ、末尾空白を形式不正にできるよう検証自体には未加工値を渡してください。
+
+**コメント要約**:
+
+1行目: 空白のみの organizer_email で MISSING と INVALID が二重に出る。
+
+2行目: `trim() !== ''` を形式チェックのゲートにし、検証値は未加工のまま。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。RC-11 で trim 削除した副作用。形式チェック前のみ trim して非空判定すれば v-form と両立。
+
+---
+
+**識別子**: RC-14（GitHub id: 5267584519）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/EventEdit.vue:808`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const resolveHasEventCoverImage = (): boolean => {
++  if (coverImage.value != null) {
++    return true
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `base/src/components/EventEdit.vue:808` 付近の `resolveHasEventCoverImage()` が `useEventStore(eventId).coverImageUrl` の文字列有無だけでカバー画像ありと判定しています。`base/src/components/ImageInput.vue` は画像 URL の読込失敗時に `iconImageUrl = null` として v-form を invalid にするため、実ファイルが存在しない/読めないケースでは Step 4 で進めない一方、今回追加したモーダルには `event_cover_missing` が出ません。結果として「進めない理由をモーダルで表示する」というこの PR の目的を満たせなくなります。
+
+**コメント要約**:
+
+1行目: カバー URL あり・読込失敗時、集約モーダルに理由が出ない。
+
+2行目: form invalid 時もモーダルで理由表示が必要（#2246）。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 📑 仕様書
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: #2246 の「進めない理由をモーダル表示」に反する。集約 messages が空かつ form invalid 時に汎用 Step 4 モーダルを表示するよう修正。
 
 ---

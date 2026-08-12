@@ -363,6 +363,7 @@ export default {
       off_amount_missing: 'おごり金額が未入力です。',
       off_amount_invalid: 'おごり金額は100円以上の値を入力してください。',
       off_amount_step: 'おごり金額は100円単位で入力してください。',
+      form_fields_invalid: '入力内容にエラーがあります。各項目のエラーを確認してください。',
     },
   },
   event_basic_info: {
