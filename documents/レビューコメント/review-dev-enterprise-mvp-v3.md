@@ -99,6 +99,47 @@
 | [x] | RC-93 | 3766743215 | 👌 修正不要 | — | 📌 スコープ内 | 📑 仕様書 | 確認のみ | — | updateEnterpriseMember の Auth displayName 同期<br>#2232 仕様どおりのため対応不要 |
 | [x] | RC-94 | 3766778628 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | getCommunityData が scope 省略を null 固定<br>partner 1 引数呼び出しが PF のみ検索 |
 | [x] | RC-95 | 3766778635 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | CSV 同時作成で同一 account が二重作成<br>enterprise/community_accounts キー doc で原子的確保 |
+| [ ] | RC-96 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📤 スコープ外 | 📏 規約, 🐛 実害 | 🔧 微修正 | M | vue-tsc 2.0.16 が TS 5.8.3 で無反応終了し build:types が型検査していない |
+| [ ] | RC-97 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | base の CancelPolicyDialog が `@/router/utils` に依存（RC-9 方針と不整合） |
+| [ ] | RC-98 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💰 金銭 | 🔧 微修正 | S | 福利厚生 budget ローダー失敗が console.warn のみ |
+| [x] | RC-99 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | orders.vue の user_message に文字列 falsy チェック |
+| [ ] | RC-100 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | resolver の RouteLocationRaw を `string \| undefined` 前提で受けている |
+| [x] | RC-101 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventPreviewTile の未使用 props（communityId / eventId） |
+| [ ] | RC-102 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | S | EventsTabPanel の「もっと読む」が callback と store の 2 系統 |
+| [x] | RC-103 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | withDefaults 済み props への `?.` + `?? true` が冗長 |
+| [ ] | RC-104 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | 旧 cart monthlyUsage ローダー一式がデッドコード化 |
+| [x] | RC-105 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | normalizeCartEnterpriseSubsidyBudget の as キャスト |
+| [ ] | RC-106 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | isPreviewAccessGranted が既存 computed の条件を再実装 |
+| [ ] | RC-107 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | M | 新規 profile composable の戻り値型が未指定 |
+| [ ] | RC-108 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | friendUserOf が composable とカードで二重定義 |
+| [ ] | RC-109 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | cart.monthly_usage_label が未参照キーとして残存 |
+| [x] | RC-110 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | PF 確定の enterprise_id null が scope で上書きされる |
+| [x] | RC-111 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | event store options を doc ごとに再計算し既存 util 未使用 |
+| [ ] | RC-112 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 📏 規約 | 🔧 微修正 | S | getCommunityData の enterpriseId 3 値セマンティクスが逆転 |
+| [ ] | RC-113 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 重複チェッククエリが withConverter なし |
+| [ ] | RC-114 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | letterList の lookup 例外が握りつぶされ永久ローディング |
+| [x] | RC-115 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | userProfilePreview の空 ID 二重ガード |
+| [x] | RC-116 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | enterprise_id null の user doc 書き戻しで undefined キーが混入し set 失敗 |
+| [ ] | RC-117 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | EP-22 が未来月の履歴扱いを規定していない |
+| [ ] | RC-118 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | enterprise robots.txt が user 版 allow-list のコピー |
+| [ ] | RC-119 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 新規レイアウトの defineProps が PropType 形式 |
+| [x] | RC-120 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 関数 props が PropType + eslint-disable |
+| [ ] | RC-121 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | usage パネルの catch が reportClientError なし・未設定と失敗が同一表示 |
+| [ ] | RC-122 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | loading / error の 2 ref でローディング表現 |
+| [ ] | RC-123 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | タブ判定と本体表示で同一 Firestore 読み込みが二重 |
+| [ ] | RC-124 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | S | 降順 12 件 slice で未来月が履歴枠を占有 |
+| [x] | RC-125 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useEnterpriseCommunityMemberFlags の戻り値型が未指定 |
+| [x] | RC-126 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | レイアウト内の /chat ハードコード |
+| [ ] | RC-127 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | enterprise chat ページが user 版の全文コピー（差分 1 行） |
+| [ ] | RC-128 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | loadEventForRouteGuard の意図不明な無言リトライ |
+| [x] | RC-129 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | currentUserId as string のキャスト |
+| [ ] | RC-130 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害, 📋 仕様追加 | 📋 仕様追加 | M | レター通知メールのリンクが常に PF ホストでエンプラ会員が開けない |
+| [ ] | RC-131 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 自己負担 0 円検証済み経路で自己負担合計を再計算 |
+| [ ] | RC-132 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | community_accounts キー doc が converter / スキーマなし |
+| [ ] | RC-133 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | キー doc の解放処理がなく account が永久予約される |
+| [x] | RC-134 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | profileFilter のインラインオブジェクト prop |
+| [x] | RC-135 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | legacy tab リダイレクトの重複分岐 |
+| [x] | RC-136 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | user の getOrdersPath が常に同値を返す tab 引数を持つ |
 
 ---
 
@@ -3061,6 +3102,1607 @@ RC-63 で `useCommunityStore` は修正済みだが `communityList` 側が同種
 **想定工数**: M
 
 **判断理由**: 指摘妥当。RC-73 で save+manager 原子的化済みだが、異なる random community.id への同時書き込み race は残る。`enterprises/{id}/community_accounts/{account}` を transaction.create し、legacy データ向けに query チェックも併用。vitest 3 ケースに更新。
+
+---
+
+## 評価セッション（2026-08-12 23:20・shokujii-code-review）
+
+- **評価日時**: 2026-08-12 23:20 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`・ブランチ全体差分レビュー）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **レビュー範囲**: `git diff origin/development...HEAD`（93 コミット・189 ファイル）を base components / base stores + common / enterprise / functions + terraform / user + documents の 5 領域に分割して精査
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3a 自動修正**: RC-116（🚨 1 件）
+- **手順 3b 自動修正**: RC-99・101・103・105・110・111・115・120・125・126・129・134・135・136（🟡 14 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-96 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📤 スコープ外 | 📏 規約, 🐛 実害 | 🔧 微修正 | M | `vue-tsc` 2.0.16 が TS 5.8.3 で無反応終了し `build:types` が型を検査していない<br>型エラーを仕込んでも 0.4 秒で成功。development 由来 |
+| [ ] | RC-97 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | base の CancelPolicyDialog が `@/router/utils` の `getOrdersPath` に依存<br>RC-9 の props 注入方針と不整合（依存自体は既存） |
+| [ ] | RC-98 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💰 金銭 | 🔧 微修正 | S | 福利厚生 budget ローダー失敗が `console.warn` のみ<br>残り予算表示が黙って消え調査不能 |
+| [x] | RC-99 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `data.user_message` に文字列 falsy チェック<br>空文字を明示除外して `!= null` 判定に変更 |
+| [ ] | RC-100 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | プレビューカード / タイルが resolver の `RouteLocationRaw` を `string \| undefined` 前提で扱う<br>object 形式 resolver で型が破綻（RC-96 のため型検査で検出されない） |
+| [x] | RC-101 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventPreviewTile の `communityId` / `eventId` が未使用<br>props と親の binding を削除 |
+| [ ] | RC-102 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | S | EventsTabPanel の「もっと読む」が `onLoadMore` / `eventListStore` の 2 系統<br>構造型 props で store 型に追随できない |
+| [x] | RC-103 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `withDefaults` 済み props への `?.` + `?? true` が冗長<br>直接呼び出し + 戻り値型明示に変更 |
+| [ ] | RC-104 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | 月次 usage 表示廃止後の旧 loader 一式が未使用のまま<br>仕様書が `enterpriseCartMonthlyUsageLoader` を参照中 |
+| [x] | RC-105 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `normalizeCartEnterpriseSubsidyBudget` の `as` キャスト<br>`'monthlyUsage' in value` の型ガードに変更 |
+| [ ] | RC-106 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | `isPreviewAccessGranted` が isProfileLoading / isInvalidProfile を再実装<br>既存 computed の合成にすべき |
+| [ ] | RC-107 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | M | 新規 profile composable 4 件の戻り値型が未指定<br>`CommunityListStore` 由来の複合型を新規に定義する必要あり |
+| [ ] | RC-108 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `friendUserOf` が composable とカードで重複実装<br>composable 側は未参照 |
+| [ ] | RC-109 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | `cart.monthly_usage_label` が未参照キーとして残存<br>仕様書 §4.2.9 が用語基準として参照中 |
+| [x] | RC-110 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | `enterprise_id ?? scope` が PF 確定の null を scope で上書き<br>`resolveEffectiveEnterpriseId` に切り出し + vitest 追加 |
+| [x] | RC-111 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | event store options を doc ごとに再計算し既存 util を未使用<br>store 生成時 1 回 + `resolveEventStoreOptionsFromInjectedEnterpriseId` に統一 |
+| [ ] | RC-112 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 📏 規約 | 🔧 微修正 | S | `getCommunityData` の `enterpriseId` 3 値セマンティクスが communityScope と逆転<br>誤用時に全テナント横断検索へ落ちる |
+| [ ] | RC-113 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 重複チェッククエリだけ `withConverter` なしで生 `DocumentData` を返す |
+| [ ] | RC-114 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | letterList の lookup 例外が TaskExecutor に握りつぶされ永久ローディング<br>`reportClientError` もなし |
+| [x] | RC-115 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | RC-33 対応後に残った空 ID の二重ガード<br>初期化側を削除し `load` 先頭に集約 |
+| [x] | RC-116 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | `enterprise_id: null` の user doc を書き戻すと `undefined` キーが混入し `set` が失敗<br>`omitUndefined` を common util 化して適用 + 回帰テスト |
+| [ ] | RC-117 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | EP-22「直近 12 ヶ月」が未来月の扱いを規定していない<br>実装は未来月も履歴枠を消費（RC-124 と対） |
+| [ ] | RC-118 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | enterprise の robots.txt が user 版 allow-list のコピー<br>`Allow: /c/` 等 enterprise に存在しない前提が混在 |
+| [ ] | RC-119 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 新規レイアウトの `defineProps` が `PropType` オブジェクト形式<br>RC-120 と同種で型ベースに揃えるべき |
+| [x] | RC-120 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `PropType` + `eslint-disable` の props 宣言<br>`VerticalOverlayNavToggleFn` 型エイリアス + 型ベース props に変更 |
+| [ ] | RC-121 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | usage パネルの `catch {}` が `reportClientError` なしで握りつぶす<br>「対象外」と「取得失敗」も同一表示 |
+| [ ] | RC-122 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | `loading` / `error` の 2 ref でローディング表現<br>`null \| boolean` パターン未使用 |
+| [ ] | RC-123 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | `fetchEnterpriseUsageTabEligible` がフル fetch を呼びタブ判定と本体で二重読み |
+| [ ] | RC-124 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | S | 履歴が降順 12 件 slice のため未来月が枠を占有し過去実績が落ちる |
+| [x] | RC-125 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `useEnterpriseCommunityMemberFlags` の戻り値型が未指定 |
+| [x] | RC-126 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | レイアウト内に `/chat` をハードコード<br>`getChatPath()` に統一 |
+| [ ] | RC-127 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | enterprise の chat ページが user 側実装をほぼ全文コピー |
+| [ ] | RC-128 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `loadEventForRouteGuard` が非 ZodError 時に同一呼び出しを無言リトライ<br>意図がコメントされずガード待ちが最大 16 秒に |
+| [x] | RC-129 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `currentUserId as string` のキャスト<br>null チェック + `=== true` 比較に変更 |
+| [ ] | RC-130 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害, 📋 仕様追加 | 📋 仕様追加 | M | レター通知メールのリンクが常に PF ホスト<br>エンプラ会員が開けない URL を送信 |
+| [ ] | RC-131 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `finalizeEnterpriseSubsidyZeroPaymentOrder` は自己負担 0 円を検証済みで<br>`sumEnterpriseUserPaidAmounts` が常に 0（冗長計算） |
+| [ ] | RC-132 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | `community_accounts` キー doc が converter / スキーマなしの生 write |
+| [ ] | RC-133 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | キー doc の解放処理がなくコミュニティ削除・account 変更後も予約が残る |
+| [x] | RC-134 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | `:profile-filter="{ kind: 'pf-null' }"` のインラインオブジェクトで watch が毎回再発火<br>定数に切り出し |
+| [x] | RC-135 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | legacy tab リダイレクトが同一処理の 2 分岐<br>`tab === 'orders' \|\| tab === 'usage'` に統合 |
+| [x] | RC-136 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | user の `getOrdersPath` が使われない `tab` 引数を受け取る<br>引数を削除し呼び出し側も統一 |
+
+### RC-96（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/package.json:59`
+
+**該当コード（レビュー時点）**:
+
+```json
+"vue-tsc": "2.0.16"
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/M]: `npm run build:types` が型検査を実行していない。`base/package.json` の `vue-tsc` 2.0.16 はルートの `typescript` 5.8.3 と非互換で、`./lib/tsc` を解決できず**何も出力せずに exit 0** で終わる。検証として意図的に型エラーを注入しても 0.4 秒で成功した。→ PR verify の型ゲートが実質無効なので、`vue-tsc` を TypeScript 5.8 対応版（2.2 系以降）へ更新し、型エラーを注入したときに失敗することを確認してほしい。
+
+**コメント要約**: `build:types` が vue-tsc / TypeScript のバージョン非互換で無反応終了し、全 Vue アプリの型検査が効いていない。
+本ブランチ由来ではなく development から存在する問題だが、RC-100 のような型不整合が検出されないまま入る。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📤 スコープ外
+
+**ラベル**: 📏 規約, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: 影響は大きいが、本ブランチの差分ではなく development 由来のツールチェーン問題。バージョン更新は全アプリの型エラーを一斉に露出させるため、エンプラ MVP マージとは分離して対応すべき（自動修正対象外：スコープ外の設計変更）。本ブランチの変更 `.ts` は一時 tsconfig で `tsc` 直実行して型を確認済み。
+
+---
+
+### RC-97（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/CancelPolicyDialog.vue:4`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-import { getLogin, getUserPath } from '@/router/utils'
++import { getLogin, getOrdersPath } from '@/router/utils'
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/M]: base コンポーネントが `@/router/utils` を直接 import している。RC-9 で合意した「base パネルへの path は props 注入（`profilePathResolvers.ts`）」方針と不整合で、base → app の依存反転が残る。→ `resolveOrdersPath` を props で受け取る形に寄せてほしい。
+
+**コメント要約**: base の CancelPolicyDialog が app 側 `@/router/utils` に依存。依存自体は本ブランチ以前から存在し、今回は import する関数名のみ変更。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🏗️ 設計
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 妥当だが、cart shell からの props 伝搬（`cart.vue` → `CancelPolicyDialog`）を伴い自動修正の一意性がない。既存依存の解消であり本 PR の必須ではないため未着手で記録。
+
+---
+
+### RC-98（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/pages/cart.vue:156`
+
+**該当コード（レビュー時点）**:
+
+```ts
+      console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)
+      enterpriseSubsidyBudget.value = null
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 福利厚生 budget のロード失敗が `console.warn` のみで、残り予算の表示が黙って消える。enterprise 側の `enterpriseCartSubsidyBudgetLoader` は `reportClientError` を呼んでいるのに base 側の catch は呼んでいない。→ `reportClientError(error, { componentInfo: 'cart', severity: 'warn' })` を追加してほしい。
+
+**コメント要約**: 金額表示に関わる catch が `console.warn` 止まりで、本番で残り予算が消えても検知できない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約, 💰 金銭
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 修正方針は一意で工数 S だが、`base` の cart は既存 catch も `console.error` 統一（`reportClientError` 未導入）であり、1 箇所だけ差し込むと方針が混在する。cart 全体の error 報告方針とあわせて対応すべきと判断し未着手で記録。
+
+---
+
+### RC-99（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/pages/orders.vue:109`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-      if (hasRefundIssues || data.user_message) {
+-        notification.show(data.user_message ?? $t('user.canceled'), 'warning')
++      const userMessage = data.user_message != null && data.user_message !== '' ? data.user_message : null
++      if (hasRefundIssues || userMessage != null) {
++        notification.show(userMessage ?? $t('user.canceled'), 'warning')
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 文字列 `data.user_message` に falsy チェックを使っている。空文字と null が同一視され、規約の「文字列は `!= null` / `!== ''` で判定」に反する。→ 明示比較に変更してほしい。
+
+**コメント要約**: 文字列への falsy チェック。空文字時の意図が読み取れない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で修正方針が一意なため手順 3b で自動修正。空文字を `null` に正規化してから判定するよう変更。
+
+---
+
+### RC-100（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/profile/UserProfileCommunitiesPreviewCard.vue:28`
+
+**該当コード（レビュー時点）**:
+
+```ts
+const communityLinkTo = (
+  c: UserProfileCommunityPreviewItem,
+  canLinkToDetail: ProfileLinkPolicyFn,
+  resolveCommunityPath: ResolveCommunityPathFn,
+): string | undefined =>
+  canLinkToDetail(c.is_public, c.is_linkable) ? resolveCommunityPath(c.community_account) : undefined
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: resolver の型は `ResolveCommunityPathFn = (account: string) => RouteLocationRaw` なのに、ヘルパーの戻り値と `UserProfileCommunityPreviewTile` の `linkTo` prop は `string | undefined` に固定されている。オブジェクト形式（`{ path, query }`）を返す resolver を app 側から注入すると型が破綻する。RC-96 のため型検査で検出されない。→ `RouteLocationRaw | undefined` に揃えるか、resolver 型を `string` に狭めてほしい。`UserProfileEventsPreviewCard.vue:30` も同型。
+
+**コメント要約**: resolver 型（`RouteLocationRaw`）と受け側（`string | undefined`）が不一致。現状 user / enterprise が string を返しているため動作しているだけ。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 「型を広げる」「resolver 型を狭める」の 2 方針があり修正が一意でない（`profilePathResolvers.ts` は他パネルとも共用）。型設計判断を伴うため自動修正せず記録。
+
+---
+
+### RC-101（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/profile/UserProfileEventPreviewTile.vue:9`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+ defineProps<{
+-  communityId: string
+-  eventId: string
+   linkTo: string | undefined
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `communityId` / `eventId` props がテンプレート・script のどこからも参照されていない。→ props と親 (`UserProfileEventsPreviewCard.vue`) の binding を削除してほしい。
+
+**コメント要約**: 未使用 props。インターフェースを無用に広げている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。props と親の binding を削除。
+
+---
+
+### RC-102（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/profile/UserProfileEventsTabPanel.vue:13`
+
+**該当コード（レビュー時点）**:
+
+```ts
+  onLoadMore?: () => void
+  eventListStore?: { next: () => void }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/S]: 「もっと読む」の入口が `onLoadMore` と `eventListStore` の 2 系統ある。後者は `{ next: () => void }` という構造型で `EventListStore` の実型に追随できず、base が store 実体を握る形にもなっている。→ `onLoadMore` 単一に寄せ、app shell 側で store の `next` を渡してほしい。
+
+**コメント要約**: base パネルが store 実体と callback の二重入口を持ち、「表示 + emit」に留まっていない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🏗️ 設計
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: S
+
+**判断理由**: 妥当だが user / enterprise 両 shell の呼び出し側修正を伴い、既存呼び出しの互換確認が必要。自動修正の一意性がないため記録のみ。
+
+---
+
+### RC-103（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/profile/UserProfileFriendsPreviewCard.vue:36`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-const canLink = (friend: UserProfileFriendPreviewItem) => props.canLinkFriendPreview?.(friend) ?? true
++const canLink = (friend: UserProfileFriendPreviewItem): boolean => props.canLinkFriendPreview(friend)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `withDefaults` でデフォルト関数を与えている prop に `?.` + `?? true` を付けており、型で保証されている値を再チェックしている。→ 直接呼び出しに変更してほしい。
+
+**コメント要約**: 冗長な optional chaining / nullish 合体。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。戻り値型も明示。
+
+---
+
+### RC-104（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/cartMonthlyUsage.ts:1`
+
+**該当コード（レビュー時点）**:
+
+```ts
+export type CartMonthlyUsage = { used: number; limit: number }
+export type CartMonthlyUsageLoader = (userId: string) => Promise<CartMonthlyUsage | null>
+export function normalizeCartMonthlyUsage(value: unknown): CartMonthlyUsage | null {
+  ...
+  const { used, limit } = value as CartMonthlyUsage
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: カートの月次 usage 表示を budget 方式に置き換えた結果、旧 `CartMonthlyUsage` / `normalizeCartMonthlyUsage` / `pfCartMonthlyUsageLoader` と `enterprise/src/composable/enterpriseCartMonthlyUsage.ts` がテスト以外から参照されないデッドコードになっている。旧 `normalizeCartMonthlyUsage` には RC-105 で除去したのと同じ `as` キャストも残っている。→ 旧 API とそのテストを削除してほしい。
+
+**コメント要約**: 置き換え前の loader 一式が未参照のまま残存。仕様書 04_詳細_マイページ・友人.md も旧名を参照している。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約, 📑 仕様書
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 削除自体は容易だが、enterprise 側 loader・テスト・仕様書記述の同時更新を伴い、`enterpriseCartMonthlyUsageLoader` を将来の利用状況表示で再利用する想定があるか仕様判断が必要。自動修正対象外として記録。
+
+---
+
+### RC-105（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/cartMonthlyUsage.ts:34`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-  if (typeof value !== 'object' || value === null) {
++  if (typeof value !== 'object' || value === null || !('monthlyUsage' in value)) {
+     return null
+   }
+-  const { monthlyUsage } = value as CartEnterpriseSubsidyBudget
++  const { monthlyUsage } = value
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `unknown` から `as CartEnterpriseSubsidyBudget` でキャストしている。規約は「`as` 回避は型ガードで行う」。→ `'monthlyUsage' in value` の型ガードに置き換えてほしい。
+
+**コメント要約**: `as` キャストによる型の押し込み。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。`in` 演算子の絞り込みで `as` を除去。
+
+---
+
+### RC-106（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/useUserProfileAuthState.ts:89`
+
+**該当コード（レビュー時点）**:
+
+```ts
+  const isPreviewAccessGranted = computed(() => {
+    if (isEnterpriseMode) {
+      return profileUserId !== '' && !previewNotFound.value && !previewAccessDenied.value && previewData.value != null
+    }
+    if (profileUserId === '') return false
+    if (exists.value === null) return false
+    if (exists.value === false || (user.value != null && user.value.is_deleted)) return false
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/S]: `isPreviewAccessGranted` が同ファイルの `isProfileLoading` / `isInvalidProfile` と同じ条件を再実装しており、判定が二重管理になっている。→ 既存 computed の合成（`!isProfileLoading.value && !isInvalidProfile.value && ...`）で表現してほしい。
+
+**コメント要約**: 認可判定ロジックの重複。片方だけ直すと閲覧可否がずれる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: S
+
+**判断理由**: プロフィール閲覧可否に直結するため、合成に置き換える際は enterprise / PF 両モードの真理値表を検証する必要がある（セキュリティ影響確認が必要）。自動修正対象外として記録。
+
+---
+
+### RC-107（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/useUserProfileCommunityLists.ts:12`
+
+**該当コード（レビュー時点）**:
+
+```ts
+export const useUserProfileCommunityLists = (options: {
+  profileUserId: string
+  profileFilter: Ref<ProfileListFilter>
+  tabs: Ref<UserProfileTabKey>
+  canInitTabStores: ComputedRef<boolean>
+}) => {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/M]: 新規追加した profile 系 composable（`useUserProfileCommunityLists` / `useUserProfileFriendsStores` / `useUserProfileEventLists` / `useUserProfileAuthState` の一部）に戻り値の型注釈がない。規約は「関数の戻り値の型が明示されているか」。→ 戻り値型を定義してほしい。
+
+**コメント要約**: 公開 composable の戻り値型が推論任せ。RC-96 のため型崩れも検出されない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: `CommunityListStore` 等の複合型を含む戻り値型を新規に設計する必要があり、工数 M・修正方針も一意でない。自動修正対象外として記録。
+
+---
+
+### RC-108（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/useUserProfileFriendsStores.ts:89`
+
+**該当コード（レビュー時点）**:
+
+```ts
+  const friendUserOf = (item: { user_id: string; user_name: string; user_image_url: string }) =>
+    new User(item.user_id, { user_name: item.user_name, user_image_url: item.user_image_url })
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: composable が `friendUserOf` を export しているが、`UserProfileFriendsPreviewCard.vue:33` が同じ関数を独自に再定義しており、composable 側の export は未参照。→ どちらかに寄せてほしい。
+
+**コメント要約**: 同一ロジックの二重定義。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: base コンポーネントが composable に依存するか（RC-102 の「表示 + emit に留める」方針との整合）で寄せ先が変わるため、修正方針が一意でない。自動修正対象外として記録。
+
+---
+
+### RC-109（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/locales/messages/ja.ts:134`
+
+**該当コード（レビュー時点）**:
+
+```ts
+    monthly_usage_label: '今月の割引利用',
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: カートの月次 usage 表示廃止に伴い `cart.monthly_usage_label` が未参照キーになっている（参照は `documents/08_エンタープライズ/10_仕様/04_詳細_マイページ・友人.md:230` の用語基準のみ）。→ キー削除と仕様書の用語参照先の更新をセットで行ってほしい。
+
+**コメント要約**: 未参照 i18n キーの残存。仕様書が用語の基準として参照している。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約, 📑 仕様書
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-104 と同じデッドコード整理で、仕様書の用語基準をどのキーに差し替えるか仕様判断が必要。自動修正対象外として記録。
+
+---
+
+### RC-110（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/community.ts:231`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-  const resolvedEnterpriseId =
+-    (target instanceof BokudeliCommunity ? (target.enterprise_id ?? undefined) : undefined) ?? scope?.enterpriseId
++  const resolvedEnterpriseId = resolveEffectiveEnterpriseId(
++    target instanceof BokudeliCommunity ? target.enterprise_id : undefined,
++    scope?.enterpriseId,
++  )
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `target.enterprise_id ?? undefined` を `?? scope?.enterpriseId` に繋げているため、**PF コミュニティであることが確定している `null`** が scope の enterprise_id で上書きされる。enterprise セッションから PF コミュニティの store を引くと enterprise スコープとして解決され、テナントを跨いだ参照になる。→ `null`（PF 確定）と `undefined`（未指定）を区別する関数に切り出してほしい。
+
+**コメント要約**: `null` と `undefined` を区別しない nullish 連鎖でスコープ解決が誤る。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で方針が一意なため手順 3b で自動修正。`communityScope.ts` に `resolveEffectiveEnterpriseId` を追加し vitest 3 ケースを追加。
+
+---
+
+### RC-111（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/community.ts:584`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+             const stores = eventStores.value || new Map()
+-            const eventStoreOptions =
+-              resolvedEnterpriseId != null && resolvedEnterpriseId !== ''
+-                ? buildEventStoreOptions(resolvedEnterpriseId)
+-                : {}
+             stores.set(eventId, useEventStore(eventId, eventStoreOptions) as EventStore)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `onSnapshot` コールバック内で event ごとに store options を組み立て直しており、同一 store 内で不変な値を毎ドキュメント再計算している。さらに同じ判定を行う既存 util `resolveEventStoreOptionsFromInjectedEnterpriseId` を使っていない。→ store 生成時に 1 回だけ解決し、既存 util に統一してほしい。
+
+**コメント要約**: 不変な options の重複計算と既存 util の未使用（独自実装）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。store 定義先頭で 1 回解決し、`buildEventStoreOptions` の直接呼び出しを削除。
+
+---
+
+### RC-112（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/communityList.ts:72`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      const getCommunityData = async (
++        communityAccount: string,
++        options?: { enterpriseId?: string | null },
++      ): Promise<DocumentData | null> => {
++        const duplicatedCommunity = await getDocs(
++          query(
++            collection(db, 'communities'),
++            ...(options?.enterpriseId !== undefined
++              ? [where('enterprise_id', '==', options.enterpriseId ?? null)]
++              : []),
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `enterpriseId` の 3 値セマンティクスが `communityScope` 側と逆転している。ここでは `undefined` = 「全テナント横断検索」だが、`resolveEffectiveEnterpriseId`（RC-110）では `undefined` = 「scope に委ねる」・`null` = 「PF 確定」。呼び出し側が誤って省略すると、テナント分離のないアカウント重複チェックに落ちる。→ scope 型（`CommunityStoreScope`）を受け取る形に揃えるか、`{ scope: 'any' | 'pf' | enterpriseId }` のような明示的な引数にしてほしい。
+
+**コメント要約**: 同じ `enterpriseId?: string | null` という形で意味が反転しており、誤用が静かにテナント横断検索になる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ, 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-94 の修正意図（partner の非スコープ検索を保つ）と両立させる引数設計を決める必要があり、方針が一意でない。呼び出し側（partner / enterprise）の期待を仕様として確定してから対応すべきと判断。
+
+---
+
+### RC-113（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/communityList.ts:76`
+
+**該当コード（レビュー時点）**:
+
+```ts
+        const duplicatedCommunity = await getDocs(
+          query(collection(db, 'communities'), ...),
+        )
+        return duplicatedCommunity.docs[0].data()
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: この重複チェッククエリだけ `withConverter` を通さず生の `DocumentData` を返している（同ファイルの一覧取得は converter 付き）。zod バリデーションが外れ、呼び出し側は型のない値を扱う。→ `communityConverter` 付きの ref を使ってほしい。
+
+**コメント要約**: converter なしのクエリ。規約の「withConverter 付き ref を使う」に反する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: converter を通すと呼び出し側（partner の存在チェック）が `DocumentData` 前提で書かれている箇所の戻り値型変更を伴い、既存挙動（zod パース失敗時に例外）への影響確認が必要。RC-112 と同じ関数なので併せて対応すべきと判断。
+
+---
+
+### RC-114（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/letterList.ts:38`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    let _letterListRef: CollectionReference<BokudeliLetter> | null = null
++    const getLettersRef = async () => {
++      if (_letterListRef == null) {
++        const communityRef = await resolveCommunityDocumentRef(communityAccount, scope)
++        _letterListRef = collection(communityRef, 'letters').withConverter(letterConverter)
++      }
++      return _letterListRef
++    }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `getLettersRef` の `resolveCommunityDocumentRef` が失敗すると `paginationExecutor.addTask` 内で例外が握りつぶされ、`letterStores` が `null` のままになる（レター一覧が永久ローディング）。`reportClientError` も呼ばれないため調査もできない。→ task 内を try/catch し、失敗時に `reportClientError` + 空配列でローディング解除してほしい。
+
+**コメント要約**: community 解決失敗が TaskExecutor に飲まれ、UI が永久ローディングかつ無記録。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害, 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 失敗時に空配列で確定させるか error 状態を持たせるか（`letterStores` の `null` = ローディングという既存規約との整合）で UI 仕様の判断が必要。自動修正対象外として記録。
+
+---
+
+### RC-115（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/userProfilePreview.ts:54`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-    if (targetUserId !== '') {
+-      load()
+-    }
++    load()
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-33 の対応で `load()` 先頭に空 ID ガードを入れた結果、初期化側のガードが冗長になっている。→ 呼び出し側のガードを削除してほしい。
+
+**コメント要約**: 同一条件の二重ガード。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。`load()` 内のガードに集約。
+
+---
+
+### RC-116（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/User.ts:66`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++import { omitUndefined } from '../utils/object.js'
+...
+ const convertToDb = (user: User) => {
+-  return {
++  // AppSchema で null → undefined に正規化した enterprise_id はキーが残るため落とす
++  return omitUndefined({
+     ...user,
+     updated_at: Date.now(),
+-  }
++  })
+ }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `UserAppSchema` の `enterprise_id` は `.transform((v) => v ?? undefined)` で `null` を `undefined` に正規化するが、zod はキー自体を残すため `User` インスタンスは `enterprise_id: undefined` を own property として持つ。`toFirestore()` はそれをそのまま返し、プロジェクトは `ignoreUndefinedProperties` を設定していないため、`enterprise_id: null` を持つ PF ユーザーの doc を書き戻すと `Unsupported field value: undefined` で `setDoc` が失敗する。backfill で全 user に `enterprise_id: null` を materialize する計画（`02_developmentマージ.md` §2.4）と組み合わせると、**全 PF ユーザーのプロフィール更新が落ちる**。→ `Enterprise.ts` / `EnterpriseMember.ts` と同様に `undefined` キーを除去してほしい。
+
+**コメント要約**: `enterprise_id: null` → `undefined` 正規化でキーが残り、Firestore 書き込みが失敗する。backfill 後に全 PF ユーザーへ波及。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 一時 vitest で `toFirestore()` に `enterprise_id: undefined` が残ることを再現確認。`Enterprise.ts` の内製 `omitUndefined` を `common/src/utils/object.ts` に共通化して両者から利用し、`User.test.ts` に回帰テスト 2 件を追加（手順 3a で自動修正）。
+
+---
+
+### RC-117（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `documents/08_エンタープライズ/10_仕様/04_詳細_マイページ・友人.md:78`
+
+**該当コード（レビュー時点）**:
+
+```markdown
+| EP-22 | 過去月の表示範囲 | **直近 12 ヶ月**（`monthly_usage` に存在するキーのうち、降順。…） | MVP |
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄ドキュメントのみ/S]: EP-22 は「直近 12 ヶ月」としか書いていないが、実装（`enterpriseMemberMonthlyUsageHistory.ts`）は未来月キーも履歴に含め、当月〜最新未来月に上限・残額を付与する。未来月が 12 件あると過去実績が 1 件も表示されない（RC-124）。→ 未来月を履歴に含めるか、含める場合の枠の扱いを EP-22 に明記してほしい。
+
+**コメント要約**: 仕様が未来月の扱いを規定しておらず、実装の挙動（未来月優先）が仕様から読み取れない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: 記載追加自体は S だが、どちらを正とするか（未来月を表示するか）は仕様判断。RC-124 と一体で決める必要があるため自動修正対象外。
+
+---
+
+### RC-118（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/public/robots.txt:5`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++User-agent: *
++Allow: /
++Allow: /c/
++Allow: /communitylist
++Disallow: /admin
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄ドキュメントのみ/S]: user 版 robots.txt をそのままコピーしており、`Allow: /c/` `Allow: /communitylist` のように enterprise では公開クロールを想定しないパスの allow-list が混在している。enterprise サイトは `firebase.json` で全パスに `X-Robots-Tag: noindex` を付けているため実害はないが、記述の意図が読めない。→ enterprise 向けに（noindex 前提の最小構成へ）整理してほしい。
+
+**コメント要約**: user 由来の allow-list コピー。noindex ヘッダで indexing は防げているが記述が実態と合わない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: `noindex` を効かせるにはクロール自体は許可する必要があり、どこまで `Disallow` にするかは SEO / 運用方針の判断。自動修正対象外として記録。
+
+---
+
+### RC-119（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/components/layouts/DefaultLayoutWithVerticalNav.vue:1`
+
+**該当コード（レビュー時点）**:
+
+```ts
+defineProps({
+  navItems: {
+    type: Array as PropType<VerticalNavItems>,
+    required: true,
+  },
+})
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 新規追加した enterprise レイアウトの `defineProps` が `PropType` オブジェクト形式のままで、RC-120 で型ベースに直したのと同種の書き方が残っている。→ `defineProps<{ navItems: VerticalNavItems }>()` に揃えてほしい。
+
+**コメント要約**: 型ベース props への統一漏れ（materio 由来のコピーだが enterprise 側の新規ファイル）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: materio の `VerticalNavLayout` からの複製部分であり、テンプレート更新時の diff 追従性を優先して原文維持する判断もありうる（`base/materio` 変更禁止方針との整合）。方針が一意でないため自動修正せず記録。
+
+---
+
+### RC-120（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/components/layouts/RegisterVerticalOverlayNavToggle.vue:5`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-const props = defineProps({
+-  // eslint-disable-next-line no-unused-vars
+-  toggle: { type: Function as PropType<(value: boolean) => void>, required: true },
+-})
++const props = defineProps<{
++  toggle: VerticalOverlayNavToggleFn
++}>()
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `PropType` + `eslint-disable` で関数 prop を宣言している。→ 型エイリアスを定義して型ベース `defineProps` に置き換えれば `eslint-disable` も不要になる。
+
+**コメント要約**: 関数 prop の宣言方法が旧式で、lint 抑制コメントを伴っている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。`useVerticalOverlayNavClose.ts` に `VerticalOverlayNavToggleFn` を追加し型ベース props に変更、`eslint-disable` を削除。
+
+---
+
+### RC-121（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/components/profile/EnterpriseSubsidyUsagePanel.vue:18`
+
+**該当コード（レビュー時点）**:
+
+```ts
+  } catch {
+    error.value = true
+    data.value = null
+  } finally {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `catch {}` が例外を完全に握りつぶしており `reportClientError` を呼んでいない。加えて `fetchEnterpriseMemberMonthlyUsage` は内部で失敗時 `null` を返すため、「福利厚生未設定（EP-20 の対象外）」と「取得失敗」が同じ `load_failed` 表示になり切り分けできない。→ catch で `reportClientError` を呼び、対象外と失敗を区別してほしい。
+
+**コメント要約**: 金額パネルの catch が無記録。未設定と失敗が同一 UI。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `reportClientError` 追加のみなら S だが、未設定と失敗の区別は `fetchEnterpriseMemberMonthlyUsage` の戻り値設計（`null` の多義性）変更を伴い仕様判断が必要。自動修正対象外として記録。
+
+---
+
+### RC-122（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/components/profile/EnterpriseSubsidyUsagePanel.vue:33`
+
+**該当コード（レビュー時点）**:
+
+```ts
+const loading = ref(true)
+const error = ref(false)
+const data = ref<EnterpriseMemberMonthlyUsageView | null>(null)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/S]: ローディング状態を `loading` / `error` の 2 つの ref で表現しており、規約の「ローディング中は `null | boolean` パターン」に沿っていない。3 状態（読込中・失敗・成功）が 2 つの独立フラグで表現され、片方だけ更新するバグを許す。→ 単一の状態表現に寄せてほしい。
+
+**コメント要約**: ローディング表現の規約不一致。状態の組み合わせ爆発。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: S
+
+**判断理由**: RC-121 と同一ファイルの状態設計であり、未設定 / 失敗の区別（仕様判断）とセットで直すべき。単独の自動修正は避けて記録。
+
+---
+
+### RC-123（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/composable/enterpriseMemberMonthlyUsage.ts:23`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++/** 利用状況タブ表示可否（monthly_limit_per_user が設定されているか） */
++export async function fetchEnterpriseUsageTabEligible(userId: string): Promise<boolean> {
++  const view = await fetchEnterpriseMemberMonthlyUsage(userId)
++  return view != null
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: タブ表示可否の判定でフル取得（`EnterpriseMember` + `Enterprise` の 2 read + 集計）を実行し、その後パネル側でも同じ取得を行うため、`/orders` 表示ごとに同じドキュメントを二重に読んでいる。→ 判定結果（または view 自体）を共有して 1 回の取得で済ませてほしい。
+
+**コメント要約**: タブ判定と本体表示で同一 Firestore 読み込みが 2 回走る。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: ⚡ パフォーマンス
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 共有方法（store 化 / shell での一度取得と props 注入）が複数あり方針が一意でない。EP-19 の「クライアント直読み」方針の範囲で設計判断が必要なため記録のみ。
+
+---
+
+### RC-124（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/composable/enterpriseMemberMonthlyUsageHistory.ts:61`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  return Array.from(keys)
++    .sort(compareYearMonthDesc)
++    .slice(0, maxMonths)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 履歴を「降順で先頭 12 件」で切っているため、未来月キー（先付けのイベント分）が枠を占有し、EP-22 が意図する過去 12 ヶ月の実績が表示されなくなる。当月行は `ensureCurrentMonthInHistory` / `trimMonthlyUsageHistoryPreservingCurrentMonth` で救われるが、過去月は救済されない。→ 未来月を別枠にするか、過去 12 ヶ月を基準に選ぶようにしてほしい。
+
+**コメント要約**: 降順 12 件 slice のため未来月が履歴枠を消費し、過去実績が落ちる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-117 の仕様確定（未来月を表示するか・何件まで）が前提。仕様判断を伴うため自動修正対象外として記録。
+
+---
+
+### RC-125（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/composable/useEnterpriseCommunityStore.ts:22`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-export function useEnterpriseCommunityMemberFlags(communityAccount: string) {
++export function useEnterpriseCommunityMemberFlags(communityAccount: string): {
++  isMember: Ref<boolean>
++  isManager: Ref<boolean>
++} {
+   return useCommunityMemberFlags(communityAccount, buildEnterpriseCommunityScope())
+ }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 新規 composable の戻り値型が未指定。規約の「関数の戻り値の型が明示されているか」に反する。→ 戻り値型を明示してほしい。
+
+**コメント要約**: 戻り値型の明示漏れ。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 委譲先 `useCommunityMemberFlags` の戻り値が単純な 2 フラグで一意に書けるため手順 3b で自動修正。RC-107 と異なり複合 store 型を含まない。
+
+---
+
+### RC-126（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/layouts/default.vue:117`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-      await router.push('/chat')
++      await router.push(getChatPath())
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `/chat` をハードコードしている。同じファイルで `@/router/utils` の path ヘルパーを使っている箇所があり、経路定義が二重管理になる。→ `getChatPath()` に統一してほしい。
+
+**コメント要約**: ルーティングパスのハードコード。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。既存 `getChatPath()` に置換。
+
+---
+
+### RC-127（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/chat/index.vue:1`
+
+**該当コード（レビュー時点）**:
+
+```
+$ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
+40a41
+>         unread-badge-color="primary"
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/M]: enterprise の chat ページが user 版 92 行のほぼ全文コピーで、差分は `unread-badge-color="primary"` の 1 行のみ。今後 chat 側の修正が片方に取り残される。→ 共有部分を `base` のパネルに切り出し、色差分だけ props で渡してほしい。
+
+**コメント要約**: user / enterprise でほぼ同一のページ実装が二重管理になっている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🏗️ 設計
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: base 化はコンポーネント分割方針（v-card / パネル単位・shell 分離）に沿った設計判断とテストを伴い工数 M。エンプラ MVP のスコープ外の改修として記録のみ。
+
+---
+
+### RC-128（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/router/index.ts:27`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++async function loadEventForRouteGuard(eventStore: EventStore): Promise<BokudeliEvent> {
++  try {
++    return await eventStore.getLoadedEvent(EVENT_GUARD_LOAD_TIMEOUT_MS)
++  } catch (first) {
++    if (first instanceof ZodError) {
++      throw first
++    }
++    return await eventStore.getLoadedEvent(EVENT_GUARD_LOAD_TIMEOUT_MS)
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 非 `ZodError` のとき同じ呼び出しを 1 回だけ無言でリトライしている。なぜ 1 回リトライすると成功しうるのか（初回購読の競合か、認証確立待ちか）がコードから読み取れず、失敗もログに残らない。最悪ケースでガード待ちが 8 秒 × 2 = 16 秒になる。→ リトライの理由をコメントに明記し、1 回目の失敗を `reportClientError` 等で記録してほしい。
+
+**コメント要約**: 意図不明の無言リトライ。タイムアウトが実質 2 倍になり、失敗理由も残らない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**想定工数の補足**: コメント追記のみなら S。
+
+**判断理由**: リトライを入れた元の意図（どの失敗を救う想定か）が差分から確定できず、コメント文言を推測で書くと誤ったコメントになる。実装者確認が必要なため自動修正せず記録。
+
+---
+
+### RC-129（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/router/index.ts:196`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-      const isSupport = config?.isSupport(currentUserId as string) ?? false
++      const isSupport = currentUserId != null && config?.isSupport(currentUserId) === true
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `currentUserId as string` でキャストしている。`null` の可能性があるからキャストが必要になっているので、null チェックで解消すべき。→ 明示的な null チェックに変更してほしい。
+
+**コメント要約**: 認可判定における `as` キャスト。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。`currentUserId != null` を前置し、`=== true` で厳密比較（挙動は従来と同一：null 時は false）。
+
+---
+
+### RC-130（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/letter.ts:200`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+       const communityData = {
+         ...
+-        community_url: getCommunityUrl(communityAccount),
++        community_url: getCommunityUrl(communityAccount),
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [📋仕様追加/M]: レター送信メールの `community_url` / `event_url` が `getCommunityUrl` / `getEventUrl` 経由で常に `EVENT_HOST`（PF ホスト）を使う。本ブランチで letter は enterprise コミュニティも対象になったため、エンプラ会員に PF ホストのリンクが届き、テナント分離により開けない URL になる。リポジトリ全体を検索しても `ENTERPRISE_HOST` 相当のパラメータは存在しない。→ enterprise ホストを解決してコミュニティの `enterprise_id` に応じて URL を切り替えてほしい。
+
+**コメント要約**: エンプラ向けメールのリンクが PF ホスト固定で到達不能。enterprise ホストを解決する仕組み自体が未整備。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害, 📋 仕様追加
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 自動修正対象外（仕様判断が必要）。enterprise ホストの持ち方（`defineString('ENTERPRISE_HOST')` の追加か、テナント別ドメインを Firestore で管理するか）、および解決不能時のフォールバック方針を決める必要がある。terraform / GitHub Actions の env 追加も伴う。
+
+---
+
+### RC-131（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/enterpriseSubsidyOrders.ts:316`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+   const eventMonth = formatYearMonth(event.event_start_datetime)
++  const userPaidTotal = sumEnterpriseUserPaidAmounts(orders)
+   await adjustEnterpriseMemberMonthlyUsage(
+     ...
++    userPaidTotal,
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: この関数は直前で `computeEnterpriseSubsidyTotalPayment(orders) !== 0` なら throw しており、`sumEnterpriseUserPaidAmounts(orders)` は定義上つねに 0 になる（両者は `menu_price - pay_enterprise_subsidy_amount` の合計で同値）。型で保証されている値を再計算していて、読み手には「自己負担が発生しうる」と誤読させる。→ `0` を渡すか、常に 0 である旨をコメントで示してほしい。
+
+**コメント要約**: 自己負担 0 円検証済みの経路で自己負担合計を再計算している（冗長）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `0` 直書きに変えると将来 `computeEnterpriseSubsidyTotalPayment` と `sumEnterpriseUserPaidAmounts` の定義が乖離した際に不整合が出るため、あえて再計算している設計意図もありうる。方針が一意でないため記録のみ。
+
+---
+
+### RC-132（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/stores/community.ts:382`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const getEnterpriseCommunityAccountRef = (
++  db: ReturnType<typeof getFirestore>,
++  enterpriseId: string,
++  communityAccount: string,
++) => db.collection('enterprises').doc(enterpriseId).collection('community_accounts').doc(communityAccount)
+...
++    transaction.create(accountKeyRef, { community_id: community.id })
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 新設した `community_accounts` キー doc が `withConverter` なしの生オブジェクトで書かれており、zod スキーマも定義されていない。規約は「DocumentReference は withConverter 付きを使う」。→ `common/src/schemas` にキー doc のスキーマを追加し converter を通してほしい。
+
+**コメント要約**: 一意性キー doc が converter / スキーマなしの生 write。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: スキーマ追加は `common/src/schemas` への新規定義（命名・DbSchema/AppSchema の方針決定）を伴い、`shokujii-common-schemas` の設計判断が必要。RC-95 の緊急修正としては converter なしでも安全（Admin SDK 専用・単一フィールド）なため、記録して後続対応とする。
+
+---
+
+### RC-133（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/stores/community.ts:401`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    transaction.create(accountKeyRef, { community_id: community.id })
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨→🟡 **修正提案** [📋仕様追加/M]: `community_accounts` キー doc を作成する経路はあるが、解放する経路がどこにもない（リポジトリ全体で参照は本ファイルとテストのみ）。コミュニティ削除や `community_account` 変更を実装した時点で、旧 account が永久に予約され再利用できなくなる。→ 削除・rename 時にキー doc を同一トランザクションで消す処理、または移行手順を決めてほしい。
+
+**コメント要約**: 一意性キーのライフサイクルが片道（作成のみ）。将来の削除・rename 機能で account が枯渇する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 現時点でコミュニティ削除・account 変更の機能自体が未実装のため即時実害はない。解放処理の設計は削除機能の仕様とセットで決める必要があり、自動修正対象外（仕様判断）として記録。
+
+---
+
+### RC-134（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `user/src/pages/orders.vue:37`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const profileFilter = { kind: 'pf-null' as const }
+...
+-  <Orders :profile-filter="{ kind: 'pf-null' }" ... />
++  <Orders :profile-filter="profileFilter" ... />
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: テンプレートでインラインオブジェクトを prop に渡しているため、再レンダリングごとに新しい参照になり、`profileFilter` を watch している base パネル側のストア初期化が不要に再実行されうる。→ 定数に切り出してほしい。
+
+**コメント要約**: インラインオブジェクト prop による参照の同一性喪失。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: ⚡ パフォーマンス
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。`script setup` 直下の定数に切り出し。
+
+---
+
+### RC-135（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `user/src/pages/u/[userId].vue:37`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-  if (tab === 'orders') {
+-    return { path: getOrdersPath(), query: rest, replace: true }
+-  }
+-  if (tab === 'usage') {
++  if (tab === 'orders' || tab === 'usage') {
+     return { path: getOrdersPath(), query: rest, replace: true }
+   }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: legacy tab のリダイレクトが同一処理の 2 分岐に分かれている。→ 1 つの条件にまとめてほしい。
+
+**コメント要約**: 同一結果を返す条件分岐の重複。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。`||` に統合（EP-26 のリダイレクト仕様は不変）。
+
+---
+
+### RC-136（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `user/src/router/utils.ts:8`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-export const getOrdersPath = (tab?: 'usage') => (tab === 'usage' ? '/orders' : '/orders')
++export const getOrdersPath = () => '/orders'
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: user アプリには利用状況セクションがないため `tab` 引数は結果に影響せず、両分岐が同じ値を返している。→ 引数を削除し、呼び出し側も揃えてほしい。
+
+**コメント要約**: 常に同じ値を返す引数。呼び出し側に「usage 指定がある」と誤解させる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。引数を削除し、`UserProfile.vue` のパス比較も `getOrdersPath()` に統一。
 
 ---
 
