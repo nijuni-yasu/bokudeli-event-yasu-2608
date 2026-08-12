@@ -114,15 +114,7 @@ export const acceptInvitationForEnterpriseCommunityManager = onCall<
   if (community === undefined) {
     throw new HttpsError('not-found', 'The community does not exist.')
   }
-  const enterpriseId = community.enterprise_id
-  if (enterpriseId == null || enterpriseId === '') {
-    throw new HttpsError('failed-precondition', 'The community is not an enterprise community.')
-  }
-
-  if (tokenEnterpriseId !== enterpriseId) {
-    throw new HttpsError('permission-denied', 'enterprise mismatch')
-  }
-  await assertActiveEnterpriseMember(enterpriseId, uid)
+  await assertActiveEnterpriseMember(tokenEnterpriseId, uid)
 
   await community.inviteAsManager(uid, token)
 })

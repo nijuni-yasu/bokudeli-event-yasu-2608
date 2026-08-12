@@ -66,8 +66,9 @@ beforeEach(() => {
   queryChain.withConverter.mockClear()
 
   transactionGetMock.mockResolvedValue({ empty: true, docs: [] })
-  runTransactionMock.mockImplementation(async (fn: (tx: { get: typeof transactionGetMock; set: typeof transactionSetMock }) => Promise<void>) =>
-    fn({ get: transactionGetMock, set: transactionSetMock }),
+  runTransactionMock.mockImplementation(
+    async (fn: (tx: { get: typeof transactionGetMock; set: typeof transactionSetMock }) => Promise<void>) =>
+      fn({ get: transactionGetMock, set: transactionSetMock }),
   )
 })
 

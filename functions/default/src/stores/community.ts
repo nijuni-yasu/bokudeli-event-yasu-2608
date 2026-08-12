@@ -382,11 +382,7 @@ export const createEnterpriseCommunityWithManager = async (
   }
   const db = getFirestore()
   await db.runTransaction(async (transaction) => {
-    const existing = await getCommunityByAccountInEnterprise(
-      enterpriseId,
-      community.community_account,
-      transaction,
-    )
+    const existing = await getCommunityByAccountInEnterprise(enterpriseId, community.community_account, transaction)
     if (existing != null) {
       throw new CommunityAccountAlreadyExistsInEnterpriseError()
     }
