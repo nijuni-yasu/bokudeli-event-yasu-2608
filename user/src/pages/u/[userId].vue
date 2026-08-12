@@ -34,11 +34,8 @@ const redirectFromLegacyOrdersRoutes = (): boolean => {
   }
   const tab = String(route.query.tab ?? '')
 
-  if (tab === 'orders') {
-    void router.replace(getOrdersPath())
-    return true
-  }
-  if (tab === 'usage') {
+  // PF に利用状況セクションは無いため、旧 usage タブも注文履歴へ寄せる
+  if (tab === 'orders' || tab === 'usage') {
     void router.replace(getOrdersPath())
     return true
   }

@@ -7,6 +7,8 @@ import { useNotification } from '@shokujii/base/composable/notification.js'
 import { storeToRefs } from 'pinia'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
+const profileFilter = { kind: 'pf-null' as const }
+
 const router = useRouter()
 const notification = useNotification()
 const { t: $t } = useI18n()
@@ -34,7 +36,7 @@ const navigateToEventChat = async (params: { communityId: string; eventId: strin
 
 <template>
   <Orders
-    :profile-filter="{ kind: 'pf-null' }"
+    :profile-filter="profileFilter"
     :resolve-event-path="getEventPath"
     :resolve-receipt-path="getReceiptPath"
     :navigate-to-event-chat="navigateToEventChat"

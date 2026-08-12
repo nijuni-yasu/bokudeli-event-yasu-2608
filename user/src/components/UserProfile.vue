@@ -30,7 +30,7 @@ const user = computed(() => {
 
 const ordersTabPath = computed(() => getOrdersPath())
 
-const isOrdersTabActive = computed(() => route.path === '/orders')
+const isOrdersTabActive = computed(() => route.path === getOrdersPath())
 
 const isOpenHomeButtonDialog = ref(false)
 
