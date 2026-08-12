@@ -8,6 +8,7 @@ import {
   urlValidator as _urlValidator,
   betweenValidator as _betweenValidator,
 } from '@core/utils/validators'
+import { isValidEmail, isValidPhone } from '@shokujii/common/utils/contactFormat.js'
 import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
 
 export const useValidators = () => {
@@ -44,30 +45,11 @@ export const useValidators = () => {
     return (Number.isInteger(numValue) && numValue >= 1) || $t('validator.positive_integer')
   }
 
-  /**
-   * 電話番号のバリデーション
-   *
-   * @param value
-   * @returns boolean | string if it's invalid, return error message
-   * @see https://akinov.hatenablog.com/entry/2017/05/31/194421
-   */
   const phoneValidator = (value: string | null | undefined) => {
     if (isEmpty(value)) {
       return true
     }
-    return (
-      // 市外局番ありパターン
-      /^0(\d{1}[-(]?\d{4}|\d{2}[-(]?\d{3}|\d{3}[-(]?\d{2}|\d{4}[-(]?\d{1})[-)]?\d{4}$/.test(value as string) ||
-      // // 市外局番なしパターン
-      // /^\d{1,4}\-?\d{4}$/.test(value) ||
-      // 携帯電話パターン
-      /^0[5789]0[-(]?\d{4}[-)]?\d{4}$/.test(value as string) ||
-      // フリーダイヤルパターン
-      /^0120[-(]?\d{3}[-)]?\d{3}$/.test(value as string) ||
-      // 国際電話パターン
-      // /^\+[1-9][\d-]+$/.test(value as string) ||
-      $t('validator.phone')
-    )
+    return isValidPhone(value as string) || $t('validator.phone')
   }
 
   /**
@@ -81,10 +63,7 @@ export const useValidators = () => {
     if (isEmpty(value)) {
       return true
     }
-    return (
-      /^[\w!#$%&'*+/=?`{|}~^-]+(\.[\w!#$%&'*+/=?`{|}~^-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/.test(value as string) ||
-      $t('validator.email')
-    )
+    return isValidEmail(value as string) || $t('validator.email')
   }
 
   /**

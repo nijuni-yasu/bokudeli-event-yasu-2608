@@ -20,7 +20,10 @@ const REASON_CODE_TO_I18N_KEY: Record<ReservationRequestReasonCode, string> = {
   ORGANIZER_FULLNAME_MISSING: 'reservation_request_reason.organizer_fullname_missing',
   ORGANIZER_COMPANY_MISSING: 'reservation_request_reason.organizer_company_missing',
   ORGANIZER_EMAIL_MISSING: 'reservation_request_reason.organizer_email_missing',
+  ORGANIZER_EMAIL_INVALID: 'reservation_request_reason.organizer_email_invalid',
   ORGANIZER_PHONE_PERSONAL_MISSING: 'reservation_request_reason.organizer_phone_personal_missing',
+  ORGANIZER_PHONE_PERSONAL_INVALID: 'reservation_request_reason.organizer_phone_personal_invalid',
+  ORGANIZER_PHONE_COMPANY_INVALID: 'reservation_request_reason.organizer_phone_company_invalid',
   ORGANIZER_MEMO_MISSING: 'reservation_request_reason.organizer_memo_missing',
   EVENT_DB_INVALID: 'reservation_request_reason.event_db_invalid',
 }
