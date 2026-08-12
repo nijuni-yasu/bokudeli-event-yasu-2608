@@ -654,7 +654,7 @@ export default {
       reserve_success: '「{name}」に予約申請しました。店舗からの予約承認をお待ちください。',
       reserve_error: '予約申請中にエラーが発生しました: {error}',
       reserve_validation_modal_title: '予約申請できません',
-      reserve_validation_intro: '以下の項目をご確認のうえ、再度お試しください。下書きの内容は保存されています。',
+      reserve_validation_intro: '以下の項目をご確認のうえ、再度お試しください。',
       community_not_approved: 'コミュニティが承認されていません',
       not_manager: 'コミュニティ運営者ではありません',
       menu_update_failed: 'メニューの更新に失敗しました',

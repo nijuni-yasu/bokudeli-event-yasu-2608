@@ -3,6 +3,7 @@ import { EventMenu } from '../schemas/EventMenu.js'
 import { PartnerShop } from '../schemas/PartnerShop.js'
 import { User } from '../schemas/User.js'
 import { UserPersonalInformation } from '../schemas/UserPersonalInformation.js'
+import { isValidEmail, isValidPhone } from './contactFormat.js'
 import { isInShopTime } from './datetime.js'
 import { EventLocationLatLng, isPartnerShopIdInDeliveryRange } from './partnerShopDeliverable.js'
 import { getReservationLeadTimeMinMillis } from './reservationLeadTime.js'
@@ -26,7 +27,10 @@ export const RESERVATION_REQUEST_REASON_CODES = [
   'ORGANIZER_FULLNAME_MISSING',
   'ORGANIZER_COMPANY_MISSING',
   'ORGANIZER_EMAIL_MISSING',
+  'ORGANIZER_EMAIL_INVALID',
   'ORGANIZER_PHONE_PERSONAL_MISSING',
+  'ORGANIZER_PHONE_PERSONAL_INVALID',
+  'ORGANIZER_PHONE_COMPANY_INVALID',
   'ORGANIZER_MEMO_MISSING',
   'EVENT_DB_INVALID',
 ] as const
@@ -176,5 +180,24 @@ function validateEventDbAndOrganizer(event: Event, handleUserId: string, reasons
         reasons.add(code)
       }
     }
+  }
+
+  validateOrganizerFormats(event, reasons)
+}
+
+function validateOrganizerFormats(event: Event, reasons: Set<ReservationRequestReasonCode>) {
+  const email = event.organizer_email ?? ''
+  if (email.trim() !== '' && !isValidEmail(email)) {
+    reasons.add('ORGANIZER_EMAIL_INVALID')
+  }
+
+  const phonePersonal = event.organizer_phone_personal ?? ''
+  if (phonePersonal.trim() !== '' && !isValidPhone(phonePersonal)) {
+    reasons.add('ORGANIZER_PHONE_PERSONAL_INVALID')
+  }
+
+  const phoneCompany = event.organizer_phone_company ?? ''
+  if (phoneCompany.trim() !== '' && !isValidPhone(phoneCompany)) {
+    reasons.add('ORGANIZER_PHONE_COMPANY_INVALID')
   }
 }

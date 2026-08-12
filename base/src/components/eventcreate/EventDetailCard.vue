@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { emailValidator } from '@core/utils/validators'
 import { useI18n } from 'vue-i18n'
 // user_on_day 復活時など、スキーマ駆動の支払い選択肢が必要になったら有効化する
 // import { EVENT_PAYMENT_VALUES } from '@shokujii/common/schemas/Event.js'
@@ -179,7 +178,7 @@ const textFieldVariant = computed(() => {
   return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
 })
 
-const { requiredValidator, positiveIntegerValidator, requiredHtmlValidator } = useValidators()
+const { requiredValidator, positiveIntegerValidator, requiredHtmlValidator, emailValidator } = useValidators()
 
 const maxPeopleValidator = (v: number) => {
   if (v < event.value.members.length) {

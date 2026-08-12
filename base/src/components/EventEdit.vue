@@ -2,9 +2,16 @@
 import { ref, shallowRef, reactive, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
 import { DateTime } from 'luxon'
 import { isInShopTime } from '@shokujii/common/utils/datetime.js'
-import { validateReservationRequest } from '@shokujii/common/utils/validateReservationRequest.js'
+import {
+  validateReservationRequest,
+  type ReservationRequestReasonCode,
+} from '@shokujii/common/utils/validateReservationRequest.js'
 import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
 import { reasonCodesToMessages } from '@shokujii/base/utils/reservationRequestMessages'
+import {
+  collectEventBasicInfoValidationMessages,
+  collectEventDetailValidationMessages,
+} from '@shokujii/base/utils/eventEditValidationMessages'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
 import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
@@ -55,7 +62,14 @@ const emits = defineEmits<{
   updated: [id: string]
 }>()
 
-const { requiredValidator, postalCodeValidator } = useValidators()
+const {
+  requiredValidator,
+  postalCodeValidator,
+  urlValidator,
+  requiredHtmlValidator,
+  positiveIntegerValidator,
+  emailValidator,
+} = useValidators()
 
 const alertDialog = reactive({
   visible: false,
@@ -67,6 +81,19 @@ const reserveValidationDialog = reactive({
   visible: false,
   messages: [] as string[],
 })
+
+const step1ValidationDialog = reactive({
+  visible: false,
+  messages: [] as string[],
+})
+
+const step4ValidationDialog = reactive({
+  visible: false,
+  messages: [] as string[],
+})
+
+const step1FormRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
+const step4FormRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
 
 const showAlertDialog = (message: string, onClose?: () => void) => {
   alertDialog.message = message
@@ -90,8 +117,10 @@ const isProcessing = computed(() => processingState.value != null)
 /** 新規ウィザードで Step 3 の初回 Firestore 作成が完了したか */
 const hasFirestoreDraft = ref(false)
 
-const shopNoticeFormValid = ref(false)
-const shopNoticeRef = shallowRef<{ openReserveConfirmDialog: () => void } | null>(null)
+const shopNoticeRef = shallowRef<{
+  openReserveConfirmDialog: () => void
+  validateForm: () => Promise<{ valid: boolean } | undefined>
+} | null>(null)
 
 const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
 
@@ -456,6 +485,42 @@ const selectedMenuIds = computed(() => {
 
 const selectedMenuCount = computed(() => selectedMenuIds.value.length)
 
+/** 予約申請ボタンの事前無効化（データ未取得・処理中・下書き以外） */
+const isReserveButtonDisabled = computed(() => {
+  return (
+    event.value?.event_status?.value !== 'in_draft' ||
+    isProcessing.value ||
+    isLoadingMenu.value ||
+    isReserveDataMissing.value
+  )
+})
+
+const showReserveValidationFailure = (reasonCodes: ReservationRequestReasonCode[]) => {
+  reserveValidationDialog.messages = reasonCodesToMessages(reasonCodes, $t)
+  reserveValidationDialog.visible = true
+}
+
+const validateCurrentReservationRequest = (ev: BokudeliEvent) => {
+  const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
+  const user = currentUserStore.user
+  const personalInformation = currentUserStore.personalInformation
+  const loc = location.value
+  if (handleUserId === '' || user == null || personalInformation == null || loc == null) {
+    return null
+  }
+  return validateReservationRequest({
+    event: ev,
+    handleUserId,
+    user,
+    personalInformation,
+    authEmail: currentUserStore.firebaseUser?.email ?? null,
+    eventMenus: eventMenus.value,
+    partnerShops: partnerShopListStore.shops ?? [],
+    location: { latitude: loc.latitude, longitude: loc.longitude },
+    nowMillis: DateTime.now().toMillis(),
+  })
+}
+
 const canUseSecondarySave = computed(() => {
   if (event.value == null) {
     return false
@@ -614,10 +679,7 @@ const submitReservation = async () => {
     showAlertDialog($t('manage.event.save_failed'))
     return
   }
-  const user = currentUserStore.user
-  const personalInformation = currentUserStore.personalInformation
-  const loc = location.value
-  if (user == null || personalInformation == null || loc == null) {
+  if (isReserveDataMissing.value) {
     showAlertDialog($t('event_edit.shop_list_loading'))
     return
   }
@@ -630,20 +692,13 @@ const submitReservation = async () => {
       showAlertDialog($t('manage.event.save_failed'))
       return
     }
-    const result = validateReservationRequest({
-      event: ev,
-      handleUserId,
-      user,
-      personalInformation,
-      authEmail: currentUserStore.firebaseUser?.email ?? null,
-      eventMenus: eventMenus.value,
-      partnerShops: partnerShopListStore.shops ?? [],
-      location: { latitude: loc.latitude, longitude: loc.longitude },
-      nowMillis: DateTime.now().toMillis(),
-    })
+    const result = validateCurrentReservationRequest(ev)
+    if (result == null) {
+      showAlertDialog($t('event_edit.shop_list_loading'))
+      return
+    }
     if (!result.ok) {
-      reserveValidationDialog.messages = reasonCodesToMessages(result.reasonCodes, $t)
-      reserveValidationDialog.visible = true
+      showReserveValidationFailure(result.reasonCodes)
       return
     }
     ev.event_status = { value: 'applying_reservation', shop_comment: '' }
@@ -755,6 +810,140 @@ const openReserveConfirm = () => {
   shopNoticeRef.value?.openReserveConfirmDialog()
 }
 
+const resolveHasEventCoverImage = (): boolean => {
+  if (coverImage.value != null) {
+    return true
+  }
+  const communityCover = communityStore.coverImageUrl
+  if (communityCover != null && communityCover !== '') {
+    return true
+  }
+  const eventId = props.eventId ?? (hasFirestoreDraft.value && event.value != null ? event.value.event_id : null)
+  if (eventId == null) {
+    return false
+  }
+  const eventStore = useEventStore(eventId) as EventStore
+  const eventCover = eventStore.coverImageUrl
+  return eventCover != null && eventCover !== ''
+}
+
+const handleStep1Next = async () => {
+  if (isProcessing.value) {
+    return
+  }
+  const ev = event.value
+  if (ev == null) {
+    return
+  }
+
+  try {
+    const formResult = await step1FormRef.value?.validate?.()
+
+    const messages = collectEventBasicInfoValidationMessages({
+      event: ev,
+      requiredValidator,
+      postalCodeValidator,
+      urlValidator,
+      t: $t,
+    })
+    if (messages.length > 0) {
+      step1ValidationDialog.messages = messages
+      step1ValidationDialog.visible = true
+      return
+    }
+    if (formResult?.valid !== true) {
+      step1ValidationDialog.messages = [$t('event_edit.form_fields_invalid')]
+      step1ValidationDialog.visible = true
+      return
+    }
+    stepper.value++
+  } catch (error) {
+    console.error('Failed to validate step 1:', error)
+    showAlertDialog($t('manage.event.save_failed'))
+  }
+}
+
+const handleStep4Next = async () => {
+  if (isProcessing.value) {
+    return
+  }
+  const ev = event.value
+  if (ev == null) {
+    return
+  }
+
+  try {
+    const formResult = await step4FormRef.value?.validate?.()
+
+    const messages = collectEventDetailValidationMessages({
+      event: ev,
+      hasCoverImage: resolveHasEventCoverImage(),
+      isEnterpriseMode: paymentUiStrategy.value.isEnterpriseMode,
+      requiredValidator,
+      requiredHtmlValidator,
+      positiveIntegerValidator,
+      emailValidator,
+      t: $t,
+    })
+    if (messages.length > 0) {
+      step4ValidationDialog.messages = messages
+      step4ValidationDialog.visible = true
+      return
+    }
+    if (formResult?.valid !== true) {
+      step4ValidationDialog.messages = [$t('event_edit.form_fields_invalid')]
+      step4ValidationDialog.visible = true
+      return
+    }
+    stepper.value++
+  } catch (error) {
+    console.error('Failed to validate step 4:', error)
+    showAlertDialog($t('manage.event.save_failed'))
+  }
+}
+
+const handleReserveButtonClick = async () => {
+  if (isReserveButtonDisabled.value) {
+    return
+  }
+  const ev = event.value
+  if (ev == null) {
+    return
+  }
+  const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
+  if (handleUserId === '') {
+    showAlertDialog($t('manage.event.save_failed'))
+    return
+  }
+  if (isReserveDataMissing.value) {
+    showAlertDialog($t('event_edit.shop_list_loading'))
+    return
+  }
+
+  try {
+    const formResult = await shopNoticeRef.value?.validateForm?.()
+
+    const result = validateCurrentReservationRequest(ev)
+    if (result == null) {
+      showAlertDialog($t('event_edit.shop_list_loading'))
+      return
+    }
+    if (!result.ok) {
+      showReserveValidationFailure(result.reasonCodes)
+      return
+    }
+    if (formResult?.valid !== true) {
+      reserveValidationDialog.messages = [$t('event_edit.form_fields_invalid')]
+      reserveValidationDialog.visible = true
+      return
+    }
+    openReserveConfirm()
+  } catch (error) {
+    console.error('Failed to validate reservation request:', error)
+    showAlertDialog($t('manage.event.save_failed'))
+  }
+}
+
 const stepperItems = computed(() => [
   {
     title: '場所・日時',
@@ -778,7 +967,7 @@ const stepperItems = computed(() => [
   <div v-if="event" class="event-edit-page">
     <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
       <template #[`item.1`]>
-        <v-form v-model="isValid1">
+        <v-form ref="step1FormRef" v-model="isValid1">
           <v-row class="justify-center">
             <v-col cols="12" sm="12" md="9">
               <event-basic-info-card v-model="event" :min-start-date="minEventStartDate" />
@@ -789,8 +978,8 @@ const stepperItems = computed(() => [
                   rounded="xl"
                   min-width="168"
                   :append-icon="mdiChevronRight"
-                  :disabled="!isValid1 || isProcessing"
-                  @click="stepper++"
+                  :disabled="isProcessing"
+                  @click="handleStep1Next"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
@@ -902,7 +1091,7 @@ const stepperItems = computed(() => [
         </event-edit-step-nav>
       </template>
       <template #[`item.4`]>
-        <v-form v-model="isValid4">
+        <v-form ref="step4FormRef" v-model="isValid4">
           <v-row class="justify-center">
             <v-col cols="12" sm="12" md="9">
               <event-detail-card
@@ -931,8 +1120,8 @@ const stepperItems = computed(() => [
                   rounded="xl"
                   min-width="168"
                   :append-icon="mdiChevronRight"
-                  :disabled="!isValid4 || isProcessing"
-                  @click="stepper++"
+                  :disabled="isProcessing"
+                  @click="handleStep4Next"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
@@ -959,7 +1148,6 @@ const stepperItems = computed(() => [
           ref="shopNoticeRef"
           v-model="event"
           v-model:shop="selectedShop"
-          v-model:form-valid="shopNoticeFormValid"
           @send-reserve-mail="submitReservation"
         />
         <event-edit-step-nav :visible="stepper === 5">
@@ -992,19 +1180,13 @@ const stepperItems = computed(() => [
             <div class="event-edit-step-nav__step5-reserve-row">
               <v-btn
                 class="event-shop-notice-footer__reserve"
-                :disabled="
-                  !shopNoticeFormValid ||
-                  event.event_status?.value !== 'in_draft' ||
-                  isProcessing ||
-                  isLoadingMenu ||
-                  isReserveDataMissing
-                "
+                :disabled="isReserveButtonDisabled"
                 :loading="processingState === 'reserving'"
                 color="grey-900"
                 size="x-large"
                 rounded="xl"
                 :prepend-icon="mdiEmailOutline"
-                @click="openReserveConfirm"
+                @click="handleReserveButtonClick"
               >
                 {{ $t('shop_notice.send_reserve_mail') }}
               </v-btn>
@@ -1028,15 +1210,46 @@ const stepperItems = computed(() => [
   </confirm-dialog>
 
   <confirm-dialog
+    v-model="step4ValidationDialog.visible"
+    :title="$t('event_edit.validation_modal_title')"
+    role="alertdialog"
+    :ok-text="$t('ok')"
+    ok-variant="text"
+  >
+    <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
+      <ul class="event-edit-reserve-validation-list mb-0">
+        <li v-for="(message, idx) in step4ValidationDialog.messages" :key="idx">{{ message }}</li>
+      </ul>
+    </v-alert>
+  </confirm-dialog>
+
+  <confirm-dialog
+    v-model="step1ValidationDialog.visible"
+    :title="$t('event_edit.validation_modal_title')"
+    role="alertdialog"
+    :ok-text="$t('ok')"
+    ok-variant="text"
+  >
+    <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
+      <ul class="event-edit-reserve-validation-list mb-0">
+        <li v-for="(message, idx) in step1ValidationDialog.messages" :key="idx">{{ message }}</li>
+      </ul>
+    </v-alert>
+  </confirm-dialog>
+
+  <confirm-dialog
     v-model="reserveValidationDialog.visible"
     :title="$t('manage.event.reserve_validation_modal_title')"
     role="alertdialog"
-    ok-text="OK"
+    :ok-text="$t('ok')"
+    ok-variant="text"
   >
     <p class="mb-3">{{ $t('manage.event.reserve_validation_intro') }}</p>
-    <ul class="event-edit-reserve-validation-list">
-      <li v-for="(message, idx) in reserveValidationDialog.messages" :key="idx">{{ message }}</li>
-    </ul>
+    <v-alert type="error" variant="tonal" density="compact" :icon="false" class="mb-0">
+      <ul class="event-edit-reserve-validation-list mb-0">
+        <li v-for="(message, idx) in reserveValidationDialog.messages" :key="idx">{{ message }}</li>
+      </ul>
+    </v-alert>
   </confirm-dialog>
 </template>
 

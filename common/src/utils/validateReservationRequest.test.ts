@@ -340,6 +340,47 @@ describe('validateReservationRequest - 主催者連絡先', () => {
       ]),
     )
   })
+
+  it.each([
+    ['organizer_email', 'abc', 'ORGANIZER_EMAIL_INVALID'],
+    ['organizer_phone_personal', '12345', 'ORGANIZER_PHONE_PERSONAL_INVALID'],
+    ['organizer_phone_company', '12345', 'ORGANIZER_PHONE_COMPANY_INVALID'],
+  ])('%s が %s なら %s', (field, value, expected) => {
+    const result = validateReservationRequest(buildInput({ event: makeEvent({ [field]: value } as Partial<Event>) }))
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reasonCodes).toContain(expected as ReservationRequestReasonCode)
+  })
+
+  it('空の organizer_phone_company は形式エラーにならない', () => {
+    const result = validateReservationRequest(buildInput({ event: makeEvent({ organizer_phone_company: '' }) }))
+    expect(result.ok).toBe(true)
+  })
+
+  it('未入力の organizer_email では ORGANIZER_EMAIL_INVALID を付けない', () => {
+    const result = validateReservationRequest(buildInput({ event: makeEvent({ organizer_email: '' }) }))
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reasonCodes).toContain('ORGANIZER_EMAIL_MISSING')
+    expect(result.reasonCodes).not.toContain('ORGANIZER_EMAIL_INVALID')
+  })
+
+  it('末尾空白付き organizer_email は v-form と同様に形式エラーになる', () => {
+    const result = validateReservationRequest(
+      buildInput({ event: makeEvent({ organizer_email: 'user@example.com ' }) }),
+    )
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reasonCodes).toContain('ORGANIZER_EMAIL_INVALID')
+  })
+
+  it('空白のみの organizer_email では ORGANIZER_EMAIL_INVALID を付けない', () => {
+    const result = validateReservationRequest(buildInput({ event: makeEvent({ organizer_email: '   ' }) }))
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reasonCodes).toContain('ORGANIZER_EMAIL_MISSING')
+    expect(result.reasonCodes).not.toContain('ORGANIZER_EMAIL_INVALID')
+  })
 })
 
 describe('validateReservationRequest - DB 整合', () => {
