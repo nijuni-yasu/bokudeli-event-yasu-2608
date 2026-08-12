@@ -344,6 +344,7 @@ export default {
     shop_not_deliverable_before_save:
       '開催場所と開催日時に対して、選択中の店舗は配達・営業条件を満たしていません。店舗を選び直してください。',
     validation_modal_title: '入力内容をご確認ください',
+    form_fields_invalid: '入力内容にエラーがあります。各項目のエラーを確認してください。',
     step1_validation: {
       postalcode_missing: '郵便番号が未入力です。',
       postalcode_invalid: '郵便番号は7桁の数字で入力してください。',
@@ -363,7 +364,6 @@ export default {
       off_amount_missing: 'おごり金額が未入力です。',
       off_amount_invalid: 'おごり金額は100円以上の値を入力してください。',
       off_amount_step: 'おごり金額は100円単位で入力してください。',
-      form_fields_invalid: '入力内容にエラーがあります。各項目のエラーを確認してください。',
     },
   },
   event_basic_info: {

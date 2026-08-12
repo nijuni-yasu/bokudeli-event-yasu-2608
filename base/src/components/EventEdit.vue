@@ -42,7 +42,6 @@ import {
 } from '@shokujii/common/utils/partnerShopDeliverable.js'
 import { isAddressBaseValidForPostalcode } from '@shokujii/base/utils/isAddressBaseValidForPostalcode'
 import { useValidators } from '@shokujii/base/composable/validators'
-import { emailValidator as coreEmailValidator } from '@core/utils/validators'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { mdiChevronLeft, mdiChevronRight, mdiEmailOutline } from '@mdi/js'
@@ -63,8 +62,14 @@ const emits = defineEmits<{
   updated: [id: string]
 }>()
 
-const { requiredValidator, postalCodeValidator, urlValidator, requiredHtmlValidator, positiveIntegerValidator } =
-  useValidators()
+const {
+  requiredValidator,
+  postalCodeValidator,
+  urlValidator,
+  requiredHtmlValidator,
+  positiveIntegerValidator,
+  emailValidator,
+} = useValidators()
 
 const alertDialog = reactive({
   visible: false,
@@ -847,6 +852,8 @@ const handleStep1Next = async () => {
       return
     }
     if (formResult?.valid !== true) {
+      step1ValidationDialog.messages = [$t('event_edit.form_fields_invalid')]
+      step1ValidationDialog.visible = true
       return
     }
     stepper.value++
@@ -875,7 +882,7 @@ const handleStep4Next = async () => {
       requiredValidator,
       requiredHtmlValidator,
       positiveIntegerValidator,
-      emailValidator: coreEmailValidator,
+      emailValidator,
       t: $t,
     })
     if (messages.length > 0) {
@@ -884,7 +891,7 @@ const handleStep4Next = async () => {
       return
     }
     if (formResult?.valid !== true) {
-      step4ValidationDialog.messages = [$t('event_edit.step4_validation.form_fields_invalid')]
+      step4ValidationDialog.messages = [$t('event_edit.form_fields_invalid')]
       step4ValidationDialog.visible = true
       return
     }
@@ -926,6 +933,8 @@ const handleReserveButtonClick = async () => {
       return
     }
     if (formResult?.valid !== true) {
+      reserveValidationDialog.messages = [$t('event_edit.form_fields_invalid')]
+      reserveValidationDialog.visible = true
       return
     }
     openReserveConfirm()

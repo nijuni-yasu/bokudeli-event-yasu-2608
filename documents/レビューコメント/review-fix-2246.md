@@ -18,6 +18,9 @@
 | [x] | RC-12 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `ok-text="$t('ok')"` が文字列リテラルになる<br>`:ok-text` に v-bind 修正 |
 | [x] | RC-13 | 3766914550 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | 空白のみ連絡先に MISSING+INVALID 二重表示<br>形式チェック前に trim で非空判定 |
 | [x] | RC-14 | 5267584519 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 📑 仕様書 | 🔧 微修正 | S | カバー読込失敗時 v-form のみ NG でモーダル無表示<br>form invalid 時に汎用モーダル追加 |
+| [x] | RC-15 | 5267762217 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 5 で form invalid 時サイレント return<br>予約申請モーダルで汎用メッセージ表示 |
+| [x] | RC-16 | 5267762217 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Step 4（@core）と Step 5（contactFormat）の email 正規表現不一致<br>`useValidators().emailValidator`（contactFormat）へ一本化 |
+| [x] | RC-17 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 1 だけ form invalid 時サイレント return が残存<br>共通キー `event_edit.form_fields_invalid` で 3 ステップ統一 |
 
 ---
 
@@ -725,5 +728,182 @@
 **想定工数**: S
 
 **判断理由**: #2246 の「進めない理由をモーダル表示」に反する。集約 messages が空かつ form invalid 時に汎用 Step 4 モーダルを表示するよう修正。
+
+---
+
+## 評価セッション（2026-08-12 22:58・review-comments-evaluate）
+
+- **評価日時**: 2026-08-12 22:58 JST
+- **ブランチ名**: fix/2246
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2247
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 7（レビュー依頼 3、Codex 接続案内 3、Codex 問題なし 1）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-15 | 5267762217 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 5 で form invalid 時サイレント return<br>予約申請モーダルで汎用メッセージ表示 |
+| [x] | RC-16 | 5267762217 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Step 4（@core）と Step 5（contactFormat）の email 正規表現不一致<br>`useValidators().emailValidator`（contactFormat）へ一本化 |
+
+---
+
+**識別子**: RC-15（GitHub id: 5267762217）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/EventEdit.vue:928`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+     if (!result.ok) {
+       showReserveValidationFailure(result.reasonCodes)
+       return
+     }
+     if (formResult?.valid !== true) {
+       return  // ← サイレントリターン：理由が表示されない
+     }
+     openReserveConfirm()
+```
+
+**レビュワーのコメント（原文）**:
+
+**[must] `base/src/components/EventEdit.vue` L928–930: Step 5 で `formResult?.valid !== true` 時にユーザーへのフィードバックがない**
+
+```ts
+if (formResult?.valid !== true) {
+  return  // ← サイレントリターン：理由が表示されない
+}
+```
+
+Step 1/4 では `formResult?.valid !== true` 時にモーダルを表示していますが、Step 5 の `handleReserveButtonClick` だけは何もせず終了しています。`validateCurrentReservationRequest` では拾えない v-form エラー（例：ImageInput のロード失敗）が発生した場合に、ユーザーが「なぜ申請ボタンが効かないのか」分からなくなります。Step 4 と同様に汎用エラーメッセージをモーダルで表示することを推奨します。
+
+**コメント要約**:
+
+1行目: Step 5 予約申請で v-form invalid 時にサイレント return し理由が表示されない。
+
+2行目: #2246 の意図に反する。Step 4 と同様に汎用モーダル表示が必要。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-14（Step 4）と同型の欠落。集約バリデーション通過後の v-form ゲートで理由をモーダル表示すべき。`reserveValidationDialog` に汎用メッセージを追加して解消。
+
+---
+
+**識別子**: RC-16（GitHub id: 5267762217）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/utils/eventEditValidationMessages.ts` / `common/src/utils/validateReservationRequest.ts`
+
+**該当コード（レビュー時点の diff）**:
+
+（インライン指摘なし）
+
+**レビュワーのコメント（原文）**:
+
+**[imo] `base/src/utils/eventEditValidationMessages.ts` と `common/src/utils/validateReservationRequest.ts` でメールバリデーションの正規表現が異なる**
+
+- Step 4 モーダル（`collectEventDetailValidationMessages`）には `@core/utils/validators` の `emailValidator` を渡している（EventEdit.vue L878）
+  - パターン: `` /^(([^<>()\\[\\]\\\\.,;:\\s@\"]+...)...$ `` （quoted string・IPリテラルを許容）
+- Step 5 モーダル（`validateReservationRequest` → `validateOrganizerFormats`）は `contactFormat.ts` の `isValidEmail` を使用
+  - パターン: `/^[\\w!#$%&'*+/=?`{|}~^-]+(\\.[\\w...])*@([A-Za-z0-9-]+\\.)+[A-Za-z]{2,}$/`
+
+同一メールアドレスに対して Step 4 では「有効」、Step 5 では「無効」（またはその逆）と判定される可能性があります。`contactFormat.ts` のコメントには「base/src/composable/validators.ts と同一の正規表現」とありますが、`@core` の `emailValidator` は別パターンです。Step 4 のモーダル用にも `coreEmailValidator` でなく `contactFormat.ts` の `isValidEmail` に統一するか、明示的に差異を文書化することを検討してください。
+
+**コメント要約**:
+
+1行目: Step 4 モーダル（@core emailValidator）と Step 5 集約（contactFormat isValidEmail）で正規表現が異なる。
+
+2行目: 同一文字列への判定が食い違う可能性。RC-10 で @core 統一済みの Step 4 との整合方針要検討。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。ただし調査の結果、各 Step 内では v-form と集約モーダルの検証器は一致しており（Step 4 は双方 `@core`、Step 5 は双方 `contactFormat`）、RC-10 / RC-11 の対応は維持されていた。残る差異は `bill_email` だけが `@core` を使うフィールド間の非一貫性。加えて `@core` の `emailValidator` は英語メッセージを返すため、`EventDetailCard.vue` の請求先メールで英語エラーが表示される i18n 規約違反も併存していた。
+
+`base/src/composable/validators.ts` の `emailValidator` が `contactFormat.isValidEmail` を呼ぶ実装であることから、ユーザー判断のうえ **`useValidators().emailValidator` へ一本化**（案 A）を採用。`EventDetailCard.vue` の `@core` import を除去して `useValidators()` から取得し、`EventEdit.vue` の Step 4 モーダル注入も同じ validator に変更した。`base/materio/` は変更していない（`@core` の `emailValidator` はプロジェクト内で未使用になった）。副次的に請求先メールのエラー文言が `validator.email`（日本語）になる。`collectEventDetailValidationMessages` は validator を注入で受け取る設計のため、`eventEditValidationMessages.ts` とそのテストは変更不要。
+
+---
+
+## 評価セッション（2026-08-12 23:06・shokujii-code-review）
+
+- **評価日時**: 2026-08-12 23:06 JST
+- **ブランチ名**: fix/2246
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2247
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-17 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 1 だけ form invalid 時サイレント return が残存<br>共通キー `event_edit.form_fields_invalid` で 3 ステップ統一 |
+
+---
+
+**識別子**: RC-17（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventEdit.vue:854`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+     if (messages.length > 0) {
+       step1ValidationDialog.messages = messages
+       step1ValidationDialog.visible = true
+       return
+     }
+     if (formResult?.valid !== true) {
+       return
+     }
+     stepper.value++
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `handleStep1Next` の `formResult?.valid !== true` ガードが理由を表示せず return している。RC-14 で Step 4、RC-15 で Step 5 の同型サイレント return を解消したが、Step 1 だけ残っていた。集約 `collectEventBasicInfoValidationMessages` で拾えない v-form エラー（会場 URL の形式等、ルール差分が生じた場合）が起きると、ユーザーは「進む」が効かない理由を確認できず、Issue #2246 の「進めない理由をモーダルで表示する」という目的を満たせない。→ Step 4 と同様に汎用メッセージを `step1ValidationDialog` に表示する。あわせて、同一文言が `step4_validation.form_fields_invalid` と `manage.event.reserve_validation_form_fields_invalid` に重複しており Step 1 追加で三重化するため、共通キー `event_edit.form_fields_invalid` へ統合する。
+
+**コメント要約**:
+
+1行目: Step 1 の v-form ゲートだけ理由未表示のサイレント return が残っていた。
+
+2行目: RC-14 / RC-15 と同型。汎用メッセージ表示と、三重化する文言の共通キー統合で対応。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: Issue #2246 の受け入れ条件そのものに関わる欠落で、Step 1/4/5 の挙動を揃える必要がある。修正時に `event_edit.form_fields_invalid` を新設し、RC-14 で追加した `event_edit.step4_validation.form_fields_invalid` と RC-15 で追加した `manage.event.reserve_validation_form_fields_invalid` を廃止して 3 ステップとも同キーを参照するようにした。両キーとも本 PR 内で追加したもののため、他機能への影響はない。
 
 ---
