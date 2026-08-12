@@ -343,6 +343,28 @@ export default {
     shop_list_loading: '店舗一覧を読み込み中です。しばらくしてから再度お試しください。',
     shop_not_deliverable_before_save:
       '開催場所と開催日時に対して、選択中の店舗は配達・営業条件を満たしていません。店舗を選び直してください。',
+    step1_validation_modal_title: '入力内容をご確認ください',
+    step1_validation_intro: '以下の項目を入力のうえ、再度お試しください。',
+    step1_validation: {
+      postalcode_missing: '郵便番号が未入力です。',
+      postalcode_invalid: '郵便番号は7桁の数字で入力してください。',
+      address_base_missing: '住所1が未入力です。',
+      address_detail_missing: '住所2が未入力です。',
+      place_url_invalid: '会場URLの形式が正しくありません。',
+    },
+    step4_validation: {
+      event_name_missing: 'イベントタイトルが未入力です。',
+      event_cover_missing: 'イベントカバー画像が未入力です。',
+      event_desc_missing: '開催内容が未入力です。',
+      max_people_missing: '定員数が未入力です。',
+      max_people_invalid: '定員数は正の整数で入力してください。',
+      bill_fullname_missing: '請求先 担当者名が未入力です。',
+      bill_email_missing: '請求先 メールアドレスが未入力です。',
+      bill_email_invalid: '請求先 メールアドレスの形式が正しくありません。',
+      off_amount_missing: 'おごり金額が未入力です。',
+      off_amount_invalid: 'おごり金額は100円以上の値を入力してください。',
+      off_amount_step: 'おごり金額は100円単位で入力してください。',
+    },
   },
   event_basic_info: {
     place: '開催場所',

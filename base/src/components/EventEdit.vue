@@ -8,6 +8,10 @@ import {
 } from '@shokujii/common/utils/validateReservationRequest.js'
 import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
 import { reasonCodesToMessages } from '@shokujii/base/utils/reservationRequestMessages'
+import {
+  collectEventBasicInfoValidationMessages,
+  collectEventDetailValidationMessages,
+} from '@shokujii/base/utils/eventEditValidationMessages'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
 import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
@@ -58,7 +62,8 @@ const emits = defineEmits<{
   updated: [id: string]
 }>()
 
-const { requiredValidator, postalCodeValidator } = useValidators()
+const { requiredValidator, postalCodeValidator, urlValidator, requiredHtmlValidator, positiveIntegerValidator, emailValidator } =
+  useValidators()
 
 const alertDialog = reactive({
   visible: false,
@@ -70,6 +75,19 @@ const reserveValidationDialog = reactive({
   visible: false,
   messages: [] as string[],
 })
+
+const step1ValidationDialog = reactive({
+  visible: false,
+  messages: [] as string[],
+})
+
+const step4ValidationDialog = reactive({
+  visible: false,
+  messages: [] as string[],
+})
+
+const step1FormRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
+const step4FormRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
 
 const showAlertDialog = (message: string, onClose?: () => void) => {
   alertDialog.message = message
@@ -786,6 +804,89 @@ const openReserveConfirm = () => {
   shopNoticeRef.value?.openReserveConfirmDialog()
 }
 
+const resolveHasEventCoverImage = (): boolean => {
+  if (coverImage.value != null) {
+    return true
+  }
+  const communityCover = communityStore.coverImageUrl
+  if (communityCover != null && communityCover !== '') {
+    return true
+  }
+  const eventId =
+    props.eventId ?? (hasFirestoreDraft.value && event.value != null ? event.value.event_id : null)
+  if (eventId == null) {
+    return false
+  }
+  const eventStore = useEventStore(eventId) as EventStore
+  const eventCover = eventStore.coverImageUrl
+  return eventCover != null && eventCover !== ''
+}
+
+const handleStep1Next = async () => {
+  if (isProcessing.value) {
+    return
+  }
+  const ev = event.value
+  if (ev == null) {
+    return
+  }
+
+  try {
+    await step1FormRef.value?.validate?.()
+
+    const messages = collectEventBasicInfoValidationMessages({
+      event: ev,
+      requiredValidator,
+      postalCodeValidator,
+      urlValidator,
+      t: $t,
+    })
+    if (messages.length > 0) {
+      step1ValidationDialog.messages = messages
+      step1ValidationDialog.visible = true
+      return
+    }
+    stepper.value++
+  } catch (error) {
+    console.error('Failed to validate step 1:', error)
+    showAlertDialog($t('manage.event.save_failed'))
+  }
+}
+
+const handleStep4Next = async () => {
+  if (isProcessing.value) {
+    return
+  }
+  const ev = event.value
+  if (ev == null) {
+    return
+  }
+
+  try {
+    await step4FormRef.value?.validate?.()
+
+    const messages = collectEventDetailValidationMessages({
+      event: ev,
+      hasCoverImage: resolveHasEventCoverImage(),
+      isEnterpriseMode: paymentUiStrategy.value.isEnterpriseMode,
+      requiredValidator,
+      requiredHtmlValidator,
+      positiveIntegerValidator,
+      emailValidator,
+      t: $t,
+    })
+    if (messages.length > 0) {
+      step4ValidationDialog.messages = messages
+      step4ValidationDialog.visible = true
+      return
+    }
+    stepper.value++
+  } catch (error) {
+    console.error('Failed to validate step 4:', error)
+    showAlertDialog($t('manage.event.save_failed'))
+  }
+}
+
 const handleReserveButtonClick = async () => {
   if (isReserveButtonDisabled.value) {
     return
@@ -846,7 +947,7 @@ const stepperItems = computed(() => [
   <div v-if="event" class="event-edit-page">
     <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
       <template #[`item.1`]>
-        <v-form v-model="isValid1">
+        <v-form ref="step1FormRef" v-model="isValid1">
           <v-row class="justify-center">
             <v-col cols="12" sm="12" md="9">
               <event-basic-info-card v-model="event" :min-start-date="minEventStartDate" />
@@ -857,8 +958,8 @@ const stepperItems = computed(() => [
                   rounded="xl"
                   min-width="168"
                   :append-icon="mdiChevronRight"
-                  :disabled="!isValid1 || isProcessing"
-                  @click="stepper++"
+                  :disabled="isProcessing"
+                  @click="handleStep1Next"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
@@ -970,7 +1071,7 @@ const stepperItems = computed(() => [
         </event-edit-step-nav>
       </template>
       <template #[`item.4`]>
-        <v-form v-model="isValid4">
+        <v-form ref="step4FormRef" v-model="isValid4">
           <v-row class="justify-center">
             <v-col cols="12" sm="12" md="9">
               <event-detail-card
@@ -999,8 +1100,8 @@ const stepperItems = computed(() => [
                   rounded="xl"
                   min-width="168"
                   :append-icon="mdiChevronRight"
-                  :disabled="!isValid4 || isProcessing"
-                  @click="stepper++"
+                  :disabled="isProcessing"
+                  @click="handleStep4Next"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
@@ -1086,6 +1187,30 @@ const stepperItems = computed(() => [
 
   <confirm-dialog v-model="alertDialog.visible" :ok-click="handleAlertDialogOk" ok-text="OK">
     {{ alertDialog.message }}
+  </confirm-dialog>
+
+  <confirm-dialog
+    v-model="step4ValidationDialog.visible"
+    :title="$t('event_edit.step1_validation_modal_title')"
+    role="alertdialog"
+    ok-text="OK"
+  >
+    <p class="mb-3">{{ $t('event_edit.step1_validation_intro') }}</p>
+    <ul class="event-edit-reserve-validation-list">
+      <li v-for="(message, idx) in step4ValidationDialog.messages" :key="idx">{{ message }}</li>
+    </ul>
+  </confirm-dialog>
+
+  <confirm-dialog
+    v-model="step1ValidationDialog.visible"
+    :title="$t('event_edit.step1_validation_modal_title')"
+    role="alertdialog"
+    ok-text="OK"
+  >
+    <p class="mb-3">{{ $t('event_edit.step1_validation_intro') }}</p>
+    <ul class="event-edit-reserve-validation-list">
+      <li v-for="(message, idx) in step1ValidationDialog.messages" :key="idx">{{ message }}</li>
+    </ul>
   </confirm-dialog>
 
   <confirm-dialog
