@@ -96,6 +96,9 @@
 | [x] | RC-90 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | UserEventCard の subsidy 計算を common へ |
 | [x] | RC-91 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | profile プレビューカードのタイル markup 重複 |
 | [x] | RC-92 | 3766045327 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | manageCommunityCanView が tenant 未解決・enterprise_id null を許容<br>enterpriseId 解決待ちと tenant 不一致拒否を厳格化 |
+| [x] | RC-93 | 3766743215 | 👌 修正不要 | — | 📌 スコープ内 | 📑 仕様書 | 確認のみ | — | updateEnterpriseMember の Auth displayName 同期<br>#2232 仕様どおりのため対応不要 |
+| [x] | RC-94 | 3766778628 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | getCommunityData が scope 省略を null 固定<br>partner 1 引数呼び出しが PF のみ検索 |
+| [x] | RC-95 | 3766778635 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | CSV 同時作成で同一 account が二重作成<br>enterprise/community_accounts キー doc で原子的確保 |
 
 ---
 
@@ -2896,4 +2899,168 @@ const eventStore = useAppEventStore(props.eventId) as EventStore
 - **レビュワーのコメント（原文）**: [must] tenant 判定が未完了（enterpriseId 未解決）でも managers 判定に進んで true/false が確定し得ます。また enterpriseId が解決済みでも community.enterprise_id == null の場合に tenant mismatch 判定がスキップされます。support 以外は enterpriseId 解決まで pending にし、解決後は enterprise_id が一致しない null/undefined 含むコミュニティを明確に拒否するのが安全です。
 - **判断理由**: enterpriseId 未解決時は null を返し、community.enterprise_id !== enterpriseId で PF/null コミュニティを拒否。テスト 2 件追加。
 
+## 評価セッション（2026-08-12 22:20・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-12 22:20 JST
+- **PR**: #2223
+- **REVIEW_REQUEST_SINCE**: 2026-08-12T13:11:41Z
+- **partial**: true（Codex substantive なし。Copilot 1 件）
+- **手順 4a 自動修正**: なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | 要約 |
+| --- | --- | --- | --- | --- | --- |
+| [x] | RC-93 | 3766743215 | 👌 修正不要 | — | Auth displayName 同期は #2232 仕様どおり |
+
+### RC-93
+
+- **識別子**: RC-93（GitHub id: 3766743215）
+- **レビュワー**: Copilot
+- **指摘箇所**: functions/default/src/enterprise/members.ts:471
+- **評価**: 👌 修正不要
+- **ステータス**: —
+- **PRスコープ**: 📌 スコープ内
+- **ラベル**: 📑 仕様書
+- **変更種別**: 確認のみ
+- **想定工数**: —
+- **レビュワーのコメント（原文）**: [must] #2232 の仕様と異なり updateEnterpriseMember が tenantAuth.updateUser displayName を実行している。管理者が氏名を修正するたび従業員側の表示名に影響する。
+- **判断理由**: 05_認証 §4.5 と 04_詳細_全社管理者画面.md は updateEnterpriseMember で Auth displayName を display_name に同期し users.user_name は更新しないと明記。#2232 コミット 0231e363a も Auth 同期維持が意図。Copilot は users 非更新のみを見て Auth 同期を誤指摘。
+
+---
+
+## 評価セッション（2026-08-12 22:36・review-comments-evaluate）
+
+- **評価日時**: 2026-08-12 22:36 JST
+- **ブランチ名**: dev/enterprise-mvp-v3
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **手順 4a 自動修正**: RC-94（🚨 1 件）、RC-95（🚨 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-94 | 3766778628 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | getCommunityData が scope 省略を null 固定<br>partner 1 引数呼び出しが PF のみ検索 |
+| [x] | RC-95 | 3766778635 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | CSV 同時作成で同一 account が二重作成<br>enterprise/community_accounts キー doc で原子的確保 |
+
+### RC-94（GitHub id: 3766778628）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/stores/communityList.ts:76`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -69,9 +69,18 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null,
+         next()
+       }
+ 
+-      const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> =>
++      const getCommunityData = async (
++        communityAccount: string,
++        options?: { enterpriseId?: string },
++      ): Promise<DocumentData | null> => {
++        const enterpriseId = options?.enterpriseId ?? null
+         const duplicatedCommunity = await getDocs(
+           query(
+             collection(db, 'communities'),
++            where('enterprise_id', '==', enterpriseId),
+             where('community_account', '==', communityAccount),
+             limit(1),
+           ),
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  partner の既存コミュニティ検索を非スコープのまま保ってください**
+
+Enterprise コミュニティに紐づく店舗で `partner/src/pages/community.vue` を開く場合、同ファイルの 54 行目と 124 行目は `enterpriseId` を指定せず `getCommunityData` を呼ぶため、ここで `null` に正規化すると PF コミュニティだけが検索されます。その結果、既存コミュニティが存在しないと誤判定されて新規作成画面になり、編集できないだけでなく同じスラッグの PF コミュニティを作成し得ます。既存の `useCommunityStore` に対する指摘とは別に、この変更された検索ヘルパーにも同じ未移行の partner 呼び出しが残っていることが新しい根拠です。scope 省略時は従来の非スコープ検索を維持するか、店舗から解決したスコープを明示してください。
+
+**コメント要約**: `getCommunityData` が `options` 省略時に `enterprise_id == null` で検索するため、partner が enterprise 店舗コミュニティを見つけられない。
+RC-63 で `useCommunityStore` は修正済みだが `communityList` 側が同種の欠陥。scope 省略時は enterprise_id フィルタなしの従来検索を維持すべき。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。RC-63（community store）と同根で partner の 1 引数呼び出しが PF のみヒットし誤新規作成に至る。`options?.enterpriseId !== undefined` のときのみ enterprise_id 条件を付与するよう修正。
+
+---
+
+### RC-95（GitHub id: 3766778635）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/stores/community.ts:385`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -335,6 +360,45 @@ export const saveCommunity = async (community: ShokujiiCommunity): Promise<void>
+   await db.collection('communities').doc(community.id).withConverter(communityConverter).set(community, { merge: true })
+ }
+ 
++/** エンタープライズ CSV 作成時、同一 enterprise 内の community_account が既に存在する */
++export class CommunityAccountAlreadyExistsInEnterpriseError extends Error {
++  constructor() {
++    super('Community account already exists in enterprise')
++    this.name = 'CommunityAccountAlreadyExistsInEnterpriseError'
++  }
++}
++
++/**
++ * エンタープライズ向けコミュニティ作成と manager 付与を 1 トランザクションで原子的に行う。
++ * 親 `managers` 配列は onCommunityMemberWritten が再集計する。
++ */
++export const createEnterpriseCommunityWithManager = async (
++  community: ShokujiiCommunity,
++  managerUserId: string,
++): Promise<void> => {
++  const enterpriseId = community.enterprise_id
++  if (enterpriseId == null || enterpriseId === '') {
++    throw new Error('enterprise_id is required')
++  }
++  const db = getFirestore()
++  await db.runTransaction(async (transaction) => {
++    const existing = await getCommunityByAccountInEnterprise(enterpriseId, community.community_account, transaction)
++    if (existing != null) {
++      throw new CommunityAccountAlreadyExistsInEnterpriseError()
++    }
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  コミュニティアカウントの一意キーを原子的に確保してください**
+
+同じ enterprise に対して複数の CSV 作成リクエストが同じ `community_account` を同時に処理すると、両トランザクションのクエリが空を返し得ます。空のクエリでは競合対象となる既存ドキュメントがない一方、各処理は異なるランダムな `community.id` へ書き込むため、双方が成功して同一スラッグのコミュニティが複数作成され、以後のルート解決が曖昧になります。`enterpriseId/account` から決まる一意キー文書を同じトランザクションで読み書きするなど、同時作成が必ず競合する構成にしてください。
+
+**コメント要約**: 同時 CSV 作成でクエリ重複チェックだけでは race が残り、同一 account の community が複数 doc に作成されうる。
+04_詳細_全社管理者画面 §6 の enterprise 内 account 一意要件に反する。トランザクション内で決定的なキー doc を create して競合させる必要がある。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘妥当。RC-73 で save+manager 原子的化済みだが、異なる random community.id への同時書き込み race は残る。`enterprises/{id}/community_accounts/{account}` を transaction.create し、legacy データ向けに query チェックも併用。vitest 3 ケースに更新。
+
+---
 

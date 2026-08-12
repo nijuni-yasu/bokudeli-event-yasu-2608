@@ -368,6 +368,13 @@ export class CommunityAccountAlreadyExistsInEnterpriseError extends Error {
   }
 }
 
+/** 同一 enterprise 内 community_account の一意性をトランザクション競合で担保するキー doc */
+const getEnterpriseCommunityAccountRef = (
+  db: ReturnType<typeof getFirestore>,
+  enterpriseId: string,
+  communityAccount: string,
+) => db.collection('enterprises').doc(enterpriseId).collection('community_accounts').doc(communityAccount)
+
 /**
  * エンタープライズ向けコミュニティ作成と manager 付与を 1 トランザクションで原子的に行う。
  * 親 `managers` 配列は onCommunityMemberWritten が再集計する。
@@ -382,10 +389,16 @@ export const createEnterpriseCommunityWithManager = async (
   }
   const db = getFirestore()
   await db.runTransaction(async (transaction) => {
+    const accountKeyRef = getEnterpriseCommunityAccountRef(db, enterpriseId, community.community_account)
+    const accountKeySnap = await transaction.get(accountKeyRef)
+    if (accountKeySnap.exists) {
+      throw new CommunityAccountAlreadyExistsInEnterpriseError()
+    }
     const existing = await getCommunityByAccountInEnterprise(enterpriseId, community.community_account, transaction)
     if (existing != null) {
       throw new CommunityAccountAlreadyExistsInEnterpriseError()
     }
+    transaction.create(accountKeyRef, { community_id: community.id })
     const communityRef = db.collection('communities').doc(community.id).withConverter(communityConverter)
     // saveCommunity と同様 merge: true（toFirestore の FieldValue.delete 対策）
     transaction.set(communityRef, community, { merge: true })

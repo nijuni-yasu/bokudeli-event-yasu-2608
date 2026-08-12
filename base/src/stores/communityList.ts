@@ -71,13 +71,14 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
 
       const getCommunityData = async (
         communityAccount: string,
-        options?: { enterpriseId?: string },
+        options?: { enterpriseId?: string | null },
       ): Promise<DocumentData | null> => {
-        const enterpriseId = options?.enterpriseId ?? null
         const duplicatedCommunity = await getDocs(
           query(
             collection(db, 'communities'),
-            where('enterprise_id', '==', enterpriseId),
+            ...(options?.enterpriseId !== undefined
+              ? [where('enterprise_id', '==', options.enterpriseId ?? null)]
+              : []),
             where('community_account', '==', communityAccount),
             limit(1),
           ),
