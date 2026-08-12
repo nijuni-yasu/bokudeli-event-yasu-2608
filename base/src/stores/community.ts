@@ -35,7 +35,7 @@ import {
 import { AlbumItem } from '@shokujii/common/schemas/AlbumItem.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getUserRef, useUserStore } from '@shokujii/base/stores/user.js'
-import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { uploadAlbumImage, uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
@@ -45,8 +45,10 @@ import { TaskExecutor } from '../utils/executors.js'
 import {
   buildCommunityLookupConstraints,
   resolveCommunityStoreKey,
+  resolveEffectiveEnterpriseId,
   type CommunityStoreScope,
 } from '@shokujii/base/stores/communityScope.js'
+import { resolveEventStoreOptionsFromInjectedEnterpriseId } from '@shokujii/base/stores/eventStoreOptions.js'
 
 export type { CommunityStoreScope } from '@shokujii/base/stores/communityScope.js'
 export {
@@ -228,11 +230,14 @@ export async function resolveCommunityDocumentRef(
  */
 export const useCommunityStore = (target: string | BokudeliCommunity, scope?: CommunityStoreScope) => {
   const communityAccount: string = target instanceof BokudeliCommunity ? target.community_account : target
-  const resolvedEnterpriseId =
-    target instanceof BokudeliCommunity ? (target.enterprise_id ?? scope?.enterpriseId) : scope?.enterpriseId
+  const resolvedEnterpriseId = resolveEffectiveEnterpriseId(
+    target instanceof BokudeliCommunity ? target.enterprise_id : undefined,
+    scope?.enterpriseId,
+  )
   const storeKey = resolveCommunityStoreKey(resolvedEnterpriseId)
   const store = defineStore(`/communities/${storeKey}/${communityAccount}`, () => {
     const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${storeKey}_${communityAccount}`
+    const eventStoreOptions = resolveEventStoreOptionsFromInjectedEnterpriseId(resolvedEnterpriseId)
     const community = ref<BokudeliCommunity | null>(target instanceof BokudeliCommunity ? target : null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
     const _communityRef = ref<DocumentReference<BokudeliCommunity> | null>(null)
@@ -581,10 +586,6 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
           querySnapshot.docs.forEach((doc) => {
             const eventId = doc.id
             const stores = eventStores.value || new Map()
-            const eventStoreOptions =
-              resolvedEnterpriseId != null && resolvedEnterpriseId !== ''
-                ? buildEventStoreOptions(resolvedEnterpriseId)
-                : {}
             stores.set(eventId, useEventStore(eventId, eventStoreOptions) as EventStore)
             eventStores.value = stores
           })

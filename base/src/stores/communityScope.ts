@@ -9,6 +9,20 @@ export function resolveCommunityStoreKey(enterpriseId: string | null | undefined
   return enterpriseId != null && enterpriseId !== '' ? enterpriseId : 'pf'
 }
 
+/**
+ * community オブジェクトの `enterprise_id` と scope から実効 enterpriseId を決める。
+ * `null` は PF 確定なので scope へフォールバックしない（未 materialize の `undefined` のみ scope を使う）。
+ */
+export function resolveEffectiveEnterpriseId(
+  communityEnterpriseId: string | null | undefined,
+  scopeEnterpriseId: string | undefined,
+): string | undefined {
+  if (communityEnterpriseId === undefined) {
+    return scopeEnterpriseId
+  }
+  return communityEnterpriseId ?? undefined
+}
+
 /** PF / scope 省略は Firestore 上 `enterprise_id == null`。Enterprise は非空 string。 */
 export function resolveCommunityEnterpriseIdForQuery(scope?: CommunityStoreScope): string | null {
   const enterpriseId = scope?.enterpriseId

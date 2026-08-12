@@ -3,6 +3,7 @@ import {
   buildCommunityLookupConstraints,
   resolveCommunityEnterpriseIdForQuery,
   resolveCommunityStoreKey,
+  resolveEffectiveEnterpriseId,
 } from '@shokujii/base/stores/communityScope.js'
 
 describe('resolveCommunityStoreKey', () => {
@@ -14,6 +15,22 @@ describe('resolveCommunityStoreKey', () => {
     expect(resolveCommunityStoreKey(undefined)).toBe('pf')
     expect(resolveCommunityStoreKey(null)).toBe('pf')
     expect(resolveCommunityStoreKey('')).toBe('pf')
+  })
+})
+
+describe('resolveEffectiveEnterpriseId', () => {
+  it('community.enterprise_id が null なら PF 確定で scope にフォールバックしない', () => {
+    expect(resolveEffectiveEnterpriseId(null, 'ent-1')).toBeUndefined()
+  })
+
+  it('community.enterprise_id が undefined なら scope を使う', () => {
+    expect(resolveEffectiveEnterpriseId(undefined, 'ent-1')).toBe('ent-1')
+    expect(resolveEffectiveEnterpriseId(undefined, undefined)).toBeUndefined()
+  })
+
+  it('community.enterprise_id が文字列ならそれを優先する', () => {
+    expect(resolveEffectiveEnterpriseId('ent-2', 'ent-1')).toBe('ent-2')
+    expect(resolveEffectiveEnterpriseId('ent-2', undefined)).toBe('ent-2')
   })
 })
 
