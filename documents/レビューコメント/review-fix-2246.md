@@ -21,6 +21,10 @@
 | [x] | RC-15 | 5267762217 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 5 で form invalid 時サイレント return<br>予約申請モーダルで汎用メッセージ表示 |
 | [x] | RC-16 | 5267762217 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Step 4（@core）と Step 5（contactFormat）の email 正規表現不一致<br>`useValidators().emailValidator`（contactFormat）へ一本化 |
 | [x] | RC-17 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | Step 1 だけ form invalid 時サイレント return が残存<br>共通キー `event_edit.form_fields_invalid` で 3 ステップ統一 |
+| [x] | RC-18 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `formValid` が書き込み専用の残骸（親の `defineModel` 廃止後）<br>ref と `v-form` の `v-model` を削除 |
+| [ ] | RC-19 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | モーダル用集約が v-form の `:rules` を二重実装し drift が反復発生<br>validator を共有モジュールへ切り出して単一定義にする |
+| [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `num < OFF_AMOUNT_MIN` が到達不能な分岐<br>分岐と未使用定数を削除し `offAmountValidator` と揃える |
+| [x] | RC-21 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 新規理由コード 3 件が仕様書・テスト項目書に未反映<br>対応表と §5.2.7 に追記 |
 
 ---
 
@@ -905,5 +909,197 @@ Step 1/4 では `formResult?.valid !== true` 時にモーダルを表示して�
 **想定工数**: S
 
 **判断理由**: Issue #2246 の受け入れ条件そのものに関わる欠落で、Step 1/4/5 の挙動を揃える必要がある。修正時に `event_edit.form_fields_invalid` を新設し、RC-14 で追加した `event_edit.step4_validation.form_fields_invalid` と RC-15 で追加した `manage.event.reserve_validation_form_fields_invalid` を廃止して 3 ステップとも同キーを参照するようにした。両キーとも本 PR 内で追加したもののため、他機能への影響はない。
+
+---
+
+## 評価セッション（2026-08-12 23:16・shokujii-code-review）
+
+- **評価日時**: 2026-08-12 23:16 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: fix/2246
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2247
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-18 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `formValid` が書き込み専用の残骸（親の `defineModel` 廃止後）<br>ref と `v-form` の `v-model` を削除 |
+| [ ] | RC-19 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | モーダル用集約が v-form の `:rules` を二重実装し drift が反復発生<br>validator を共有モジュールへ切り出して単一定義にする |
+| [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `num < OFF_AMOUNT_MIN` が到達不能な分岐<br>分岐と未使用定数を削除し `offAmountValidator` と揃える |
+| [x] | RC-21 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 新規理由コード 3 件が仕様書・テスト項目書に未反映<br>対応表と §5.2.7 に追記 |
+
+---
+
+**識別子**: RC-18（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/eventcreate/EventShopNotice.vue:18`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-/** 店舗連絡フォームの v-form 妥当性（親の Step 5 ナビの disabled に使用） */
+-const formValid = defineModel<boolean>('formValid', { default: false })
++/** 店舗連絡フォームの v-form 妥当性 */
++const formValid = ref(false)
++
++const formRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `formValid` が `v-model` で書き込まれるだけで一切読まれていない（親への `defineModel` を廃止した際の残骸）。Step 5 の disabled 判定は `isReserveButtonDisabled` に、妥当性判定は `validateForm()` に移ったため、この ref の値を参照する箇所はもう存在しない。→ ref と `v-form` の `v-model` を削除する。
+
+**コメント要約**:
+
+1行目: `defineModel` からローカル ref に変えた際に、値を読む側が消えて書き込み専用の変数になっていた。
+
+2行目: 未使用変数のため ref と `v-model` バインドを削除。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 本 PR で `defineModel` を廃止した際に生じた残骸であり、削除方針は一意。`v-form` の `v-model` は妥当性の出力専用で、外すことによるバリデーション動作への影響はない（`formRef.validate()` は従来どおり動作する）。
+
+---
+
+**識別子**: RC-19（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/utils/eventEditValidationMessages.ts:1`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++/** EventEdit ウィザード各 Step の v-form ルールと同等のモーダル用メッセージ収集 */
++
++const OFF_AMOUNT_STEP = 100
++
++const validateOffAmountForModal = (v: number | string | undefined, t: TranslateFn): string | null => {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/M]: モーダル用メッセージ収集が `EventBasicInfoCard.vue` / `EventDetailCard.vue` の `:rules` を手書きで二重実装している。同じ構造が原因で本ブランチだけでも RC-10（`bill_email` の検証器不一致）・RC-11（trim 有無の不一致）・RC-16（email 正規表現の不一致）と 3 回 drift が発生しており、現時点でも `offAmountValidator` と `OFF_AMOUNT_STEP` が `EventDetailCard.vue` と `eventEditValidationMessages.ts` に二重定義されている。→ validator 実体を共有モジュール（例: `base/src/composable/validators.ts` または専用 util）へ切り出し、v-form の `:rules` とモーダル収集が同一関数を参照する形にする。
+
+**コメント要約**:
+
+1行目: モーダル用の集約チェックが v-form ルールの写経になっており、変更時に drift する構造が残っている。
+
+2行目: `offAmountValidator` と定数の二重定義を共有化し、単一定義から両者が参照するようにしたい。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当だが、共有化には `EventDetailCard.vue` 側の `:rules` 差し替えと i18n キーの統合（`discount_settings.off_amount_*` と `event_edit.step4_validation.off_amount_*` の重複整理）を伴い、工数 M で修正方針も複数あるため [auto-fix-policy](../../.agents/skills/review-comments-evaluate/references/auto-fix-policy.md) の自動修正条件を満たさない。RC-20 で到達不能分岐は解消済みで、現時点の挙動不整合はないため未着手として記録する。
+
+---
+
+**識別子**: RC-20（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/utils/eventEditValidationMessages.ts:83`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  if (num % OFF_AMOUNT_STEP !== 0) {
++    return t('event_edit.step4_validation.off_amount_step')
++  }
++  if (num < OFF_AMOUNT_MIN) {
++    return t('event_edit.step4_validation.off_amount_invalid')
++  }
++  return null
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `num < OFF_AMOUNT_MIN` は到達不能。直前の分岐で「正の整数」かつ「100 の倍数」が保証されているため、ここに来る `num` は必ず 100 以上になる。参照元の `EventDetailCard.vue` の `offAmountValidator` にも最小値分岐は無く、「v-form ルールと同等」というこのファイルの目的からも余分。→ 分岐と、使われなくなる `OFF_AMOUNT_MIN` 定数を削除する。
+
+**コメント要約**:
+
+1行目: 100 の倍数かつ正の整数を通過した値は必ず 100 以上のため、最小値分岐はデッドコード。
+
+2行目: `offAmountValidator` と挙動を揃えるため分岐と未使用定数を削除。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: デッドコードの削除で挙動は変わらず（`50` は従来どおり `off_amount_step`、`0` や小数は `off_amount_invalid`）、既存テストの期待値にも影響しない。修正方針が一意で工数 S のため自動修正した。`OFF_AMOUNT_STEP` と `off_amount_invalid` キーは引き続き使用する。
+
+---
+
+**識別子**: RC-21（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `documents/02_主催者獲得と継続/15_予約申請時のバリデーション_テスト項目.md:79`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+   'ORGANIZER_EMAIL_MISSING',
++  'ORGANIZER_EMAIL_INVALID',
+   'ORGANIZER_PHONE_PERSONAL_MISSING',
++  'ORGANIZER_PHONE_PERSONAL_INVALID',
++  'ORGANIZER_PHONE_COMPANY_INVALID',
+   'ORGANIZER_MEMO_MISSING',
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄ドキュメントのみ/S]: 本 PR で理由コードを 3 件追加したが、テスト項目書 §4「理由コードと日本語メッセージの対応（確認用）」の表が旧一覧のままで、仕様書 §5.2.7 も「`EventDbSchema` / `ReservationRequiredSchema` を満たすこと」のみで主催者連絡先の形式チェック追加に触れていない。仕様書とコードの理由コード一覧が乖離すると、QA の確認漏れや今後の実装時の参照ミスにつながる。→ 対応表に 3 行追加し、§5.2.7 に形式チェックの条件・使用関数・理由コードを追記する。
+
+**コメント要約**:
+
+1行目: 追加した 3 つの理由コードが仕様書・テスト項目書の一覧に未反映。
+
+2行目: 対応表への追記と §5.2.7 への形式チェック仕様の明記で解消。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: ドキュメントのみの追記で工数 S、記載内容も実装から一意に決まるため自動修正した。表は `RESERVATION_REQUEST_REASON_CODES` の定義順（表示順の正本）に合わせて挿入し、§5.2.7 には未入力時に MISSING のみを返す（RC-13 の二重表示回避）挙動もあわせて明記した。
 
 ---

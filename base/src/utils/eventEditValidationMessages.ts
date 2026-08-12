@@ -4,7 +4,6 @@ type FieldValidator = (value: unknown) => boolean | string
 
 type TranslateFn = (key: string, params?: unknown[]) => string
 
-const OFF_AMOUNT_MIN = 100
 const OFF_AMOUNT_STEP = 100
 
 export type EventBasicInfoValidationFields = {
@@ -79,9 +78,6 @@ const validateOffAmountForModal = (v: number | string | undefined, t: TranslateF
   }
   if (num % OFF_AMOUNT_STEP !== 0) {
     return t('event_edit.step4_validation.off_amount_step')
-  }
-  if (num < OFF_AMOUNT_MIN) {
-    return t('event_edit.step4_validation.off_amount_invalid')
   }
   return null
 }

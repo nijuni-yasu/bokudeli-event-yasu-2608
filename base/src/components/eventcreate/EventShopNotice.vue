@@ -14,9 +14,6 @@ const emit = defineEmits<{
 
 const event = defineModel<BokudeliEvent>({ required: true })
 const shop = defineModel<BokudeliPartnerShop | null>('shop', { required: true })
-/** 店舗連絡フォームの v-form 妥当性 */
-const formValid = ref(false)
-
 const formRef = ref<{ validate: () => Promise<{ valid: boolean }> }>()
 
 const { t: $t } = useI18n()
@@ -150,7 +147,7 @@ defineExpose({
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="8" class="px-0">
       <v-card flat class="mt-2">
-        <v-form ref="formRef" v-model="formValid" class="multi-col-validation">
+        <v-form ref="formRef" class="multi-col-validation">
           <v-card-title class="px-5">
             <v-icon size="50" class="text--primary me-3" :icon="mdiEmailOutline" />
             <span>{{ $t('shop_notice.notice_title') }}</span>
