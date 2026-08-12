@@ -375,9 +375,7 @@ describe('validateReservationRequest - 主催者連絡先', () => {
   })
 
   it('空白のみの organizer_email では ORGANIZER_EMAIL_INVALID を付けない', () => {
-    const result = validateReservationRequest(
-      buildInput({ event: makeEvent({ organizer_email: '   ' }) }),
-    )
+    const result = validateReservationRequest(buildInput({ event: makeEvent({ organizer_email: '   ' }) }))
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.reasonCodes).toContain('ORGANIZER_EMAIL_MISSING')
