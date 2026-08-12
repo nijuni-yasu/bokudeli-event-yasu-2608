@@ -22,6 +22,7 @@ export const useProfilePreviewMedia = (previewDataVersion: Ref<unknown>) => {
   const failedEventCoverIds = ref(new Set<string>())
 
   watch(previewDataVersion, () => {
+    failedFoodMenuImageIds.value = new Set()
     failedEventCoverIds.value = new Set()
   })
 
@@ -52,7 +53,7 @@ export const useProfilePreviewMedia = (previewDataVersion: Ref<unknown>) => {
 
   const markFoodMenuImageFailed = (orderId: string) => {
     if (failedFoodMenuImageIds.value.has(orderId)) return
-    failedFoodMenuImageIds.value.add(orderId)
+    failedFoodMenuImageIds.value = new Set([...failedFoodMenuImageIds.value, orderId])
   }
 
   const communityIconUrl = (communityId: string): string | undefined => {

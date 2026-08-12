@@ -17,7 +17,11 @@ const props = defineProps<{
 const { t: $t } = useI18n()
 
 const handleLoadMore = () => {
-  props.onLoadMore?.() ?? props.eventListStore?.next()
+  if (props.onLoadMore != null) {
+    props.onLoadMore()
+    return
+  }
+  props.eventListStore?.next()
 }
 </script>
 

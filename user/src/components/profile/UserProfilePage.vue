@@ -117,6 +117,7 @@ const communityLists = useUserProfileCommunityLists({
   profileUserId,
   profileFilter: profileFilterRef,
   tabs,
+  canInitTabStores: isPreviewAccessGranted,
 })
 
 const {

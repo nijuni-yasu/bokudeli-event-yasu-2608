@@ -17,8 +17,8 @@ defineProps<{
   showManagedSection: boolean
   memberCommunityListHasMore: boolean
   managerCommunityListHasMore: boolean
-  memberCommunityListStore: CommunityListStore
-  managerCommunityListStore: CommunityListStore
+  memberCommunityListStore: CommunityListStore | null
+  managerCommunityListStore: CommunityListStore | null
   isCommunitiesTabReady: boolean
   isCommunitiesTabEmpty: boolean
   canLinkToDetail: ProfileLinkPolicyFn
@@ -58,9 +58,9 @@ const { t: $t } = useI18n()
     >
       <v-col cols="auto">
         <IncrementalLoader
-          :loaded-count="memberCommunityListStore.communityStores?.length ?? 0"
-          :total-count="memberCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-          @load="memberCommunityListStore.next()"
+          :loaded-count="memberCommunityListStore?.communityStores?.length ?? 0"
+          :total-count="memberCommunityListStore?.totalCount ?? Number.MAX_SAFE_INTEGER"
+          @load="memberCommunityListStore?.next()"
         />
       </v-col>
     </v-row>
@@ -90,9 +90,9 @@ const { t: $t } = useI18n()
     <v-row v-if="managerCommunityListHasMore || managerCommunities.length > 0" class="justify-center mt-2">
       <v-col cols="auto">
         <IncrementalLoader
-          :loaded-count="managerCommunityListStore.communityStores?.length ?? 0"
-          :total-count="managerCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-          @load="managerCommunityListStore.next()"
+          :loaded-count="managerCommunityListStore?.communityStores?.length ?? 0"
+          :total-count="managerCommunityListStore?.totalCount ?? Number.MAX_SAFE_INTEGER"
+          @load="managerCommunityListStore?.next()"
         />
       </v-col>
     </v-row>

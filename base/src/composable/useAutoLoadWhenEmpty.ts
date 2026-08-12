@@ -4,9 +4,13 @@ export const useAutoLoadWhenEmpty = (
   deps: WatchSource<unknown>[],
   config: { shouldLoad: () => boolean; load: () => void },
 ): void => {
-  watch(deps, () => {
-    if (config.shouldLoad()) {
-      config.load()
-    }
-  })
+  watch(
+    deps,
+    () => {
+      if (config.shouldLoad()) {
+        config.load()
+      }
+    },
+    { immediate: true },
+  )
 }

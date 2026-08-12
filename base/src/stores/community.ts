@@ -601,10 +601,9 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
         query(collection(db, 'communities'), ...queryConstraints, limit(2)).withConverter(communityConverter),
       ).then((querySnapshot) => {
         if (querySnapshot.docs.length > 1) {
-          console.warn(
-            `Multiple communities matched account "${communityAccount}" for scope; expected at most one document.`,
-          )
-          console.error(`The community "${communityAccount}" is ambiguous for the given scope.`)
+          reportClientError(new Error(`Community "${communityAccount}" is ambiguous for the given scope.`), {
+            severity: 'error',
+          })
           return
         }
         const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)

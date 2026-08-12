@@ -48,7 +48,13 @@ if (enterpriseId.value == null) {
   throw new Error('Enterprise is not resolved')
 }
 
-const profileFilter = computed(() => ({ kind: 'enterprise' as const, enterpriseId: enterpriseId.value! }))
+const profileFilter = computed(() => {
+  const id = enterpriseId.value
+  if (id == null || id === '') {
+    return { kind: 'none' as const }
+  }
+  return { kind: 'enterprise' as const, enterpriseId: id }
+})
 
 const { t: $t } = useI18n()
 const currentUserStore = useCurrentUserStore()
@@ -134,6 +140,7 @@ const communityLists = useUserProfileCommunityLists({
   profileUserId,
   profileFilter,
   tabs,
+  canInitTabStores: isPreviewAccessGranted,
 })
 
 const {

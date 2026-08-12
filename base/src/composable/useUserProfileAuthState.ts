@@ -1,4 +1,4 @@
-import { computed, type ComputedRef } from 'vue'
+import { computed, ref, type ComputedRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
@@ -35,7 +35,10 @@ export const useUserProfileAuthState = (profileUserId: string, authMode: UserPro
     accessDenied: previewAccessDenied,
   } = storeToRefs(previewStore)
 
-  const { user, exists } = storeToRefs(useUserStore(profileUserId, { autoSubscribe: !isEnterpriseMode }))
+  const { user, exists } =
+    profileUserId === ''
+      ? { user: ref<User | null>(null), exists: ref<boolean | null>(null) }
+      : storeToRefs(useUserStore(profileUserId, { autoSubscribe: !isEnterpriseMode }))
 
   const displayUser = computed((): User | null => {
     if (isEnterpriseMode) {
