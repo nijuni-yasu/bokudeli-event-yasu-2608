@@ -228,10 +228,10 @@ export const setupRouter = (router: Router) => {
               alertExistsCredential(credentialFromError(err)?.providerId)
             } else {
               const pendingCred = credentialFromError(err)
-              alertProfileLinkageFailed(pendingCred?.providerId ?? userCredential?.providerId)
+              alertProfileLinkageFailed(pendingCred?.providerId ?? userCredential?.providerId ?? undefined)
             }
           } else {
-            alertProfileLinkageFailed(userCredential?.providerId)
+            alertProfileLinkageFailed(userCredential?.providerId ?? undefined)
           }
           return
         }

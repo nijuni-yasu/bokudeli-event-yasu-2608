@@ -13,7 +13,7 @@
     "dev": "vite",
     "devtool": "VUE_DEVTOOLS= vite",
     "build": "npm -w common run build && vite build",
-    "build:types": "vue-tsc --noEmit",
+    "build:types": "vue-tsc --noEmit -p tsconfig.types.json",
     "preview": "vite preview",
     "test": "vitest run"
   },

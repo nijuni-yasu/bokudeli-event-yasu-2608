@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "composite": false,
+    "verbatimModuleSyntax": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "./auto-imports.d.ts",
+    "../base/src/types/build-types-stubs.d.ts"
+  ],
+  "exclude": ["src/**/__tests__/*", "src/@core/**"]
+}

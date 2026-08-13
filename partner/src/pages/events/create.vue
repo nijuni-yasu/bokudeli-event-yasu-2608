@@ -1,17 +1,20 @@
 <script setup lang="ts">
+import { where, orderBy } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getCommunityPath, getShopPath, getEventPath, getUserEventUrl } from '@/navigation/utils'
-import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore, BokudeliEvent, createNewEvent } from '@shokujii/base/stores/event.js'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiOpenInNew } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import { useDisplay } from 'vuetify'
 
 const notification = useNotification()
+const display = useDisplay()
 
 const router = useRouter()
 const route = useRoute()
@@ -19,7 +22,6 @@ const { t: $t } = useI18n()
 
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
-const eventListStore = useEventListStore()
 
 const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
   watch(
@@ -66,6 +68,28 @@ const community = await new Promise<BokudeliCommunity>((resolve) => {
 const communityId = community.community_id
 const communityName = community.community_name
 
+const numOfColumns = computed(() => {
+  switch (display.name.value) {
+    case 'xs':
+      return 1
+    case 'sm':
+      return 2
+    case 'md':
+      return 3
+    default:
+      return 4
+  }
+})
+
+const communityEventListStore = useEventListStore(
+  [where('community_account', '==', communityAccount), orderBy('event_start_datetime', 'desc')],
+  numOfColumns.value,
+)
+
+const reloadCommunityEventList = (): void => {
+  communityEventListStore.reload()
+}
+
 let _event: BokudeliEvent
 if (route.query.id != null) {
   const eventStore = useEventStore(route.query.id as string) as EventStore
@@ -87,19 +111,20 @@ if (route.query.id != null) {
     throw new Error()
   }
 } else {
-  _event = eventListStore.eventDraft
-  _event.community_account = communityAccount
-  _event.community_id = communityId
-  _event.community_name = communityName
-  _event.event_postalcode = shop.shop_postcode ?? ''
-  _event.event_address_base = shop.shop_address_base ?? ''
-  _event.event_address_detail = shop.shop_address_detail ?? ''
-  _event.event_place = shop.shop_name ?? ''
-  _event.event_place_url = shop.shop_url ?? ''
-  _event.partner_id = partnerId
-  _event.shop_id = shop.shop_id
-  _event.shop_name = shop.shop_name ?? ''
-  _event.event_status = { value: 'in_draft' }
+  _event = new BokudeliEvent(communityId, null, {
+    community_account: communityAccount,
+    community_id: communityId,
+    community_name: communityName,
+    event_postalcode: shop.shop_postcode ?? '',
+    event_address_base: shop.shop_address_base ?? '',
+    event_address_detail: shop.shop_address_detail ?? '',
+    event_place: shop.shop_name ?? '',
+    event_place_url: shop.shop_url ?? '',
+    partner_id: partnerId,
+    shop_id: shop.shop_id,
+    shop_name: shop.shop_name ?? '',
+    event_status: { value: 'in_draft', shop_comment: '' },
+  })
 }
 
 const event = ref<BokudeliEvent>(_event)
@@ -133,7 +158,7 @@ watch(
 const submit = async (apply: boolean) => {
   isLoading.value = true
   if (apply) {
-    event.value.event_status = { value: 'applying_to_admin' }
+    event.value.event_status = { value: 'applying_to_admin', shop_comment: '' }
   }
   try {
     if (route.query.id != null) {
@@ -144,13 +169,10 @@ const submit = async (apply: boolean) => {
       }
       notification.show($t('event.updated'), 'success')
     } else {
-      const newEvent = await eventListStore.createNewEventFromDraft(communityId)
-      const eventStore = useEventStore(newEvent.event_id) as EventStore
-      if (coverImage.value != null) {
-        await eventStore.updateCoverImage(coverImage.value)
-      }
+      await createNewEvent(toRaw(event.value), coverImage.value)
       notification.show($t('event.created'), 'success')
     }
+    reloadCommunityEventList()
     router.push('/events')
   } catch (err) {
     console.error(err)
@@ -161,7 +183,7 @@ const submit = async (apply: boolean) => {
 }
 
 onUnmounted(() => {
-  eventListStore.reload()
+  reloadCommunityEventList()
 })
 </script>
 
