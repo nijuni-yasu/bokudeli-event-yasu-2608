@@ -136,7 +136,7 @@
 | [x] | RC-130 | なし・エージェントレビュー | 🚨 必須修正 | 📤 #2248 別Issue化 | 📌 スコープ内 | 🐛 実害, 📋 仕様追加 | 📋 仕様追加 | M | レター通知メールのリンクが常に PF ホストでエンプラ会員が開けない<br>P1 維持メールは #2249 |
 | [ ] | RC-131 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 自己負担 0 円検証済み経路で自己負担合計を再計算 |
 | [ ] | RC-132 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | community_accounts キー doc が converter / スキーマなし |
-| [ ] | RC-133 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | キー doc の解放処理がなく account が永久予約される |
+| [x] | RC-133 | なし・エージェントレビュー | 🟡 修正提案 | 📤 #2253 別Issue化 | 📤 スコープ外 | 💾 データ | 📋 仕様追加 | M | キー doc の解放処理がなく account が永久予約される<br>https://github.com/nijuniinc/bokudeli-event-new/issues/2253 |
 | [x] | RC-134 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | profileFilter のインラインオブジェクト prop |
 | [x] | RC-135 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | legacy tab リダイレクトの重複分岐 |
 | [x] | RC-136 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | user の getOrdersPath が常に同値を返す tab 引数を持つ |
@@ -146,7 +146,7 @@
 | [x] | RC-140 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `base/auto-imports.d.ts` が gitignore 済みで未追跡<br>CI Typecheck が 282 件の TS2304 で失敗（PR verify 実測 red）。gitignore から除外 |
 | [x] | RC-141 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventEdit の `resolveHasEventCoverImage` に `useEventStore` 参照が残存<br>import 削除済みで実行時 ReferenceError。`createAppEventStore` に置換 |
 | [ ] | RC-142 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `EnrichedCartItem` の `eventMonthUsed` / `subsidyTotalsFromReplay` が書き込みのみで未参照 |
-| [ ] | RC-143 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 📋 仕様追加 | M | カートの replay 表示とサーバー検証の基準が不一致<br>同月の別注文確定後に注文が必ず失敗しうる |
+| [x] | RC-143 | なし・エージェントレビュー | 🟡 修正提案 | 📤 #2252 別Issue化 | 📤 スコープ外 | 💰 金銭, 🐛 実害 | 📋 仕様追加 | M | カートの replay 表示とサーバー検証の基準が不一致<br>同月の別注文確定後に注文が必ず失敗しうる<br>https://github.com/nijuniinc/bokudeli-event-new/issues/2252 |
 | [ ] | RC-144 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `UserProfileCommunitiesPreviewCard` で `t()` と `$t()` が混在 |
 | [ ] | RC-145 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `UserProfileCommunityListItem` が composable と TabPanel で二重定義 |
 | [x] | RC-146 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | `user_profile.private_event_chip` が user の ja.ts のみ<br>enterprise で生キーが chip に表示される。base へ移設 |
@@ -3208,7 +3208,7 @@ RC-63 で `useCommunityStore` は修正済みだが `communityList` 側が同種
 | [x] | RC-130 | なし・エージェントレビュー | 🚨 必須修正 | 📤 #2248 別Issue化 | 📌 スコープ内 | 🐛 実害, 📋 仕様追加 | 📋 仕様追加 | M | レター通知メールのリンクが常に PF ホスト<br>エンプラ会員が開けない URL を送信。P1 は #2249 |
 | [ ] | RC-131 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `finalizeEnterpriseSubsidyZeroPaymentOrder` は自己負担 0 円を検証済みで<br>`sumEnterpriseUserPaidAmounts` が常に 0（冗長計算） |
 | [ ] | RC-132 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | `community_accounts` キー doc が converter / スキーマなしの生 write |
-| [ ] | RC-133 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | キー doc の解放処理がなくコミュニティ削除・account 変更後も予約が残る |
+| [x] | RC-133 | なし・エージェントレビュー | 🟡 修正提案 | 📤 #2253 別Issue化 | 📤 スコープ外 | 💾 データ | 📋 仕様追加 | M | キー doc の解放処理がなくコミュニティ削除・account 変更後も予約が残る<br>https://github.com/nijuniinc/bokudeli-event-new/issues/2253 |
 | [x] | RC-134 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | `:profile-filter="{ kind: 'pf-null' }"` のインラインオブジェクトで watch が毎回再発火<br>定数に切り出し |
 | [x] | RC-135 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | legacy tab リダイレクトが同一処理の 2 分岐<br>`tab === 'orders' \|\| tab === 'usage'` に統合 |
 | [x] | RC-136 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | user の `getOrdersPath` が使われない `tab` 引数を受け取る<br>引数を削除し呼び出し側も統一 |
@@ -4630,9 +4630,9 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: 📤 #2253 別Issue化
 
-**PRスコープ**: 📌 スコープ内
+**PRスコープ**: 📤 スコープ外
 
 **ラベル**: 💾 データ
 
@@ -4640,7 +4640,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 
 **想定工数**: M
 
-**判断理由**: 現時点でコミュニティ削除・account 変更の機能自体が未実装のため即時実害はない。解放処理の設計は削除機能の仕様とセットで決める必要があり、自動修正対象外（仕様判断）として記録。
+**判断理由**: 現時点でコミュニティ削除・account 変更の機能自体が未実装のため即時実害はない。解放処理の設計は削除機能の仕様とセットで決める必要があるため https://github.com/nijuniinc/bokudeli-event-new/issues/2253 に切り出した。
 
 ---
 
@@ -4951,7 +4951,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 | [x] | RC-140 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `base/auto-imports.d.ts` が gitignore 済みで未追跡。CI Typecheck が red |
 | [x] | RC-141 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | EventEdit に `useEventStore` 参照が残存し実行時 ReferenceError |
 | [ ] | RC-142 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `eventMonthUsed` / `subsidyTotalsFromReplay` が未参照 |
-| [ ] | RC-143 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 📋 仕様追加 | M | カート replay 表示とサーバー検証の基準が不一致 |
+| [x] | RC-143 | なし・エージェントレビュー | 🟡 修正提案 | 📤 #2252 別Issue化 | 📤 スコープ外 | 💰 金銭, 🐛 実害 | 📋 仕様追加 | M | カート replay 表示とサーバー検証の基準が不一致<br>https://github.com/nijuniinc/bokudeli-event-new/issues/2252 |
 | [ ] | RC-144 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `t()` と `$t()` の混在 |
 | [ ] | RC-145 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `UserProfileCommunityListItem` の二重定義 |
 | [x] | RC-146 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 👤 UX | 🔧 微修正 | S | `private_event_chip` が enterprise で未定義。生キー表示 |
@@ -5124,9 +5124,9 @@ const eventCover = eventStore.coverImageUrl
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: 📤 #2252 別Issue化
 
-**PRスコープ**: 📌 スコープ内
+**PRスコープ**: 📤 スコープ外
 
 **ラベル**: 💰 金銭, 🐛 実害
 
@@ -5134,7 +5134,7 @@ const eventCover = eventStore.coverImageUrl
 
 **想定工数**: M
 
-**判断理由**: 再同期 Callable の追加か表示側の累積 replay かで仕様判断が必要。手順 3b の対象外。
+**判断理由**: 再同期 Callable の追加か表示側の累積 replay かで仕様判断が必要。#2238 フォローアップとして https://github.com/nijuniinc/bokudeli-event-new/issues/2252 に切り出した。
 
 ---
 
