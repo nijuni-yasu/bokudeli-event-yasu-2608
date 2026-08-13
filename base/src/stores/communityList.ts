@@ -78,7 +78,7 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
             collection(db, 'communities'),
             ...(options?.enterpriseId !== undefined
               ? [where('enterprise_id', '==', options.enterpriseId ?? null)]
-              : []),
+              : [where('enterprise_id', '==', null)]),
             where('community_account', '==', communityAccount),
             limit(1),
           ),

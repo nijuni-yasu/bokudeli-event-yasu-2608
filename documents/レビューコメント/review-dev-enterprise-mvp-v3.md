@@ -186,6 +186,10 @@
 | [x] | RC-180 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
 | [x] | RC-181 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | レビュー正本に実在しない composable 名 `useAppEventListStore` を記載<br>実在は `useCreateAppCommunityEventListStore`。2 ファイルとも修正 |
 | [x] | RC-182 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolver 例の query キーが実装（camelCase）と不一致<br>`getOrdersPathAfterOrder` の実装に合わせて修正 |
+| [x] | RC-183 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `getCommunityData` 未指定時 enterprise_id フィルタなしで PF 呼び出しが誤判定 |
+| [x] | RC-184 | Codex | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が invite 更新後に member read し FAILED_PRECONDITION |
+| [ ] | RC-185 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | ホスト未解決時 community 作成メール #12 が early return で未送信 |
+| [ ] | RC-186 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `/orders` 利用状況パネルが loginUser 未確定でマウントし表示されない |
 
 ---
 
@@ -6628,3 +6632,134 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 
 ---
 
+
+## 評価セッション（2026-08-13 17:37・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-13 17:37 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **REVIEW_REQUEST_SINCE**: `2026-08-13T08:25:00Z`
+- **partial**: false
+- **Outdated**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文・Codex 接続案内）
+- **手順 4a 自動修正**: RC-183（🚨 1 件）・RC-184（🚨 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-183 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `getCommunityData` 未指定時 enterprise_id フィルタなしで PF 呼び出しが誤判定 |
+| [x] | RC-184 | Codex | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が invite 更新後に member read し FAILED_PRECONDITION |
+| [ ] | RC-185 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | ホスト未解決時 community 作成メール #12 が early return で未送信 |
+| [ ] | RC-186 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `/orders` 利用状況パネルが loginUser 未確定でマウントし表示されない |
+
+---
+
+**識別子**: RC-183（GitHub id: Copilot・3773700951）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/communityList.ts:84`
+
+**レビュワーのコメント（原文）**:
+
+[must] getCommunityData() のデフォルト挙動が enterprise_id フィルタなしになっており、enterprise スコープで community_account 重複が許容される前提だと「別 enterprise の同名 account」まで重複扱いになって PF / partner / base 側の既存呼び出しが誤判定します。未指定時は従来どおり PF（enterprise_id == null）として検索するか、必ず scope を渡す形に寄せてください。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害, 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: PF / partner / base の既存呼び出しは scope 未指定。enterprise_id フィルタなしだと別 enterprise 同名 account と衝突しうる。未指定時は `enterprise_id == null`（PF）に限定する修正が一意。
+
+**対応内容**: `getCommunityData` の `options.enterpriseId === undefined` 時に `where('enterprise_id', '==', null)` を付与。
+
+---
+
+**識別子**: RC-184（GitHub id: Codex・3773720290）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/stores/community.ts:141`
+
+**レビュワーのコメント（原文）**:
+
+招待更新前にメンバーを読み取ってください。`inviteAsManager` の正常経路では `transaction.update(inviteRef, ...)` の後に `transaction.get(memberRef)` を実行していますが、Firestore は write 後の read を `FAILED_PRECONDITION` で拒否します。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-180 の Transaction 化後も read-after-write 順序が誤っており、正常 redeem 経路が必ず失敗する。member 読取を invite 更新前に移動する修正が一意。
+
+**対応内容**: transaction 内で `memberRef` を `inviteRef` 更新前に `transaction.get` するよう順序変更。
+
+---
+
+**識別子**: RC-185（GitHub id: Codex・3773720297）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/communityMail.ts:64`
+
+**レビュワーのコメント（原文）**:
+
+ホスト未解決でもコミュニティ作成メールを送ってください。Enterprise に `custom_domain` がなく `ENTERPRISE_BASE_DOMAIN` も未設定の場合、この早期 return によりコミュニティ作成完了メール #12 が一通も送信されません。AC-13 は URL を空にして ERROR ログを残し送信継続の方針。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: AC-13 方針に沿う修正は明確だが 📑 仕様書ラベルのため手順 4a 自動修正対象外。early return 削除と ERROR ログ維持で対応可能。
+
+---
+
+**識別子**: RC-186（GitHub id: Codex・3773720313）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `enterprise/src/pages/orders.vue:105`
+
+**レビュワーのコメント（原文）**:
+
+ログインユーザー確定後に利用状況パネルを表示してください。認証復元直後の `/orders` では Firestore の `loginUser` が未取得のまま `EnterpriseSubsidyUsagePanel` がマウントされ、再試行せずエラー状態になる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-19 と同様 Auth UID フォールバックで解消可能だが 👤 UX ラベルのため手順 4a 自動修正対象外。
+
+---

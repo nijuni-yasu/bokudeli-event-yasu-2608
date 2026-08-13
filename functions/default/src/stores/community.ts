@@ -134,11 +134,11 @@ export class ShokujiiCommunity extends Community {
       if (invite.has_token_been_redeemed === true) {
         throw new HttpsError('invalid-argument', 'The token has been redeemed.')
       }
+      const memberSnap = await transaction.get(memberRef)
       transaction.update(inviteRef, {
         has_token_been_redeemed: true,
         updated_at: now,
       })
-      const memberSnap = await transaction.get(memberRef)
       if (memberSnap.exists) {
         const member = memberSnap.data()
         const roles = new Set(member?.roles ?? []) as Set<CommunityMemberRolesType>
