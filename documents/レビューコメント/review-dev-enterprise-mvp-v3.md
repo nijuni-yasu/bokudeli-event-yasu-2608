@@ -183,6 +183,9 @@
 | [ ] | RC-177 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `ordersTabPath` の `computed` にリアクティブ依存がなく値を中継しているだけ |
 | [ ] | RC-178 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | プロフィールイベントの pageSize `6` が 4 箇所に散在<br>ずれると reload が別 store に向く |
 | [ ] | RC-179 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `getOrdersPathAfterOrder` が `'/orders'` を再掲・戻り値型未明示 |
+| [ ] | RC-180 | Copilot | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
+| [x] | RC-181 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | レビュー正本に実在しない composable 名 `useAppEventListStore` を記載<br>実在は `useCreateAppCommunityEventListStore`。2 ファイルとも修正 |
+| [x] | RC-182 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolver 例の query キーが実装（camelCase）と不一致<br>`getOrdersPathAfterOrder` の実装に合わせて修正 |
 
 ---
 
@@ -4981,6 +4984,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 | [ ] | RC-177 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 依存のない `computed` |
 | [ ] | RC-178 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | pageSize `6` が 4 箇所に散在 |
 | [ ] | RC-179 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `'/orders'` の再掲・戻り値型未明示 |
+| [ ] | RC-180 | Copilot | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
 
 ---
 
@@ -6440,6 +6444,185 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 **想定工数**: S
 
 **判断理由**: RC-163 の `getOrdersPathAfterOrder` 拡張方針と揃える必要があり、単独では確定しない。
+
+---
+
+## 評価セッション（2026-08-13 15:17 JST・review-comments-evaluate auto）
+
+**評価日時**: 2026-08-13 15:17 JST  
+**ブランチ名**: dev/enterprise-mvp-v3  
+**PR**: #2223  
+**REVIEW_REQUEST_SINCE**: 2026-08-13T06:03:34Z  
+**partial**: false  
+**手順 4a 自動修正**: なし（RC-180 は 🔒 セキュリティのため対象外）
+
+### 取得サマリ
+
+| 区分 | 件数 |
+|:--|:--|
+| Codex インライン（新規） | 6（重複 1 件除き 5 ユニーク） |
+| Copilot トップレベル | 1（must 2 点） |
+| レビュー非該当スキップ | 2（依頼定型文 1、Codex 接続案内 1） |
+| Outdated 除外 | 0 |
+| **新規 RC** | **1（RC-180）** |
+
+### 既存 RC へのマッピング（新規 RC なし）
+
+| GitHub id | レビュワー | 既存 RC |
+|:--|:--|:--|
+| 3772854244 | Codex | RC-170 |
+| 3772854250 | Codex | RC-137 |
+| 3772854252 | Codex | RC-171 |
+| 3772854255 | Codex | RC-114 |
+| 3772854259 / 3772854262 | Codex | RC-165（#2251 別Issue化） |
+| 3772854266 | Codex | RC-143 |
+| Copilot cart 指摘 | Copilot | RC-143 |
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-180 | Copilot | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
+
+---
+
+**識別子**: RC-180（GitHub id: Copilot・IC_kwDOJXF1N88AAAABOoNLXw）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/community.ts:116`
+
+**該当コード（レビュー時点）**:
+
+```ts
+  async inviteAsManager(uid: string, token: string): Promise<void> {
+    const inviteDoc = await inviteRef.get()
+    // ...
+    if (inviteDoc.get('has_token_been_redeemed') === true) {
+      throw new HttpsError('invalid-argument', 'The token has been redeemed.')
+    }
+    const batch = db.batch().update(inviteRef, {
+      has_token_been_redeemed: true,
+      updated_at: now,
+    })
+    const memberDoc = await memberRef.get()
+    // ...
+    await batch.commit()
+  }
+```
+
+**レビュワーのコメント（原文）**:
+
+高信頼で 2 点あります。
+
+- [must] `functions/default/src/stores/community.ts:116` 付近  
+  `inviteAsManager()` が招待トークンの未使用確認と manager 付与を `get()` + `batch.commit()` で分離しています。同じ招待 URL を同時に踏まれると両方が未使用判定を通り、1 つのトークンで複数ユーザーに manager 権限を付与できるため、`inviteRef` の確認から `has_token_been_redeemed` 更新・member roles 更新までを 1 つの Transaction にまとめる必要があります。
+
+- [must] `base/src/components/pages/cart.vue:194` 付近  
+  福利厚生カートの replay 表示が各イベントごとに同じ `monthlyUsage[eventMonth]` を起点に独立計算されています。同月の別カート分を相互に消費扱いしていないため、表示上は両方とも補助ありに見えても、先に 1 件確定すると後続は `assertEnterpriseSubsidyOrdersConsistent()` で `failed-precondition` になります。開催月ごとにカート全体で累積 replay するか、表示とサーバー検証の基準を揃える必要があります。
+
+**コメント要約**: `inviteAsManager` の read-check-write が非原子のため、同一招待トークンで複数ユーザーに manager 付与可能（cart 指摘は RC-143 と同一）。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: Copilot [must] 指摘。race により 1 トークン複数 redeem が成立しうる。修正方針は Transaction 化で一意だが 🔒 セキュリティのため手順 4a 自動修正対象外。cart 側は RC-143（📋 仕様追加・M）と重複のため本 RC では扱わない。
+
+---
+
+## 評価セッション（2026-08-13 15:30・shokujii-code-review）
+
+- **評価日時**: 2026-08-13 15:30 JST
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **対象**: 本セッションの未コミット差分（`.agents/skills/shokujii-code-review/SKILL.md`・`shokujii-code-review.md` のチェックリスト更新）
+- **Outdated**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **手順 3a/3b 自動修正**: RC-181（🚨 1 件）・RC-182（🟡 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-181 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | 実在しない composable 名 `useAppEventListStore` を正本に記載 |
+| [x] | RC-182 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolver 例の query キーが実装（camelCase）と不一致 |
+
+---
+
+**識別子**: RC-181（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `.agents/skills/shokujii-code-review/SKILL.md:マルチテナント（enterprise / PF）スコープ`、`.agents/skills/shokujii-code-review/shokujii-code-review.md:同`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++- [ ] `base` のコンポーネント・composable が `useCommunityStore` / `useEventStore` / `useEventListStore` を直接呼んでいないか（`useAppCommunityStore` / `useAppEventStore` / `useAppEventListStore` 経由で inject スコープを通す）
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `useAppEventListStore` という export は存在しない。`base/src/composable/useAppEventListStore.ts` が export しているのは `useCreateAppCommunityEventListStore(communityAccount, pageSize, options)` のみ。レビュー正本に実在しない API 名を書くと、以後のレビューで誤った修正を指示することになる。NG/OK 例側の `useAppCommunityEventListStore(props.communityAccount)` も同様に存在しない。→ 実名に修正し、あわせて「App ラッパー自身が内部で `useEventListStore` を呼ぶのは正しい」旨を補足する。
+
+**コメント要約**: 正本に実在しない composable 名を記載。実在は `useCreateAppCommunityEventListStore`。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約, 📑 仕様書
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 事実誤認で修正方針が一意（実名への置換）。仕様判断・セキュリティ確認を伴わないため手順 3a で自動修正。チェックリスト項目と NG/OK 例の両方を `useCreateAppCommunityEventListStore` に統一し、ラッパー内部呼び出しが正当である旨を追記した。
+
+---
+
+**識別子**: RC-182（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `.agents/skills/shokujii-code-review/shokujii-code-review.md:NG: 注入する resolver のシグネチャが型定義と食い違う`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  query: { event_id: eventId, community_account: communityAccount },
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: OK 例の query キーが `event_id` / `community_account`（snake_case）になっているが、実装（`user/src/router/utils.ts:11`・`enterprise/src/router/utils.ts:14`）は `eventId` / `communityAccount`（camelCase）。正本のサンプルが実装と食い違うと、これを参照した実装が `/orders` 側の query 読み取りと噛み合わない。→ 実装に合わせる。
+
+**コメント要約**: NG/OK 例の query キーが実装と不一致。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で修正方針が一意なため手順 3b で自動修正。`user/src/router/utils.ts` の実装に合わせて camelCase に統一した。
 
 ---
 

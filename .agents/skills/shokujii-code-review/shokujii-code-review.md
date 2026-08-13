@@ -21,6 +21,9 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 関数の戻り値の型が明示されているか
 - [ ] `optional` と `nullable` を適切に使い分けているか
 - [ ] `tsconfig` の strict 設定を緩める変更をしていないか
+- [ ] 型検査を実質的に無効化する変更をしていないか（`build:types` の対象外指定追加・`**/*.test.ts` 除外・`verify:vue-tsc-gate` の迂回・`skipLibCheck` の拡大等）
+- [ ] 引数・戻り値を `unknown` にして呼び出し側の型検査を消していないか
+- [ ] 必須の識別子を `optional` + 既定値フォールバック（`app?: string` + `?? 'user'` 等）にしていないか（渡し漏れが型で検出できず、別テナント・別 app に集計される）
 
 ### 比較・falsy チェック
 
@@ -37,24 +40,37 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `isProcessing`、`isCompleted` 等の一時フラグを不必要にリアクティブにしていないか
 - [ ] `v-if` と `v-show` を適切に使い分けているか（機能を殺す場合は `v-if`）
 - [ ] `defineEmits` を最新の型構文で書いているか（例: `defineEmits<{ save: [menu: BokudeliPartnerMenu] }>()`）
+- [ ] `defineProps` を型ベースで書いているか（`PropType` オブジェクト形式 + `eslint-disable` は不可。関数 props は型エイリアスを定義し、既定値は `withDefaults` で与える）
 - [ ] `props` と `model` を同時に定義していないか
 - [ ] イベントハンドラ・ライフサイクルフックから呼ぶ非同期処理に `try/catch` があるか（unhandled rejection や UI 不整合を防ぐ）
+- [ ] 初期値の時点で既に条件を満たしうる `watch` に `immediate: true` を付けているか（初回に発火せず読み込みが始まらない）
+- [ ] 子が `watch` / store 初期化の依存に使う prop（例: `profileFilter`）に、テンプレートでオブジェクト・配列リテラルを直接渡していないか（毎レンダー新参照になり子の副作用が再実行される。`computed` や setup 定数に切り出す。Vuetify の `:rules` / `:items` 等の慣用表現は対象外）
+- [ ] render / computed の評価中に副作用（イベント登録・store 生成等）を行っていないか
+- [ ] リアクティブ依存を持たない `computed` で値を中継していないか（依存が追跡されず更新されない。定数化するか依存を `computed` 内で参照する）
+- [ ] `base/src` 配下の `.ts` composable 等で `ref` / `computed` 等を auto-import 任せにせず明示的に import しているか（`base/tsconfig.json` の `build:types` は app 側の auto-import 設定を持たない。各 app の `.vue` は `unplugin-auto-import` 前提で対象外）
 
 ### Vue コンポーネント設計
 
 - [ ] `base` のコンポーネント内にルーティングパスをハードコードしていないか（`emit` を使ってコンポーネントを汎化する）
+- [ ] 各 app のレイアウト・コンポーネントで `/chat` 等のパスを文字列リテラルで書いていないか（`router/utils` の `getXxxPath()` を使う）
 - [ ] `base` のコンポーネント内にビジネスロジックを持ち込んでいないか
 - [ ] ローディング状態は「画面全体に影響するデータが読み込まれているか」で判断しているか
 - [ ] `getLoadedXXX` を使う場合、「そのデータが画面全体に影響する」ことを確認しているか
 - [ ] ローディング中を表現する変数は `null | boolean` パターンを使っているか（`null` = ローディング中）
 - [ ] 複数の非同期処理が競合しうる箇所で `isLoading` を個別に持っていないか（先祖返りを防ぐため一つにまとめる）
+- [ ] `catch` 節でローディング状態を解除しているか（例外時に `null` のままだと永久ローディングになる）
+- [ ] 「対象外・未設定」と「取得失敗」を同一表示にしていないか（原因が切り分けられない）
 - [ ] テーマカラーを直接指定していないか（Vuetify Theme を使う）
 - [ ] `base/src/components/pages/` は deprecated であることを認識しているか（**新規は `components/<domain>/` のパネル + 各 app shell 組み立て**。`orders.vue` は #2208 時点の例外で pages/ に配置済み。以降の新規画面は domain パネル + shell を優先）
 - [ ] 複数 app（`user` / `enterprise` / `partner`）で共有する画面を **monolith（1 ファイル丸ごと base 化）** していないか（**v-card / タブパネル単位**で `base` に置き、**タブ shell・認可・app 差分は各 app の shell** に残す）
 - [ ] マイページ（`UserProfilePage`）等の新規 base 化は `base/src/components/profile/` 配下の `*PreviewCard` / `*TabPanel` + composable とし、`base/src/components/profile/UserProfilePage.vue` のような **ページ monolith を新設していないか**
-- [ ] base パネルへの path / filter / 認可差分は **`profilePathResolvers.ts` 型 + props 注入**（`resolveUserPath` / `resolveEventPath` / `profileFilter` / `canLinkToDetail` 等）で渡しているか（base 内 `@/router/utils` 依存を新規追加していないか）
+- [ ] base コンポーネントへの path / filter / 認可差分は **`profilePathResolvers.ts` 型 + props 注入**（`resolveUserPath` / `resolveEventPath` / `resolveOrdersPath` / `profileFilter` / `canLinkToDetail` 等）で渡しているか（profile に限らず、base 内 `@/router/utils` 依存を新規追加していないか）
+- [ ] 注入する resolver の引数（数・順序・オブジェクト形式）と戻り値型が `profilePathResolvers.ts` の型定義と一致しているか（位置引数と object 引数の取り違えは query が欠落しても型で気づけないことがある）
 - [ ] app shell が store 初期化・タブ URL 同期・enterprise Callable ゲート等の **組み立て責務**を担い、base パネルは **表示 + emit** に留まっているか
+- [ ] app 間で差分がわずかな画面を全文コピーしていないか（共通部分は base のパネルに置き、差分だけ各 app の shell に残す）
 - [ ] ハードコードされた UI 文字列を `i18n` に移行しているか（**`ja.ts` のみ**。英語 locale は作らない）
+- [ ] `base` のコンポーネントが参照する i18n キーを `base/src/locales/messages/ja.ts` に置いているか（app 側の `ja.ts` だけに置くと、キーを持たない別 app で生キーがそのまま画面に出る）
+- [ ] 同一コンポーネント内で `t()` と `$t()` を混在させていないか
 - [ ] `src/locales/messages/en.ts` 等の **英語 locale を新規追加していないか**（本プロジェクトは日本語のみ）
 - [ ] 英語用の UI 文字列だけを別ファイルに分けていないか（未使用の `en.ts` 残骸を作らない）
 - [ ] 削除等の破壊的操作に確認モーダルを挟んでいるか（誤操作防止の UX）
@@ -73,6 +89,14 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 **先例**: manage パネル（`CommunityEventsPanel.vue`）、注文履歴（`orders.vue` + `profileFilter` 注入）。
 
 **レビュー時の 🚨 例**: `base/src/components/profile/UserProfilePage.vue` を新設・復活させ、user/enterprise を薄ラッパーにした PR → monolith 方針違反。
+
+### ルーティング・ナビゲーションガード
+
+- [ ] ガードの判定関数が「未確定」を `boolean` に丸めていないか（`boolean | null` で未確定を表し、timeout で 404 / エラーへ分岐する）
+- [ ] 未確定・未解決の状態を「許可」側に倒していないか（テナント未解決のまま通すのは認可バイパス）
+- [ ] `beforeEach` 内の待機処理を pending Promise で共有しているか（同じ待機が多重実行されると待ち時間が倍増する）
+- [ ] 非同期処理の完了後に `router.replace` / ダイアログ表示を行う場合、開始時の path / query と一致するか確認しているか（route 変更後に発火する stale な遷移を防ぐ）
+- [ ] リトライを入れる場合、回数・条件・意図をコメントで明示しているか（無言のリトライはガード待ちを数秒〜十数秒に伸ばす）
 
 ### セキュリティ
 
@@ -109,7 +133,10 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] ループ内で Firestore の read/write や外部 API 呼び出しを逐次 `await` していないか（`Promise.all`・バッチ処理・並列度を制限した実行を検討する）
 - [ ] カウンタや上限チェック等の不変条件を read-then-write で更新していないか（`FieldValue.increment` または Transaction で原子性を担保する）
 - [ ] 新規の複合クエリ（`where` 複数条件・`orderBy` 併用・`array-contains` 等）に対応する `firestore.indexes.json` の追加漏れ・重複がないか
-- [ ] store の zod パースエラー等、握りつぶすと調査不能になる catch 節で `reportClientError` を呼んでいるか（クライアント側 store）
+- [ ] 存在確認・重複チェックのクエリに `limit()` を付けているか（1 件確認は `limit(1)`、曖昧一致の検知が要る解決処理は `limit(2)`）
+- [ ] 複数一致しうる検索で `docs[0]` 固定にしていないか（曖昧一致を握りつぶさずエラーにする）
+- [ ] store ID を決める要素（クエリ filters・`pageSize` 等）を複数箇所に手書きコピーしていないか（1 箇所でもずれると別 store になり `reload` が効かなくなる。定数・ファクトリに集約する）
+- [ ] zod パースエラー・lookup 失敗等、握りつぶすと調査不能になる catch 節で `reportClientError` を呼んでいるか（store に限らず composable・コンポーネントの catch も対象）
 
 ### community_id / community_account の使い分け
 
@@ -117,6 +144,25 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Callable / Firestore パス / Storage には `community_id`（Firestore ドキュメント ID）を渡しているか
 - [ ] URL 生成（`getCommunityPath`, `getEventPath` 等）には `community_account` を渡しているか
 - [ ] 同一コンポーネント内で prop 名 `communityId` と `communityAccount` を混在させていないか（用途が異なる場合は JSDoc で区別する）
+
+### 認証・ユーザー ID の確定待ち
+
+- [ ] `onMounted` / `watch` の条件に Firestore 由来の `loginUser` だけを使っていないか（確定が遅れるため `firebaseUser.uid` をフォールバックに併用する）
+- [ ] 空文字の ID で store 生成・Callable 呼び出しをしていないか（`useUserStore('')` は throw し、preview Callable は失敗する）
+- [ ] 空 ID のガードを複数箇所に散らしていないか（`load` 先頭等の 1 箇所に集約する）
+
+### マルチテナント（enterprise / PF）スコープ
+
+Enterprise 版は PF（`enterprise_id == null`）と同じコレクションを共有し、`community_account` は **enterprise 単位でしか一意でない**。スコープ漏れは他テナントのデータ露出・誤取得に直結する。
+
+- [ ] `base` のコンポーネントが `useCommunityStore` / `useEventStore` / `useEventListStore` を直接呼んでいないか（`useAppCommunityStore` / `useAppEventStore` / `useCreateAppCommunityEventListStore` 経由で inject スコープを通す。これらの App ラッパー自身が内部で呼ぶのは正しい。**例外**: inject 不可の非同期ハンドラで ID トークン claim 等からスコープを解決する既存パターン（`cart.vue` の `resolveEventStoreOptions` + `useEventStore`）は維持可。新規は setup で `useCreateAppXxxStore()` のクロージャを使う）
+- [ ] コミュニティ・イベントの検索やレター等の派生クエリに `enterprise_id` 条件が付いているか（`community_account` だけの検索は PF と enterprise が混在する）
+- [ ] `collectionGroup` クエリに `enterprise_id` を付与しているか
+- [ ] community ドキュメントの `enterprise_id` が `undefined`（未 materialize）のとき scope に委ね、`null`（PF 確定）を scope で上書きしていないか（`resolveEffectiveEnterpriseId`。`null` は PF 確定なので scope へフォールバックしない）
+- [ ] partner 等スコープ未注入の呼び出し元が残る lookup ヘルパー（例: `communityList.getCommunityData`）で、`options?.enterpriseId === undefined` のとき `enterprise_id == null` に固定していないか（省略時はフィルタなし＝全テナント横断。PF 確定は `{ enterpriseId: null }` を明示。`CommunityStoreScope` 型で揃えるのが望ましい — RC-112 参照）
+- [ ] `functions/default` で PF 固定のヘルパー（`getCommunityByAccount` 等）を enterprise 経路から呼んでいないか
+- [ ] `community_account` の重複チェック・新規作成をテナント込みで原子的に確保しているか（同時作成で同一 account が二重に作られない）
+- [ ] 認可ゲート（enterprise preview Callable 等）の判定前に、対象ドキュメントの Firestore 購読・クエリを開始していないか
 
 ### Firestore Security Rules
 
@@ -135,6 +181,9 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
 - [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（Transaction 等で未処理を原子的に確保する。送信成功前に sent 確定フラグだけ立てない）
 - [ ] トリガー / Function 内で catch した例外をログのみにせず再 throw し、Cloud Functions の自動リトライに乗せているか（意図的に握りつぶす場合は理由をコメントに明記する）
+- [ ] メール・通知本文の URL を `EVENT_HOST` 固定のヘルパー（`getEventUrl` / `getCommunityUrl` 等）で組み立てていないか（community / event からは `getCommunityUrlForCommunity` / `getEventUrlForCommunity` / `getEventUrlForEvent` / `getManageCommunityUrlForCommunity` 等の enterprise 解決版を使う）
+- [ ] ホスト解決ロジックを各ファイルで再実装していないか（`utils/urls.ts` の `resolveAppHostForCommunity` 系へ委譲する）
+- [ ] Firestore トリガー内で Callable 用の `HttpsError` を throw していないか（トリガーには呼び出し元がおらず、エラーコードが意味を持たない）
 
 ### 決済 (Stripe)
 
@@ -146,15 +195,16 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 - [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、`.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も同 PR で更新されているか
 - [ ] 更新漏れは 🚨 必須修正（マージ後も Function が未デプロイでサイレント障害になる）
-- [ ] export しない内部ヘルパーは対象外
+- [ ] export しない内部ヘルパー（他 Function から import するだけの関数）は対象外
 - [ ] 後方非互換なスキーマ変更・新規 Callable を含む PR で、複数 CI ワークフロー（`deploy_functions` / `deploy_user` / `deploy_partner` 等）間のデプロイ順序を明記・保証しているか
+- [ ] 型検査に必要な生成物（`auto-imports.d.ts` 等）を `.gitignore` に入れていないか（ローカルでは通っても CI の Typecheck が未解決シンボルで落ちる）
 
 ### 日付・時刻処理
 
 - [ ] `Date` オブジェクトを直接使っていないか（`luxon` を使う）
 - [ ] `new Date()` で UNIX タイムを生成していないか（実行環境によって値が変わる）
 - [ ] 日付の固定値は `CUTOFF_UNIX_TIME_XXXX` のように `common` に定数として定義しているか
-- [ ] `common` の `DEFAULT_TIME_ZONE` をアプリ層（`user` / `partner` / `base` / `functions`）で直接 import していないか（海外対応時の置換コストを下げるため、タイムゾーンへの参照は `common` 内部に閉じる）
+- [ ] `common` の `DEFAULT_TIME_ZONE` をアプリ層（`user` / `partner` / `enterprise` / `base`）で直接 import していないか（海外対応時の置換コストを下げるため、タイムゾーンへの参照は `common` 内部に閉じる。`functions/default` 内の既存利用は段階移行中で、**新規追加**は `common` 側に zone を閉じた util を追加して呼び出す）
 - [ ] タイムゾーン依存の計算ロジックを call site で組み立てていないか（必要なら `common` 側に zone を閉じた util / ドメイン関数を追加して呼び出す）
 - [ ] `$d(..., 'date'|'time'|'datetime'|'datetime_weekday_short')` 等の vue-i18n datetimeFormats を新規追加していないか（`common/src/utils/datetime.ts` の `convertToXxx` 系を使う）
 - [ ] 日付・時刻の表示フォーマットを call site で独自実装していないか（`convertToDate` / `convertToTimeString` / `convertToDatetime` / `convertToDatetimeWeekdayShort` 等を使う）
@@ -175,11 +225,14 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 計算ロジックは composable より store で行うようになっているか
 - [ ] Composable 内の Store は引数で受け取らず Composable 内で再取得しているか
 - [ ] Store に不要なビジネスロジックを持ち込んでいないか
+- [ ] `inject()` を内部で使う composable（`useAppCommunityStore` / `useAppEventStore` 等）を computed getter・watch コールバック・非同期ハンドラから呼んでいないか（setup で `useCreateAppXxxStore()` を一度呼び、返却クロージャを使う）
+- [ ] Pinia store の購読開始等の副作用を `defineStore` の setup 内で制御していないか（同一 ID の store は再利用され setup は初回のみ実行されるため、2 回目以降のオプションは無視される。副作用は store 取得の出口で毎回判定する）
 
 ### テスト (Vitest)
 
 - [ ] `documents/テスト方針・テスト項目書/テスト方針.md` の基準（ビジネスロジック・純粋関数・バグ修正）に該当する新規・変更ロジックに vitest テストを追加しているか
 - [ ] Transaction・レースコンディションを含む store 関数を新規追加・変更した場合、優先してテストを追加しているか
+- [ ] `vi.stubGlobal`（`localStorage` 等）を使った場合、`afterEach` で `vi.unstubAllGlobals()` して他テストへ影響を残していないか
 
 ### コード品質・可読性
 
@@ -195,6 +248,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Store は常に存在するため `storeXXX &&` のような null チェックをしていないか
 - [ ] マジックナンバー・インデックス固定（例: 配列の `[0]` で固定）をしていないか（別途定数に切り出す）
 - [ ] 将来流用できる部分を最初から汎用化しているか
+- [ ] 置換・刷新後に旧実装（ローダー・composable）・未使用 props・未使用 export が残っていないか
+- [ ] 未参照になった `ja.ts` の i18n キーを削除しているか
 
 ### コミット・PR
 
@@ -205,6 +260,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ### アセット管理
 
 - [ ] 画像・バナー等のアセットをコード内にハードコードしていないか（Firestore / Storage で管理する）
+- [ ] 固定パスに上書きするアセット（ロゴ等）の表示 URL に、リロードを跨いで有効なバージョン（`updated_at` 等）を付けているか（Storage パスが同一だと URL が変わらずブラウザキャッシュが残る。セッション内カウンタはリロードで破綻する）
+- [ ] 新規追加する画像アセットのファイルサイズを確認しているか（背景画像等は圧縮する）
 
 ---
 
@@ -426,7 +483,8 @@ const now = DateTime.now().toMillis()
 ### NG: アプリ層で `DEFAULT_TIME_ZONE` を直接参照する
 
 海外対応時にタイムゾーン参照が散らばっていると置換コストが膨らむ。
-`DEFAULT_TIME_ZONE` は `common` 内部に閉じ、アプリ層は zone を内部に閉じた util を呼ぶ。
+`DEFAULT_TIME_ZONE` は `common` 内部に閉じ、アプリ層（`user` / `partner` / `enterprise` / `base`）は zone を内部に閉じた util を呼ぶ。
+`functions/default` 内の既存利用（課金スナップショット・JSON-LD 等）は段階移行中。**新規追加**は `common` 側に util を足してから呼び出す。
 
 ```typescript
 // NG: アプリ層で zone 参照（DEFAULT_TIME_ZONE）を露出させる
@@ -837,3 +895,237 @@ import { getEventPath, getUserPath } from '@/router/utils'
 export type ResolveEventPathFn = (communityAccount: string, eventId: string) => RouteLocationRaw
 export type ProfileLinkPolicyFn = (isPublic: boolean, isLinkable?: boolean) => boolean
 ```
+
+### NG: 注入する resolver のシグネチャが型定義と食い違う
+
+`ResolveOrdersPathFn` は object 引数。位置引数で実装すると `communityAccount` が渡らず query が壊れる。
+
+```typescript
+// NG: 位置引数 2 個で実装（呼び出し側は object を 1 個渡すため query が欠落する）
+export const getOrdersPathAfterOrder = (eventId: string, communityAccount: string) =>
+  `/orders?eventId=${eventId}&communityAccount=${communityAccount}`
+
+// OK: 型定義（object 引数）に合わせる
+export const getOrdersPathAfterOrder = ({
+  eventId,
+  communityAccount,
+}: {
+  eventId: string
+  communityAccount: string
+}) => ({
+  path: '/orders',
+  query: { eventId, communityAccount },
+})
+```
+
+### NG: base で app スコープを通さず store を取得する（テナント漏れ）
+
+```typescript
+// NG: community_account だけで検索 → PF と enterprise の同名アカウントが混在する
+const communityStore = useCommunityStore(props.communityAccount)
+const eventListStore = useEventListStore(
+  [where('community_account', '==', props.communityAccount), orderBy('event_start_datetime', 'desc')],
+  PAGE_SIZE,
+)
+
+// OK: inject スコープ付きの App 版を使う（enterprise_id 条件はラッパーが付与する）
+const communityStore = useAppCommunityStore(props.communityAccount)
+const createEventListStore = useCreateAppCommunityEventListStore()
+const eventListStore = createEventListStore(props.communityAccount, PAGE_SIZE)
+```
+
+**例外（既存）**: inject 不可の非同期ハンドラでは ID トークン claim から `EventStoreOptions` を解決し `useEventStore` を直接呼ぶ（`base/src/components/pages/cart.vue` の `resolveEventStoreOptions`）。新規は setup で `useCreateAppEventStore()` のクロージャを使う。
+
+### NG: `enterprise_id` の 3 値セマンティクスを文脈ごとに混同する
+
+`enterprise_id` の解釈は **文脈で 3 系統**ある。混同すると inject ラッパーを誤判定したり、partner の非スコープ検索を壊す。
+
+| 文脈 | `undefined` | `null` | 非空 string |
+|:--|:--|:--|:--|
+| inject スコープ付き store / App ラッパー（`resolveCommunityEnterpriseIdForQuery`） | scope 省略 → PF（`enterprise_id == null`） | PF 確定 | enterprise |
+| community ドキュメント + scope（`resolveEffectiveEnterpriseId`） | 未 materialize → scope に委ねる | PF 確定（scope で上書き不可） | enterprise |
+| スコープ未注入の lookup ヘルパー（`getCommunityData` 等） | フィルタなし（全テナント横断） | PF 確定 | enterprise |
+
+```typescript
+// OK: inject スコープから PF / enterprise を決める App ラッパー（communityScope.test.ts もこの契約）
+const enterpriseId = scopeFromApp?.()?.enterpriseId ?? null
+return useEventListStore(
+  [where('enterprise_id', '==', enterpriseId), where('community_account', '==', communityAccount), ...],
+  pageSize,
+)
+
+// NG: partner 等が enterpriseId を渡さず呼ぶ lookup で undefined を null 固定する
+const getCommunityData = async (communityAccount: string, options?: { enterpriseId?: string | null }) => {
+  const enterpriseId = options?.enterpriseId ?? null // 省略 = PF 固定 → partner が enterprise を見失う
+  await getDocs(query(..., where('enterprise_id', '==', enterpriseId), ...))
+}
+
+// OK: 省略時は enterprise_id 条件を付けない（RC-94）。PF 確定は明示的に null
+...(options?.enterpriseId !== undefined ? [where('enterprise_id', '==', options.enterpriseId ?? null)] : [])
+```
+
+### NG: `inject()` 依存の composable を setup 外から呼ぶ
+
+`useAppCommunityStore` / `useAppEventStore` は内部で `inject()` するため、computed getter や非同期ハンドラから呼ぶと **inject コンテキスト外**になり、enterprise スコープが静かに PF へ戻る。
+
+```typescript
+// NG: computed / 非同期ハンドラの中で呼ぶ
+const existingMenus = computed(() => useAppEventStore(props.eventId).menus)
+const onSave = async () => {
+  await useAppEventStore(props.eventId).save(draft)
+}
+
+// OK: setup で factory を一度作り、返却クロージャを使う
+const createEventStore = useCreateAppEventStore()
+const existingMenus = computed(() => createEventStore(props.eventId).menus)
+const onSave = async () => {
+  await createEventStore(props.eventId).save(draft)
+}
+```
+
+### NG: Pinia store の初回生成時オプションで副作用を制御する
+
+同一 ID の store は再利用され `defineStore` の setup は初回のみ実行される。setup 内で購読を開始すると、後から別オプションで取得しても反映されない。逆に一度 `autoSubscribe: false` で生成されると、通常呼び出しでも購読が始まらず `getLoadedUser()` が永久に解決しない。
+
+```typescript
+// NG: setup 内（初回のみ実行）で購読を開始する
+export const useUserStore = (userId: string, options?: UseUserStoreOptions) => {
+  const store = defineStore(`/users/${userId}`, () => {
+    if (options?.autoSubscribe !== false) {
+      subscribe() // 2 回目以降の呼び出しでは評価されない
+    }
+    return { ... }
+  })
+  return store()
+}
+
+// OK: 取得の出口で毎回判定する（subscribe は idempotent にしておく）
+export const useUserStore = (userId: string, options?: UseUserStoreOptions) => {
+  const store = defineStore(`/users/${userId}`, () => { ... })
+  const storeInstance = store()
+  if (options?.autoSubscribe !== false) {
+    storeInstance.subscribe()
+  }
+  return storeInstance
+}
+```
+
+### NG: `loginUser` だけで UID 確定を判断する
+
+`loginUser`（Firestore 由来）は Auth 確定より遅れて解決する。Checkout 戻りやカート初期化で「まだ null」のまま処理が終わってしまう。
+
+```typescript
+// NG: loginUser が解決する前に onMounted が終わり、予算・replay が欠落する
+onMounted(async () => {
+  if (loginUser.value == null) return
+  await loadBudget(loginUser.value.user_id)
+})
+
+// OK: firebaseUser.uid をフォールバックに併用する
+const currentUserId = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? '')
+watch(currentUserId, async (userId) => {
+  if (userId === '') return // 空 ID で store 生成 / Callable を呼ばない
+  await loadBudget(userId)
+}, { immediate: true })
+```
+
+### NG: 存在確認・重複チェックのクエリに `limit` がない
+
+```typescript
+// NG: 一致する全件を読み込んでから件数判定し、docs[0] を固定採用する
+const matched = await getDocs(query(collection(db, 'communities'), ...constraints))
+return matched.docs[0].data()
+
+// OK: 曖昧一致の検知に必要な 2 件だけ読む
+const matched = await getDocs(query(collection(db, 'communities'), ...constraints, limit(2)))
+if (matched.docs.length > 1) {
+  throw new Error(`Community "${communityAccount}" is ambiguous for the given scope.`)
+}
+```
+
+### NG: 固定 Storage パスのキャッシュバストにセッション内カウンタを使う
+
+ロゴ等を同じ Storage パスへ上書きすると `company_logo_url` が変化せず、ブラウザキャッシュのまま古い画像が残る。世代カウンタはリロードで 1 に戻り、同じ URL を再利用してしまう。
+
+```typescript
+// NG: セッション内カウンタ（リロードすると v=1 に戻り古いキャッシュを再利用する）
+let logoRenderGeneration = 0
+const src = `${url}?v=${++logoRenderGeneration}`
+
+// OK: 永続するバージョン（Enterprise.updated_at）をキーにする
+const src = withEnterpriseLogoCacheBust(url, enterprise.updated_at)
+```
+
+### NG: ガードの「未確定」を boolean に丸める
+
+```typescript
+// NG: tenant 未解決や community 未取得を false / true に丸める
+export function canView(snapshot: Snapshot): boolean {
+  return snapshot.community?.managers.some((m) => m.id === snapshot.currentUserId) ?? true
+}
+
+// OK: 未確定は null。呼び出し側が timeout で 404 / エラーへ分岐する
+export function evaluateManageCommunityCanView(snapshot: ManageCommunityGuardSnapshot): boolean | null {
+  if (snapshot.enterpriseId == null || snapshot.enterpriseId === '') {
+    return null // tenant 未解決を「許可」に倒さない
+  }
+  if (snapshot.community != null && snapshot.community.enterprise_id !== snapshot.enterpriseId) {
+    return false
+  }
+  if (snapshot.community != null && snapshot.currentUserId != null) {
+    return snapshot.community.managers.some((managerRef) => managerRef.id === snapshot.currentUserId)
+  }
+  return null
+}
+```
+
+### NG: await 後に route を確認せず遷移する
+
+```typescript
+// NG: fetch 中にユーザーが別ページへ移動していても replace が発火する
+const eligible = await fetchEligible()
+router.replace(eligible ? usagePath : ordersPath)
+
+// OK: 開始時の path と一致するときだけ遷移する
+const requestPath = route.fullPath
+const eligible = await fetchEligible()
+if (route.fullPath !== requestPath) return
+router.replace(eligible ? usagePath : ordersPath)
+```
+
+### NG: `defineProps` を `PropType` オブジェクト形式で書く
+
+```typescript
+// NG: PropType + eslint-disable
+const props = defineProps({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  toggleVerticalOverlayNavActive: {
+    type: Function as PropType<(value: boolean) => void>,
+    required: true,
+  },
+})
+
+// OK: 型エイリアス + 型ベース props（既定値は withDefaults）
+export type VerticalOverlayNavToggleFn = (value: boolean) => void
+
+const props = withDefaults(
+  defineProps<{ toggleVerticalOverlayNavActive: VerticalOverlayNavToggleFn; isOverlayNavActive?: boolean }>(),
+  { isOverlayNavActive: false },
+)
+```
+
+### NG: メール本文の URL を EVENT_HOST 固定で組み立てる
+
+Enterprise 会員には subdomain / custom_domain のホストで届けないと、リンク先で認証が通らない。
+
+```typescript
+// NG: PF ホスト固定。enterprise 会員が開けない URL になる
+const event_url = getEventUrl(community.community_account, event.id)
+
+// OK: community.enterprise_id からホストを解決する
+const event_url = await getEventUrlForCommunity(community, event.id)
+// event から直接引く場合は getEventUrlForEvent(event)
+// community URL は getCommunityUrlForCommunity / 管理画面は getManageCommunityUrlForCommunity
+```
+
+ホスト解決を各ファイルで再実装せず、`functions/default/src/utils/urls.ts` の `resolveAppHostForCommunity` 系へ委譲する。
