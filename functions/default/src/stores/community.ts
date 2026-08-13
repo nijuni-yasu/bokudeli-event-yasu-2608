@@ -118,38 +118,43 @@ export class ShokujiiCommunity extends Community {
     const communityRef = db.collection('communities').doc(this.id).withConverter(communityConverter)
     const memberRef = communityRef.collection('members').doc(uid).withConverter(communityMemberConverter)
     const inviteRef = communityRef.collection('invites').doc(token).withConverter(communityInviteConverter)
-    const inviteDoc = await inviteRef.get()
-    if (!inviteDoc.exists) {
-      throw new HttpsError('not-found', 'The invitation does not exist.')
-    }
-    const created_at = inviteDoc.get('created_at')
-    const now = Timestamp.now()
-    if (created_at.toMillis() < now.toMillis() - EXPIRED_TIME) {
-      throw new HttpsError('invalid-argument', 'The token is expired.')
-    }
-    if (inviteDoc.get('has_token_been_redeemed') === true) {
-      throw new HttpsError('invalid-argument', 'The token has been redeemed.')
-    }
-    // invite と set を batch で実行する
-    const batch = db.batch().update(inviteRef, {
-      has_token_been_redeemed: true,
-      updated_at: now,
+    await db.runTransaction(async (transaction) => {
+      const inviteSnap = await transaction.get(inviteRef)
+      if (!inviteSnap.exists) {
+        throw new HttpsError('not-found', 'The invitation does not exist.')
+      }
+      const invite = inviteSnap.data()
+      if (invite == null) {
+        throw new HttpsError('not-found', 'The invitation does not exist.')
+      }
+      const now = Timestamp.now()
+      if (invite.created_at < now.toMillis() - EXPIRED_TIME) {
+        throw new HttpsError('invalid-argument', 'The token is expired.')
+      }
+      if (invite.has_token_been_redeemed === true) {
+        throw new HttpsError('invalid-argument', 'The token has been redeemed.')
+      }
+      transaction.update(inviteRef, {
+        has_token_been_redeemed: true,
+        updated_at: now,
+      })
+      const memberSnap = await transaction.get(memberRef)
+      if (memberSnap.exists) {
+        const member = memberSnap.data()
+        const roles = new Set(member?.roles ?? []) as Set<CommunityMemberRolesType>
+        roles.add('manager')
+        transaction.update(memberRef, {
+          roles: Array.from(roles),
+        })
+      } else {
+        transaction.set(
+          memberRef,
+          new CommunityMember(uid, {
+            roles: ['manager'],
+          }),
+        )
+      }
     })
-    const memberDoc = await memberRef.get()
-    if (memberDoc.exists) {
-      // 既に存在する場合は roles に 'manager' を追加
-      const roles = new Set(memberDoc.get('roles') ?? []) as Set<CommunityMemberRolesType>
-      roles.add('manager')
-      batch.update(memberRef, {
-        roles: Array.from(roles),
-      })
-    } else {
-      const m = new CommunityMember(uid, {
-        roles: ['manager'],
-      })
-      batch.set(memberRef, m)
-    }
-    await batch.commit()
   }
 }
 

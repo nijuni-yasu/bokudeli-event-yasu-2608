@@ -183,7 +183,7 @@
 | [ ] | RC-177 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `ordersTabPath` の `computed` にリアクティブ依存がなく値を中継しているだけ |
 | [ ] | RC-178 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | プロフィールイベントの pageSize `6` が 4 箇所に散在<br>ずれると reload が別 store に向く |
 | [ ] | RC-179 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `getOrdersPathAfterOrder` が `'/orders'` を再掲・戻り値型未明示 |
-| [ ] | RC-180 | Copilot | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
+| [x] | RC-180 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
 | [x] | RC-181 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約, 📑 仕様書 | 🔧 微修正 | S | レビュー正本に実在しない composable 名 `useAppEventListStore` を記載<br>実在は `useCreateAppCommunityEventListStore`。2 ファイルとも修正 |
 | [x] | RC-182 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolver 例の query キーが実装（camelCase）と不一致<br>`getOrdersPathAfterOrder` の実装に合わせて修正 |
 
@@ -4984,7 +4984,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 | [ ] | RC-177 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 依存のない `computed` |
 | [ ] | RC-178 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | pageSize `6` が 4 箇所に散在 |
 | [ ] | RC-179 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `'/orders'` の再掲・戻り値型未明示 |
-| [ ] | RC-180 | Copilot | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
+| [x] | RC-180 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
 
 ---
 
@@ -6482,7 +6482,7 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-180 | Copilot | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
+| [x] | RC-180 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が get+batch で分離し同一招待トークンの二重 redeem が可能 |
 
 ---
 
@@ -6525,7 +6525,7 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -6536,6 +6536,8 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 **想定工数**: S
 
 **判断理由**: Copilot [must] 指摘。race により 1 トークン複数 redeem が成立しうる。修正方針は Transaction 化で一意だが 🔒 セキュリティのため手順 4a 自動修正対象外。cart 側は RC-143（📋 仕様追加・M）と重複のため本 RC では扱わない。
+
+**対応内容**: `ShokujiiCommunity.inviteAsManager` を `db.runTransaction` に置き換え。transaction 内で invite 読取・検証・`has_token_been_redeemed` 更新・member 読取・roles 更新を原子化。`communityInviteAsManager.test.ts` を追加。
 
 ---
 
