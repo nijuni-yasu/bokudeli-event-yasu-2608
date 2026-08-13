@@ -3,8 +3,14 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityManagerEmailSet } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getCommunityUrl, getManageCommunityUrl } from './utils/urls.js'
-import { ShokujiiCommunity } from './stores/community.js'
+import {
+  getCommunityUrl,
+  getCommunityUrlForCommunity,
+  getManageCommunityUrl,
+  getManageCommunityUrlForCommunity,
+} from './utils/urls.js'
+import { ShokujiiCommunity, getCommunity } from './stores/community.js'
+import { isEnterpriseCommunity } from './utils/enterpriseMail.js'
 import { getUser } from './stores/user.js'
 import { createModuleLogger } from './utils/logger.js'
 
@@ -48,8 +54,15 @@ async function sendCommunityAddedMailToOrganizer(templateId: string, community: 
   }
   const community_account = community.community_account
   const community_name = community.community_name
-  const community_url = getCommunityUrl(community_account)
-  const community_manage_url = getManageCommunityUrl(community_account)
+  const community_url = await getCommunityUrlForCommunity(community)
+  const community_manage_url = await getManageCommunityUrlForCommunity(community)
+  if (isEnterpriseCommunity(community) && (community_url == null || community_manage_url == null)) {
+    logger.error('Enterprise host unresolved for community added mail', {
+      communityId: community.id,
+      enterpriseId: community.enterprise_id,
+    })
+    return []
+  }
   return Promise.all(
     emails.map(async (to) => {
       await sgMail.send({
@@ -59,8 +72,8 @@ async function sendCommunityAddedMailToOrganizer(templateId: string, community: 
         dynamicTemplateData: {
           community_account,
           community_name,
-          community_url,
-          community_manage_url,
+          community_url: community_url ?? '',
+          community_manage_url: community_manage_url ?? '',
         },
       })
     }),
@@ -124,8 +137,19 @@ async function sendCommunityContactMailToOrganizers(
   templateId: string,
   data: CommunityContactRequest,
 ): Promise<void[]> {
+  const community = await getCommunity(data.community_id)
+  if (community == null) {
+    throw new HttpsError('not-found', 'Community not found.')
+  }
+  const community_url = await getCommunityUrlForCommunity(community)
+  if (community_url == null && isEnterpriseCommunity(community)) {
+    throw new HttpsError('failed-precondition', 'enterprise host is not configured')
+  }
   const emails = await getEmailList(data.community_id)
-  const dynamicTemplateData = data
+  const dynamicTemplateData = {
+    ...data,
+    community_url: community_url ?? '',
+  }
   if (!emails.includes(SUPPORT_MAIL)) {
     emails.push(SUPPORT_MAIL)
   }

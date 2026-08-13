@@ -1,7 +1,7 @@
-import { defineString } from 'firebase-functions/params'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { getCommunityInvitationUrl } from '@shokujii/common/utils/urls.js'
 import type { Enterprise } from '@shokujii/common/schemas/Enterprise.js'
+import { resolveEnterpriseAppHost } from '../utils/enterpriseBaseDomain.js'
 import type {
   AcceptInvitationForEnterpriseCommunityManagerRequest,
   AcceptInvitationForEnterpriseCommunityManagerResponse,
@@ -12,24 +12,17 @@ import { getCommunity, getCommunityByAccountInEnterprise } from '../stores/commu
 import { getConfigGlobal } from '../stores/config.js'
 import { getEnterpriseById, getEnterpriseMember } from '../stores/enterprise.js'
 
-const ENTERPRISE_BASE_DOMAIN = defineString('ENTERPRISE_BASE_DOMAIN', { default: '' })
-
 function tokenEnterpriseIdFromAuth(token: Record<string, unknown> | undefined): string | undefined {
   const raw = token?.enterprise_id
   return typeof raw === 'string' ? raw : undefined
 }
 
 export function resolveEnterpriseHost(enterprise: Enterprise): string {
-  const customDomain = enterprise.custom_domain?.trim().toLowerCase()
-  if (customDomain != null && customDomain !== '') {
-    return customDomain
+  const host = resolveEnterpriseAppHost(enterprise)
+  if (host == null) {
+    throw new HttpsError('failed-precondition', 'enterprise host is not configured')
   }
-  const baseDomain = ENTERPRISE_BASE_DOMAIN.value().trim().toLowerCase()
-  const subdomain = enterprise.subdomain?.trim().toLowerCase()
-  if (baseDomain !== '' && subdomain != null && subdomain !== '') {
-    return `${subdomain}.${baseDomain}`
-  }
-  throw new HttpsError('failed-precondition', 'enterprise host is not configured')
+  return host
 }
 
 async function assertActiveEnterpriseMember(enterpriseId: string, userId: string): Promise<void> {

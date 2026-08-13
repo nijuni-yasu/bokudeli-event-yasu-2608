@@ -17,6 +17,20 @@ export function getEnterpriseSubdomainHost(subdomain: string): string | undefine
   return `${subdomain.trim().toLowerCase()}.${baseDomain}`
 }
 
+/**
+ * メール・招待 URL 等のアプリ host（hostname のみ）を解決する。
+ * custom_domain > subdomain.base（communityManager.resolveEnterpriseHost と同一優先順）。
+ */
+export function resolveEnterpriseAppHost(
+  enterprise: Pick<Enterprise, 'subdomain' | 'custom_domain'>,
+): string | undefined {
+  const customDomain = enterprise.custom_domain?.trim().toLowerCase()
+  if (customDomain != null && customDomain !== '') {
+    return customDomain
+  }
+  return getEnterpriseSubdomainHost(enterprise.subdomain)
+}
+
 /** 企業に紐づく許可ホスト一覧（subdomain ホスト + custom_domain） */
 export function getAllowedEnterpriseHosts(enterprise: Pick<Enterprise, 'subdomain' | 'custom_domain'>): string[] {
   const hosts: string[] = []

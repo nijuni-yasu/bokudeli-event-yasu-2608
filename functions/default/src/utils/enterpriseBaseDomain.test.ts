@@ -9,6 +9,7 @@ vi.mock('firebase-functions/params', () => ({
 import {
   getAllowedEnterpriseHosts,
   getEnterpriseSubdomainHost,
+  resolveEnterpriseAppHost,
   resolveEnterpriseCheckoutOrigin,
 } from './enterpriseBaseDomain.js'
 
@@ -31,6 +32,20 @@ describe('enterpriseBaseDomain checkout origin', () => {
   describe('getAllowedEnterpriseHosts', () => {
     it('subdomain ホストと custom_domain の両方を返す', () => {
       expect(getAllowedEnterpriseHosts(enterprise)).toEqual(['acme.enterprise.example.com', 'lunch.acme.co.jp'])
+    })
+  })
+
+  describe('resolveEnterpriseAppHost', () => {
+    it('custom_domain を優先する', () => {
+      expect(resolveEnterpriseAppHost(enterprise)).toBe('lunch.acme.co.jp')
+    })
+
+    it('custom_domain 未設定時は subdomain ホストを返す', () => {
+      expect(resolveEnterpriseAppHost({ subdomain: 'acme', custom_domain: null })).toBe('acme.enterprise.example.com')
+    })
+
+    it('解決不能時は undefined', () => {
+      expect(resolveEnterpriseAppHost({ subdomain: '', custom_domain: null })).toBeUndefined()
     })
   })
 
