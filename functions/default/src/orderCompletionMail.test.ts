@@ -54,7 +54,7 @@ vi.mock('firebase-admin/firestore', () => ({
 
 vi.mock('./utils/urls.js', () => ({
   convertStoragePathToURL: (path: string) => `https://storage.example/${path}`,
-  getEventUrl: () => 'https://example.com/event',
+  getEventUrlForEvent: async () => 'https://example.com/event',
   getUserUrl: () => 'https://example.com/user',
   FIREBASE_STORAGE_BASE_URL: 'https://storage.example/',
 }))

@@ -7,7 +7,7 @@ import {
 } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
-import { getEventUrl, getPartnerOrderUrl, convertStoragePathToURL } from './utils/urls.js'
+import { getEventUrlForEvent, getPartnerOrderUrl, convertStoragePathToURL } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import { getAcceptingOrderEventsByTime, ShokujiiEvent } from './stores/event.js'
@@ -98,6 +98,14 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
   const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
   const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
+  const event_url = await getEventUrlForEvent(event)
+  if (event_url == null && isEnterpriseEvent(event)) {
+    logger.error('Enterprise host unresolved for order deadline mail', {
+      eventId: event.id,
+      enterpriseId: event.enterprise_id,
+    })
+    throw new Error('enterprise host is not configured')
+  }
 
   return {
     event_name: event.event_name,
@@ -110,7 +118,7 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
     event_deadline_datetime,
     order_count,
     order_total_price,
-    event_url: getEventUrl(event.community_account, event.id),
+    event_url: event_url ?? '',
     orders,
     order_url: getPartnerOrderUrl(event.id),
     organizer_fullname: event.organizer_fullname,
@@ -132,6 +140,14 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
   const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
   const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
+  const event_url = await getEventUrlForEvent(event)
+  if (event_url == null && isEnterpriseEvent(event)) {
+    logger.error('Enterprise host unresolved for organizer order deadline mail', {
+      eventId: event.id,
+      enterpriseId: event.enterprise_id,
+    })
+    throw new Error('enterprise host is not configured')
+  }
 
   const shopData = await getEventPartnerShop(event)
   if (!shopData) {
@@ -148,7 +164,7 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
     community_name: event.community_name,
     shop_name: event.shop_name,
     date,
-    event_url: getEventUrl(event.community_account, event.id),
+    event_url: event_url ?? '',
     event_deadline_datetime,
     order_count,
     orders,
@@ -252,6 +268,14 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
   await Promise.allSettled(
     events.map(async (event) => {
       try {
+        const event_url = await getEventUrlForEvent(event)
+        if (event_url == null && isEnterpriseEvent(event)) {
+          logger.error('Enterprise host unresolved for order deadline member mail', {
+            eventId: event.id,
+            enterpriseId: event.enterprise_id,
+          })
+          return
+        }
         const dynamic_template_data: TemplateDataForMembers = {
           date: convertToDateWeekdayShort(event.event_start_datetime),
           event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
@@ -260,7 +284,7 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
           community_name: event.community_name,
           event_address: event.fullAddress,
           shop_name: event.shop_name,
-          event_url: getEventUrl(event.community_account, event.id),
+          event_url: event_url ?? '',
         }
 
         const memberEmails = await getEventMemberEmails(event)
@@ -319,9 +343,10 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
           return
         }
 
+        const event_url = await getEventUrlForEvent(event)
         const dynamic_template_data: TemplateDataForCommunityReminder = {
           community_name: event.community_name,
-          event_url: getEventUrl(event.community_account, event.id),
+          event_url: event_url ?? '',
           event_name: event.event_name,
           event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
           event_desc: event.event_desc,
