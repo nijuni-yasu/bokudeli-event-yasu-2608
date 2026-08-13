@@ -140,7 +140,7 @@
 | [x] | RC-134 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | profileFilter のインラインオブジェクト prop |
 | [x] | RC-135 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | legacy tab リダイレクトの重複分岐 |
 | [x] | RC-136 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | user の getOrdersPath が常に同値を返す tab 引数を持つ |
-| [ ] | RC-137 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | eventStatusChangeMail がホスト未解決時に throw し onDocumentWritten が永続リトライする<br>AC-13 はバッチを ERROR ログ + 送信スキップ。letter.ts に揃える |
+| [x] | RC-137 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | eventStatusChangeMail がホスト未解決時に throw し onDocumentWritten が永続リトライする<br>AC-13 はバッチを ERROR ログ + 送信スキップ。letter.ts に揃える |
 | [x] | RC-138 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getEventUrlForEvent が resolveAppHostForCommunity を再実装していた<br>`getEventUrlForCommunity` へ委譲 + 失敗系 vitest を追加 |
 | [x] | RC-139 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未使用の `getUserUrlForHost` が残っていた<br>呼び出しが無いため削除 |
 | [x] | RC-140 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `base/auto-imports.d.ts` が gitignore 済みで未追跡<br>CI Typecheck が 282 件の TS2304 で失敗（PR verify 実測 red）。gitignore から除外 |
@@ -159,7 +159,7 @@
 | [ ] | RC-153 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `createLayoutsFromThemeConfig` の引数が `unknown` で呼び出し側の型検査が消失 |
 | [ ] | RC-154 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `reloadForStaleChunk` の `Reflect.apply` が実質的な型回避・変数名 `global` が紛らわしい |
 | [ ] | RC-155 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `setupGlobalErrorHandling` の `app` が optional + `?? 'user'`<br>渡し漏れ時に enterprise のエラーが user に集計される |
-| [ ] | RC-156 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `base/tsconfig.json` の `**/*.test.ts` 除外でテストの型エラー 4 件が隠れている |
+| [x] | RC-156 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `base/tsconfig.json` の `**/*.test.ts` 除外でテストの型エラー 4 件が隠れている |
 | [ ] | RC-157 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📄 ドキュメントのみ | S | `@/*` → base スタブの path マッピングが暫定措置である旨の注記なし |
 | [ ] | RC-158 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `omitUndefined` の `as T` と戻り値型の不正確さ・`object.test.ts` 不在 |
 | [ ] | RC-159 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `describe('computeOrderLineNet')` が同一ファイルに 2 ブロック分裂 |
@@ -173,7 +173,7 @@
 | [ ] | RC-167 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | 同一テンプレートの一括送信 2 箇所が `Promise.all` + 個別 send |
 | [ ] | RC-168 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `communityAdded` トリガーで `console.error` + Callable 用 `HttpsError` |
 | [x] | RC-169 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📤 スコープ外 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | PF `communityManager.ts` の `hasRole` に await 漏れで認可バイパス<br>development 由来の既存不具合。別 Issue 化を要判断 |
-| [ ] | RC-170 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🔧 微修正 | S | `orderDeadlineMail` 内でホスト未解決時の扱いが throw / スキップに割れている |
+| [x] | RC-170 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🔧 微修正 | S | `orderDeadlineMail` 内でホスト未解決時の扱いが throw / スキップに割れている |
 | [ ] | RC-171 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💾 データ | 🔧 微修正 | S | 新規キー doc `enterprises/*/community_accounts/*` の ref に `withConverter` なし |
 | [ ] | RC-172 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 🏗️ 設計 | 📐 リファクタ | S | partner create.vue が一覧の filters / pageSize を手書きコピーして store id 一致を担保 |
 | [ ] | RC-173 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | partner create.vue で submit 成功時と `onUnmounted` の reload が二重発火 |
@@ -188,8 +188,8 @@
 | [x] | RC-182 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolver 例の query キーが実装（camelCase）と不一致<br>`getOrdersPathAfterOrder` の実装に合わせて修正 |
 | [x] | RC-183 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `getCommunityData` 未指定時 enterprise_id フィルタなしで PF 呼び出しが誤判定 |
 | [x] | RC-184 | Codex | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が invite 更新後に member read し FAILED_PRECONDITION |
-| [ ] | RC-185 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | ホスト未解決時 community 作成メール #12 が early return で未送信 |
-| [ ] | RC-186 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `/orders` 利用状況パネルが loginUser 未確定でマウントし表示されない |
+| [x] | RC-185 | Codex | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | ホスト未解決時 community 作成メール #12 が early return で未送信 |
+| [x] | RC-186 | Codex | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `/orders` 利用状況パネルが loginUser 未確定でマウントし表示されない |
 
 ---
 
@@ -4773,7 +4773,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-137 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | eventStatusChangeMail がホスト未解決時に throw し onDocumentWritten が永続リトライする<br>AC-13 はバッチを ERROR ログ + 送信スキップ。letter.ts に揃える |
+| [x] | RC-137 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | eventStatusChangeMail がホスト未解決時に throw し onDocumentWritten が永続リトライする<br>AC-13 はバッチを ERROR ログ + 送信スキップ。letter.ts に揃える |
 | [x] | RC-138 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getEventUrlForEvent が resolveAppHostForCommunity を再実装していた<br>`getEventUrlForCommunity` へ委譲 + 失敗系 vitest を追加 |
 | [x] | RC-139 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未使用の `getUserUrlForHost` が残っていた<br>呼び出しが無いため削除 |
 
@@ -4806,7 +4806,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -4817,6 +4817,8 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 **想定工数**: S
 
 **判断理由**: AC-13 の「URL 省略」を空文字送信と解釈するか送信スキップと解釈するかが letter.ts 実装と併せて判断を要する。📑 仕様書のため手順 3b の自動修正対象外。
+
+**対応内容**: `throw` を削除し ERROR ログ + `event_url: ''` で送信継続（#2249）。`eventStatusChangeMail.test.ts` を追加。
 
 ---
 
@@ -4964,7 +4966,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 | [ ] | RC-153 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `createLayoutsFromThemeConfig` の引数が `unknown` |
 | [ ] | RC-154 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `Reflect.apply` による実質的な型回避 |
 | [ ] | RC-155 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `app` optional + `?? 'user'` のフォールバック |
-| [ ] | RC-156 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `**/*.test.ts` 除外でテスト型エラー 4 件が隠れている |
+| [x] | RC-156 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `**/*.test.ts` 除外でテスト型エラー 4 件が隠れている |
 | [ ] | RC-157 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📄 ドキュメントのみ | S | `@/*` path マッピングの暫定性が未注記 |
 | [ ] | RC-158 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `omitUndefined` の `as T` とテスト不在 |
 | [ ] | RC-159 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `describe` ブロックの分裂 |
@@ -4978,7 +4980,7 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 | [ ] | RC-167 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | 一括送信が `Promise.all` + 個別 send |
 | [ ] | RC-168 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | トリガーで `console.error` + `HttpsError` |
 | [x] | RC-169 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📤 スコープ外 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | PF `hasRole` の await 漏れで認可バイパス（既存不具合） |
-| [ ] | RC-170 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🔧 微修正 | S | ホスト未解決時の扱いが throw / スキップに割れている |
+| [x] | RC-170 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🔧 微修正 | S | ホスト未解決時の扱いが throw / スキップに割れている |
 | [ ] | RC-171 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💾 データ | 🔧 微修正 | S | 新規キー doc の ref に `withConverter` なし |
 | [ ] | RC-172 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 🏗️ 設計 | 📐 リファクタ | S | store id 一致を手書きコピーで担保 |
 | [ ] | RC-173 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | reload の二重発火 |
@@ -5591,7 +5593,7 @@ type SetupGlobalErrorHandlingOptions = Pick<ClientErrorContext, 'app'>
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -5602,6 +5604,8 @@ type SetupGlobalErrorHandlingOptions = Pick<ClientErrorContext, 'app'>
 **想定工数**: S
 
 **判断理由**: テスト 4 件の型修正を伴い、除外を外すと他の未検出エラーが露出しうる。CI 復旧を優先し次周回に送る。
+
+**対応内容**: テスト 4 件の型エラーを修正し `base/tsconfig.json` から `**/*.test.ts` 除外を削除（#2250）。
 
 ---
 
@@ -6113,7 +6117,7 @@ export type EnterpriseTenantCacheEntry = {
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -6124,6 +6128,8 @@ export type EnterpriseTenantCacheEntry = {
 **想定工数**: S
 
 **判断理由**: AC-13 の「URL 省略」を空文字送信と解釈するか送信スキップと解釈するかの仕様判断が必要で、RC-137 と方針を揃える必要がある。📑 仕様書のため手順 3b の対象外。
+
+**対応内容**: `throw` とメンバー向け early return を廃止し ERROR ログ + `event_url: ''` で送信継続に統一（#2249）。`orderDeadlineMail.test.ts` を拡張。
 
 ---
 
@@ -6651,8 +6657,8 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | [x] | RC-183 | Copilot | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📏 規約 | 🔧 微修正 | S | `getCommunityData` 未指定時 enterprise_id フィルタなしで PF 呼び出しが誤判定 |
 | [x] | RC-184 | Codex | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `inviteAsManager` が invite 更新後に member read し FAILED_PRECONDITION |
-| [ ] | RC-185 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | ホスト未解決時 community 作成メール #12 が early return で未送信 |
-| [ ] | RC-186 | Codex | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `/orders` 利用状況パネルが loginUser 未確定でマウントし表示されない |
+| [x] | RC-185 | Codex | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | ホスト未解決時 community 作成メール #12 が early return で未送信 |
+| [x] | RC-186 | Codex | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX, 🐛 実害 | 🔧 微修正 | S | `/orders` 利用状況パネルが loginUser 未確定でマウントし表示されない |
 
 ---
 
@@ -6724,7 +6730,7 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -6735,6 +6741,8 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 **想定工数**: S
 
 **判断理由**: AC-13 方針に沿う修正は明確だが 📑 仕様書ラベルのため手順 4a 自動修正対象外。early return 削除と ERROR ログ維持で対応可能。
+
+**対応内容**: early return を削除し ERROR ログ + 空 URL で #12 送信継続（#2248）。`communityMail.test.ts` を追加。
 
 ---
 
@@ -6750,7 +6758,7 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -6761,5 +6769,7 @@ export const getOrdersPathAfterOrder = ({ eventId, communityAccount }: { ... }) 
 **想定工数**: S
 
 **判断理由**: RC-19 と同様 Auth UID フォールバックで解消可能だが 👤 UX ラベルのため手順 4a 自動修正対象外。
+
+**対応内容**: `firebaseUser.uid` フォールバック + `watch` で uid 確定後に再 load（#2230）。
 
 ---
