@@ -168,11 +168,11 @@
 | [ ] | RC-162 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | `firebase.client.ts` が base の Firebase 初期化を複製 + alias 差し替え |
 | [ ] | RC-163 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterprise `u/[userId].vue` の 1 分岐だけ `/orders` をハードコード |
 | [ ] | RC-164 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `evaluateManageCommunityCanView` の `config !== FIRESTORE_LOADING` が到達不能な冗長チェック |
-| [ ] | RC-165 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 📋 仕様追加 | M | `/admin` ガードの tenant 照合が fail-open に退行<br>`user_type !== 'enterprise'` の claims で照合を丸ごとスキップ |
+| [x] | RC-165 | なし・エージェントレビュー | 🟡 修正提案 | 📤 #2251 別Issue化 | 📤 スコープ外 | 🔒 セキュリティ | 📋 仕様追加 | M | `/admin` ガードの tenant 照合が fail-open に退行<br>`user_type !== 'enterprise'` の claims で照合を丸ごとスキップ |
 | [ ] | RC-166 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💾 データ | 🔧 微修正 | S | `enterpriseTenantCache` の `cached_at` が TTL 判定に未使用 |
 | [ ] | RC-167 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | 同一テンプレートの一括送信 2 箇所が `Promise.all` + 個別 send |
 | [ ] | RC-168 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `communityAdded` トリガーで `console.error` + Callable 用 `HttpsError` |
-| [ ] | RC-169 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📤 スコープ外 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | PF `communityManager.ts` の `hasRole` に await 漏れで認可バイパス<br>development 由来の既存不具合。別 Issue 化を要判断 |
+| [x] | RC-169 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📤 スコープ外 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | PF `communityManager.ts` の `hasRole` に await 漏れで認可バイパス<br>development 由来の既存不具合。別 Issue 化を要判断 |
 | [ ] | RC-170 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🔧 微修正 | S | `orderDeadlineMail` 内でホスト未解決時の扱いが throw / スキップに割れている |
 | [ ] | RC-171 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💾 データ | 🔧 微修正 | S | 新規キー doc `enterprises/*/community_accounts/*` の ref に `withConverter` なし |
 | [ ] | RC-172 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 🏗️ 設計 | 📐 リファクタ | S | partner create.vue が一覧の filters / pageSize を手書きコピーして store id 一致を担保 |
@@ -4966,11 +4966,11 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 | [ ] | RC-162 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | `firebase.client.ts` が base 初期化を複製 |
 | [ ] | RC-163 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterprise `u/[userId].vue` の `/orders` ハードコード |
 | [ ] | RC-164 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 到達不能な `config !== FIRESTORE_LOADING` チェック |
-| [ ] | RC-165 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 📋 仕様追加 | M | `/admin` ガードの tenant 照合が fail-open に退行 |
+| [x] | RC-165 | なし・エージェントレビュー | 🟡 修正提案 | 📤 #2251 別Issue化 | 📤 スコープ外 | 🔒 セキュリティ | 📋 仕様追加 | M | `/admin` ガードの tenant 照合が fail-open に退行 |
 | [ ] | RC-166 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💾 データ | 🔧 微修正 | S | `cached_at` が TTL 判定に未使用 |
 | [ ] | RC-167 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | 一括送信が `Promise.all` + 個別 send |
 | [ ] | RC-168 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | トリガーで `console.error` + `HttpsError` |
-| [ ] | RC-169 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📤 スコープ外 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | PF `hasRole` の await 漏れで認可バイパス（既存不具合） |
+| [x] | RC-169 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📤 スコープ外 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | PF `hasRole` の await 漏れで認可バイパス（既存不具合） |
 | [ ] | RC-170 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🔧 微修正 | S | ホスト未解決時の扱いが throw / スキップに割れている |
 | [ ] | RC-171 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💾 データ | 🔧 微修正 | S | 新規キー doc の ref に `withConverter` なし |
 | [ ] | RC-172 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 🏗️ 設計 | 📐 リファクタ | S | store id 一致を手書きコピーで担保 |
@@ -5916,9 +5916,9 @@ export async function ensureEnterpriseTenantConsistent(user: User): Promise<bool
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: 📤 #2251 別Issue化
 
-**PRスコープ**: 📌 スコープ内
+**PRスコープ**: 📤 スコープ外
 
 **ラベル**: 🔒 セキュリティ
 
@@ -5926,7 +5926,7 @@ export async function ensureEnterpriseTenantConsistent(user: User): Promise<bool
 
 **想定工数**: M
 
-**判断理由**: 「従業員 claims でない場合にログイン必須ルート全般をどう扱うか」は仕様判断であり、セキュリティ影響範囲の確認も必要。手順 3a の自動修正対象外。
+**判断理由**: 「従業員 claims でない場合にログイン必須ルート全般をどう扱うか」は仕様判断であり、セキュリティ影響範囲の確認も必要。手順 3a の自動修正対象外。本 PR では修正せず [#2251](https://github.com/nijuniinc/bokudeli-event-new/issues/2251) へ切り出し。
 
 ---
 
@@ -6067,7 +6067,7 @@ export type EnterpriseTenantCacheEntry = {
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📤 スコープ外
 
@@ -6077,7 +6077,7 @@ export type EnterpriseTenantCacheEntry = {
 
 **想定工数**: S
 
-**判断理由**: 本 PR の差分外（`origin/development` 由来の既存不具合）でありスコープ外。修正自体は 1 行だが、エンプラ MVP の PR に混ぜると責務が混在するため、Issue 化して単独対応するか本 PR に含めるかをユーザー判断とする。
+**判断理由**: `community.hasRole` に `await` を追加し、`communityManager.test.ts` で permission-denied を検証。enterprise 版（RC-146）と同じ修正。
 
 ---
 

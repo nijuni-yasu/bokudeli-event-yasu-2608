@@ -21,7 +21,7 @@ export const getInvitationUrlForCommunityManager = onCall(async (request) => {
   }
   const config = await getConfigGlobal()
   const isSupport = config?.isSupport(uid) ?? false
-  const isManager = community.hasRole(uid, 'manager')
+  const isManager = await community.hasRole(uid, 'manager')
   if (!isSupport && !isManager) {
     throw new HttpsError('permission-denied', 'The function must be called by a manager.')
   }
