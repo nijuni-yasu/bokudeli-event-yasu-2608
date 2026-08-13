@@ -9,7 +9,7 @@
     "materio/@layouts.d.ts",
     "materio/@themeConfig.d.ts"
   ],
-  "exclude": ["node_modules", "materio/@core/**", "materio/@layouts/**", "**/*.test.ts"],
+  "exclude": ["node_modules", "materio/@core/**", "materio/@layouts/**"],
   "compilerOptions": {
     "baseUrl": ".",
     "skipLibCheck": true,

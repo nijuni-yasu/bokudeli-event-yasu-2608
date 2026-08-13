@@ -18,6 +18,13 @@ import {
 } from './reloadForStaleChunk.js'
 
 describe('reloadForStaleChunk', () => {
+  type MockToastElement = {
+    id: string
+    textContent: string
+    style: Record<string, string>
+    setAttribute: ReturnType<typeof vi.fn>
+  }
+
   const reloadMock = vi.fn()
   const sessionStorageMock = (() => {
     const store = new Map<string, string>()
@@ -40,28 +47,33 @@ describe('reloadForStaleChunk', () => {
     sessionStorageMock.setItem.mockClear()
     sessionStorageMock.removeItem.mockClear()
 
-    const createdElements: Array<{ id: string }> = []
+    const createdElements: MockToastElement[] = []
     vi.stubGlobal('sessionStorage', sessionStorageMock)
     vi.stubGlobal('location', { reload: reloadMock })
     vi.stubGlobal('setTimeout', (handler: TimerHandler) => {
       if (typeof handler === 'function') {
         handler()
       }
-      return 0 as ReturnType<typeof setTimeout>
+      return 0 as unknown as ReturnType<typeof setTimeout>
     })
     vi.stubGlobal('window', {
       setTimeout: (handler: TimerHandler) => {
         if (typeof handler === 'function') {
           handler()
         }
-        return 0 as ReturnType<typeof setTimeout>
+        return 0 as unknown as ReturnType<typeof setTimeout>
       },
       location: { reload: reloadMock },
     })
     vi.stubGlobal('document', {
       getElementById: vi.fn((id: string) => createdElements.find((element) => element.id === id) ?? null),
-      createElement: vi.fn(() => {
-        const element = { id: '', textContent: '', style: {} as CSSStyleDeclaration, setAttribute: vi.fn() }
+      createElement: vi.fn((): MockToastElement => {
+        const element: MockToastElement = {
+          id: '',
+          textContent: '',
+          style: {},
+          setAttribute: vi.fn(),
+        }
         createdElements.push(element)
         return element
       }),

@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { buildLinkifiedSegments } from './linkifiedSegments.js'
 
-const textValues = (segments: ReturnType<typeof buildLinkifiedSegments>): string[] => {
-  return segments.filter((segment) => segment.kind === 'text').map((segment) => segment.value)
-}
+const textValues = (segments: ReturnType<typeof buildLinkifiedSegments>): string[] =>
+  segments.flatMap((segment) => (segment.kind === 'text' ? [segment.value] : []))
 
 describe('buildLinkifiedSegments', () => {
   it('keeps HTML tags as plain text', () => {
@@ -19,7 +18,9 @@ describe('buildLinkifiedSegments', () => {
   it('keeps img onerror payload as plain text segments', () => {
     const segments = buildLinkifiedSegments('<img src=x onerror=alert(1)>')
     expect(segments.every((segment) => segment.kind === 'text')).toBe(true)
-    expect(segments.map((segment) => segment.value).join('')).toBe('<img src=x onerror=alert(1)>')
+    expect(segments.flatMap((segment) => (segment.kind === 'text' ? [segment.value] : [])).join('')).toBe(
+      '<img src=x onerror=alert(1)>',
+    )
   })
 
   it('linkifies a standalone URL token', () => {
