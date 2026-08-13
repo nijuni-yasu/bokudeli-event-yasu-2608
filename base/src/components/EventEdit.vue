@@ -824,7 +824,7 @@ const resolveHasEventCoverImage = (): boolean => {
   if (eventId == null) {
     return false
   }
-  const eventStore = useEventStore(eventId) as EventStore
+  const eventStore = createAppEventStore(eventId)
   const eventCover = eventStore.coverImageUrl
   return eventCover != null && eventCover !== ''
 }

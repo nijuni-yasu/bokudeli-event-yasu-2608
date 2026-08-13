@@ -27,12 +27,19 @@ const value: number = 'not-a-number'
 EOF
 
 set +e
-npm -w base exec vue-tsc --noEmit --pretty false "$FIXTURE" >/dev/null 2>&1
+OUTPUT="$(npm -w base exec -- vue-tsc --noEmit --pretty false "$FIXTURE" 2>&1)"
 STATUS=$?
 set -e
 
 if [[ "$STATUS" -eq 0 ]]; then
   echo "vue-tsc gate: expected type error to fail, but exit code was 0" >&2
+  exit 1
+fi
+
+# 終了コードだけでは TS6053（ファイル未検出）等でも合格してしまうため、意図した型エラーの検出を確認する
+if [[ "$OUTPUT" != *"error TS2322"* ]]; then
+  echo "vue-tsc gate: expected TS2322 for the fixture, got:" >&2
+  echo "$OUTPUT" >&2
   exit 1
 fi
 
