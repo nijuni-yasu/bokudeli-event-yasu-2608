@@ -1,7 +1,7 @@
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
-import type { User } from '@shokujii/common/schemas/User'
+import type { User } from '@shokujii/common/schemas/User.js'
 
 export const escapeCsvCell = (value: string): string => `"${value.replace(/"/g, '""')}"`
 

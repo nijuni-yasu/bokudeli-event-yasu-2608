@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import MemberSnsButtons from '@shokujii/base/components/manage/MemberSnsButtons.vue'
-import type { User } from '@shokujii/common/schemas/User'
+import type { User } from '@shokujii/common/schemas/User.js'
 
 defineProps<{
   member: User

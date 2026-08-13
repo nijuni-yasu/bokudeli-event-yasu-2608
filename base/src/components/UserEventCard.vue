@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
@@ -22,7 +23,7 @@ const props = defineProps<{
   /** 注文取得失敗時 true（注文ブロックにエラー＋再試行） */
   ordersError?: boolean
   /** 指定時はカバー・タイトルをイベント詳細へリンク（操作ボタンはリンク外） */
-  eventDetailPath?: string
+  eventDetailPath?: RouteLocationRaw
 }>()
 
 const { t } = useI18n()

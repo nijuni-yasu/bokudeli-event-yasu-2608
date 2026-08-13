@@ -12,10 +12,15 @@ export function clearStaleChunkReloadFlag(): void {
 
 function getReloadMessage(): string {
   try {
-    return getI18n().global.t('error.app_update_reload')
+    const global = getI18n().global
+    const result = Reflect.apply(global.t, global, ['error.app_update_reload'])
+    if (typeof result === 'string') {
+      return result
+    }
   } catch {
     return FALLBACK_MESSAGE
   }
+  return FALLBACK_MESSAGE
 }
 
 function showStaleChunkReloadToast(): void {

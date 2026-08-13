@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { mdiAccountGroup } from '@mdi/js'
 
 defineProps<{
   communityName: string
   isPublic: boolean
   iconUrl: string | undefined
-  linkTo: string | undefined
+  linkTo: RouteLocationRaw | undefined
 }>()
 </script>
 

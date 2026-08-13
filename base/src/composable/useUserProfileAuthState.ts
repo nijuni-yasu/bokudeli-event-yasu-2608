@@ -1,4 +1,4 @@
-import { computed, ref, type ComputedRef } from 'vue'
+import type { Ref, ComputedRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
@@ -18,9 +18,9 @@ export type UserProfileAuthState = {
   isPreviewAccessGranted: ComputedRef<boolean>
   canInitTabStores: ComputedRef<boolean>
   previewStore: ReturnType<typeof useUserProfilePreviewStore>
-  previewData: ComputedRef<GetUserProfilePreviewResponse | null>
-  previewLoading: ComputedRef<boolean>
-  previewError: ComputedRef<unknown>
+  previewData: Ref<GetUserProfilePreviewResponse | null>
+  previewLoading: Ref<boolean>
+  previewError: Ref<unknown>
 }
 
 export const useUserProfileAuthState = (profileUserId: string, authMode: UserProfileAuthMode): UserProfileAuthState => {

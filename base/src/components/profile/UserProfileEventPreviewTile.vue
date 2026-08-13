@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { mdiCalendarHeart } from '@mdi/js'
 import { formatProfilePreviewDate } from '@shokujii/base/components/profile/userProfileConstants.js'
 
@@ -6,7 +7,7 @@ defineProps<{
   eventName: string
   eventStartDatetime: number
   isPublic: boolean
-  linkTo: string | undefined
+  linkTo: RouteLocationRaw | undefined
   showCoverImage: boolean
   coverUrl: string | undefined
 }>()

@@ -145,7 +145,7 @@ const checkAccountExists = async (value: string) => {
 }
 const isOpenNewCommunityDialog = ref(false)
 
-let autoOpenTimer: ReturnType<typeof setTimeout> | null = null
+let autoOpenTimer: number | null = null
 onMounted(() => {
   if (props.autoOpenHelpDialog === true) {
     autoOpenTimer = window.setTimeout(() => {

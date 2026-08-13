@@ -71,9 +71,6 @@ const isOrderHistoryLoaded = computed(() => userOrderHistoryStore.value?.initial
 const cancelLoadingEventId = ref<string | null>(null)
 const cancelDialogEventId = ref<string | null>(null)
 
-// 注文履歴は本人のみ閲覧（isOwner 常に true）。is_linkable 未指定時はリンク可
-const canLinkToDetail = (isLinkable?: boolean): boolean => isLinkable ?? true
-
 const showOrdersEmpty = computed(
   () => isOrderHistoryLoaded.value && orderHistoryEvents.value.length === 0 && !orderHistoryHasMore.value,
 )
@@ -166,11 +163,7 @@ watch(
               :is-owner="true"
               :hide-private-scope-chip="true"
               :cancel-loading="cancelLoadingEventId === event.event_id"
-              :event-detail-path="
-                canLinkToDetail(event.is_linkable)
-                  ? props.resolveEventPath(event.community_account, event.event_id)
-                  : undefined
-              "
+              :event-detail-path="props.resolveEventPath(event.community_account, event.event_id)"
               @download-invoice="downloadReceipt"
               @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
               @retry-orders="(eid: string) => userOrderHistoryStore?.reloadOrdersForEvent(eid)"

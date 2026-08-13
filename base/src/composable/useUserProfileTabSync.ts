@@ -42,7 +42,20 @@ export const useUserProfileTabSync = (options: {
     const currentSort =
       route.query.sort == null || String(route.query.sort) === '' ? undefined : String(route.query.sort)
     if (currentTab === nextTab && (!options.syncFriendSortToUrl || currentSort === nextSort)) return
-    const query: Record<string, string | string[] | undefined> = { ...route.query }
+    const query: Record<string, string | string[] | undefined> = {}
+    for (const [key, value] of Object.entries(route.query)) {
+      if (value == null) {
+        continue
+      }
+      if (Array.isArray(value)) {
+        const normalized = value.filter((item): item is string => item != null)
+        if (normalized.length > 0) {
+          query[key] = normalized
+        }
+      } else {
+        query[key] = value
+      }
+    }
     if (nextTab === undefined) {
       delete query.tab
     } else {

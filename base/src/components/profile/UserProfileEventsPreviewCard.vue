@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { mdiCalendarHeart } from '@mdi/js'
 import type { UserProfileEventPreviewItem } from '@shokujii/common/apis/userProfile.js'
 import type {
@@ -27,7 +28,7 @@ const eventLinkTo = (
   event: UserProfileEventPreviewItem,
   canLinkToDetail: ProfileLinkPolicyFn,
   resolveEventPath: ResolveEventPathFn,
-): string | undefined =>
+): RouteLocationRaw | undefined =>
   canLinkToDetail(event.is_public, event.is_linkable)
     ? resolveEventPath(event.community_account, event.event_id)
     : undefined

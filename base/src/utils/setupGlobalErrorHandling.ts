@@ -17,7 +17,7 @@ type SetupGlobalErrorHandlingOptions = Pick<ClientErrorContext, 'app'>
 export function setupGlobalErrorHandling(app: App, router: Router, options: SetupGlobalErrorHandlingOptions): void {
   const { app: appName } = options
 
-  configureClientErrorReporting({ app: appName })
+  configureClientErrorReporting({ app: appName ?? 'user' })
 
   const reportAndRedirect520 = (err: unknown, componentInfo?: string): void => {
     console.error('Stale chunk retry exhausted:', err)

@@ -2,20 +2,22 @@
   "extends": "../tsconfig.base.json",
   "include": [
     "env.d.ts",
+    "auto-imports.d.ts",
     "src/**/*",
     "src/**/*.vue",
     "materio/@core.d.ts",
     "materio/@layouts.d.ts",
     "materio/@themeConfig.d.ts"
   ],
-  "exclude": ["node_modules", "materio/@core/**", "materio/@layouts/**"],
+  "exclude": ["node_modules", "materio/@core/**", "materio/@layouts/**", "**/*.test.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "skipLibCheck": true,
     "skipDefaultLibCheck": true, // デフォルトライブラリもスキップ
     "types": [], // 自動的に含まれる型定義を制限
     "paths": {
-      "@shokujii/base/*": ["./src/*"]
+      "@shokujii/base/*": ["./src/*"],
+      "@/*": ["./src/stubs/app/*"]
     }
   }
 }

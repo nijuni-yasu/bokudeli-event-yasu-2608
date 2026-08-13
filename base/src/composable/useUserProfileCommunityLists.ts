@@ -8,13 +8,32 @@ import {
   type UserProfileTabKey,
 } from '@shokujii/base/components/profile/userProfileConstants.js'
 import { useAutoLoadWhenEmpty } from '@shokujii/base/composable/useAutoLoadWhenEmpty.js'
+import type { BokudeliCommunity, BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
+
+export type UserProfileCommunityListItem = {
+  community: BokudeliCommunity
+  members: BokudeliCommunityMember[]
+}
+
+export type UserProfileCommunityListsState = {
+  memberCommunityListStore: Ref<CommunityListStore | null>
+  managerCommunityListStore: Ref<CommunityListStore | null>
+  memberCommunities: ComputedRef<UserProfileCommunityListItem[]>
+  managerCommunities: ComputedRef<UserProfileCommunityListItem[]>
+  showJoinedSection: ComputedRef<boolean>
+  showManagedSection: ComputedRef<boolean>
+  memberCommunityListHasMore: ComputedRef<boolean>
+  managerCommunityListHasMore: ComputedRef<boolean>
+  isCommunitiesTabEmpty: ComputedRef<boolean>
+  isCommunitiesTabReady: ComputedRef<boolean>
+}
 
 export const useUserProfileCommunityLists = (options: {
   profileUserId: string
   profileFilter: Ref<ProfileListFilter>
   tabs: Ref<UserProfileTabKey>
   canInitTabStores: ComputedRef<boolean>
-}) => {
+}): UserProfileCommunityListsState => {
   const communityFilterConstraints = computed(() => profileListFilterToConstraints(options.profileFilter.value))
 
   const memberCommunityListStore = ref<CommunityListStore | null>(null)
@@ -60,7 +79,7 @@ export const useUserProfileCommunityLists = (options: {
       }
       return {
         community: communityStore.community,
-        members: communityStore.members.filter((m) => m !== undefined),
+        members: communityStore.members.filter((m): m is BokudeliCommunityMember => m != null),
       }
     }),
   )
@@ -72,7 +91,7 @@ export const useUserProfileCommunityLists = (options: {
       }
       return {
         community: communityStore.community,
-        members: communityStore.members.filter((m) => m !== undefined),
+        members: communityStore.members.filter((m): m is BokudeliCommunityMember => m != null),
       }
     }),
   )

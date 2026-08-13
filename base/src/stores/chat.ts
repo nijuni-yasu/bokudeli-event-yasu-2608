@@ -633,7 +633,11 @@ export const useChatStore = defineStore('chat', () => {
 
     try {
       for (const imageFile of imageFiles) {
-        const attachment = await buildAttachment(roomId, messageId, imageFile, imageFile.type)
+        const contentType = imageFile.type
+        if (!isAllowedChatAttachmentMimeType(contentType)) {
+          throw new Error(CHAT_SEND_MESSAGE_ERROR.attachment_type)
+        }
+        const attachment = await buildAttachment(roomId, messageId, imageFile, contentType)
         await uploadChatAttachment(imageFile, attachment.storage_path, attachment.content_type)
         uploadedPaths.push(attachment.storage_path)
         attachments.push(attachment)
