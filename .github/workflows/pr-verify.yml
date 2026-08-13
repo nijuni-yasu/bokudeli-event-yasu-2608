@@ -52,6 +52,7 @@ jobs:
             root:
               - 'package.json'
               - 'package-lock.json'
+              - 'scripts/verify-vue-tsc-gate.sh'
               - '.github/workflows/pr-verify.yml'
 
   verify:
@@ -74,6 +75,11 @@ jobs:
         run: npm run verify:functions-deploy
       - name: Install dependencies
         run: npm ci
+      - name: Verify vue-tsc gate
+        if: >-
+          needs.changes.outputs.root == 'true' ||
+          needs.changes.outputs.base == 'true'
+        run: npm run verify:vue-tsc-gate
       - name: Build common
         if: >-
           needs.changes.outputs.common == 'true' ||

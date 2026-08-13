@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /c/
+Allow: /communitylist
+Disallow: /admin
+Disallow: /manage
+Disallow: /chat/
+Disallow: /chat
+Disallow: /cart
+Disallow: /login
+Disallow: /pass-code
+Disallow: /orders
+Disallow: /profile

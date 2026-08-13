@@ -5,6 +5,19 @@ export const getCommunityListPath = () => '/communitylist'
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
 export const getEventPath = (communityAccount: string, eventId: string) => `/c/${communityAccount}/e/${eventId}`
 export const getUserPath = (userId: string) => `/u/${userId}`
+/** PF には利用状況セクションが無いため `?tab=usage` は扱わない（enterprise 限定） */
+export const getOrdersPath = () => '/orders'
+
+export const getOrdersPathAfterOrder = ({
+  eventId,
+  communityAccount,
+}: {
+  eventId: string
+  communityAccount: string
+}) => ({
+  path: '/orders',
+  query: { eventId, communityAccount },
+})
 export const getChatPath = (roomId?: string) => (roomId != null && roomId !== '' ? `/chat/${roomId}` : '/chat')
 export const getReceiptPath = (eventId: string, stripeId: string) => `/receipt?eventId=${eventId}&stripeId=${stripeId}`
 export const getEventCreatePath = (communityAccount: string) => `/manage/community/${communityAccount}/newevent`

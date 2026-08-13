@@ -4,13 +4,13 @@ import { useRouter } from 'vue-router'
 import { getCommunityPath, getLogin } from '@/router/utils'
 import { getEventUrl } from '@shokujii/common/utils/urls.js'
 import { convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useEventStore } from '@shokujii/base/stores/event'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
@@ -68,7 +68,7 @@ const galleryAlbums = computed(() => (props.albumImageUrls ?? []).map((i) => ({ 
 
 const galleryDescImageSlides = computed(() => extractImageSlidesFromHtml(props.event.event_desc))
 
-const communityStore = useCommunityStore(props.community.community_account)
+const communityStore = useAppCommunityStore(props.community)
 const eventUrl = computed(() => {
   // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
   return getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, props.event.community_account, props.event.event_id)
@@ -76,7 +76,7 @@ const eventUrl = computed(() => {
 
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
-const eventStore = useEventStore(props.event.event_id)
+const eventStore = useAppEventStore(props.event)
 
 const members = computed(() =>
   [...(eventStore.members ?? [])].sort(

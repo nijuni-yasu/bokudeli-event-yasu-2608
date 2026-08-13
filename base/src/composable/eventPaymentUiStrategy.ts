@@ -1,9 +1,9 @@
-import type { EventPayment } from '@shokujii/common/schemas/Event.js'
+import type { EventPaymentType } from '@shokujii/common/schemas/Event.js'
 
 export type EventPaymentUiStrategy = {
   isEnterpriseMode: boolean
-  forbiddenPayments: EventPayment[]
-  defaultPaymentWhenDraft?: EventPayment
+  forbiddenPayments: EventPaymentType[]
+  defaultPaymentWhenDraft?: EventPaymentType
 }
 
 export const PF_EVENT_PAYMENT_UI_STRATEGY: EventPaymentUiStrategy = {

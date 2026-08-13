@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
@@ -22,7 +23,7 @@ const props = defineProps<{
   /** 注文取得失敗時 true（注文ブロックにエラー＋再試行） */
   ordersError?: boolean
   /** 指定時はカバー・タイトルをイベント詳細へリンク（操作ボタンはリンク外） */
-  eventDetailPath?: string
+  eventDetailPath?: RouteLocationRaw
 }>()
 
 const { t } = useI18n()
@@ -47,6 +48,7 @@ const cancelDialogOpen = computed({
   },
 })
 
+/** 参加者の実支払額（福利厚生・主催者負担割引は common の computeOrderLineNet） */
 const orderLineNet = (o: EventMemberOrder) =>
   computeOrderLineNet(o, props.event.event_payment, props.event.community_bill_settings)
 
@@ -157,7 +159,7 @@ type CancelDialogOrderedRow = {
   orderDateMillis: number | null
   /** メニュー価格（税込想定の単価） */
   menu_price: number
-  /** 参加者支払額（community_bill 時は menu_price - 主催者負担相当） */
+  /** 参加者支払額（自己負担額 = menu_price - 割引・補助相当） */
   line_net: number
   checked: boolean
 }
@@ -222,8 +224,22 @@ const cancelRefundAmount = computed(() =>
   cancelOrderedRows.value.filter((r) => r.checked).reduce((sum, r) => sum + r.line_net, 0),
 )
 
-/** 主催者請求書払いではメニュー金額と参加者支払額を分けて表示 */
-const showCancelPaymentColumn = computed(() => props.event.event_payment === 'community_bill')
+const isEnterpriseSubsidyEvent = computed(() => props.event.event_payment === 'enterprise_subsidy')
+
+const totalPriceLabelKey = computed(() =>
+  isEnterpriseSubsidyEvent.value ? 'user_event_card.total_self_pay' : 'user_event_card.total_price',
+)
+
+/** 主催者請求書払い・福利厚生ではメニュー金額と参加者支払額を分けて表示 */
+const showCancelPaymentColumn = computed(
+  () => props.event.event_payment === 'community_bill' || isEnterpriseSubsidyEvent.value,
+)
+
+const cancelDialogAmountColumnKey = computed(() =>
+  isEnterpriseSubsidyEvent.value
+    ? 'user_event_card.cancel_dialog.column_self_pay'
+    : 'user_event_card.cancel_dialog.column_amount',
+)
 
 const submitCancel = () => {
   if (!canSubmit.value) return
@@ -306,7 +322,7 @@ const submitCancel = () => {
         </div>
       </v-card-text>
       <v-card-text v-if="showOrderSummary && isOwner" class="px-2 pt-1 pb-4 event-card">
-        {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
+        {{ $t(totalPriceLabelKey, [$n(totalPrice, 'currency')]) }}
       </v-card-text>
     </template>
     <v-card-text>
@@ -357,6 +373,9 @@ const submitCancel = () => {
             />
             <div v-else v-html="$t('user_event_card.cancel_dialog.description_community_bill')" />
           </div>
+          <div v-else-if="event.event_payment === 'enterprise_subsidy'">
+            <div v-html="$t('user_event_card.cancel_dialog.description_enterprise_subsidy')" />
+          </div>
         </div>
 
         <div class="text-h6 mb-4" style="line-height: 2rem">
@@ -389,9 +408,7 @@ const submitCancel = () => {
               $t('user_event_card.cancel_dialog.column_order_date')
             }}</span>
             <span class="text-end">{{ $t('user_event_card.cancel_dialog.column_menu_price') }}</span>
-            <span v-if="showCancelPaymentColumn" class="text-end">{{
-              $t('user_event_card.cancel_dialog.column_amount')
-            }}</span>
+            <span v-if="showCancelPaymentColumn" class="text-end">{{ $t(cancelDialogAmountColumnKey) }}</span>
           </div>
           <div v-for="row in cancelOrderedRows" :key="row.orderId" class="cancel-dialog-table__row">
             <v-checkbox

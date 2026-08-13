@@ -36,6 +36,7 @@ export type GetEnterpriseByDomainResponse = {
   theme_color: string
   subdomain: string
   allowed_email_domains: string[]
+  updated_at: number
 }
 
 export type RequestEnterpriseEmailLoginRequest = {

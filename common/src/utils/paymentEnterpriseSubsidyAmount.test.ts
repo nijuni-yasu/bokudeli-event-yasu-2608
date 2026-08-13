@@ -3,6 +3,7 @@ import { EventMemberOrder } from '../schemas/EventMemberOrder.js'
 import {
   computePaymentEnterpriseSubsidyAmount,
   enterpriseSubsidySettingsFromEnterprise,
+  getMemberOrderDiscountAmount,
   isPaymentEnterpriseSubsidyAmountConsistent,
   replayEnterpriseSubsidyAmountsForOrders,
 } from './paymentEnterpriseSubsidyAmount.js'
@@ -78,6 +79,23 @@ describe('isPaymentEnterpriseSubsidyAmountConsistent', () => {
       pay_enterprise_subsidy_amount: 400,
     })
     expect(isPaymentEnterpriseSubsidyAmountConsistent('enterprise_subsidy', settings, order, 7500)).toBe(false)
+  })
+})
+
+describe('getMemberOrderDiscountAmount', () => {
+  it('pay_enterprise_subsidy_amount を優先し、自己負担は menu_price から差し引く', () => {
+    const order = new EventMemberOrder('oid', {
+      order_id: 'oid',
+      user_id: 'u1',
+      event_id: 'e1',
+      community_id: 'c1',
+      menu_id: 'm1',
+      menu_name: 'menu',
+      menu_price: 2200,
+      pay_enterprise_subsidy_amount: 1500,
+    })
+    expect(getMemberOrderDiscountAmount(order)).toBe(1500)
+    expect(order.menu_price - getMemberOrderDiscountAmount(order)).toBe(700)
   })
 })
 

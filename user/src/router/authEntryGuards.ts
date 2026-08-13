@@ -100,7 +100,7 @@ export async function handleProfileUpdateFailure(
 
   if (toPath === '/profile') {
     if (userCredential != null) {
-      alertProfileLinkageFailed(providerId)
+      alertProfileLinkageFailed(providerId ?? undefined)
     }
     return undefined
   }

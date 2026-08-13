@@ -107,7 +107,7 @@ export const updateProfileFromProviders = async (userCredential: UserCredential 
           const info: Partial<ShokujiiUser> = {}
           // user_description は Functions 側で空のときのみ反映（既存の自己紹介は保護）
           const description = additionalUserInfo.profile?.description
-          if (description != null) {
+          if (typeof description === 'string') {
             info.user_description = description
           }
           const username = additionalUserInfo.username

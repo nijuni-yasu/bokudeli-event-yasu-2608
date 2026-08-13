@@ -4,13 +4,13 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import LetterTable from '@shokujii/base/components/LetterTable.vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import LetterEdit from '@shokujii/base/components/LetterEdit.vue'
-import { useEventStore } from '@shokujii/base/stores/event.js'
-import { useLetterListStore } from '@shokujii/base/stores/letterList.js'
-import { useLetterStore, type BokudeliLetter } from '@shokujii/base/stores/letter.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
+import { useCreateAppLetterListStore, useCreateAppLetterStore } from '@shokujii/base/composable/useAppLetterStore.js'
+import { type BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { getManageCommunityPath, getManageCommunitySettingsPath, getUserPath } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
 
 const notification = useNotification()
 const { t: $t } = useI18n()
@@ -21,7 +21,7 @@ const router = useRouter()
 const eventId = route.params.eventId as string
 const letterId = route.query.letterId as string | undefined
 
-const eventStore = useEventStore(eventId)
+const eventStore = useAppEventStore(eventId)
 const event: BokudeliEvent = await new Promise((resolve) => {
   watch(
     () => eventStore.event,
@@ -34,10 +34,12 @@ const event: BokudeliEvent = await new Promise((resolve) => {
   )
 })
 
-const communityStore = useCommunityStore(event.community_account)
+const communityStore = useAppCommunityStore(event.community_account)
 const community = computed(() => communityStore.community)
 
-const letterListStore = useLetterListStore(event.community_account)
+const createLetterListStore = useCreateAppLetterListStore()
+const createLetterStore = useCreateAppLetterStore()
+const letterListStore = createLetterListStore(event.community_account)
 const letters = computed(
   () =>
     letterListStore.letterStores?.flatMap((ls) =>
@@ -49,7 +51,7 @@ const getLetter = async (letterId: string): Promise<BokudeliLetter> => {
   if (letterId === '') {
     return letterListStore.newLetter('event_participant', event.event_id)
   }
-  const letterStore = useLetterStore(event.community_account, letterId)
+  const letterStore = createLetterStore(event.community_account, letterId)
   return new Promise((resolve) => {
     watch(
       () => letterStore.letter,
@@ -89,7 +91,7 @@ const onDeleteClick = async (letter: BokudeliLetter) => {
   notification.show($t('manage.letter.notification.deleted'), 'success')
 }
 const onCopyClick = async (letter: BokudeliLetter) => {
-  const letterStore = useLetterStore(event.community_account, letter.id)
+  const letterStore = createLetterStore(event.community_account, letter.id)
   selectedLetter.value = await letterStore.copyLetter()
   router.push({ query: { copy: null } })
 }

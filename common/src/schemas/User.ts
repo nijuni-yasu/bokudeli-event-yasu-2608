@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
 import { USER_TYPE_VALUES } from './Enterprise.js'
+import { omitUndefined } from '../utils/object.js'
 
 const NonNegativeIntSchema = z.number().int().nonnegative()
 
@@ -63,14 +64,20 @@ const UserAppSchema = z.object({
   ordered_food_count: NonNegativeIntSchema.default(0),
   counts_updated_at: EpochMillisSchema.optional(),
   user_type: z.enum(USER_TYPE_VALUES).optional(),
-  enterprise_id: z.string().optional(),
+  /** PF materialize 後の `enterprise_id: null` を read 互換（未所属は undefined） */
+  enterprise_id: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => v ?? undefined),
 })
 
 const convertToDb = (user: User) => {
-  return {
+  // AppSchema で null → undefined に正規化した enterprise_id はキーが残るため落とす
+  return omitUndefined({
     ...user,
     updated_at: Date.now(),
-  }
+  })
 }
 
 export class User {

@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { mdiPlus } from '@mdi/js'
-import { useLetterListStore } from '@shokujii/base/stores/letterList.js'
+import { useCreateAppLetterListStore, useCreateAppLetterStore } from '@shokujii/base/composable/useAppLetterStore.js'
 import EventList from '@shokujii/base/components/EventList.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import LetterTable from '@shokujii/base/components/LetterTable.vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import LetterEdit from '@shokujii/base/components/LetterEdit.vue'
-import { BokudeliLetter, useLetterStore } from '@shokujii/base/stores/letter.js'
+import { BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { getManageEventPath, getManageCommunitySettingsPath, getUserPath } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const notification = useNotification()
@@ -21,17 +21,19 @@ const router = useRouter()
 const communityAccount = route.params.communityAccount as string
 const letterId = route.query.letterId as string | undefined
 
-const communityStore = useCommunityStore(communityAccount)
+const communityStore = useAppCommunityStore(communityAccount)
 const community = computed(() => communityStore.community)
 
-const letterListStore = useLetterListStore(communityAccount)
+const createLetterListStore = useCreateAppLetterListStore()
+const createLetterStore = useCreateAppLetterStore()
+const letterListStore = createLetterListStore(communityAccount)
 const letters = computed(() => letterListStore.letterStores?.flatMap((ls) => ls.letter ?? []) ?? [])
 
 const getLetter = async (letterId: string): Promise<BokudeliLetter> => {
   if (letterId === '') {
     return letterListStore.newLetter('community')
   } else {
-    const letterStore = useLetterStore(communityAccount, letterId)
+    const letterStore = createLetterStore(communityAccount, letterId)
     return new Promise((resolve) => {
       watch(
         () => letterStore.letter,
@@ -94,7 +96,7 @@ const onDeleteClick = async (letter: BokudeliLetter) => {
   notification.show($t('manage.letter.notification.deleted'), 'success')
 }
 const onCopyClick = async (letter: BokudeliLetter) => {
-  const letterStore = useLetterStore(communityAccount, letter.id)
+  const letterStore = createLetterStore(communityAccount, letter.id)
   selectedLetter.value = await letterStore.copyLetter()
   router.push({ query: { copy: null } })
 }

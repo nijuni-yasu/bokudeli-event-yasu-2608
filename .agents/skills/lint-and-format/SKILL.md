@@ -1,6 +1,6 @@
 ---
 name: lint-and-format
-description: PR verify（pr-verify.yml）と同じ build・lint・format・型・vitest のローカルチェック。format 失敗時はローカル自動修正。「チェックして」「lintして」「formatチェックして」「verifyして」と依頼された時に使用する。
+description: PR verify（pr-verify.yml）と同じ verify:functions-deploy / verify:vue-tsc-gate / build・lint・format・型・vitest のローカルチェック。format 失敗時はローカル自動修正。「チェックして」「lintして」「formatチェックして」「verifyして」と依頼された時に使用する。
 ---
 
 # lint・format・型・test チェック（PR verify 相当）
@@ -12,10 +12,11 @@ description: PR verify（pr-verify.yml）と同じ build・lint・format・型�
 
 | 観点 | 内容 |
 |:-----|:-----|
-| **チェック内容** | verify:functions-deploy / build / lint / format:check / build:types / vitest の項目・順序・対象パッケージは PR verify と一致 |
+| **チェック内容** | verify:functions-deploy / verify:vue-tsc-gate / build / lint / format:check / build:types / vitest の項目・順序・対象パッケージは PR verify と一致 |
 | **format ローカル自動修正** | `format:check` 失敗時のみ `format` を実行し再チェック。PR verify は check のみ（リモートは修正不可） |
 | **合格状態** | スキル成功時 = PR verify が通る状態（format は自動修正後に check が緑） |
 | **含まないもの** | `npm ci`、Ubuntu 実行環境、実装ターン完了時のセルフレビュー（Stop 検証は [`.agents/hooks/stop-gate-check.sh`](../../hooks/stop-gate-check.sh) が担当） |
+| **ローカル拡張** | CI は paths-filter で変更パッケージのみ実行。本スキルは push 前の full verify として全パッケージを常時実行する（vue-tsc gate も常時実行） |
 
 ## いつ実行するか
 
@@ -36,6 +37,14 @@ format 自動修正でワーキングツリーに変更が残る。push 前（`g
 
 ```
 npm run verify:functions-deploy
+```
+
+### 0b. vue-tsc gate（build:types 有効性）
+
+`vue-tsc` が意図的な型エラーで非ゼロ exit になることを確認する。PR verify では root / base 変更時のみ実行。ローカル push 前 verify では常時実行する。
+
+```
+npm run verify:vue-tsc-gate
 ```
 
 ### 1. ビルド（common）
@@ -96,6 +105,8 @@ npm -w functions/default run format
 
 ### 4. 型チェック（build:types）
 
+各 workspace の `package.json` の `build:types` スクリプトを実行する（base は workspace tsconfig、user / partner / enterprise は `tsconfig.types.json` 経由）。
+
 ```
 npm -w base run build:types
 npm -w user run build:types
@@ -129,6 +140,9 @@ npm -w functions/default run test
 ```
 0. verify:functions-deploy
 - functions deploy list: ✅ 成功 / ❌ 失敗
+
+0b. verify:vue-tsc-gate
+- vue-tsc gate: ✅ 成功 / ❌ 失敗
 
 1. build（common）
 - common: ✅ 成功 / ❌ 失敗
@@ -180,7 +194,7 @@ npm -w functions/default run test
 
 ## 制約
 
-- **実行順**: verify:functions-deploy → build common → build terms → lint → format:check → build:types → build functions → vitest
+- **実行順**: verify:functions-deploy → verify:vue-tsc-gate → build common → build terms → lint → format:check → build:types → build functions → vitest
 - **PR verify 相当**: 上記チェックは `pr-verify.yml` の verify ジョブと一致（ローカル再現用）
 - **format ローカル自動修正**: PR verify にはないローカル拡張。成功時は format:check が緑 = CI と同じ合格状態
 - **Stop hook では実行しない**: lint 検証は push / PR / reflect 前に本スキルで行う

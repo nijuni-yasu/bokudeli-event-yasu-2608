@@ -36,11 +36,13 @@ import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/event
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { ZodError } from 'zod'
 import { copyCommunityCoverToEvent as callCopyCommunityCoverToEvent } from '@shokujii/base/apis/copyCommunityCoverToEvent.js'
-import {
-  preparePfEventDraft,
-  prepareEnterpriseEventDraft,
-  type EventDraftPreparer,
-} from '@shokujii/base/stores/eventDraft.js'
+import { preparePfEventDraft, type EventDraftPreparer } from '@shokujii/base/stores/eventDraft.js'
+export type { EventStoreOptions } from '@shokujii/base/stores/eventStoreOptions.js'
+export {
+  buildEventStoreOptions,
+  resolveEventStoreOptionsFromInjectedEnterpriseId,
+} from '@shokujii/base/stores/eventStoreOptions.js'
+import type { EventStoreOptions } from '@shokujii/base/stores/eventStoreOptions.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
 import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 
@@ -163,15 +165,6 @@ export const updateEventMenus = async (
 
 export type EventStore = ReturnType<typeof useEventStore>
 
-export type EventStoreOptions = {
-  /** PF / enterprise 向け: member_orders の collectionGroup クエリに enterprise_id フィルタを追加。未指定キー = フィルタなし（partner） */
-  ordersEnterpriseId?: string | null
-  /** PF / enterprise 向け: events の collectionGroup クエリに enterprise_id フィルタを追加。未指定キー = フィルタなし（partner） */
-  eventsEnterpriseId?: string | null
-  /** 下書き保存前の event 補正（enterprise subsidy スナップショット等） */
-  draftPreparer?: EventDraftPreparer
-}
-
 let defaultEventStoreOptions: EventStoreOptions = {}
 
 export const setDefaultEventStoreOptions = (options: EventStoreOptions): void => {
@@ -214,21 +207,6 @@ const resolveEventStorePiniaId = (eventId: string, options: EventStoreOptions): 
     return `/events/${eventId}/pf`
   }
   return `/events/${eventId}`
-}
-
-export const buildEventStoreOptions = (enterpriseId: string | null | undefined): EventStoreOptions => {
-  if (enterpriseId != null && enterpriseId !== '') {
-    return {
-      ordersEnterpriseId: enterpriseId,
-      eventsEnterpriseId: enterpriseId,
-      draftPreparer: prepareEnterpriseEventDraft,
-    }
-  }
-  return {
-    ordersEnterpriseId: null,
-    eventsEnterpriseId: null,
-    draftPreparer: preparePfEventDraft,
-  }
 }
 
 export const useEventStore = (target: string | BokudeliEvent, options: EventStoreOptions = {}) => {
@@ -565,7 +543,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
         (querySnapshot) => {
           const eventRef = querySnapshot.docs[0]?.ref?.withConverter(eventConverter)
           if (eventRef == null) {
-            if (retry++ < 10) {
+            if (retry++ < 16) {
               console.warn(
                 `The event "${eventId}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
               )

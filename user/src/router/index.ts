@@ -54,6 +54,7 @@ const isLoginRequired = (path: string) => {
     ['/profile', '/register/complete', '/register/email'].includes(path) ||
     paths[1] === 'manage' ||
     paths[1] === 'chat' ||
+    paths[1] === 'orders' ||
     (paths[1] === 'c' && paths[3] === 'invites')
   )
 }
@@ -227,10 +228,10 @@ export const setupRouter = (router: Router) => {
               alertExistsCredential(credentialFromError(err)?.providerId)
             } else {
               const pendingCred = credentialFromError(err)
-              alertProfileLinkageFailed(pendingCred?.providerId ?? userCredential?.providerId)
+              alertProfileLinkageFailed(pendingCred?.providerId ?? userCredential?.providerId ?? undefined)
             }
           } else {
-            alertProfileLinkageFailed(userCredential?.providerId)
+            alertProfileLinkageFailed(userCredential?.providerId ?? undefined)
           }
           return
         }

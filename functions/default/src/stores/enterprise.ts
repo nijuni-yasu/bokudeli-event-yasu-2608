@@ -107,13 +107,14 @@ export const getEnterpriseMemberInTransaction = async (
   return snapshot.exists ? snapshot.data() : undefined
 }
 
-/** monthly_usage / monthly_order_count を Transaction 内で加減算（Math.max(0, ...) でガード） */
+/** monthly_usage / monthly_order_count / monthly_user_paid を Transaction 内で加減算（Math.max(0, ...) でガード） */
 export const adjustEnterpriseMemberMonthlyUsage = async (
   enterpriseId: string,
   userId: string,
   eventMonth: string,
   subsidyDelta: number,
   orderCountDelta: number,
+  userPaidDelta: number,
   transaction: Transaction,
 ): Promise<void> => {
   const memberRef = getEnterpriseMemberRef(enterpriseId, userId)
@@ -127,12 +128,15 @@ export const adjustEnterpriseMemberMonthlyUsage = async (
   }
   const newUsage = Math.max(0, (member.monthly_usage[eventMonth] ?? 0) + subsidyDelta)
   const newCount = Math.max(0, (member.monthly_order_count[eventMonth] ?? 0) + orderCountDelta)
+  const newUserPaid = Math.max(0, (member.monthly_user_paid[eventMonth] ?? 0) + userPaidDelta)
   transaction.update(
     memberRef,
     new FieldPath('monthly_usage', eventMonth),
     newUsage,
     new FieldPath('monthly_order_count', eventMonth),
     newCount,
+    new FieldPath('monthly_user_paid', eventMonth),
+    newUserPaid,
     'updated_at',
     FieldValue.serverTimestamp(),
   )

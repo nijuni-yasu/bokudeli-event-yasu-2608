@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { slackBotFunctionBaseURL } from '@shokujii/base/firebase.js'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import { mdiContentCopy } from '@mdi/js'
 import slackLogo from '@shokujii/base/assets/images/slack/slack_logo.png'
 import slackImage01 from '@shokujii/base/assets/images/slack/slack_image_01.png'
@@ -11,7 +11,7 @@ import slackImage04 from '@shokujii/base/assets/images/slack/slack_image_04.png'
 const { t: $t } = useI18n()
 
 const communityAccount = useRoute().params.communityAccount as string
-const communityStore = useCommunityStore(communityAccount) as CommunityStore
+const communityStore = useAppCommunityStore(communityAccount)
 const communityNameForSlack = computed(() => {
   const community = communityStore.community
   return `${community?.community_account}-${community?.community_id}`

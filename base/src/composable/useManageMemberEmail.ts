@@ -1,6 +1,6 @@
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import type { ManageCommunitySettingsPathResolver } from '@shokujii/base/composable/managePathResolvers.js'
-import type { User } from '@shokujii/common/schemas/User'
+import type { User } from '@shokujii/common/schemas/User.js'
 import { computed, ref, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

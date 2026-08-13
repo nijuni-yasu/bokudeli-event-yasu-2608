@@ -2,10 +2,12 @@
 import { ref, computed } from 'vue'
 import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliLetter } from '@shokujii/base/stores/letter.js'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useCreateAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
+import { useCreateAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { type EventStore } from '@shokujii/base/stores/event'
 import { getManageEventPath } from '@/router/utils'
 import LetterStatusChip from '@shokujii/base/components/LetterStatusChip.vue'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { type CommunityStore } from '@shokujii/base/stores/community'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiPencil, mdiDelete, mdiContentCopy } from '@mdi/js'
 
@@ -19,12 +21,15 @@ const emits = defineEmits<{
   'user-click': [string]
 }>()
 
+const createAppEventStore = useCreateAppEventStore()
+const createAppCommunityStore = useCreateAppCommunityStore()
+
 const eventStores = computed(() => {
   const stores = new Map<string, EventStore>()
   props.letters.forEach((letter) => {
     if (letter.event_id && !stores.has(letter.event_id)) {
-      const store = useEventStore(letter.event_id)
-      stores.set(letter.event_id, store as EventStore)
+      const store = createAppEventStore(letter.event_id)
+      stores.set(letter.event_id, store)
     }
   })
   return stores
@@ -37,8 +42,8 @@ const communityStores = computed(() => {
   const stores = new Map<string, CommunityStore>()
   props.letters.forEach((letter) => {
     if (letter.community_account && !stores.has(letter.community_account)) {
-      const store = useCommunityStore(letter.community_account)
-      stores.set(letter.community_account, store as CommunityStore)
+      const store = createAppCommunityStore(letter.community_account)
+      stores.set(letter.community_account, store)
     }
   })
   return stores

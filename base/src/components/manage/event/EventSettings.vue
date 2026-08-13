@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useEventStore } from '@shokujii/base/stores/event.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import EventEdit from '@shokujii/base/components/EventEdit.vue'
 import { getEventPath } from '@/router/utils'
 
@@ -9,7 +9,7 @@ const route = useRoute()
 const eventId = route.params.eventId as string
 const step = (route.query.step as string | undefined) ?? '4'
 
-const eventStore = useEventStore(eventId)
+const eventStore = useAppEventStore(eventId)
 </script>
 
 <template>

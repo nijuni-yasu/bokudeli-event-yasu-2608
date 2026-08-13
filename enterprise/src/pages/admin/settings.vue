@@ -146,9 +146,10 @@ const saveSettings = async () => {
                         v-if="logoPreviewUrl"
                         :src="logoPreviewUrl"
                         :alt="$t('admin.settings.logo')"
-                        max-width="120"
-                        max-height="120"
-                        class="mb-3"
+                        max-width="280"
+                        max-height="96"
+                        contain
+                        class="mb-3 admin-settings-logo-preview"
                       />
                       <v-btn variant="outlined" @click="($refs.logoInput as HTMLInputElement)?.click()">
                         {{ $t('admin.settings.logo_select') }}

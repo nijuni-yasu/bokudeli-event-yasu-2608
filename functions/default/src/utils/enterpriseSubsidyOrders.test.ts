@@ -28,6 +28,7 @@ import {
   createEnterpriseSubsidyAddToCartTracker,
   getStripeCheckoutLineItemGroupKey,
   sumEnterpriseSubsidyAmounts,
+  sumEnterpriseUserPaidAmounts,
   validateEnterpriseSubsidyOrdersSnapshotForWebhook,
 } from './enterpriseSubsidyOrders.js'
 
@@ -511,5 +512,9 @@ describe('stripe checkout helpers', () => {
 
   it('sumEnterpriseSubsidyAmounts は合計補助額', () => {
     expect(sumEnterpriseSubsidyAmounts([makeOrder('o1', 800, 500), makeOrder('o2', 800, 300)])).toBe(800)
+  })
+
+  it('sumEnterpriseUserPaidAmounts は menu_price から補助を引いた合計', () => {
+    expect(sumEnterpriseUserPaidAmounts([makeOrder('o1', 800, 500), makeOrder('o2', 800, 300)])).toBe(800)
   })
 })

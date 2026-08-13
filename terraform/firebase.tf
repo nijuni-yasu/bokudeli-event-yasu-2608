@@ -14,6 +14,11 @@ resource "google_identity_platform_config" "auth" {
   provider = google-beta
   project  = var.project
 
+  # エンプラ IdP（createEnterprise / authForTenant）に必須。未定義だと apply で allow_tenants が削除される plan になる
+  multi_tenant {
+    allow_tenants = true
+  }
+
   # Authentication method configuration
   sign_in {
     allow_duplicate_emails = false
@@ -38,6 +43,8 @@ resource "google_identity_platform_config" "auth" {
       "localhost",
       "${var.project}.web.app",
       "${var.project}.firebaseapp.com",
+      "${var.project}-enterprise.web.app",
+      "${var.project}-enterprise.firebaseapp.com",
     ],
     var.auth_authorized_domains_extra,
   ))

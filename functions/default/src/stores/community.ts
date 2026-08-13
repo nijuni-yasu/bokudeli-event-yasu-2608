@@ -118,38 +118,43 @@ export class ShokujiiCommunity extends Community {
     const communityRef = db.collection('communities').doc(this.id).withConverter(communityConverter)
     const memberRef = communityRef.collection('members').doc(uid).withConverter(communityMemberConverter)
     const inviteRef = communityRef.collection('invites').doc(token).withConverter(communityInviteConverter)
-    const inviteDoc = await inviteRef.get()
-    if (!inviteDoc.exists) {
-      throw new HttpsError('not-found', 'The invitation does not exist.')
-    }
-    const created_at = inviteDoc.get('created_at')
-    const now = Timestamp.now()
-    if (created_at.toMillis() < now.toMillis() - EXPIRED_TIME) {
-      throw new HttpsError('invalid-argument', 'The token is expired.')
-    }
-    if (inviteDoc.get('has_token_been_redeemed') === true) {
-      throw new HttpsError('invalid-argument', 'The token has been redeemed.')
-    }
-    // invite と set を batch で実行する
-    const batch = db.batch().update(inviteRef, {
-      has_token_been_redeemed: true,
-      updated_at: now,
+    await db.runTransaction(async (transaction) => {
+      const inviteSnap = await transaction.get(inviteRef)
+      if (!inviteSnap.exists) {
+        throw new HttpsError('not-found', 'The invitation does not exist.')
+      }
+      const invite = inviteSnap.data()
+      if (invite == null) {
+        throw new HttpsError('not-found', 'The invitation does not exist.')
+      }
+      const now = Timestamp.now()
+      if (invite.created_at < now.toMillis() - EXPIRED_TIME) {
+        throw new HttpsError('invalid-argument', 'The token is expired.')
+      }
+      if (invite.has_token_been_redeemed === true) {
+        throw new HttpsError('invalid-argument', 'The token has been redeemed.')
+      }
+      const memberSnap = await transaction.get(memberRef)
+      transaction.update(inviteRef, {
+        has_token_been_redeemed: true,
+        updated_at: now,
+      })
+      if (memberSnap.exists) {
+        const member = memberSnap.data()
+        const roles = new Set(member?.roles ?? []) as Set<CommunityMemberRolesType>
+        roles.add('manager')
+        transaction.update(memberRef, {
+          roles: Array.from(roles),
+        })
+      } else {
+        transaction.set(
+          memberRef,
+          new CommunityMember(uid, {
+            roles: ['manager'],
+          }),
+        )
+      }
     })
-    const memberDoc = await memberRef.get()
-    if (memberDoc.exists) {
-      // 既に存在する場合は roles に 'manager' を追加
-      const roles = new Set(memberDoc.get('roles') ?? []) as Set<CommunityMemberRolesType>
-      roles.add('manager')
-      batch.update(memberRef, {
-        roles: Array.from(roles),
-      })
-    } else {
-      const m = new CommunityMember(uid, {
-        roles: ['manager'],
-      })
-      batch.set(memberRef, m)
-    }
-    await batch.commit()
   }
 }
 
@@ -194,17 +199,42 @@ export const getCommunitiesByIds = async (communityIds: readonly string[]): Prom
   return result
 }
 
-export const getCommunityByAccount = async (
+/**
+ * PF 名前空間（`enterprise_id == null`）のコミュニティを community_account で取得する。
+ */
+export const getPfCommunityByAccount = async (
   communityAccount: string,
   transaction?: Transaction,
 ): Promise<ShokujiiCommunity | undefined> => {
   const db = getFirestore()
-  const communityRef = db
+  const communityQuery = db
     .collection('communities')
+    .where('enterprise_id', '==', null)
     .where('community_account', '==', communityAccount)
+    .limit(1)
     .withConverter(communityConverter)
 
-  const snapshot = await (transaction === undefined ? communityRef.get() : transaction.get(communityRef))
+  const snapshot = await (transaction === undefined ? communityQuery.get() : transaction.get(communityQuery))
+  return snapshot.empty ? undefined : snapshot.docs[0].data()
+}
+
+/** @deprecated 名前は PF 専用。新規コードは getPfCommunityByAccount を使う */
+export const getCommunityByAccount = getPfCommunityByAccount
+
+export const getCommunityByAccountInEnterprise = async (
+  enterpriseId: string,
+  communityAccount: string,
+  transaction?: Transaction,
+): Promise<ShokujiiCommunity | undefined> => {
+  const db = getFirestore()
+  const communityQuery = db
+    .collection('communities')
+    .where('enterprise_id', '==', enterpriseId)
+    .where('community_account', '==', communityAccount)
+    .limit(1)
+    .withConverter(communityConverter)
+
+  const snapshot = await (transaction === undefined ? communityQuery.get() : transaction.get(communityQuery))
   return snapshot.empty ? undefined : snapshot.docs[0].data()
 }
 
@@ -333,6 +363,58 @@ export const saveCommunity = async (community: ShokujiiCommunity): Promise<void>
   // toFirestore は未設定の NonEmptyString フィールドを FieldValue.delete() に変換するため、
   // merge なし set だと新規ドキュメント作成時に delete sentinel が拒否され失敗する。merge: true で回避する。
   await db.collection('communities').doc(community.id).withConverter(communityConverter).set(community, { merge: true })
+}
+
+/** エンタープライズ CSV 作成時、同一 enterprise 内の community_account が既に存在する */
+export class CommunityAccountAlreadyExistsInEnterpriseError extends Error {
+  constructor() {
+    super('Community account already exists in enterprise')
+    this.name = 'CommunityAccountAlreadyExistsInEnterpriseError'
+  }
+}
+
+/** 同一 enterprise 内 community_account の一意性をトランザクション競合で担保するキー doc */
+const getEnterpriseCommunityAccountRef = (
+  db: ReturnType<typeof getFirestore>,
+  enterpriseId: string,
+  communityAccount: string,
+) => db.collection('enterprises').doc(enterpriseId).collection('community_accounts').doc(communityAccount)
+
+/**
+ * エンタープライズ向けコミュニティ作成と manager 付与を 1 トランザクションで原子的に行う。
+ * 親 `managers` 配列は onCommunityMemberWritten が再集計する。
+ */
+export const createEnterpriseCommunityWithManager = async (
+  community: ShokujiiCommunity,
+  managerUserId: string,
+): Promise<void> => {
+  const enterpriseId = community.enterprise_id
+  if (enterpriseId == null || enterpriseId === '') {
+    throw new Error('enterprise_id is required')
+  }
+  const db = getFirestore()
+  await db.runTransaction(async (transaction) => {
+    const accountKeyRef = getEnterpriseCommunityAccountRef(db, enterpriseId, community.community_account)
+    const accountKeySnap = await transaction.get(accountKeyRef)
+    if (accountKeySnap.exists) {
+      throw new CommunityAccountAlreadyExistsInEnterpriseError()
+    }
+    const existing = await getCommunityByAccountInEnterprise(enterpriseId, community.community_account, transaction)
+    if (existing != null) {
+      throw new CommunityAccountAlreadyExistsInEnterpriseError()
+    }
+    transaction.create(accountKeyRef, { community_id: community.id })
+    const communityRef = db.collection('communities').doc(community.id).withConverter(communityConverter)
+    // saveCommunity と同様 merge: true（toFirestore の FieldValue.delete 対策）
+    transaction.set(communityRef, community, { merge: true })
+    const memberRef = db
+      .collection('communities')
+      .doc(community.id)
+      .collection('members')
+      .doc(managerUserId)
+      .withConverter(communityMemberConverter)
+    transaction.set(memberRef, new CommunityMember(managerUserId, { roles: ['manager'] }))
+  })
 }
 
 export type EnterpriseCommunityRecord = {

@@ -196,27 +196,22 @@ beforeEach(() => {
 })
 
 describe('updateEnterpriseMember', () => {
-  it('表示名更新時に getUser(true) で user_email を保持して saveUser する', async () => {
-    const user = {
-      id: 'member-uid',
-      user_name: '旧名前',
-      user_email: 'member@company.com',
-    }
-    getUserMock.mockResolvedValue(user)
-
+  it('氏名更新時は EnterpriseMember と Auth displayName のみ更新し users.user_name は触らない', async () => {
     await callUpdateEnterpriseMember({
       enterprise_id: 'ent-a',
       user_id: 'member-uid',
       display_name: '新名前',
     })
 
-    expect(getUserMock).toHaveBeenCalledWith('member-uid', true)
-    expect(saveUserMock).toHaveBeenCalledWith(
+    expect(saveEnterpriseMember).toHaveBeenCalledWith(
       expect.objectContaining({
-        user_name: '新名前',
-        user_email: 'member@company.com',
+        display_name: '新名前',
       }),
+      'ent-a',
     )
+    expect(getUserMock).not.toHaveBeenCalled()
+    expect(saveUserMock).not.toHaveBeenCalled()
+    expect(updateUserMock).toHaveBeenCalledWith('member-uid', { displayName: '新名前' })
   })
 })
 

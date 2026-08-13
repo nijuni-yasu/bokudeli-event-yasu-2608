@@ -36,7 +36,7 @@ vi.mock('./utils/order.js', () => ({
 
 vi.mock('./utils/urls.js', () => ({
   convertStoragePathToURL: (path: string) => `https://storage.example/${path}`,
-  getEventUrl: () => 'https://example.com/event',
+  getEventUrlForEvent: async () => 'https://example.com/event',
   getPartnerOrderUrl: () => 'https://example.com/partner/order',
 }))
 

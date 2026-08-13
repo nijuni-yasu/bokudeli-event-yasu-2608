@@ -712,7 +712,6 @@ export default {
     logout_modal_title: 'ログアウトしますか？',
     account_deleted: 'このユーザーは利用できません',
     user_not_found: '存在しないユーザーです',
-    private_event_chip: '限定公開',
     tab_profile: 'プロフィール',
     tab_friends: 'ともだち',
     tab_events: 'イベント',
@@ -740,7 +739,6 @@ export default {
       orders: '最近の注文',
     },
     show_more: 'もっと見る',
-    stat_view_detail: '{label}の詳細を見る',
     empty: {
       events: '参加しているイベントは、まだありません。',
       friends: 'ともだちは、まだいません。',

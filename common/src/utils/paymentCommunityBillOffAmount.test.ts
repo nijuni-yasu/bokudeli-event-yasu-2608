@@ -22,6 +22,18 @@ const makeOrder = (overrides: Partial<EventMemberOrder>): EventMemberOrder =>
     ...overrides,
   })
 
+describe('computeOrderLineNet', () => {
+  it('enterprise_subsidy は pay_enterprise_subsidy_amount を差し引く', () => {
+    const order = makeOrder({ menu_price: 1000, pay_enterprise_subsidy_amount: 300 })
+    expect(computeOrderLineNet(order, 'enterprise_subsidy')).toBe(700)
+  })
+
+  it('enterprise_subsidy で subsidy 未設定なら menu_price そのまま', () => {
+    const order = makeOrder({ menu_price: 800 })
+    expect(computeOrderLineNet(order, 'enterprise_subsidy')).toBe(800)
+  })
+})
+
 describe('computePaymentCommunityBillOffAmount', () => {
   it('user_advance では undefined', () => {
     expect(

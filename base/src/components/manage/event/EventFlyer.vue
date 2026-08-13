@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 // import EventCard from '@shokujii/base/components/EventCard.vue'
 import { getEventPath, getFlyerPath } from '@/router/utils'
 // import { mdiPencil, mdiDelete, mdiCarWindshield } from '@mdi/js'
@@ -19,7 +19,7 @@ const notification = useNotification()
 const { t: $t } = useI18n()
 
 const eventId = route.params.eventId as string
-const eventStore = useEventStore(eventId) as EventStore
+const eventStore = useAppEventStore(eventId)
 
 const flyerSizes = [
   {

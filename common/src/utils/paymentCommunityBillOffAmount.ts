@@ -1,5 +1,6 @@
 import type { CommunityBillSettingsType, EventPaymentType } from '../schemas/Event.js'
 import type { EventMemberOrder } from '../schemas/EventMemberOrder.js'
+import { getMemberOrderDiscountAmount } from './paymentEnterpriseSubsidyAmount.js'
 
 /**
  * 1 つの member_orders ドキュメントに適用する主催者負担額を算出する。
@@ -50,6 +51,9 @@ export function computeOrderLineNet(
   eventPayment?: EventPaymentType,
   settings?: CommunityBillSettingsType | undefined,
 ): number {
+  if (eventPayment === 'enterprise_subsidy') {
+    return order.menu_price - getMemberOrderDiscountAmount(order)
+  }
   const off =
     eventPayment !== undefined
       ? effectiveCommunityBillOffAmount(order, eventPayment, settings)

@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { sendIndividualLetterRequestSchema, sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
-import { getCommunity, getCommunityByAccount } from './stores/community.js'
+import { getCommunity } from './stores/community.js'
 import { getEventInCommunity } from './stores/event.js'
 import { getMemberIds } from './stores/memberOrder.js'
 import { getLetter, getLetterRef, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
@@ -10,7 +10,8 @@ import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import { send } from './utils/sendgrid.js'
 import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
-import { getCommunityUrl, getEventUrl } from './utils/urls.js'
+import { getCommunityUrlForCommunity, getEventUrlForCommunity } from './utils/urls.js'
+import { isEnterpriseCommunity } from './utils/enterpriseMail.js'
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('letter')
@@ -170,20 +171,45 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         return
       }
 
-      // コミュニティ情報の取得
-      const community = await getCommunityByAccount(communityAccount)
-
-      if (!community) {
-        logger.warn('Community not found for account', { communityAccount, letterId: letter.id })
+      // レターは communities/{communityId}/letters 配下。account だけでは enterprise / PF を区別できないため ID で取得
+      const communityId = ref.parent.parent?.id
+      if (communityId == null || communityId === '') {
+        logger.warn('Invalid letter document path', { letterId: letter.id })
         return
       }
 
-      const communityId = community.id
+      const community = await getCommunity(communityId)
+
+      if (!community) {
+        logger.warn('Community not found for letter', { communityId, communityAccount, letterId: letter.id })
+        return
+      }
+
+      if (community.community_account !== communityAccount) {
+        logger.warn('Community account mismatch on letter', {
+          communityId,
+          communityAccount,
+          expected: community.community_account,
+          letterId: letter.id,
+        })
+        return
+      }
       const communityEmail =
         community.community_email != null && community.community_email !== '' ? community.community_email : DEFAULT_FROM
+      const community_url = await getCommunityUrlForCommunity(community)
+      if (community_url == null) {
+        if (isEnterpriseCommunity(community)) {
+          logger.error('Enterprise host unresolved for letter community_url', {
+            communityId,
+            letterId: letter.id,
+            enterpriseId: community.enterprise_id,
+          })
+          return
+        }
+      }
       const communityData = {
         community_name: community.community_name,
-        community_url: getCommunityUrl(communityAccount),
+        community_url: community_url ?? null,
       }
 
       // イベント情報の取得
@@ -195,8 +221,18 @@ export async function sendLetter(_: number, end: number): Promise<void> {
       if (letter.event_id) {
         const event = await getEventInCommunity(communityId, letter.event_id)
         if (event) {
+          const event_url = await getEventUrlForCommunity(community, letter.event_id)
+          if (event_url == null && isEnterpriseCommunity(community)) {
+            logger.error('Enterprise host unresolved for letter event_url', {
+              communityId,
+              letterId: letter.id,
+              eventId: letter.event_id,
+              enterpriseId: community.enterprise_id,
+            })
+            return
+          }
           eventData.event_name = event.event_name
-          eventData.event_url = getEventUrl(communityAccount, letter.event_id)
+          eventData.event_url = event_url ?? null
           eventData.event_date = convertToDateWeekdayShort(event.event_start_datetime)
         }
       }
@@ -309,13 +345,21 @@ const generateDynamicTemplateData = async (communityId: string, letterId: string
   if (letter.status !== 'draft') {
     throw new HttpsError('invalid-argument', 'The letter status must be in draft.')
   }
+  const community_url = await getCommunityUrlForCommunity(community)
+  if (community_url == null && isEnterpriseCommunity(community)) {
+    throw new HttpsError('failed-precondition', 'enterprise host is not configured')
+  }
   let eventInfo = {}
   if (letter.event_id !== undefined) {
     const event = await getEventInCommunity(communityId, letter.event_id)
     if (event !== undefined) {
+      const event_url = await getEventUrlForCommunity(community, event.id)
+      if (event_url == null && isEnterpriseCommunity(community)) {
+        throw new HttpsError('failed-precondition', 'enterprise host is not configured')
+      }
       eventInfo = {
         event_name: event.event_name,
-        event_url: getEventUrl(event.community_account, event.id),
+        event_url: event_url ?? null,
         event_date: convertToDate(event.event_start_datetime),
       }
     }
@@ -323,7 +367,7 @@ const generateDynamicTemplateData = async (communityId: string, letterId: string
   return {
     subject: letter.letter_title,
     community_name: community.community_name,
-    community_url: getCommunityUrl(community.community_account),
+    community_url: community_url ?? null,
     letter_title: letter.letter_title,
     letter_content: letter.letter_content,
     letter_type: letter.letter_type,
@@ -416,8 +460,12 @@ export const sendIndividualLetter = onCall(
       if (!eventMemberIds.includes(letter.user_id)) {
         throw new HttpsError('failed-precondition', 'Recipient is not a member of the event.')
       }
+      const event_url = await getEventUrlForCommunity(community, letter.event_id)
+      if (event_url == null && isEnterpriseCommunity(community)) {
+        throw new HttpsError('failed-precondition', 'enterprise host is not configured')
+      }
       eventData.event_name = event.event_name
-      eventData.event_url = getEventUrl(community.community_account, letter.event_id)
+      eventData.event_url = event_url ?? null
       eventData.event_date = convertToDateWeekdayShort(event.event_start_datetime)
     } else {
       const memberIds = await getCommunityMemberIds(communityId)
@@ -432,9 +480,14 @@ export const sendIndividualLetter = onCall(
     }
     const targetUserName = targetUser.user_name ?? 'ユーザー'
 
+    const community_url = await getCommunityUrlForCommunity(community)
+    if (community_url == null && isEnterpriseCommunity(community)) {
+      throw new HttpsError('failed-precondition', 'enterprise host is not configured')
+    }
+
     const dynamicTemplateData = {
       community_name: community.community_name,
-      community_url: getCommunityUrl(community.community_account),
+      community_url: community_url ?? null,
       ...eventData,
       letter_title: letter.letter_title,
       letter_content: letter.letter_content,

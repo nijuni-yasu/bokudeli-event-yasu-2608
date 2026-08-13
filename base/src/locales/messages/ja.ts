@@ -132,6 +132,8 @@ export default {
     enterprise_subsidy_exceeded: '⚠ {0}分の割引上限に達しました。全額自己負担となります',
     enterprise_subsidy_zero_payment: '✓ 全額会社負担のため、決済は不要です',
     monthly_usage_label: '今月の割引利用',
+    event_month_subsidy_heading: '{0}分の福利厚生',
+    event_month_subsidy_remaining_limit: '残り予算 {0}円 / 月間上限 {1}円',
     confirm_order_enterprise_subsidy_checkout: '福利厚生割引適用後の差額をオンライン決済でお支払いします。続きますか？',
     confirm_order_enterprise_subsidy_zero: '全額会社負担のため、決済なしで注文を確定します。よろしいですか？',
     price: '金額',
@@ -486,6 +488,7 @@ export default {
     menu: '【注文内容】',
     menu_item: '{0} ({1}個)',
     total_price: '【支払い金額】{0}',
+    total_self_pay: '【自己負担額】{0}',
     event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
@@ -504,6 +507,10 @@ export default {
                       キャンセルはイベントの注文期限まで可能です。<br />
                       お支払い済みの差額分は、キャンセル手続き完了後、ご利用の明細に反映されるまで5～10日かかります。<br />
                       キャンセルの取り消しはできません。あらかじめご了承ください。`,
+      description_enterprise_subsidy: `注文したメニューを選択してキャンセルを実行してください。<br />
+                      キャンセルはイベントの注文期限まで可能です。<br />
+                      返金額は自己負担分のみです。キャンセル手続き完了後、ご利用の明細に反映されるまで5～10日かかります。<br />
+                      キャンセルの取り消しはできません。あらかじめご了承ください。`,
       not_cancel: 'キャンセルしない',
       submit: 'キャンセルを実行する',
       select_all: 'すべて選択',
@@ -512,6 +519,7 @@ export default {
       column_order_date: '注文日',
       column_menu_price: 'メニュー金額',
       column_amount: '支払い金額',
+      column_self_pay: '自己負担額',
       refund_total: '返金額 {0}',
     },
     download_invoice: '領収書をダウンロード',
@@ -703,6 +711,10 @@ export default {
   user_profile: {
     profile_settings: 'プロフィール設定',
     user_description_placeholder: '自己紹介を追加しましょう。',
+    orders_page_lead:
+      '注文期限前であれば、キャンセルすることができます。\nまたお支払い済みのご注文は領収書をダウンロードできます。',
+    private_event_chip: '限定公開',
+    stat_view_detail: '{label}の詳細を見る',
   },
   manage: {
     settings: {

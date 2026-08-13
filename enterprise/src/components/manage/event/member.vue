@@ -3,7 +3,7 @@ import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
 import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
-import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useEnterpriseCommunityStore } from '@/composable/useEnterpriseCommunityStore'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useRouter } from 'vue-router'
@@ -34,7 +34,7 @@ const communityAccount = computed(() => eventStore.event?.community_account ?? '
 const communityStore = computed(() => {
   const account = communityAccount.value
   if (account) {
-    return useCommunityStore(account)
+    return useEnterpriseCommunityStore(account)
   }
   return null
 })

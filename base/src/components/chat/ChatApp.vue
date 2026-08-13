@@ -33,11 +33,17 @@ type SelectedImage = {
   previewUrl: string
 }
 
-const props = defineProps<{
-  roomId?: string
-  resolveProfilePath?: ResolveUserPathFn
-  resolveChatRoomPath: ResolveChatRoomPathFn
-}>()
+const props = withDefaults(
+  defineProps<{
+    roomId?: string
+    resolveProfilePath?: ResolveUserPathFn
+    resolveChatRoomPath: ResolveChatRoomPathFn
+    unreadBadgeColor?: string
+  }>(),
+  {
+    unreadBadgeColor: 'success',
+  },
+)
 
 const emit = defineEmits<{
   openEvent: [payload: { communityId: string; eventId: string }]
@@ -75,7 +81,11 @@ const SCROLL_NEAR_BOTTOM_THRESHOLD = 80
 const msg = ref('')
 const isSending = ref(false)
 const isNearBottom = ref(true)
-const chatLogPS = ref<InstanceType<typeof PerfectScrollbar> | null>(null)
+type ChatLogPerfectScrollbarRef = {
+  ps?: { element?: HTMLElement; update?: () => void }
+}
+
+const chatLogPS = ref<ChatLogPerfectScrollbarRef | null>(null)
 const selectedImages = ref<SelectedImage[]>([])
 const imageInputRef = ref<HTMLInputElement | null>(null)
 
@@ -289,7 +299,7 @@ const resolveSendMessageErrorVariant = (error: unknown): 'warning' | 'error' => 
 }
 
 const getChatLogScrollEl = (): HTMLElement | null => {
-  const ps = chatLogPS.value as (InstanceType<typeof PerfectScrollbar> & { ps?: { element?: HTMLElement } }) | null
+  const ps = chatLogPS.value
   const element = ps?.ps?.element
   return element instanceof HTMLElement ? element : null
 }
@@ -621,6 +631,7 @@ onBeforeUnmount(() => {
     >
       <ChatLeftSidebarContent
         :is-drawer-open="isLeftSidebarOpen"
+        :unread-badge-color="unreadBadgeColor"
         @open-room="openRoom"
         @open-event="emit('openEvent', $event)"
         @close="isLeftSidebarOpen = false"

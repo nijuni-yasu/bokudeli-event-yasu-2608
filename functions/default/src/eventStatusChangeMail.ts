@@ -1,7 +1,8 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getEventUrl, getPartnerOrderUrl } from './utils/urls.js'
+import { getEventUrlForEvent, getPartnerOrderUrl } from './utils/urls.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import {
   convertToDateWeekdayShort,
   convertToDatetimeWeekdayShort,
@@ -58,6 +59,14 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
   const deliveryDuration = convertToDuration(eventStartDateTime - DELIVERY_DURATION * 60 * 1000, eventStartDateTime)
   const deliveryDate = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
   const eventDeadlineDateTime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
+  const event_url = await getEventUrlForEvent(event)
+  if (event_url == null && isEnterpriseEvent(event)) {
+    logger.error('Enterprise host unresolved for event status change mail', {
+      eventId: event.id,
+      enterpriseId: event.enterprise_id,
+    })
+    throw new Error('enterprise host is not configured')
+  }
 
   return {
     ...event,
@@ -68,7 +77,7 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
     event_deadline_datetime: eventDeadlineDateTime,
     order_count: orderCount,
     order_total_price: orderTotalPrice,
-    event_url: getEventUrl(event.community_account, event.id),
+    event_url: event_url ?? '',
     orders: orderList,
     order_url: getPartnerOrderUrl(event.id),
   }
@@ -130,11 +139,9 @@ async function sendEventStatusMailToOrganizers(
  * 管理者に申請メールを送信
  */
 async function sendApplyingMailToAdmin(event: ShokujiiEvent): Promise<void> {
+  const event_url = await getEventUrlForEvent(event)
   const subject = `店舗「${event.shop_name}」主催のイベントが申請されました`
-  const text =
-    `【ID】 ${event.id}\n` +
-    `【イベント名】 ${event.event_name}\n` +
-    `【イベントURL】 ${getEventUrl(event.community_account, event.id)}\n`
+  const text = `【ID】 ${event.id}\n` + `【イベント名】 ${event.event_name}\n` + `【イベントURL】 ${event_url ?? ''}\n`
 
   await sgMail.send({
     to: DEFAULT_TO,

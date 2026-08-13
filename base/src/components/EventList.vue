@@ -4,8 +4,7 @@ import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import IncrementalLoader from './IncrementalLoader.vue'
 import EventStatusChip from './EventStatusChip.vue'
-import { useEventListStore, type EventListStore } from '@shokujii/base/stores/eventList'
-import { orderBy, where } from 'firebase/firestore'
+import { useCreateAppCommunityEventListStore } from '@shokujii/base/composable/useAppEventListStore.js'
 
 const props = defineProps<{
   communityAccount: string
@@ -18,10 +17,8 @@ const emit = defineEmits<{
   suggestFirst: [BokudeliEvent]
 }>()
 
-const eventListStore = useEventListStore(
-  [where('community_account', '==', props.communityAccount), orderBy('event_start_datetime', 'desc')],
-  5,
-) as EventListStore
+const createEventListStore = useCreateAppCommunityEventListStore()
+const eventListStore = createEventListStore(props.communityAccount, 5)
 const events = computed(() => {
   return (
     eventListStore.eventStores?.flatMap((s) => {

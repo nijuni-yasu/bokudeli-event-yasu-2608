@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { getAuth } from 'firebase/auth'
-import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
+import { getCommunityPath, getEventPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
@@ -13,6 +13,7 @@ import { computeTotalPayment } from '@shokujii/common/utils/paymentCommunityBill
 import {
   computeMemberOrdersTotalPayment,
   getMemberOrderDiscountAmount,
+  replayEnterpriseSubsidyAmountsForOrders,
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
@@ -31,19 +32,21 @@ import {
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 import {
-  pfCartMonthlyUsageLoader,
-  normalizeCartMonthlyUsage,
-  type CartMonthlyUsageLoader,
+  pfCartEnterpriseSubsidyBudgetLoader,
+  normalizeCartEnterpriseSubsidyBudget,
+  type CartEnterpriseSubsidyBudgetLoader,
 } from '@shokujii/base/composable/cartMonthlyUsage.js'
+import type { ResolveOrdersPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 
 const props = withDefaults(
   defineProps<{
-    /** 月次 usage 表示用ローダー。enterprise 側から注入 */
-    monthlyUsageLoader?: CartMonthlyUsageLoader
+    /** 福利厚生: 開催月別確定 usage（enterprise 注入） */
+    enterpriseSubsidyBudgetLoader?: CartEnterpriseSubsidyBudgetLoader
+    /** 注文確定後の注文履歴 URL（各 app の cart shell から注入） */
+    resolveOrdersPath: ResolveOrdersPathFn
   }>(),
   {
-    // Function prop はファクトリ () => fn ではなく関数を直接指定する（Vue withDefaults の仕様）
-    monthlyUsageLoader: pfCartMonthlyUsageLoader,
+    enterpriseSubsidyBudgetLoader: pfCartEnterpriseSubsidyBudgetLoader,
   },
 )
 
@@ -119,25 +122,86 @@ type EnrichedCartItem = CartItem & {
   totalDiscount: number
   totalPrice: number
   eventMonthLabel: string
+  /** 開催月の確定済み利用額（budget ロード後） */
+  eventMonthUsed: number | null
+  eventMonthLimit: number | null
+  /** 開催月の残り予算（確定済み利用を差し引いた値。この注文前） */
+  eventMonthRemaining: number | null
+  /** replay ベースの合計を表示している */
+  subsidyTotalsFromReplay: boolean
 }
 
-const monthlyUsage = ref<{ used: number; limit: number } | null>(null)
+const enterpriseSubsidyBudget = ref<Record<string, number> | null>(null)
 
-const monthlyUsageDisplay = computed(() => normalizeCartMonthlyUsage(monthlyUsage.value))
+let subsidyBudgetLoadGeneration = 0
+watch(
+  userId,
+  async (uid) => {
+    if (uid === '') {
+      enterpriseSubsidyBudget.value = null
+      return
+    }
+    const generation = ++subsidyBudgetLoadGeneration
+    try {
+      const result = await props.enterpriseSubsidyBudgetLoader(uid)
+      if (generation !== subsidyBudgetLoadGeneration) {
+        return
+      }
+      const normalized = normalizeCartEnterpriseSubsidyBudget(result)
+      enterpriseSubsidyBudget.value = normalized?.monthlyUsage ?? null
+    } catch (error) {
+      if (generation !== subsidyBudgetLoadGeneration) {
+        return
+      }
+      console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)
+      enterpriseSubsidyBudget.value = null
+    }
+  },
+  { immediate: true },
+)
 
-onMounted(async () => {
-  const uid = userId.value
-  if (uid === '') {
-    return
+const computeEnterpriseSubsidyCartTotals = (
+  event: BokudeliEvent,
+  orders: EventMemberOrder[],
+  monthlyUsageByMonth: Record<string, number> | null,
+): Pick<
+  EnrichedCartItem,
+  | 'totalMenuPrice'
+  | 'totalDiscount'
+  | 'totalPrice'
+  | 'eventMonthUsed'
+  | 'eventMonthLimit'
+  | 'eventMonthRemaining'
+  | 'subsidyTotalsFromReplay'
+> => {
+  const totalMenuPrice = orders.reduce((sum, o) => sum + o.menu_price, 0)
+  const settings = event.enterprise_subsidy_settings
+  if (settings == null || monthlyUsageByMonth == null) {
+    const totalDiscount = orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0)
+    return {
+      totalMenuPrice,
+      totalDiscount,
+      totalPrice: computeMemberOrdersTotalPayment(orders),
+      eventMonthUsed: null,
+      eventMonthLimit: null,
+      eventMonthRemaining: null,
+      subsidyTotalsFromReplay: false,
+    }
   }
-  try {
-    const result = await props.monthlyUsageLoader(uid)
-    monthlyUsage.value = normalizeCartMonthlyUsage(result)
-  } catch (error) {
-    console.warn('[cart] monthlyUsageLoader failed', error)
-    monthlyUsage.value = null
+  const eventMonth = formatYearMonth(event.event_start_datetime)
+  const monthlyUsed = monthlyUsageByMonth[eventMonth] ?? 0
+  const monthlyLimit = settings.monthly_limit_per_user
+  const replay = replayEnterpriseSubsidyAmountsForOrders('enterprise_subsidy', settings, orders, monthlyUsed)
+  return {
+    totalMenuPrice,
+    totalDiscount: replay.subsidyTotal,
+    totalPrice: replay.totalPayment,
+    eventMonthUsed: monthlyUsed,
+    eventMonthLimit: monthlyLimit,
+    eventMonthRemaining: Math.max(0, monthlyLimit - monthlyUsed),
+    subsidyTotalsFromReplay: true,
   }
-})
+}
 
 /** 主催者請求かつおごり設定ありのとき、カート注文テーブルに「おごり」列を出す */
 const hasCartCommunityBill = (event: BokudeliEvent): boolean =>
@@ -166,17 +230,6 @@ const needsCommunityBillStripe = (event: BokudeliEvent, orders: EventMemberOrder
   return computeTotalPayment(orders) > 0
 }
 
-/** enterprise_subsidy で自己負担あり Stripe 決済が必要か */
-const needsEnterpriseSubsidyStripe = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean => {
-  if (event.event_payment !== 'enterprise_subsidy') return false
-  return computeMemberOrdersTotalPayment(orders) > 0
-}
-
-const needsStripeCheckout = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean =>
-  event.event_payment === 'user_advance' ||
-  needsCommunityBillStripe(event, orders) ||
-  needsEnterpriseSubsidyStripe(event, orders)
-
 const getEventMonthLabel = (event: BokudeliEvent): string => {
   const month = formatYearMonth(event.event_start_datetime)
   const [, m] = month.split('-')
@@ -185,19 +238,39 @@ const getEventMonthLabel = (event: BokudeliEvent): string => {
 
 const enrichedCart = computed<EnrichedCartItem[] | null>(() => {
   if (cart.value == null) return null
+  const budget = enterpriseSubsidyBudget.value
   return cart.value.map((cartItem) => {
-    const totalMenuPrice = cartItem.orders.reduce((sum, o) => sum + o.menu_price, 0)
-    const totalDiscount = cartItem.orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0)
+    const subsidyTotals =
+      cartItem.event.event_payment === 'enterprise_subsidy'
+        ? computeEnterpriseSubsidyCartTotals(cartItem.event, cartItem.orders, budget)
+        : {
+            totalMenuPrice: cartItem.orders.reduce((sum, o) => sum + o.menu_price, 0),
+            totalDiscount: cartItem.orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0),
+            totalPrice: computeMemberOrdersTotalPayment(cartItem.orders),
+            eventMonthUsed: null,
+            eventMonthLimit: null,
+            eventMonthRemaining: null,
+            subsidyTotalsFromReplay: false,
+          }
     return {
       ...cartItem,
       groupedMenus: groupOrdersByMenu(cartItem.orders),
-      totalMenuPrice,
-      totalDiscount,
-      totalPrice: computeMemberOrdersTotalPayment(cartItem.orders),
+      ...subsidyTotals,
       eventMonthLabel: getEventMonthLabel(cartItem.event),
     }
   })
 })
+
+const findEnrichedCartItem = (cartItem: CartItem): EnrichedCartItem | undefined =>
+  enrichedCart.value?.find((item) => item.event.event_id === cartItem.event.event_id)
+
+const needsStripeCheckoutForItem = (item: EnrichedCartItem): boolean => {
+  const { event, orders } = item
+  if (event.event_payment === 'user_advance') return true
+  if (needsCommunityBillStripe(event, orders)) return true
+  if (event.event_payment === 'enterprise_subsidy') return item.totalPrice > 0
+  return false
+}
 
 const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople' | 'unselectedMenu'> => {
   const { event, orders } = cartItem
@@ -265,12 +338,15 @@ const startOrderProcess = async () => {
     const cartItem = selectedCartItem.value
     if (cartItem === undefined) return
 
+    const enriched = findEnrichedCartItem(cartItem)
+    if (enriched === undefined) return
+
     const { event, orders } = cartItem
     const orderIds = orders.map((o) => o.order_id)
     const communityId = event.community_id
     const eventId = event.event_id
 
-    if (needsStripeCheckout(event, orders)) {
+    if (needsStripeCheckoutForItem(enriched)) {
       try {
         const response = await createStripeCheckoutSession({
           community_id: communityId,
@@ -297,7 +373,7 @@ const startOrderProcess = async () => {
         return
       }
       try {
-        await router.push(`${getUserPath(userId.value)}?eventId=${eventId}&communityAccount=${event.community_account}`)
+        await router.push(props.resolveOrdersPath({ eventId, communityAccount: event.community_account }))
       } catch (error) {
         console.error('Failed to navigate after order:', error)
       }
@@ -307,11 +383,12 @@ const startOrderProcess = async () => {
   }
 }
 
-const paymentMessage = (event: BokudeliEvent, orders: EventMemberOrder[]) => {
+const paymentMessageForItem = (item: EnrichedCartItem) => {
+  const { event, orders, totalPrice } = item
   if (event.event_payment === 'user_advance') return $t('cart.confirm_order_credit_card')
   if (event.event_payment === 'user_on_day') return $t('cart.confirm_order_participant_on_day')
   if (event.event_payment === 'enterprise_subsidy') {
-    if (needsEnterpriseSubsidyStripe(event, orders)) {
+    if (totalPrice > 0) {
       return $t('cart.confirm_order_enterprise_subsidy_checkout')
     }
     return $t('cart.confirm_order_enterprise_subsidy_zero')
@@ -349,12 +426,15 @@ const showConfirm = async (cartItem: CartItem) => {
   }
 
   selectedCartItem.value = cartItem
-  const { event, orders } = cartItem
-  if (needsStripeCheckout(event, orders)) {
+  const enriched = findEnrichedCartItem(cartItem)
+  if (enriched === undefined) {
+    return
+  }
+  if (needsStripeCheckoutForItem(enriched)) {
     await startOrderProcess()
     return
   }
-  confirmDialogMessage.value = paymentMessage(event, orders)
+  confirmDialogMessage.value = paymentMessageForItem(enriched)
   openConfirmOrder.value = true
 }
 
@@ -451,10 +531,6 @@ const isOpenCancelpolicyDialog = ref(false)
     <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
       <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
       <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
-      <div v-if="monthlyUsageDisplay != null" class="text-center text-body-1 my-2">
-        {{ $t('cart.monthly_usage_label') }}: {{ priceString(monthlyUsageDisplay.used) }}円 /
-        {{ priceString(monthlyUsageDisplay.limit) }}円
-      </div>
     </v-col>
     <v-col v-for="cartItem in enrichedCart" :key="cartItem.event.event_id" cols="12" md="8" sm="8">
       <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
@@ -548,14 +624,8 @@ const isOpenCancelpolicyDialog = ref(false)
                     <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.unit_price') }}</th>
-                    <th
-                      v-if="hasCartCommunityBill(cartItem.event) || hasCartEnterpriseSubsidy(cartItem.event)"
-                      class="text-center"
-                      style="padding: 1px"
-                    >
-                      {{
-                        hasCartEnterpriseSubsidy(cartItem.event) ? $t('cart.company_subsidy') : $t('cart.off_amount')
-                      }}
+                    <th v-if="hasCartCommunityBill(cartItem.event)" class="text-center" style="padding: 1px">
+                      {{ $t('cart.off_amount') }}
                     </th>
                   </tr>
                 </thead>
@@ -592,7 +662,7 @@ const isOpenCancelpolicyDialog = ref(false)
                     </td>
                     <td class="text-center" style="padding: 1px">¥{{ priceString(menu.menu_price) }}</td>
                     <td
-                      v-if="hasCartCommunityBill(cartItem.event) || hasCartEnterpriseSubsidy(cartItem.event)"
+                      v-if="hasCartCommunityBill(cartItem.event)"
                       class="text-center"
                       style="padding: 1px"
                       :class="menu.totalDiscount > 0 ? 'text-caption text-discount' : ''"
@@ -606,32 +676,71 @@ const isOpenCancelpolicyDialog = ref(false)
             </v-card>
           </v-col>
         </v-row>
-        <v-card-text v-if="hasCartEnterpriseSubsidy(cartItem.event)" class="card-text-style pt-0">
-          <div class="text-body-2">
-            <div>{{ $t('cart.order_total') }}: ¥{{ priceString(cartItem.totalMenuPrice) }}</div>
-            <div v-if="cartItem.totalDiscount > 0" class="text-discount">
-              {{ $t('cart.company_subsidy_total') }}: -¥{{ priceString(cartItem.totalDiscount) }}
-            </div>
-            <div class="font-weight-bold">{{ $t('cart.your_payment') }}: ¥{{ priceString(cartItem.totalPrice) }}</div>
-            <div v-if="cartItem.totalPrice === 0" class="mt-2">
-              {{ $t('cart.enterprise_subsidy_zero_payment') }}
-            </div>
-            <div v-else-if="cartItem.totalDiscount > 0 && cartItem.totalPrice > 0" class="mt-2">
-              {{ $t('cart.enterprise_subsidy_month', [cartItem.eventMonthLabel]) }}
-            </div>
-            <div
-              v-if="
-                cartItem.totalDiscount > 0 && cartItem.totalMenuPrice > cartItem.totalDiscount + cartItem.totalPrice
-              "
-              class="mt-1"
-            >
-              {{ $t('cart.enterprise_subsidy_partial', [cartItem.eventMonthLabel]) }}
-            </div>
-            <div v-if="cartItem.totalDiscount === 0 && cartItem.totalMenuPrice > 0" class="mt-1">
-              {{ $t('cart.enterprise_subsidy_exceeded', [cartItem.eventMonthLabel]) }}
-            </div>
-          </div>
-        </v-card-text>
+        <v-row v-if="hasCartEnterpriseSubsidy(cartItem.event)" class="text-center align-center">
+          <v-col cols="12" class="px-8 pb-2">
+            <v-sheet rounded="lg" class="pa-4 cart-enterprise-subsidy-summary" border>
+              <div
+                v-if="cartItem.eventMonthLimit != null && cartItem.eventMonthRemaining != null"
+                class="text-body-2 text-medium-emphasis mb-3 cart-enterprise-subsidy-month-budget"
+              >
+                <div class="font-weight-medium mb-1">
+                  {{ $t('cart.event_month_subsidy_heading', [cartItem.eventMonthLabel]) }}
+                </div>
+                <div>
+                  {{
+                    $t('cart.event_month_subsidy_remaining_limit', [
+                      priceString(cartItem.eventMonthRemaining),
+                      priceString(cartItem.eventMonthLimit),
+                    ])
+                  }}
+                </div>
+              </div>
+              <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-2">
+                <span>{{ $t('cart.order_total') }}</span>
+                <span class="cart-subsidy-amount">¥{{ priceString(cartItem.totalMenuPrice) }}</span>
+              </div>
+              <div
+                v-if="cartItem.totalDiscount > 0"
+                class="d-flex justify-space-between text-body-2 text-discount mb-2"
+              >
+                <span>{{ $t('cart.company_subsidy_total') }}</span>
+                <span class="cart-subsidy-amount">-¥{{ priceString(cartItem.totalDiscount) }}</span>
+              </div>
+              <v-divider class="my-3" />
+              <div class="d-flex justify-space-between align-end">
+                <span class="text-body-1 font-weight-medium">{{ $t('cart.your_payment') }}</span>
+                <span class="text-h5 text-md-h4 font-weight-bold cart-subsidy-amount">
+                  ¥{{ priceString(cartItem.totalPrice) }}
+                </span>
+              </div>
+              <div v-if="cartItem.totalPrice === 0" class="mt-3">
+                <v-alert variant="tonal" color="success" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_zero_payment') }}
+                </v-alert>
+              </div>
+              <div v-else-if="cartItem.totalDiscount > 0 && cartItem.totalPrice > 0" class="mt-3">
+                <v-alert variant="tonal" color="discount" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_month', [cartItem.eventMonthLabel]) }}
+                </v-alert>
+              </div>
+              <div
+                v-if="
+                  cartItem.totalDiscount > 0 && cartItem.totalMenuPrice > cartItem.totalDiscount + cartItem.totalPrice
+                "
+                class="mt-2"
+              >
+                <v-alert variant="tonal" color="warning" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_partial', [cartItem.eventMonthLabel]) }}
+                </v-alert>
+              </div>
+              <div v-if="cartItem.totalDiscount === 0 && cartItem.totalMenuPrice > 0" class="mt-2">
+                <v-alert variant="tonal" color="warning" density="compact" class="mb-0 cart-subsidy-summary-alert">
+                  {{ $t('cart.enterprise_subsidy_exceeded', [cartItem.eventMonthLabel]) }}
+                </v-alert>
+              </div>
+            </v-sheet>
+          </v-col>
+        </v-row>
         <v-card-text v-else class="text-right">
           <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
           <span class="text-right my-2 ml-2 text-h6">¥</span>
@@ -653,9 +762,7 @@ const isOpenCancelpolicyDialog = ref(false)
               @click="showConfirm(cartItem)"
             >
               {{
-                needsStripeCheckout(cartItem.event, cartItem.orders)
-                  ? $t('cart.proceed_to_payment')
-                  : $t('cart.order_and_attend_event')
+                needsStripeCheckoutForItem(cartItem) ? $t('cart.proceed_to_payment') : $t('cart.order_and_attend_event')
               }}
             </v-btn>
           </v-col>
@@ -741,8 +848,17 @@ const isOpenCancelpolicyDialog = ref(false)
   border-radius: 8px;
 }
 
+.cart-subsidy-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-enterprise-subsidy-summary {
+  text-align: left;
+}
+
 /* Materio が .v-alert__content に font-size を直指定するため text-body-2 が効かない。本文相当に揃える */
-.cart-community-bill-banner :deep(.v-alert__content) {
+.cart-community-bill-banner :deep(.v-alert__content),
+.cart-subsidy-summary-alert :deep(.v-alert__content) {
   font-size: 0.875rem;
   line-height: 1.375rem;
 }
@@ -753,7 +869,8 @@ const isOpenCancelpolicyDialog = ref(false)
     padding-bottom: 12px !important;
   }
 
-  .cart-community-bill-banner :deep(.v-alert__content) {
+  .cart-community-bill-banner :deep(.v-alert__content),
+  .cart-subsidy-summary-alert :deep(.v-alert__content) {
     font-size: 0.75rem;
     line-height: 1.25rem;
   }

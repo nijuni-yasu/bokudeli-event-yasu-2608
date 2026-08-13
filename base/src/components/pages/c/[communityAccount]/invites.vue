@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { acceptInvitationForCommunityManager } from '@shokujii/base/apis/communityManager.js'
-import { useCommunityStore } from '@shokujii/base/stores/community'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 
 type AcceptCommunityManagerInvitation = typeof acceptInvitationForCommunityManager
 
@@ -19,7 +19,7 @@ const emits = defineEmits<{
 
 const { t } = useI18n()
 
-const communityStore = useCommunityStore(props.communityAccount)
+const communityStore = useAppCommunityStore(props.communityAccount)
 
 // notification を使用したいところだが、Manager ページはレイアウトが違うので notification がキャンセルされてしまう
 // TODO: そもそも invites が Manager ページにあるべきかもしれない。仕様を再検討

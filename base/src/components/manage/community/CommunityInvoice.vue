@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { where, orderBy } from 'firebase/firestore'
-import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
@@ -8,15 +6,14 @@ import type { EventStore } from '@shokujii/base/stores/event.js'
 import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
 import { calculateEventBillInvoiceTotal } from '@shokujii/common/utils/invoice.js'
 import { convertToDate } from '@shokujii/common/utils/datetime.js'
+import { useCreateAppCommunityEventListStore } from '@shokujii/base/composable/useAppEventListStore.js'
 
-const route = useRoute()
+const props = defineProps<{
+  communityAccount: string
+}>()
 
-const communityAccount = route.params.communityAccount as string
-
-const eventListStore = useEventListStore(
-  [where('community_account', '==', communityAccount), orderBy('event_start_datetime', 'desc')],
-  10,
-)
+const createEventListStore = useCreateAppCommunityEventListStore()
+const eventListStore = createEventListStore(props.communityAccount, 10)
 
 /** 主催者請求書払いのイベントのみ（ステータスは問わない） */
 const eventStores = computed<EventStore[] | undefined>(() =>

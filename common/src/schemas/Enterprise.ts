@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import { omitUndefined } from '../utils/object.js'
 
 export const ENTERPRISE_DISCOUNT_TYPE_VALUES = ['fixed', 'percentage'] as const
 export type EnterpriseDiscountType = (typeof ENTERPRISE_DISCOUNT_TYPE_VALUES)[number]
@@ -84,10 +85,6 @@ const EnterpriseAppSchema = z.object({
   is_active: z.boolean().default(true),
 })
 
-function omitUndefined<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined)) as T
-}
-
 const convertEnterpriseToDb = (enterprise: Enterprise) => {
   return omitUndefined({
     ...enterprise,
@@ -124,7 +121,7 @@ export class Enterprise {
     this.id = id
     this.enterprise_id = id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
-    this.updated_at = Date.now()
+    this.updated_at = EpochMillisSchema.default(Date.now()).parse(src.updated_at)
     if (src.billing_settings != null) {
       this.billing_settings = EnterpriseBillingSettingsAppSchema.parse(src.billing_settings)
     } else if (this.billing_settings == null) {
@@ -156,6 +153,7 @@ const EnterpriseMemberDbSchema = z.object({
   department: NonEmptyStringSchema.optional(),
   monthly_usage: YearMonthRecordSchema.default({}),
   monthly_order_count: YearMonthRecordSchema.default({}),
+  monthly_user_paid: YearMonthRecordSchema.default({}),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
 })
@@ -171,6 +169,7 @@ const EnterpriseMemberAppSchema = z.object({
   department: z.string().optional(),
   monthly_usage: YearMonthRecordSchema.default({}),
   monthly_order_count: YearMonthRecordSchema.default({}),
+  monthly_user_paid: YearMonthRecordSchema.default({}),
 })
 
 const convertEnterpriseMemberToDb = (member: EnterpriseMember) => {
@@ -196,6 +195,7 @@ export class EnterpriseMember {
   department?: string
   monthly_usage!: Record<string, number>
   monthly_order_count!: Record<string, number>
+  monthly_user_paid!: Record<string, number>
   created_at: number
   updated_at: number
 

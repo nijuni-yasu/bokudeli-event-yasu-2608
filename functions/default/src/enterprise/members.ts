@@ -28,7 +28,7 @@ import {
   listEnterpriseMembers,
   saveEnterpriseMember,
 } from '../stores/enterprise.js'
-import { deleteUserDocuments, getUser, saveUser, ShokujiiUser } from '../stores/user.js'
+import { deleteUserDocuments, saveUser, ShokujiiUser } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import {
   assertEnterpriseAdmin,
@@ -117,7 +117,7 @@ async function validateCreateMemberRow(
     return '許可されていないメールドメインです'
   }
   if (row.display_name.trim() === '') {
-    return '表示名は必須です'
+    return '氏名は必須です'
   }
   const role = row.role ?? 'member'
   if (!ENTERPRISE_MEMBER_ROLE_VALUES.includes(role)) {
@@ -170,6 +170,7 @@ async function createSingleEnterpriseMember(
         department,
         monthly_usage: {},
         monthly_order_count: {},
+        monthly_user_paid: {},
         created_at: now,
       })
 
@@ -464,12 +465,6 @@ export const updateEnterpriseMember = onCall<UpdateEnterpriseMemberRequest, Prom
     member.display_name = trimmedName
     member.department = trimmedDepartment
     await saveEnterpriseMember(member, enterpriseId)
-
-    const user = await getUser(userId, true)
-    if (user != null) {
-      user.user_name = trimmedName
-      await saveUser(user)
-    }
 
     const tenantAuth = await authForEnterprise(enterpriseId)
     await tenantAuth.updateUser(userId, { displayName: trimmedName })

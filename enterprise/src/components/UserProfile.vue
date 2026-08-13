@@ -15,7 +15,7 @@ import {
 } from '@mdi/js'
 import { useRoute } from 'vue-router'
 import { useNotification } from '@shokujii/base/composable/notification'
-import { getLogin, getProfile, getUserPath, getAdminDashboardPath } from '@/router/utils'
+import { getLogin, getProfile, getOrdersPath, getAdminDashboardPath } from '@/router/utils'
 import { performEnterpriseLogout } from '@/utils/enterpriseLogout'
 import { isEnterpriseAdmin } from '@/composable/useEnterpriseAdmin'
 
@@ -35,17 +35,9 @@ const user = computed(() => {
   return userStore.value?.user ?? null
 })
 
-const ordersTabPath = computed(() => {
-  const uid = firebaseUser.value?.uid
-  if (uid == null) return '/mypage'
-  return { path: getUserPath(uid), query: { tab: 'orders' } }
-})
+const ordersTabPath = computed(() => getOrdersPath())
 
-const isOrdersTabActive = computed(() => {
-  const uid = firebaseUser.value?.uid
-  if (uid == null) return false
-  return route.path === getUserPath(uid) && route.query.tab === 'orders'
-})
+const isOrdersTabActive = computed(() => route.path === '/orders')
 
 const isOpenHomeButtonDialog = ref(false)
 const showAdminLink = ref(false)

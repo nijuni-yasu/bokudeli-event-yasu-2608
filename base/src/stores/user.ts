@@ -52,7 +52,12 @@ export const getUserById = async (userId: string): Promise<User | undefined> => 
 
 export type UserStore = ReturnType<typeof useUserStore>
 
-export const useUserStore = (userId: string) => {
+type UseUserStoreOptions = {
+  /** false のとき onSnapshot を開始しない（enterprise preview ゲート前の Firestore 直読回避等） */
+  autoSubscribe?: boolean
+}
+
+export const useUserStore = (userId: string, options?: UseUserStoreOptions) => {
   const store = defineStore(`/users/${userId}`, () => {
     const userRef = getUserRef(userId)
     const exists = ref<boolean | null>(null)
@@ -129,8 +134,6 @@ export const useUserStore = (userId: string) => {
       }
     }
 
-    subscribe()
-
     return {
       exists,
       user,
@@ -144,5 +147,9 @@ export const useUserStore = (userId: string) => {
       },
     }
   })
-  return store()
+  const storeInstance = store()
+  if (options?.autoSubscribe !== false) {
+    storeInstance.subscribe()
+  }
+  return storeInstance
 }

@@ -1,30 +1,28 @@
-import { defineString } from 'firebase-functions/params'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { getCommunityInvitationUrl } from '@shokujii/common/utils/urls.js'
 import type { Enterprise } from '@shokujii/common/schemas/Enterprise.js'
+import { resolveEnterpriseAppHost } from '../utils/enterpriseBaseDomain.js'
 import type {
   AcceptInvitationForEnterpriseCommunityManagerRequest,
   AcceptInvitationForEnterpriseCommunityManagerResponse,
   GetInvitationUrlForEnterpriseCommunityManagerRequest,
   GetInvitationUrlForEnterpriseCommunityManagerResponse,
 } from '@shokujii/common/apis/enterprise.js'
-import { getCommunity, getCommunityByAccount } from '../stores/community.js'
+import { getCommunity, getCommunityByAccountInEnterprise } from '../stores/community.js'
 import { getConfigGlobal } from '../stores/config.js'
 import { getEnterpriseById, getEnterpriseMember } from '../stores/enterprise.js'
 
-const ENTERPRISE_BASE_DOMAIN = defineString('ENTERPRISE_BASE_DOMAIN', { default: '' })
+function tokenEnterpriseIdFromAuth(token: Record<string, unknown> | undefined): string | undefined {
+  const raw = token?.enterprise_id
+  return typeof raw === 'string' ? raw : undefined
+}
 
 export function resolveEnterpriseHost(enterprise: Enterprise): string {
-  const customDomain = enterprise.custom_domain?.trim().toLowerCase()
-  if (customDomain != null && customDomain !== '') {
-    return customDomain
+  const host = resolveEnterpriseAppHost(enterprise)
+  if (host == null) {
+    throw new HttpsError('failed-precondition', 'enterprise host is not configured')
   }
-  const baseDomain = ENTERPRISE_BASE_DOMAIN.value().trim().toLowerCase()
-  const subdomain = enterprise.subdomain?.trim().toLowerCase()
-  if (baseDomain !== '' && subdomain != null && subdomain !== '') {
-    return `${subdomain}.${baseDomain}`
-  }
-  throw new HttpsError('failed-precondition', 'enterprise host is not configured')
+  return host
 }
 
 async function assertActiveEnterpriseMember(enterpriseId: string, userId: string): Promise<void> {
@@ -64,7 +62,7 @@ export const getInvitationUrlForEnterpriseCommunityManager = onCall<
     throw new HttpsError('permission-denied', 'The function must be called by a manager.')
   }
 
-  const tokenEnterpriseId = auth.token.enterprise_id as string | undefined
+  const tokenEnterpriseId = tokenEnterpriseIdFromAuth(auth.token)
   if (!isSupport && tokenEnterpriseId !== enterpriseId) {
     throw new HttpsError('permission-denied', 'enterprise mismatch')
   }
@@ -100,20 +98,16 @@ export const acceptInvitationForEnterpriseCommunityManager = onCall<
     )
   }
 
-  const community = await getCommunityByAccount(communityAccount)
+  const tokenEnterpriseId = tokenEnterpriseIdFromAuth(auth.token)
+  if (tokenEnterpriseId == null || tokenEnterpriseId === '') {
+    throw new HttpsError('permission-denied', 'enterprise mismatch')
+  }
+
+  const community = await getCommunityByAccountInEnterprise(tokenEnterpriseId, communityAccount)
   if (community === undefined) {
     throw new HttpsError('not-found', 'The community does not exist.')
   }
-  const enterpriseId = community.enterprise_id
-  if (enterpriseId == null || enterpriseId === '') {
-    throw new HttpsError('failed-precondition', 'The community is not an enterprise community.')
-  }
-
-  const tokenEnterpriseId = auth.token.enterprise_id as string | undefined
-  if (tokenEnterpriseId !== enterpriseId) {
-    throw new HttpsError('permission-denied', 'enterprise mismatch')
-  }
-  await assertActiveEnterpriseMember(enterpriseId, uid)
+  await assertActiveEnterpriseMember(tokenEnterpriseId, uid)
 
   await community.inviteAsManager(uid, token)
 })

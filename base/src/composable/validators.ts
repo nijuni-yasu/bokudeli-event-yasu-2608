@@ -30,14 +30,14 @@ export const useValidators = () => {
     return String(value).length <= maxLength || $t('validator.max_length', [maxLength])
   }
 
-  const postalCodeValidator = (value: string | null | undefined) => {
+  const postalCodeValidator = (value: unknown) => {
     if (isEmpty(value)) {
       return true
     }
-    return /^\d{7}$/.test(value as string) || $t('validator.postal_code')
+    return (typeof value === 'string' && /^\d{7}$/.test(value)) || $t('validator.postal_code')
   }
 
-  const positiveIntegerValidator = (value: string | null | undefined) => {
+  const positiveIntegerValidator = (value: unknown) => {
     if (isEmpty(value)) {
       return true
     }
@@ -59,11 +59,11 @@ export const useValidators = () => {
    * @returns boolean | string if it's invalid, return error message
    * @see https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s01.html
    */
-  const emailValidator = (value: string | null | undefined) => {
+  const emailValidator = (value: unknown) => {
     if (isEmpty(value)) {
       return true
     }
-    return isValidEmail(value as string) || $t('validator.email')
+    return (typeof value === 'string' && isValidEmail(value)) || $t('validator.email')
   }
 
   /**
@@ -97,8 +97,8 @@ export const useValidators = () => {
   }
 
   /** TinyMCE 等の HTML 入力で、タグ除去後にテキストが空かつ有効な img も無ければ必須エラー */
-  const requiredHtmlValidator = (value: string | null | undefined) => {
-    const html = value ?? ''
+  const requiredHtmlValidator = (value: unknown) => {
+    const html = typeof value === 'string' ? value : ''
     if (extractImageSlidesFromHtml(html).length > 0) {
       return true
     }

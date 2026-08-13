@@ -22,7 +22,10 @@ export const extractPlainTextFromVNode = (vNode: VNode): string => {
     return children.map((child) => collectTextFromChild(child)).join('')
   }
   if (children != null && typeof children === 'object' && 'default' in children) {
-    return collectTextFromChild(children.default?.())
+    const defaultSlot = children.default
+    if (typeof defaultSlot === 'function') {
+      return collectTextFromChild(defaultSlot())
+    }
   }
   return ''
 }

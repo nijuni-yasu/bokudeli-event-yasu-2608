@@ -13,18 +13,22 @@ import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMenuList from '@shokujii/base/components/EventMenuList.vue'
 import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import {
+  useEnterpriseCommunityMemberFlags,
+  useEnterpriseCommunityStore,
+} from '@/composable/useEnterpriseCommunityStore'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
-import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
 import { useEnterpriseTenantGuard } from '@/composable/useEnterpriseTenantGuard'
 import EnterpriseErrorPage from '@/components/EnterpriseErrorPage.vue'
+import { getChatPath } from '@/router/utils'
+import { useNavigateToEventChat } from '@shokujii/base/composable/useNavigateToEventChat.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,7 +42,7 @@ if (enterpriseId.value == null) {
 }
 
 const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
-const communityStore = useCommunityStore(communityAccount) as CommunityStore
+const communityStore = useEnterpriseCommunityStore(communityAccount)
 const eventEnterpriseId = computed(() => eventStore.event?.enterprise_id)
 const communityEnterpriseId = computed(() => communityStore.community?.enterprise_id)
 const { isTenantMismatch } = useEnterpriseTenantGuard([eventEnterpriseId, communityEnterpriseId])
@@ -53,9 +57,31 @@ const menuListRef = ref()
 let menuListObserver: IntersectionObserver | null = null
 
 // 共通の composable を使用してサポートアカウントのロール拡張を考慮（isManager のみ使用）
-const { isManager } = useCommunityMemberFlags(communityAccount)
+const { isManager } = useEnterpriseCommunityMemberFlags(communityAccount)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
+
+const canOpenChat = computed(() => {
+  const uid = currentUserStore.firebaseUser?.uid
+  const currentEvent = event.value
+  if (uid == null || uid === '' || currentEvent == null) {
+    return false
+  }
+  return currentEvent.members.includes(uid)
+})
+
+const { navigateToEventChat, isNavigatingToChat } = useNavigateToEventChat({
+  getChatPath,
+  userId: () => currentUserStore.firebaseUser?.uid,
+})
+
+const onOpenChat = (): void => {
+  const currentEvent = event.value
+  if (currentEvent == null) {
+    return
+  }
+  void navigateToEventChat({ communityId: currentEvent.community_id, eventId: currentEvent.id })
+}
 
 /** 表示ステータスが下書き・予約申請中・注文受付中・満席のときイベント編集。それ以外はコミュニティ管理画面へ */
 const showManagerEventEditButton = computed(
@@ -307,6 +333,9 @@ onUnmounted(() => {
           :community="communityStore.community"
           :album-image-urls="albumImageUrls"
           hide-share-sns
+          :show-open-chat-button="canOpenChat"
+          :open-chat-loading="isNavigatingToChat"
+          @open-chat="onOpenChat"
         />
         <!-- メニュ -->
         <event-menu-list

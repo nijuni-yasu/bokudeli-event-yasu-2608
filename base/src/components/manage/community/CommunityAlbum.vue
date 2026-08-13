@@ -3,7 +3,8 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { VueDraggableNext as draggable } from 'vue-draggable-next'
-import { useCommunityStore, type BokudeliAlbumItem, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { type BokudeliAlbumItem } from '@shokujii/base/stores/community.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { validateImageFile } from '@shokujii/base/utils/image.js'
@@ -17,7 +18,7 @@ const notification = useNotification()
 const route = useRoute()
 
 const communityAccount = route.params.communityAccount as string
-const communityStore = useCommunityStore(communityAccount) as CommunityStore
+const communityStore = useAppCommunityStore(communityAccount)
 const community = computed(() => communityStore.community)
 
 const items = computed(() => communityStore.albumItems ?? [])

@@ -14,10 +14,10 @@ import { FooterType } from '@layouts/enums'
 import { layoutConfig } from '@themeConfig'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
-  () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
+  () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
 )
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(
-  () => import('@shokujii/base/components/layouts/DefaultLayoutWithVerticalNav.vue'),
+  () => import('@/components/layouts/DefaultLayoutWithVerticalNav.vue'),
 )
 
 const navItems = useNavItems()

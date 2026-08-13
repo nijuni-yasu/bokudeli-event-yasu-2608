@@ -39,6 +39,7 @@ describe('adjustEnterpriseMemberMonthlyUsage', () => {
           data: () => ({
             monthly_usage: { '2026-06': 1000 },
             monthly_order_count: { '2026-06': 1 },
+            monthly_user_paid: { '2026-06': 400 },
           }),
         }
       }),
@@ -48,7 +49,7 @@ describe('adjustEnterpriseMemberMonthlyUsage', () => {
       }),
     }
 
-    await adjustEnterpriseMemberMonthlyUsage('ent-a', 'user-a', '2026-06', 500, 1, transaction as never)
+    await adjustEnterpriseMemberMonthlyUsage('ent-a', 'user-a', '2026-06', 500, 1, 200, transaction as never)
 
     expect(callOrder).toEqual(['get', 'update'])
   })
@@ -60,6 +61,7 @@ describe('adjustEnterpriseMemberMonthlyUsage', () => {
         data: () => ({
           monthly_usage: { '2026-06': 1000 },
           monthly_order_count: { '2026-06': 1 },
+          monthly_user_paid: { '2026-06': 400 },
         }),
       })),
       update: vi.fn((...args: unknown[]) => {
@@ -67,7 +69,7 @@ describe('adjustEnterpriseMemberMonthlyUsage', () => {
       }),
     }
 
-    await adjustEnterpriseMemberMonthlyUsage('ent-a', 'user-a', '2026-06', 500, 1, transaction as never)
+    await adjustEnterpriseMemberMonthlyUsage('ent-a', 'user-a', '2026-06', 500, 1, 200, transaction as never)
 
     expect(updateMock).toHaveBeenCalledWith(
       'member-ref',
@@ -75,6 +77,8 @@ describe('adjustEnterpriseMemberMonthlyUsage', () => {
       1500,
       new FieldPath('monthly_order_count', '2026-06'),
       2,
+      new FieldPath('monthly_user_paid', '2026-06'),
+      600,
       'updated_at',
       FieldValue.serverTimestamp(),
     )

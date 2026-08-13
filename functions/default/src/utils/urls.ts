@@ -1,9 +1,22 @@
 import { defineString } from 'firebase-functions/params'
 import * as common from '@shokujii/common/utils/urls.js'
 import { getStorage } from 'firebase-admin/storage'
+import { resolveEnterpriseAppHost } from './enterpriseBaseDomain.js'
+import { getEnterpriseById } from '../stores/enterprise.js'
 
 const EVENT_HOST = defineString('EVENT_HOST')
 const PARTNER_HOST = defineString('PARTNER_HOST')
+
+type CommunityHostSource = {
+  community_account: string
+  enterprise_id?: string | null
+}
+
+type EventHostSource = {
+  community_account: string
+  id: string
+  enterprise_id?: string | null
+}
 
 export const getEventHost = (): string => EVENT_HOST.value()
 
@@ -32,6 +45,52 @@ export const getCommunityUrl = (communityAccount: string) =>
 
 export const getEventUrl = (communityAccount: string, eventId: string) =>
   common.getEventUrl(EVENT_HOST.value(), communityAccount, eventId)
+
+/** community.enterprise_id からアプリ host（hostname のみ）を解決。PF は EVENT_HOST */
+export async function resolveAppHostForCommunity(
+  community: Pick<CommunityHostSource, 'enterprise_id'>,
+): Promise<string | undefined> {
+  const enterpriseId = community.enterprise_id
+  if (enterpriseId == null || enterpriseId === '') {
+    return getEventHost()
+  }
+  const enterprise = await getEnterpriseById(enterpriseId)
+  if (enterprise == null) {
+    return undefined
+  }
+  return resolveEnterpriseAppHost(enterprise)
+}
+
+export async function getCommunityUrlForCommunity(community: CommunityHostSource): Promise<string | undefined> {
+  const host = await resolveAppHostForCommunity(community)
+  if (host == null) {
+    return undefined
+  }
+  return common.getCommunityUrl(host, community.community_account)
+}
+
+export async function getEventUrlForCommunity(
+  community: CommunityHostSource,
+  eventId: string,
+): Promise<string | undefined> {
+  const host = await resolveAppHostForCommunity(community)
+  if (host == null) {
+    return undefined
+  }
+  return common.getEventUrl(host, community.community_account, eventId)
+}
+
+export async function getManageCommunityUrlForCommunity(community: CommunityHostSource): Promise<string | undefined> {
+  const host = await resolveAppHostForCommunity(community)
+  if (host == null) {
+    return undefined
+  }
+  return common.getManageCommunityUrl(host, community.community_account)
+}
+
+export async function getEventUrlForEvent(event: EventHostSource): Promise<string | undefined> {
+  return getEventUrlForCommunity(event, event.id)
+}
 
 /** LINE 等の外部ブラウザ起動用クエリ付きイベント URL */
 export const getEventUrlForExternalBrowser = (communityAccount: string, eventId: string): string =>

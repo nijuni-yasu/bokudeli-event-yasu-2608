@@ -42,6 +42,20 @@ import { uploadAlbumImage, uploadImage, convertStoragePathToURL } from '@shokuji
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { useConfigStore } from './config.js'
 import { TaskExecutor } from '../utils/executors.js'
+import {
+  buildCommunityLookupConstraints,
+  resolveCommunityStoreKey,
+  resolveEffectiveEnterpriseId,
+  type CommunityStoreScope,
+} from '@shokujii/base/stores/communityScope.js'
+import { resolveEventStoreOptionsFromInjectedEnterpriseId } from '@shokujii/base/stores/eventStoreOptions.js'
+
+export type { CommunityStoreScope } from '@shokujii/base/stores/communityScope.js'
+export {
+  buildCommunityLookupConstraints,
+  resolveCommunityStoreKey,
+  resolveCommunityEnterpriseIdForQuery,
+} from '@shokujii/base/stores/communityScope.js'
 
 const MEMBER_LOAD_BATCH_SIZE = 10
 
@@ -189,15 +203,41 @@ export const checkSoleManagerCommunity = async (userId: string): Promise<boolean
 
 export type CommunityStore = ReturnType<typeof useCommunityStore>
 
+export async function resolveCommunityDocumentRef(
+  communityAccount: string,
+  scope?: CommunityStoreScope,
+): Promise<DocumentReference<BokudeliCommunity>> {
+  const querySnapshot = await getDocs(
+    query(
+      collection(db, 'communities').withConverter(communityConverter),
+      ...buildCommunityLookupConstraints(communityAccount, scope),
+      limit(2),
+    ),
+  )
+  if (querySnapshot.docs.length === 0) {
+    throw new Error(`Community "${communityAccount}" was not found for the given scope.`)
+  }
+  if (querySnapshot.docs.length > 1) {
+    console.warn(`Multiple communities matched account "${communityAccount}" for scope; expected at most one document.`)
+    throw new Error(`Community "${communityAccount}" is ambiguous for the given scope.`)
+  }
+  return querySnapshot.docs[0].ref.withConverter(communityConverter)
+}
+
 /**
  * コミュニティ store。文字列を渡す場合は community_account（URL スラッグ）で検索する。
- * Pinia store ID は `/communities/${communityAccount}` だが、Firestore path は `_communityRef.id`（community_id）。
+ * Pinia store ID は `/communities/${scope}/${communityAccount}` だが、Firestore path は `_communityRef.id`（community_id）。
  */
-export const useCommunityStore = (target: string | BokudeliCommunity) => {
+export const useCommunityStore = (target: string | BokudeliCommunity, scope?: CommunityStoreScope) => {
   const communityAccount: string = target instanceof BokudeliCommunity ? target.community_account : target
-  // store の Identifier が firestore の path と異なるのは危険だが、この store 内に閉じている場合は問題ないはず
-  const store = defineStore(`/communities/${communityAccount}`, () => {
-    const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${communityAccount}`
+  const resolvedEnterpriseId = resolveEffectiveEnterpriseId(
+    target instanceof BokudeliCommunity ? target.enterprise_id : undefined,
+    scope?.enterpriseId,
+  )
+  const storeKey = resolveCommunityStoreKey(resolvedEnterpriseId)
+  const store = defineStore(`/communities/${storeKey}/${communityAccount}`, () => {
+    const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${storeKey}_${communityAccount}`
+    const eventStoreOptions = resolveEventStoreOptionsFromInjectedEnterpriseId(resolvedEnterpriseId)
     const community = ref<BokudeliCommunity | null>(target instanceof BokudeliCommunity ? target : null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
     const _communityRef = ref<DocumentReference<BokudeliCommunity> | null>(null)
@@ -546,7 +586,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
           querySnapshot.docs.forEach((doc) => {
             const eventId = doc.id
             const stores = eventStores.value || new Map()
-            stores.set(eventId, useEventStore(eventId) as EventStore)
+            stores.set(eventId, useEventStore(eventId, eventStoreOptions) as EventStore)
             eventStores.value = stores
           })
         })
@@ -554,12 +594,19 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
     }
 
     let retry = 0
-    const subscribe = () =>
-      getDocs(
-        query(collection(db, 'communities'), where('community_account', '==', communityAccount)).withConverter(
-          communityConverter,
-        ),
+    const subscribe = () => {
+      const queryConstraints = buildCommunityLookupConstraints(communityAccount, {
+        enterpriseId: resolvedEnterpriseId,
+      })
+      return getDocs(
+        query(collection(db, 'communities'), ...queryConstraints, limit(2)).withConverter(communityConverter),
       ).then((querySnapshot) => {
+        if (querySnapshot.docs.length > 1) {
+          reportClientError(new Error(`Community "${communityAccount}" is ambiguous for the given scope.`), {
+            severity: 'error',
+          })
+          return
+        }
         const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
         if (communityRef == null) {
           if (retry++ < 10) {
@@ -580,6 +627,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
         // 他の Store は遅延評価なので、以下を呼ぶ必要はない
         // subscribeEvents(communityRef)
       })
+    }
 
     const unsubscribe = () => {
       retry = 0

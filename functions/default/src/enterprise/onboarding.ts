@@ -170,6 +170,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
       ...(normalizedDepartment != null ? { department: normalizedDepartment } : {}),
       monthly_usage: {},
       monthly_order_count: {},
+      monthly_user_paid: {},
       created_at: now,
     })
 
@@ -283,6 +284,7 @@ export const getEnterpriseByDomain = onCall<GetEnterpriseByDomainRequest, Promis
       theme_color: enterprise.theme_color,
       subdomain: enterprise.subdomain,
       allowed_email_domains: enterprise.allowed_email_domains,
+      updated_at: enterprise.updated_at,
     }
   },
 )

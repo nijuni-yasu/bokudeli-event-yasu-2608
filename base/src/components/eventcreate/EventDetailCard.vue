@@ -19,8 +19,8 @@ import {
 import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
 import eventDetailStyle from '@shokujii/base/utils/eventDetailStyle'
-import { useCommunityStore } from '@shokujii/base/stores/community'
-import { useEventStore } from '@shokujii/base/stores/event.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import { trimHashTag } from '@shokujii/base/utils/hashTag'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
@@ -64,11 +64,11 @@ const OFF_AMOUNT_STEP = 100
 
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
-const communityStore = useCommunityStore(event.value.community_account)
+const communityStore = useAppCommunityStore(event.value.community_account)
 const paymentUiStrategy = computed(() => props.paymentUiStrategy)
 // 新規作成中はまだイベントドキュメントが Firestore に存在しないため、
 // useEventStore を呼ぶとコレクショングループ検索でリトライ警告が連発してしまう。保存済みのときだけストアを参照する。
-const eventStore = props.isNew ? null : useEventStore(event.value)
+const eventStore = props.isNew ? null : useAppEventStore(event.value)
 
 const checkBillInfo = () => {
   if (event.value.event_payment === 'community_bill') {

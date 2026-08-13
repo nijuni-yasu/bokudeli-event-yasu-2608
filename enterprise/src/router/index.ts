@@ -1,7 +1,7 @@
 import { type User, getAuth, onAuthStateChanged } from 'firebase/auth'
 import type { Router } from 'vue-router'
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useEnterpriseCommunityStore } from '@/composable/useEnterpriseCommunityStore'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import {
   useEventStore,
@@ -15,23 +15,31 @@ import { getManageCommunityListPath } from './utils'
 import { ZodError } from 'zod'
 import { setPendingToast } from '@/utils/pendingToast'
 import { useEnterpriseStore } from '@/stores/enterprise'
-import { isEnterpriseAuthTenantConsistent } from '@/utils/enterpriseAuth'
 import { isLoginRequired } from '@/router/authGuards.js'
+import {
+  ensureEnterpriseTenantConsistent,
+  waitEnterpriseAuthentication,
+} from '@/utils/ensureEnterpriseTenantConsistent'
+import { evaluateManageCommunityCanView, MANAGE_COMMUNITY_GUARD_TIMEOUT_MS } from '@/router/manageCommunityCanView.js'
 
-const waitAdminAuthentication = async (): Promise<User | null> => {
-  return new Promise<User | null>((resolve) => {
-    const unsubscribe = onAuthStateChanged(getAuth(), async (user: User | null) => {
-      unsubscribe()
-      resolve(user)
-    })
-  })
+const EVENT_GUARD_LOAD_TIMEOUT_MS = 8000
+
+async function loadEventForRouteGuard(eventStore: EventStore): Promise<BokudeliEvent> {
+  try {
+    return await eventStore.getLoadedEvent(EVENT_GUARD_LOAD_TIMEOUT_MS)
+  } catch (first) {
+    if (first instanceof ZodError) {
+      throw first
+    }
+    return await eventStore.getLoadedEvent(EVENT_GUARD_LOAD_TIMEOUT_MS)
+  }
 }
 
 export const setupRouter = (router: Router) => {
   let lastUser: User | null = null
 
   router.beforeEach(async (to) => {
-    await waitAdminAuthentication()
+    await waitEnterpriseAuthentication()
 
     const configStore = useConfigStore()
     const config = await configStore.getResolvedConfig()
@@ -76,7 +84,7 @@ export const setupRouter = (router: Router) => {
   router.beforeEach(async (to) => {
     let user: User | null = null
     try {
-      user = await waitAdminAuthentication()
+      user = await waitEnterpriseAuthentication()
     } catch {
       // Do nothing
     }
@@ -87,23 +95,9 @@ export const setupRouter = (router: Router) => {
     } else if (to.path === '/login') {
       return (to.query?.redirect as string) ?? '/'
     } else if (isLoginRequired(to.path)) {
-      const enterpriseStore = useEnterpriseStore()
-      if (enterpriseStore.status !== 'ready') {
-        await enterpriseStore.resolveEnterprise()
-      }
-      const tokenResult = await user.getIdTokenResult()
-      if (tokenResult.claims.user_type === 'enterprise') {
-        const rawEnterpriseId = tokenResult.claims.enterprise_id
-        const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
-        const tenantOk = isEnterpriseAuthTenantConsistent(
-          enterpriseStore.enterprise?.tenant_id,
-          enterpriseStore.enterprise?.enterprise_id,
-          tokenEnterpriseId,
-          user.tenantId,
-        )
-        if (!tenantOk) {
-          return { path: '/404' }
-        }
+      const tenantOk = await ensureEnterpriseTenantConsistent(user)
+      if (!tenantOk) {
+        return { path: '/404' }
       }
     }
   })
@@ -149,7 +143,7 @@ export const setupRouter = (router: Router) => {
       const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId)) as EventStore
       let event: BokudeliEvent
       try {
-        event = await eventStore.getLoadedEvent(5000)
+        event = await loadEventForRouteGuard(eventStore)
         if (event.is_deleted) {
           return '/404'
         }
@@ -170,37 +164,40 @@ export const setupRouter = (router: Router) => {
     }
     if (communityAccount != null) {
       const configStore = useConfigStore()
-      const communityStore = useCommunityStore(communityAccount) as CommunityStore
+      const communityStore = useEnterpriseCommunityStore(communityAccount)
       const canView = await new Promise<boolean>((resolve) => {
+        let settled = false
         let unwatch: (() => void) | undefined
+
+        const finish = (value: boolean) => {
+          if (settled) {
+            return
+          }
+          settled = true
+          unwatch?.()
+          window.clearTimeout(timeoutId)
+          resolve(value)
+        }
+
+        const timeoutId = window.setTimeout(() => finish(false), MANAGE_COMMUNITY_GUARD_TIMEOUT_MS)
+
         unwatch = watch(
           () => [configStore.config, communityStore.community],
           () => {
-            if (
-              configStore.config !== FIRESTORE_LOADING &&
-              configStore.config?.isSupport(getAuth().currentUser?.uid as string) === true
-            ) {
-              unwatch?.()
-              resolve(true)
-              return
-            }
-            const community = communityStore.community
+            const config = configStore.config
             const currentUserId = getAuth().currentUser?.uid
             const enterpriseStore = useEnterpriseStore()
             const enterpriseId = enterpriseStore.enterprise?.enterprise_id
-
-            if (community != null && enterpriseId != null && community.enterprise_id != null) {
-              if (community.enterprise_id !== enterpriseId) {
-                unwatch?.()
-                resolve(false)
-                return
-              }
-            }
-
-            if (community != null && currentUserId != null) {
-              const canView = community.managers.some((managerRef) => managerRef.id === currentUserId)
-              unwatch?.()
-              resolve(canView)
+            const result = evaluateManageCommunityCanView({
+              config,
+              community: communityStore.community,
+              currentUserId,
+              enterpriseId,
+              isSupport:
+                config !== FIRESTORE_LOADING && currentUserId != null && config?.isSupport(currentUserId) === true,
+            })
+            if (result != null) {
+              finish(result)
             }
           },
           { immediate: true },
@@ -239,20 +236,8 @@ export const setupRouter = (router: Router) => {
     const config = await configStore.getResolvedConfig()
     const isSupport = config?.isSupport(user.uid) ?? false
     if (!isSupport) {
-      const enterpriseStore = useEnterpriseStore()
-      if (enterpriseStore.status !== 'ready') {
-        await enterpriseStore.resolveEnterprise()
-      }
-      const resolvedEnterpriseId = enterpriseStore.enterprise?.enterprise_id
-      const rawEnterpriseId = tokenResult.claims.enterprise_id
-      const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
-      const tenantOk = isEnterpriseAuthTenantConsistent(
-        enterpriseStore.enterprise?.tenant_id,
-        resolvedEnterpriseId,
-        tokenEnterpriseId,
-        user.tenantId,
-      )
-      if (resolvedEnterpriseId == null || tokenEnterpriseId == null || !tenantOk) {
+      const tenantOk = await ensureEnterpriseTenantConsistent(user)
+      if (!tenantOk) {
         setPendingToast('管理者権限が必要です', 'error')
         return { path: '/' }
       }

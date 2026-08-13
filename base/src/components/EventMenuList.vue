@@ -3,7 +3,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 import { priceString } from '@shokujii/base/schemes/converter'
-import { useEventStore, type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
+import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { mdiFoodForkDrink } from '@mdi/js'
 import EventMenuImage from '@shokujii/base/components/EventMenuImage.vue'
 
@@ -21,7 +22,7 @@ const emit = defineEmits<{
 
 const display = useDisplay()
 const { t: $t } = useI18n()
-const eventStore = useEventStore(props.eventId)
+const eventStore = useAppEventStore(props.eventId)
 
 // is_selected が true のメニューのみを表示
 const filteredMenus = computed(() => {

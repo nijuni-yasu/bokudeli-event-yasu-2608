@@ -3,13 +3,27 @@ import { ref, computed, watch } from 'vue'
 import { mdiCloseCircle, mdiSend, mdiCalendar, mdiMessageTextOutline } from '@mdi/js'
 import type { NavigateToEventChatFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { useEventStore } from '@shokujii/base/stores/event'
-import { useCommunityStore } from '@shokujii/base/stores/community'
+import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
 import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
+import { useDisplay } from 'vuetify'
+
+const display = useDisplay()
+
+/** xs のみ画面幅いっぱい。sm（タブレット縦等）はコンテンツ max 520px に合わせて 560px 固定 */
+const dialogWidth = computed(() => {
+  if (display.xs.value) {
+    return 'calc(100% - 48px)'
+  }
+  if (display.sm.value) {
+    return 560
+  }
+  return 650
+})
 
 const props = withDefaults(
   defineProps<{
@@ -31,8 +45,8 @@ const props = withDefaults(
 
 const model = defineModel<boolean>()
 
-const eventStore = useEventStore(props.eventId)
-const communityStore = useCommunityStore(props.communityAccount)
+const eventStore = useAppEventStore(props.eventId)
+const communityStore = useAppCommunityStore(props.communityAccount)
 const isPosted = props.isPosted
 
 const event = computed(() => eventStore.event)
@@ -147,7 +161,7 @@ watch(
 </script>
 
 <template>
-  <v-dialog v-model="model" :width="$vuetify.display.smAndDown ? 'calc(100% - 48px)' : 650" persistent>
+  <v-dialog v-model="model" :width="dialogWidth" persistent>
     <v-card v-if="event != null" class="success-join-dialog pre-line">
       <template v-if="isLoadingOrder">
         <v-card-title class="text-center d-flex justify-center py-8">
@@ -188,7 +202,7 @@ watch(
         <div class="success-join-dialog__body px-8 pb-4">
           <div class="success-join-dialog__event-content">
             <v-img
-              class="success-join-dialog__cover rounded-lg elevation-1"
+              class="success-join-dialog__cover rounded-lg"
               cover
               aspect-ratio="1.91"
               :src="eventStore.coverImageUrl"
@@ -374,6 +388,9 @@ watch(
 .success-join-dialog__cover {
   display: block;
   width: 100%;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .success-join-dialog__chat-hint {

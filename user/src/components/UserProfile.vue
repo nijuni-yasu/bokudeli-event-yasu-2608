@@ -13,7 +13,7 @@ import {
   mdiReceiptText,
 } from '@mdi/js'
 import { useRoute } from 'vue-router'
-import { getProfile, getUserPath } from '@/router/utils'
+import { getProfile, getOrdersPath } from '@/router/utils'
 
 const route = useRoute()
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
@@ -28,17 +28,9 @@ const user = computed(() => {
   return userStore.value?.user ?? null
 })
 
-const ordersTabPath = computed(() => {
-  const uid = firebaseUser.value?.uid
-  if (uid == null) return '/mypage'
-  return { path: getUserPath(uid), query: { tab: 'orders' } }
-})
+const ordersTabPath = computed(() => getOrdersPath())
 
-const isOrdersTabActive = computed(() => {
-  const uid = firebaseUser.value?.uid
-  if (uid == null) return false
-  return route.path === getUserPath(uid) && route.query.tab === 'orders'
-})
+const isOrdersTabActive = computed(() => route.path === getOrdersPath())
 
 const isOpenHomeButtonDialog = ref(false)
 
@@ -110,7 +102,7 @@ const logout = async () => {
         <v-divider class="my-2" />
 
         <!-- 👉 contact -->
-        <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
+        <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank" rel="noopener noreferrer">
           <template #prepend>
             <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
           </template>

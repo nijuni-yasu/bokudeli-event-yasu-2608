@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { getLogin, getUserPath } from '@/router/utils'
+import { getLogin, getOrdersPath } from '@/router/utils'
 
 const isOpenDialog = defineModel<boolean>({ required: true })
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const ordersTabTo = computed(() => {
-  const uid = firebaseUser.value?.uid
-  if (uid == null) return getLogin()
-  return { path: getUserPath(uid), query: { tab: 'orders' } }
+  if (firebaseUser.value?.uid == null) return getLogin()
+  return getOrdersPath()
 })
 
 const closeDialog = () => {

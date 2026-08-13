@@ -2,7 +2,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
-import { getEventUrl, getUserUrl, FIREBASE_STORAGE_BASE_URL, convertStoragePathToURL } from './utils/urls.js'
+import { getEventUrlForEvent, getUserUrl, FIREBASE_STORAGE_BASE_URL, convertStoragePathToURL } from './utils/urls.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { getUser, getUserPersonalInformation } from './stores/user.js'
@@ -25,6 +25,21 @@ async function getUserEmail(userId: string): Promise<string | undefined> {
 }
 
 async function sendOrderCompletionMailToMember(event: ShokujiiEvent, userId: string): Promise<void> {
+  const event_url = await getEventUrlForEvent(event)
+  if (event_url == null) {
+    if (isEnterpriseEvent(event)) {
+      logger.error('Enterprise host unresolved for order completion member mail', {
+        eventId: event.id,
+        enterpriseId: event.enterprise_id,
+      })
+    } else {
+      logger.warn('Event URL unresolved for order completion member mail', {
+        eventId: event.id,
+        communityAccount: event.community_account,
+      })
+    }
+    return
+  }
   const dynamicTemplateData = {
     date: convertToDateWeekdayShort(event.event_start_datetime),
     event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
@@ -33,7 +48,7 @@ async function sendOrderCompletionMailToMember(event: ShokujiiEvent, userId: str
     community_name: event.community_name,
     event_address: event.fullAddress,
     shop_name: event.shop_name,
-    event_url: getEventUrl(event.community_account, event.id),
+    event_url,
     is_public: event.is_public,
   }
 
@@ -79,11 +94,12 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
 
   // メール上のアバター表示用に large（500px）を使う（medium は 100px で粗く見える）
   const userImageUrl = getUserImageUrl(userData.user_id, userData.user_image_url, 'large', FIREBASE_STORAGE_BASE_URL)
+  const event_url = await getEventUrlForEvent(event)
 
   const dynamicTemplateData = {
     date: convertToDateWeekdayShort(event.event_start_datetime),
     event_name: event.event_name,
-    event_url: getEventUrl(event.community_account, event.id),
+    event_url,
     user_name: userData.user_name,
     user_url: getUserUrl(userData.user_id),
     user_image_url: userImageUrl,
@@ -176,9 +192,10 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
   }
 
   try {
+    const event_url = await getEventUrlForEvent(event)
     const dynamicTemplateData = {
       community_name: event.community_name,
-      event_url: getEventUrl(event.community_account, event.id),
+      event_url: event_url ?? '',
       event_name: event.event_name,
       event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
       event_desc: event.event_desc,

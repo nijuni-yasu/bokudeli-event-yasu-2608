@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { getAuth, signInWithCustomToken } from 'firebase/auth'
-import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 import { confirmEnterpriseEmailLogin, requestEnterpriseEmailLogin } from '@/apis/enterprise'
 import { useEnterpriseStore } from '@/stores/enterprise'
 import { setEnterpriseAuthTenantId } from '@/utils/enterpriseAuth'
+import { writeEnterpriseTenantCache } from '@/utils/enterpriseTenantCache'
 import { getHomePath, getLogin } from '@/router/utils'
+import LoginBrandingHeader from '@/components/login/LoginBrandingHeader.vue'
+import LoginBackgroundLayout from '@/components/login/LoginBackgroundLayout.vue'
 
 const router = useRouter()
 const notification = useNotification()
@@ -23,8 +25,6 @@ const email = history.state?.email as string | undefined
 if (email == null) {
   await router.replace(getLogin())
 }
-
-const logoUrl = computed(() => enterpriseStore.enterprise?.company_logo_url || logo)
 
 watch(passCode, async (newValue) => {
   if (newValue.length === 6) {
@@ -68,6 +68,7 @@ const submit = async (code: string) => {
     })
     if (enterprise.tenant_id != null && enterprise.tenant_id !== '') {
       setEnterpriseAuthTenantId(enterprise.tenant_id)
+      writeEnterpriseTenantCache(enterprise)
     }
     await signInWithCustomToken(getAuth(), result.data.token)
     const redirectPath = getRedirectPath() ?? getHomePath()
@@ -83,56 +84,66 @@ const submit = async (code: string) => {
 </script>
 
 <template>
-  <v-container>
-    <v-row justify="center" class="mt-16">
-      <v-col lg="5" md="6" sm="10" cols="12" class="pa-0">
-        <v-sheet class="rounded-lg py-14 px-md-10 px-5">
-          <v-container>
-            <v-row justify="center">
-              <v-img max-width="120" :src="logoUrl" />
-            </v-row>
-            <v-row justify="center">
-              <h1 class="my-3 text-h4 font-weight-bold">{{ t('enterprise.pass_code.title') }}</h1>
-            </v-row>
-            <v-row justify="center">
-              <p class="text-center">{{ t('enterprise.pass_code.description') }}</p>
-            </v-row>
-            <v-row justify="center">
-              <p class="text-body-2 text-medium-emphasis">{{ email }}</p>
-            </v-row>
-          </v-container>
+  <LoginBackgroundLayout>
+    <LoginBrandingHeader :title="t('enterprise.pass_code.title')">
+      <div class="pass-code-intro text-center">
+        <p class="text-body-1 text-medium-emphasis mb-2">{{ t('enterprise.pass_code.description') }}</p>
+        <p class="text-body-1 font-weight-medium text-high-emphasis text-break mb-0">{{ email }}</p>
+      </div>
 
-          <v-otp-input v-model="passCode" autofocus :disabled="isValidating" :loading="isValidating" />
+      <div class="pass-code-otp my-8">
+        <v-otp-input v-model="passCode" autofocus :disabled="isValidating" :loading="isValidating" />
+      </div>
 
-          <v-btn
-            size="large"
-            color="primary"
-            variant="text"
-            block
-            :disabled="isValidating"
-            :loading="isLoading"
-            @click="reSendPassCode"
-          >
-            {{ t('enterprise.pass_code.resend') }}
-          </v-btn>
-          <v-btn
-            size="large"
-            color="grey-900"
-            variant="text"
-            block
-            :disabled="isValidating"
-            @click="router.push(getLogin())"
-          >
-            {{ t('passcode.back') }}
-          </v-btn>
-        </v-sheet>
-      </v-col>
-    </v-row>
+      <div class="pass-code-actions d-flex flex-column ga-1">
+        <v-btn
+          size="default"
+          color="primary"
+          variant="text"
+          block
+          :disabled="isValidating"
+          :loading="isLoading"
+          @click="reSendPassCode"
+        >
+          {{ t('enterprise.pass_code.resend') }}
+        </v-btn>
+        <v-btn
+          size="default"
+          color="grey-900"
+          variant="text"
+          block
+          :disabled="isValidating"
+          @click="router.push(getLogin())"
+        >
+          {{ t('passcode.back') }}
+        </v-btn>
+      </div>
+    </LoginBrandingHeader>
+  </LoginBackgroundLayout>
 
-    <confirm-dialog v-model="isOpenUnMatchPassCodeDialog" :is-confirm="false">
-      <v-card-text class="text-center py-10 text-h5">
-        {{ t('enterprise.pass_code.invalid') }}
-      </v-card-text>
-    </confirm-dialog>
-  </v-container>
+  <confirm-dialog v-model="isOpenUnMatchPassCodeDialog" :is-confirm="false">
+    <v-card-text class="text-center py-10 text-h5">
+      {{ t('enterprise.pass_code.invalid') }}
+    </v-card-text>
+  </confirm-dialog>
 </template>
+
+<style scoped lang="scss">
+.pass-code-intro {
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+.pass-code-otp :deep(.v-otp-input__content) {
+  gap: 0.5rem;
+}
+
+.pass-code-otp :deep(.v-field) {
+  --v-field-border-opacity: 0.38;
+}
+</style>
+
+<route lang="yaml">
+meta:
+  layout: blank
+</route>

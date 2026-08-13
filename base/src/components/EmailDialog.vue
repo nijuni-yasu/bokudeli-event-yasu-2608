@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { functions } from '@shokujii/base/firebase'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { httpsCallable } from 'firebase/functions'
-import { useLetterListStore } from '@shokujii/base/stores/letterList.js'
+import { useCreateAppLetterListStore } from '@shokujii/base/composable/useAppLetterStore.js'
 import { mdiEmailOutline } from '@mdi/js'
 import type { User } from '@shokujii/common/schemas/User.js'
 import type { SendIndividualLetterRequest } from '@shokujii/common/apis/letter.js'
@@ -26,6 +26,7 @@ const emit = defineEmits<{
 
 const notification = useNotification()
 const { t: $t } = useI18n()
+const createLetterListStore = useCreateAppLetterListStore()
 const mailSubject = ref('')
 const mailText = ref('')
 const isSending = ref(false)
@@ -33,7 +34,7 @@ const isSending = ref(false)
 const onFormSubmit = async () => {
   isSending.value = true
   try {
-    const letterListStore = useLetterListStore(props.communityAccount)
+    const letterListStore = createLetterListStore(props.communityAccount)
 
     const letter = await letterListStore.newLetter('individual', props.eventId)
     letter.user_id = props.toUser.user_id

@@ -4,6 +4,8 @@ locals {
     "https://${var.project}.web.app",
     "https://${var.project}-admin.firebaseapp.com",
     "https://${var.project}-admin.web.app",
+    "https://${var.project}-enterprise.firebaseapp.com",
+    "https://${var.project}-enterprise.web.app",
     "http://localhost:5173",
     "http://localhost:8080",
   ]

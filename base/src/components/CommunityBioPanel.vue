@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import {
-  type BokudeliCommunity,
-  type BokudeliCommunityMember,
-  useCommunityStore,
-} from '@shokujii/base/stores/community.js'
+import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { type BokudeliCommunity, type BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
@@ -18,7 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   clickContact: []
 }>()
-const communityStore = useCommunityStore(props.community.community_account)
+const communityStore = useAppCommunityStore(props.community)
 
 const twitterUrl = computed(() =>
   props.community.community_sns_twitter ? buildTwitterUrl(props.community.community_sns_twitter) : undefined,
