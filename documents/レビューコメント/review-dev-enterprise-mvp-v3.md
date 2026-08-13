@@ -103,7 +103,7 @@
 | [ ] | RC-97 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | base の CancelPolicyDialog が `@/router/utils` に依存（RC-9 方針と不整合） |
 | [ ] | RC-98 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💰 金銭 | 🔧 微修正 | S | 福利厚生 budget ローダー失敗が console.warn のみ |
 | [x] | RC-99 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | orders.vue の user_message に文字列 falsy チェック |
-| [ ] | RC-100 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | resolver の RouteLocationRaw を `string \| undefined` 前提で受けている |
+| [x] | RC-100 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | resolver の RouteLocationRaw を `string \| undefined` 前提で受けている<br>#2250 でプレビューカード / タイルを `RouteLocationRaw \| undefined` に揃えた |
 | [x] | RC-101 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventPreviewTile の未使用 props（communityId / eventId） |
 | [ ] | RC-102 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | S | EventsTabPanel の「もっと読む」が callback と store の 2 系統 |
 | [x] | RC-103 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | withDefaults 済み props への `?.` + `?? true` が冗長 |
@@ -140,6 +140,9 @@
 | [x] | RC-134 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | ⚡ パフォーマンス | 🔧 微修正 | S | profileFilter のインラインオブジェクト prop |
 | [x] | RC-135 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | legacy tab リダイレクトの重複分岐 |
 | [x] | RC-136 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | user の getOrdersPath が常に同値を返す tab 引数を持つ |
+| [ ] | RC-137 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | eventStatusChangeMail がホスト未解決時に throw し onDocumentWritten が永続リトライする<br>AC-13 はバッチを ERROR ログ + 送信スキップ。letter.ts に揃える |
+| [x] | RC-138 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getEventUrlForEvent が resolveAppHostForCommunity を再実装していた<br>`getEventUrlForCommunity` へ委譲 + 失敗系 vitest を追加 |
+| [x] | RC-139 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未使用の `getUserUrlForHost` が残っていた<br>呼び出しが無いため削除 |
 
 ---
 
@@ -3125,7 +3128,7 @@ RC-63 で `useCommunityStore` は修正済みだが `communityList` 側が同種
 | [ ] | RC-97 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | M | base の CancelPolicyDialog が `@/router/utils` の `getOrdersPath` に依存<br>RC-9 の props 注入方針と不整合（依存自体は既存） |
 | [ ] | RC-98 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 💰 金銭 | 🔧 微修正 | S | 福利厚生 budget ローダー失敗が `console.warn` のみ<br>残り予算表示が黙って消え調査不能 |
 | [x] | RC-99 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `data.user_message` に文字列 falsy チェック<br>空文字を明示除外して `!= null` 判定に変更 |
-| [ ] | RC-100 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | プレビューカード / タイルが resolver の `RouteLocationRaw` を `string \| undefined` 前提で扱う<br>object 形式 resolver で型が破綻（RC-96 のため型検査で検出されない） |
+| [x] | RC-100 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約, 🐛 実害 | 🔧 微修正 | S | プレビューカード / タイルが resolver の `RouteLocationRaw` を `string \| undefined` 前提で扱う<br>#2250 で `RouteLocationRaw \| undefined` に揃えた |
 | [x] | RC-101 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventPreviewTile の `communityId` / `eventId` が未使用<br>props と親の binding を削除 |
 | [ ] | RC-102 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🏗️ 設計 | 📐 リファクタ | S | EventsTabPanel の「もっと読む」が `onLoadMore` / `eventListStore` の 2 系統<br>構造型 props で store 型に追随できない |
 | [x] | RC-103 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `withDefaults` 済み props への `?.` + `?? true` が冗長<br>直接呼び出し + 戻り値型明示に変更 |
@@ -3331,7 +3334,7 @@ const communityLinkTo = (
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -3341,7 +3344,7 @@ const communityLinkTo = (
 
 **想定工数**: S
 
-**判断理由**: 「型を広げる」「resolver 型を狭める」の 2 方針があり修正が一意でない（`profilePathResolvers.ts` は他パネルとも共用）。型設計判断を伴うため自動修正せず記録。
+**判断理由**: 評価時点では方針が二択だったため自動修正しなかった。#2250 の `build:types` 通過作業でプレビューカード / タイル / `UserEventCard` を `RouteLocationRaw` に広げて解消済み。
 
 ---
 
@@ -4703,6 +4706,174 @@ $ diff user/src/pages/chat/index.vue enterprise/src/pages/chat/index.vue
 **想定工数**: S
 
 **判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。引数を削除し、`UserProfile.vue` のパス比較も `getOrdersPath()` に統一。
+
+---
+
+## 評価セッション（2026-08-13 13:32・shokujii-code-review）
+
+- **評価日時**: 2026-08-13 13:32 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`・前回 2026-08-12 23:20 以降の差分レビュー）
+- **ブランチ名**: `dev/enterprise-mvp-v3`
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **レビュー範囲**: 前回セルフレビュー（`fddde0fcb`）以降の 73 ファイル。主対象は #2248/#2249 メール URL ホスト解決、#2250 vue-tsc gate / `build:types` 通過、セルフレビュー追随の型修正
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **既存 RC 更新**: RC-100 を ✅ 対応済み（#2250 で `RouteLocationRaw` に揃え済み）
+- **手順 3a 自動修正**: なし（🚨 0 件）
+- **手順 3b 自動修正**: RC-138・RC-139（🟡 2 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-137 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書, 🐛 実害 | 🔧 微修正 | S | eventStatusChangeMail がホスト未解決時に throw し onDocumentWritten が永続リトライする<br>AC-13 はバッチを ERROR ログ + 送信スキップ。letter.ts に揃える |
+| [x] | RC-138 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getEventUrlForEvent が resolveAppHostForCommunity を再実装していた<br>`getEventUrlForCommunity` へ委譲 + 失敗系 vitest を追加 |
+| [x] | RC-139 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未使用の `getUserUrlForHost` が残っていた<br>呼び出しが無いため削除 |
+
+---
+
+**識別子**: RC-137（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/eventStatusChangeMail.ts:68`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const event_url = await getEventUrlForEvent(event)
++  if (event_url == null && isEnterpriseEvent(event)) {
++    logger.error('Enterprise host unresolved for event status change mail', {
++      eventId: event.id,
++      enterpriseId: event.enterprise_id,
++    })
++    throw new Error('enterprise host is not configured')
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `createTemplateDataForOrderDeadline` がホスト未解決時に `throw` している。`onEventChanged`（`onDocumentWritten`）は catch せず `Promise.all` で呼び出すため、subdomain / custom_domain とも未設定の enterprise ではトリガーが永続リトライする。仕様 AC-13 はバッチ送信を「URL 省略 + ERROR ログ」、Callable を `failed-precondition` としており、letter.ts は ERROR ログして `return` している。→ letter と同様に送信をスキップし、throw しないでほしい。`sendApplyingMailToAdmin` は空 URL のまま送信しており、同じファイル内でも扱いが割れている。
+
+**コメント要約**: ホスト未解決で throw すると Firestore トリガーがリトライし続ける。AC-13 / letter.ts に合わせ ERROR ログ + 送信スキップ。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: AC-13 の「URL 省略」を空文字送信と解釈するか送信スキップと解釈するかが letter.ts 実装と併せて判断を要する。📑 仕様書のため手順 3b の自動修正対象外。
+
+---
+
+**識別子**: RC-138（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/urls.ts:91`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+ export async function getEventUrlForEvent(event: EventHostSource): Promise<string | undefined> {
+-  const enterpriseId = event.enterprise_id
+-  if (enterpriseId == null || enterpriseId === '') {
+-    return getEventUrl(event.community_account, event.id)
+-  }
+-  const enterprise = await getEnterpriseById(enterpriseId)
+-  if (enterprise == null) {
+-    return undefined
+-  }
+-  const host = resolveEnterpriseAppHost(enterprise)
+-  if (host == null) {
+-    return undefined
+-  }
+-  return common.getEventUrl(host, event.community_account, event.id)
+-}
++  return getEventUrlForCommunity(event, event.id)
+ }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `getEventUrlForEvent` が `resolveAppHostForCommunity` と同じ lookup を再実装している。失敗系（enterprise 未存在・ホスト未設定）のテストは `resolveAppHostForCommunity` にしか無く、実装が分岐すると AC-13（PF へ落とさない）が片方だけ壊れる。→ `getEventUrlForCommunity(event, event.id)` に委譲し、`getEventUrlForEvent` の失敗系 vitest を追加してほしい。
+
+**コメント要約**: ホスト解決の二重実装。委譲して失敗系テストを `getEventUrlForEvent` にも足す。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で修正方針が一意なため手順 3b で自動修正。委譲後に enterprise 未存在 / ホスト未設定の vitest を追加し 10 件パス。
+
+---
+
+**識別子**: RC-139（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/urls.ts:107`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-export function getUserUrlForHost(host: string, userId: string): string {
+-  return common.getUserUrl(host, userId)
+-}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `#2248` で追加された `getUserUrlForHost` がリポジトリ内に呼び出しが無い。P0 の community / event URL 解決にも使われておらずデッドコード。→ 未使用のため削除してほしい。
+
+**コメント要約**: 未使用ヘルパー。呼び出しが無いため削除。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 で一意なため手順 3b で自動修正。関数を削除した。
+
+---
+
+## 評価セッション（2026-08-13 13:32・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-13 13:32 JST
+- **ブランチ名**: dev/enterprise-mvp-v3
+- **PR**: [#2223](https://github.com/nijuniinc/bokudeli-event-new/pull/2223)
+- **REVIEW_REQUEST_SINCE**: 2026-08-13T04:24:30Z
+- **partial**: true（Codex substantive なし・connect 案内のみ。Copilot substantive 1 件）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼 5275943125、Codex 接続案内 5275953050）
+- **新規 RC なし**: Copilot 5275951938 は RC-93（3766743215）と同一指摘（`updateEnterpriseMember` の Auth displayName 同期）。05_認証 §4.5 どおりの実装のため再採番しない
+- **手順 4a 自動修正**: なし
+
+### RC 一覧（サマリ）
+
+（本セッションで新規 RC なし）
 
 ---
 

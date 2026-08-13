@@ -98,5 +98,27 @@ describe('urls community host resolution', () => {
         }),
       ).resolves.toBe('https://pf.example.com/c/pf-community/e/event-1')
     })
+
+    it('enterprise 未存在時は PF にフォールバックせず undefined', async () => {
+      getEnterpriseById.mockResolvedValue(undefined)
+      await expect(
+        getEventUrlForEvent({
+          community_account: 'my-community',
+          id: 'event-1',
+          enterprise_id: 'ent-missing',
+        }),
+      ).resolves.toBeUndefined()
+    })
+
+    it('ホスト未設定 enterprise は undefined', async () => {
+      getEnterpriseById.mockResolvedValue({ subdomain: '', custom_domain: null })
+      await expect(
+        getEventUrlForEvent({
+          community_account: 'my-community',
+          id: 'event-1',
+          enterprise_id: 'ent-1',
+        }),
+      ).resolves.toBeUndefined()
+    })
   })
 })

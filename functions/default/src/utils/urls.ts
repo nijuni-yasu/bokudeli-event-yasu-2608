@@ -89,23 +89,7 @@ export async function getManageCommunityUrlForCommunity(community: CommunityHost
 }
 
 export async function getEventUrlForEvent(event: EventHostSource): Promise<string | undefined> {
-  const enterpriseId = event.enterprise_id
-  if (enterpriseId == null || enterpriseId === '') {
-    return getEventUrl(event.community_account, event.id)
-  }
-  const enterprise = await getEnterpriseById(enterpriseId)
-  if (enterprise == null) {
-    return undefined
-  }
-  const host = resolveEnterpriseAppHost(enterprise)
-  if (host == null) {
-    return undefined
-  }
-  return common.getEventUrl(host, event.community_account, event.id)
-}
-
-export function getUserUrlForHost(host: string, userId: string): string {
-  return common.getUserUrl(host, userId)
+  return getEventUrlForCommunity(event, event.id)
 }
 
 /** LINE 等の外部ブラウザ起動用クエリ付きイベント URL */
