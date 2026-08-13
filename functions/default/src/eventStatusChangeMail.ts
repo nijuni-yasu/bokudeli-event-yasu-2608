@@ -26,7 +26,7 @@ const DELIVERY_DURATION = 30 // minutes
 /**
  * イベント用のテンプレートデータを作成
  */
-async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
+export async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
   const orders = await event.getOrders()
   const validOrders = orders.filter((order) => order.status === 'ordered')
 
@@ -65,7 +65,6 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
       eventId: event.id,
       enterpriseId: event.enterprise_id,
     })
-    throw new Error('enterprise host is not configured')
   }
 
   return {

@@ -104,7 +104,6 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
       eventId: event.id,
       enterpriseId: event.enterprise_id,
     })
-    throw new Error('enterprise host is not configured')
   }
 
   return {
@@ -146,7 +145,6 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
       eventId: event.id,
       enterpriseId: event.enterprise_id,
     })
-    throw new Error('enterprise host is not configured')
   }
 
   const shopData = await getEventPartnerShop(event)
@@ -274,7 +272,6 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
             eventId: event.id,
             enterpriseId: event.enterprise_id,
           })
-          return
         }
         const dynamic_template_data: TemplateDataForMembers = {
           date: convertToDateWeekdayShort(event.event_start_datetime),
