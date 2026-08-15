@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { getDoc } from 'firebase/firestore'
 import ChatApp from '@shokujii/base/components/chat/ChatApp.vue'
-import { getEventInCommunityRef } from '@shokujii/base/stores/event.js'
+import { useChatOpenEvent } from '@shokujii/base/composable/useChatOpenEvent.js'
 import { getChatPath, getEventPath, getUserPath } from '@/router/utils'
 
 definePage({
@@ -11,25 +10,13 @@ definePage({
 })
 
 const router = useRouter()
+const { onOpenEvent } = useChatOpenEvent({ getEventPath })
 
 const onNavigateRoom = (payload: { path: Parameters<typeof router.push>[0]; replace?: boolean }) => {
   if (payload.replace === true) {
     void router.replace(payload.path)
   } else {
     void router.push(payload.path)
-  }
-}
-
-const onOpenEvent = async (payload: { communityId: string; eventId: string }) => {
-  try {
-    const snapshot = await getDoc(getEventInCommunityRef(payload.communityId, payload.eventId))
-    if (!snapshot.exists()) {
-      return
-    }
-    const event = snapshot.data()
-    void router.push(getEventPath(event.community_account, payload.eventId))
-  } catch {
-    // getDoc 失敗時（ネットワーク / 権限）: イベントハンドラからの unhandled rejection を防ぐ
   }
 }
 </script>

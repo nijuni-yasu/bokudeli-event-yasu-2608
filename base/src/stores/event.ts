@@ -108,6 +108,18 @@ export const getEventInCommunityRef = (communityId: string, eventId: string) => 
   return doc(db, 'communities', communityId, 'events', eventId).withConverter(eventConverter)
 }
 
+/** communities/{communityId}/events/{eventId} を 1 回読む（chat onOpenEvent 等） */
+export const fetchEventInCommunityDocument = async (
+  communityId: string,
+  eventId: string,
+): Promise<BokudeliEvent | undefined> => {
+  const snapshot = await getDoc(getEventInCommunityRef(communityId, eventId))
+  if (!snapshot.exists()) {
+    return undefined
+  }
+  return snapshot.data()
+}
+
 const menuConverter: FirestoreDataConverter<EventMenu> = {
   toFirestore(menu: EventMenu): DocumentData {
     return menu.toFirestore()
