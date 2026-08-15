@@ -21,12 +21,7 @@ vi.mock('./logger.js', () => ({
   }),
 }))
 
-import {
-  sendCommunityBotsMessage,
-  sendCommunityBotsMessageOrThrow,
-  sendSlackWebhookMessage,
-  SlackWebhookGoneError,
-} from './slackMessage.js'
+import { sendCommunityBotsMessage, sendCommunityBotsMessageOrThrow, sendSlackWebhookMessage } from './slackMessage.js'
 
 const communityId = 'comm-1'
 const reference = { path: 'slackbots/T1/channels/C1' } as CommunityBot['reference']
@@ -37,6 +32,13 @@ const createSlackBot = (id: string): CommunityBot =>
     reference,
   })
 
+const mockFetchResponse = (params: { ok: boolean; status: number; statusText: string; body?: string }) => ({
+  ok: params.ok,
+  status: params.status,
+  statusText: params.statusText,
+  text: async () => params.body ?? '',
+})
+
 describe('sendSlackWebhookMessage', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
@@ -44,18 +46,36 @@ describe('sendSlackWebhookMessage', () => {
     loggerWarnMock.mockReset()
   })
 
-  it('404 は SlackWebhookGoneError を throw する', async () => {
+  it('404 + no_service は SlackWebhookGoneError を throw する', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-      }),
+      vi
+        .fn()
+        .mockResolvedValue(mockFetchResponse({ ok: false, status: 404, statusText: 'Not Found', body: 'no_service' })),
     )
 
-    await expect(sendSlackWebhookMessage('https://hooks.slack.com/test', 'hello')).rejects.toBeInstanceOf(
-      SlackWebhookGoneError,
+    await expect(sendSlackWebhookMessage('https://hooks.slack.com/test', 'hello')).rejects.toMatchObject({
+      name: 'SlackWebhookGoneError',
+      status: 404,
+      slackError: 'no_service',
+    })
+    expect(loggerErrorMock).not.toHaveBeenCalled()
+  })
+
+  it('404 + 未知の本文は remove 対象外として WARN のみ', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          mockFetchResponse({ ok: false, status: 404, statusText: 'Not Found', body: 'unknown_error' }),
+        ),
+    )
+
+    await expect(sendSlackWebhookMessage('https://hooks.slack.com/test', 'hello')).resolves.toBeUndefined()
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      'Slack webhook request failed with non-removable client error',
+      expect.objectContaining({ status: 404, slackError: 'unknown_error' }),
     )
     expect(loggerErrorMock).not.toHaveBeenCalled()
   })
@@ -63,11 +83,7 @@ describe('sendSlackWebhookMessage', () => {
   it('500 は ERROR ログのうえ throw する', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-      }),
+      vi.fn().mockResolvedValue(mockFetchResponse({ ok: false, status: 500, statusText: 'Internal Server Error' })),
     )
 
     await expect(sendSlackWebhookMessage('https://hooks.slack.com/test', 'hello')).rejects.toThrow(
@@ -98,9 +114,9 @@ describe('sendCommunityBotsMessageOrThrow', () => {
       'fetch',
       vi.fn().mockImplementation(async (url: string) => {
         if (url.includes('gone')) {
-          return { ok: false, status: 404, statusText: 'Not Found' }
+          return mockFetchResponse({ ok: false, status: 404, statusText: 'Not Found', body: 'no_service' })
         }
-        return { ok: true, status: 200, statusText: 'OK' }
+        return mockFetchResponse({ ok: true, status: 200, statusText: 'OK' })
       }),
     )
 
@@ -109,9 +125,67 @@ describe('sendCommunityBotsMessageOrThrow', () => {
     expect(removeCommunityBotMock).toHaveBeenCalledWith(communityId, 'slack-gone')
     expect(loggerWarnMock).toHaveBeenCalledWith(
       'Slack webhook is gone; removing community bot binding',
-      expect.objectContaining({ communityId, botId: 'slack-gone', status: 404 }),
+      expect.objectContaining({ communityId, botId: 'slack-gone', status: 404, slackError: 'no_service' }),
     )
     expect(loggerErrorMock).not.toHaveBeenCalled()
+  })
+
+  it('404 + channel_is_archived でも bot を remove する', async () => {
+    const bot = createSlackBot('slack-archived')
+    getSlackWebhookUrlMock.mockResolvedValue('https://hooks.slack.com/test')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        mockFetchResponse({
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+          body: 'channel_is_archived',
+        }),
+      ),
+    )
+
+    await expect(sendCommunityBotsMessageOrThrow(communityId, [bot], 'hello')).resolves.toBeUndefined()
+    expect(removeCommunityBotMock).toHaveBeenCalledWith(communityId, 'slack-archived')
+  })
+
+  it('404 + channel_not_found でも bot を remove する', async () => {
+    const bot = createSlackBot('slack-not-found')
+    getSlackWebhookUrlMock.mockResolvedValue('https://hooks.slack.com/test')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        mockFetchResponse({
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+          body: 'channel_not_found',
+        }),
+      ),
+    )
+
+    await expect(sendCommunityBotsMessageOrThrow(communityId, [bot], 'hello')).resolves.toBeUndefined()
+    expect(removeCommunityBotMock).toHaveBeenCalledWith(communityId, 'slack-not-found')
+  })
+
+  it('404 + 未知の本文では remove せず成功扱いにする', async () => {
+    const bot = createSlackBot('slack-unknown')
+    getSlackWebhookUrlMock.mockResolvedValue('https://hooks.slack.com/test')
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          mockFetchResponse({ ok: false, status: 404, statusText: 'Not Found', body: 'temporary_failure' }),
+        ),
+    )
+
+    await expect(sendCommunityBotsMessageOrThrow(communityId, [bot], 'hello')).resolves.toBeUndefined()
+    expect(removeCommunityBotMock).not.toHaveBeenCalled()
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      'Slack webhook request failed with non-removable client error',
+      expect.objectContaining({ status: 404, slackError: 'temporary_failure' }),
+    )
   })
 
   it('500 応答時は throw する', async () => {
@@ -119,11 +193,7 @@ describe('sendCommunityBotsMessageOrThrow', () => {
     getSlackWebhookUrlMock.mockResolvedValue('https://hooks.slack.com/test')
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-      }),
+      vi.fn().mockResolvedValue(mockFetchResponse({ ok: false, status: 500, statusText: 'Internal Server Error' })),
     )
 
     await expect(sendCommunityBotsMessageOrThrow(communityId, [bot], 'hello')).rejects.toThrow(
@@ -138,11 +208,11 @@ describe('sendCommunityBotsMessageOrThrow', () => {
     getSlackWebhookUrlMock.mockResolvedValue('https://hooks.slack.com/test')
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-      }),
+      vi
+        .fn()
+        .mockResolvedValue(
+          mockFetchResponse({ ok: false, status: 404, statusText: 'Not Found', body: 'no_active_hooks' }),
+        ),
     )
 
     await expect(sendCommunityBotsMessageOrThrow(communityId, [bot], 'hello')).resolves.toBeUndefined()
@@ -161,9 +231,9 @@ describe('sendCommunityBotsMessageOrThrow', () => {
       'fetch',
       vi.fn().mockImplementation(async (url: string) => {
         if (url.includes('gone')) {
-          return { ok: false, status: 404, statusText: 'Not Found' }
+          return mockFetchResponse({ ok: false, status: 404, statusText: 'Not Found', body: 'no_service' })
         }
-        return { ok: true, status: 200, statusText: 'OK' }
+        return mockFetchResponse({ ok: true, status: 200, statusText: 'OK' })
       }),
     )
 
@@ -190,11 +260,7 @@ describe('sendCommunityBotsMessage', () => {
     getSlackWebhookUrlMock.mockResolvedValue('https://hooks.slack.com/test')
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 410,
-        statusText: 'Gone',
-      }),
+      vi.fn().mockResolvedValue(mockFetchResponse({ ok: false, status: 410, statusText: 'Gone', body: 'no_service' })),
     )
 
     await expect(sendCommunityBotsMessage(communityId, [bot], 'hello')).resolves.toBeUndefined()

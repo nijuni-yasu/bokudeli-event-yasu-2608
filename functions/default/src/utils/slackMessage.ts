@@ -4,17 +4,45 @@ import { getSlackWebhookUrl, removeCommunityBot } from '../stores/slackBot.js'
 
 const logger = createModuleLogger('slackMessage')
 
+/** Incoming Webhook 失敗時、communities/{id}/bots の紐付けを削除してよい Slack エラー */
+const REMOVABLE_SLACK_WEBHOOK_ERRORS = [
+  'no_service',
+  'no_active_hooks',
+  'invalid_token',
+  'channel_is_archived',
+  'channel_not_found',
+] as const
+
+type RemovableSlackWebhookError = (typeof REMOVABLE_SLACK_WEBHOOK_ERRORS)[number]
+
+const matchRemovableSlackWebhookError = (body: string): RemovableSlackWebhookError | undefined => {
+  const normalized = body.trim().toLowerCase()
+  return REMOVABLE_SLACK_WEBHOOK_ERRORS.find((code) => normalized.includes(code))
+}
+
 export class SlackWebhookGoneError extends Error {
   readonly status: number
+  readonly slackError: string | undefined
 
-  constructor(status: number) {
-    super(`Slack webhook request failed: ${status}`)
+  constructor(status: number, slackError?: string) {
+    const suffix = slackError != null && slackError !== '' ? ` (${slackError})` : ''
+    super(`Slack webhook request failed: ${status}${suffix}`)
     this.name = 'SlackWebhookGoneError'
     this.status = status
+    this.slackError = slackError
   }
 }
 
-const isSlackWebhookGoneStatus = (status: number): boolean => status === 404 || status === 410
+const shouldRemoveSlackBotBinding = (status: number, body: string): { remove: boolean; slackError?: string } => {
+  if (status === 410) {
+    return { remove: true, slackError: matchRemovableSlackWebhookError(body) }
+  }
+  const matched = matchRemovableSlackWebhookError(body)
+  if (matched != null) {
+    return { remove: true, slackError: matched }
+  }
+  return { remove: false }
+}
 
 export const sendSlackWebhookMessage = async (webhookUrl: string, text: string): Promise<void> => {
   const response = await fetch(webhookUrl, {
@@ -26,19 +54,34 @@ export const sendSlackWebhookMessage = async (webhookUrl: string, text: string):
   })
 
   if (!response.ok) {
-    if (isSlackWebhookGoneStatus(response.status)) {
-      throw new SlackWebhookGoneError(response.status)
+    const body = await response.text()
+    const { remove, slackError } = shouldRemoveSlackBotBinding(response.status, body)
+    if (remove) {
+      throw new SlackWebhookGoneError(response.status, slackError)
+    }
+    if (response.status === 404 || response.status === 410) {
+      logger.warn('Slack webhook request failed with non-removable client error', {
+        status: response.status,
+        slackError: body.trim() !== '' ? body.trim() : undefined,
+      })
+      return
     }
     logger.error('Slack webhook request failed', { status: response.status, statusText: response.statusText })
     throw new Error(`Slack webhook request failed: ${response.status}`)
   }
 }
 
-const handleInvalidSlackBot = async (communityId: string, bot: CommunityBot, status: number): Promise<void> => {
+const handleInvalidSlackBot = async (
+  communityId: string,
+  bot: CommunityBot,
+  status: number,
+  slackError?: string,
+): Promise<void> => {
   logger.warn('Slack webhook is gone; removing community bot binding', {
     communityId,
     botId: bot.id,
     status,
+    slackError,
   })
   try {
     await removeCommunityBot(communityId, bot.id)
@@ -47,6 +90,7 @@ const handleInvalidSlackBot = async (communityId: string, bot: CommunityBot, sta
       communityId,
       botId: bot.id,
       status,
+      slackError,
       error: error instanceof Error ? error.message : String(error),
     })
   }
@@ -65,7 +109,7 @@ export const sendCommunityBotMessage = async (communityId: string, bot: Communit
     await sendSlackWebhookMessage(webhookUrl, text)
   } catch (error) {
     if (error instanceof SlackWebhookGoneError) {
-      await handleInvalidSlackBot(communityId, bot, error.status)
+      await handleInvalidSlackBot(communityId, bot, error.status, error.slackError)
       return
     }
     throw error
@@ -93,7 +137,7 @@ export const sendCommunityBotsMessage = async (
   }
 }
 
-/** transient 失敗時のみ throw する。404/410 は自動 remove して部分成功を許容。 */
+/** transient 失敗時のみ throw する。webhook 失効・チャンネル不可の判定時は自動 remove して部分成功を許容。 */
 export const sendCommunityBotsMessageOrThrow = async (
   communityId: string,
   bots: CommunityBot[],
