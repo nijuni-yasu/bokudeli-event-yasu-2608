@@ -56,10 +56,7 @@ describe('resolveEnterpriseBillInvoiceCorsOrigin', () => {
 
   it('テナント subdomain ホストを許可する', async () => {
     vi.mocked(getEnterpriseById).mockResolvedValue(enterprise)
-    const origin = await resolveEnterpriseBillInvoiceCorsOrigin(
-      'https://company-a.sandbox2510.tabete.co',
-      'company-a',
-    )
+    const origin = await resolveEnterpriseBillInvoiceCorsOrigin('https://company-a.sandbox2510.tabete.co', 'company-a')
     expect(origin).toBe('https://company-a.sandbox2510.tabete.co')
   })
 
