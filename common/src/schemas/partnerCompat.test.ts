@@ -26,11 +26,6 @@ describe('partner base形 parse 互換（PA-11e / C-5）', () => {
     const event = new Event('event-ent', enterpriseSubsidyEventFields)
     expect(event.event_payment).toBe('enterprise_subsidy')
     expect(event.enterprise_id).toBe('ent-a')
-    expect(event.enterprise_subsidy_settings).toEqual({
-      type: 'fixed',
-      value: 500,
-      monthly_limit_per_user: 7500,
-    })
   })
 
   it('Enterprise 形 Event が DbSchema を通る', () => {
@@ -39,11 +34,6 @@ describe('partner base形 parse 互換（PA-11e / C-5）', () => {
     const out = event.toFirestore('user-1')
     expect(out.event_payment).toBe('enterprise_subsidy')
     expect(out.enterprise_id).toBe('ent-a')
-    expect(out.enterprise_subsidy_settings).toEqual({
-      type: 'fixed',
-      value: 500,
-      monthly_limit_per_user: 7500,
-    })
   })
 
   it('PF / Enterprise 形 Community を parse できる', () => {

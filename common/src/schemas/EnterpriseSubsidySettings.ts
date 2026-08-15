@@ -12,3 +12,13 @@ export const EnterpriseSubsidySettingsAppSchema = z.object({
 export const EnterpriseSubsidySettingsDbSchema = EnterpriseSubsidySettingsAppSchema
 
 export type EnterpriseSubsidySettingsType = z.infer<typeof EnterpriseSubsidySettingsAppSchema>
+
+export const YEAR_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
+
+export const EnterpriseSubsidySettingsEntryAppSchema = EnterpriseSubsidySettingsAppSchema.extend({
+  effective_from_month: z.string().regex(YEAR_MONTH_PATTERN),
+})
+
+export const EnterpriseSubsidySettingsEntryDbSchema = EnterpriseSubsidySettingsEntryAppSchema
+
+export type EnterpriseSubsidySettingsEntryType = z.infer<typeof EnterpriseSubsidySettingsEntryAppSchema>

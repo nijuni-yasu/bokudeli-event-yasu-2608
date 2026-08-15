@@ -1,18 +1,34 @@
 import type { EventPaymentType } from '../schemas/Event.js'
-import type { EnterpriseSubsidySettingsType } from '../schemas/EnterpriseSubsidySettings.js'
-import type { Enterprise } from '../schemas/Enterprise.js'
+import type {
+  EnterpriseSubsidySettingsEntryType,
+  EnterpriseSubsidySettingsType,
+} from '../schemas/EnterpriseSubsidySettings.js'
 import type { EventMemberOrder } from '../schemas/EventMemberOrder.js'
 
 /**
- * Enterprise マスター（フラット discount_*）→ Event スナップショット変換。
+ * 開催月 eventMonth に適用される補助設定を返す。
+ * effective_from_month <= eventMonth を満たすエントリのうち effective_from_month が最大のものを採用。
+ * YYYY-MM は辞書順 = 時系列順。
  */
-export function enterpriseSubsidySettingsFromEnterprise(
-  enterprise: Pick<Enterprise, 'discount_type' | 'discount_value' | 'monthly_limit_per_user'>,
+export function resolveEnterpriseSubsidySettingsForMonth(
+  history: EnterpriseSubsidySettingsEntryType[],
+  eventMonth: string,
 ): EnterpriseSubsidySettingsType {
+  let resolved: EnterpriseSubsidySettingsEntryType | undefined
+  for (const entry of history) {
+    if (entry.effective_from_month <= eventMonth) {
+      if (resolved == null || entry.effective_from_month > resolved.effective_from_month) {
+        resolved = entry
+      }
+    }
+  }
+  if (resolved == null) {
+    throw new Error(`No subsidy settings found for event month ${eventMonth}`)
+  }
   return {
-    type: enterprise.discount_type,
-    value: enterprise.discount_value,
-    monthly_limit_per_user: enterprise.monthly_limit_per_user,
+    type: resolved.type,
+    value: resolved.value,
+    monthly_limit_per_user: resolved.monthly_limit_per_user,
   }
 }
 
@@ -32,7 +48,7 @@ export function computePaymentEnterpriseSubsidyAmount(
 ): number | undefined {
   if (eventPayment !== 'enterprise_subsidy') return undefined
   if (settings == null) {
-    throw new Error('enterprise_subsidy requires enterprise_subsidy_settings')
+    throw new Error('enterprise_subsidy requires resolved subsidy settings')
   }
   if (remainingMonthlyLimit <= 0) return undefined
 
@@ -124,7 +140,7 @@ export function replayEnterpriseSubsidyAmountsForOrders(
     throw new Error('replayEnterpriseSubsidyAmountsForOrders is only for enterprise_subsidy')
   }
   if (settings == null) {
-    throw new Error('enterprise_subsidy requires enterprise_subsidy_settings')
+    throw new Error('enterprise_subsidy requires resolved subsidy settings')
   }
   let runningUsage = monthlyUsageForEventMonth
   const expectedAmounts: (number | undefined)[] = []

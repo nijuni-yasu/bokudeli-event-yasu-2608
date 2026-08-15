@@ -6,7 +6,6 @@
 import { z } from 'zod'
 import { Event } from './Event.js'
 import { EpochMillisSchema } from './firebase/index.js'
-import { EnterpriseSubsidySettingsAppSchema, type EnterpriseSubsidySettingsType } from './EnterpriseSubsidySettings.js'
 
 /** partnerCompat fixture と整合する write コア（EventAppSchema 非 export のためここで定義） */
 export const EventWriteCoreAppSchema = z.object({
@@ -43,20 +42,17 @@ export const PfEventPaymentSchema = z.enum(['user_advance', 'user_on_day', 'comm
 export const EnterpriseEventWriteAppSchema = EventWriteCoreAppSchema.extend({
   event_payment: z.literal('enterprise_subsidy'),
   enterprise_id: z.string().nonempty(),
-  enterprise_subsidy_settings: EnterpriseSubsidySettingsAppSchema,
 })
 
 /** enterprise draft 出口で検証する判別フィールド（下書き未完了時のコア未入力は許容） */
 export const EnterpriseEventWriteDiscriminantSchema = EnterpriseEventWriteAppSchema.pick({
   event_payment: true,
   enterprise_id: true,
-  enterprise_subsidy_settings: true,
 })
 
 const PfEventWriteBaseSchema = EventWriteCoreAppSchema.extend({
   event_payment: PfEventPaymentSchema,
   enterprise_id: z.null().optional(),
-  enterprise_subsidy_settings: z.undefined().optional(),
 })
 
 /** PF 書き込み分支 */
@@ -75,11 +71,10 @@ export type EventWriteApp = z.infer<typeof EventWriteAppSchema>
 export type EnterpriseEvent = Event & {
   event_payment: 'enterprise_subsidy'
   enterprise_id: string
-  enterprise_subsidy_settings: EnterpriseSubsidySettingsType
 }
 
 export function isEnterpriseEvent(e: Event): e is EnterpriseEvent {
-  return e.event_payment === 'enterprise_subsidy' && e.enterprise_id != null && e.enterprise_subsidy_settings != null
+  return e.event_payment === 'enterprise_subsidy' && e.enterprise_id != null
 }
 
 export function parseEventWrite(input: unknown): EventWriteApp {
@@ -90,11 +85,10 @@ export function writeToEvent(id: string, write: EventWriteApp): Event {
   return new Event(id, write)
 }
 
-/** prepareEnterpriseEventDraft 出口: subsidy スナップショット済み draft の enterprise 判別を strict 検証 */
+/** prepareEnterpriseEventDraft 出口: enterprise 判別を strict 検証 */
 export function assertEnterpriseEventDraftStrict(event: Event): void {
   EnterpriseEventWriteDiscriminantSchema.parse({
     event_payment: event.event_payment,
     enterprise_id: event.enterprise_id,
-    enterprise_subsidy_settings: event.enterprise_subsidy_settings,
   })
 }

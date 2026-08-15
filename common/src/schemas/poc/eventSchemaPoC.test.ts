@@ -45,7 +45,6 @@ describe('G1-6 eventlog partial merge', () => {
     const raw = {
       ...convertEventToDb(new Event(ENT_EVENT_ID, enterpriseSubsidyEventFields), UPDATE_USER),
     }
-    delete (raw as { enterprise_subsidy_settings?: unknown }).enterprise_subsidy_settings
 
     expect(EventDbSchema.safeParse(raw).success).toBe(true)
     expect(EventDbSchemaVariantA.safeParse(raw).success).toBe(false)
@@ -83,13 +82,12 @@ describe('approach C nest flatten', () => {
   })
 
   it('Enterprise nest → flatten → toFirestore が G1-5 golden と一致', () => {
-    const core = omitKeys(enterpriseSubsidyEventFields, 'enterprise_id', 'enterprise_subsidy_settings', 'event_payment')
+    const core = omitKeys(enterpriseSubsidyEventFields, 'enterprise_id', 'event_payment')
     const nested = EventNestedWriteSchemaC.parse({
       ...core,
       event_payment: 'enterprise_subsidy',
       enterprise: {
         enterprise_id: enterpriseSubsidyEventFields.enterprise_id,
-        enterprise_subsidy_settings: enterpriseSubsidyEventFields.enterprise_subsidy_settings,
       },
     })
     const flat = flattenNestedWriteToFlat(nested)

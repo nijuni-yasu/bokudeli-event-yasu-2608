@@ -10,11 +10,6 @@ import {
 } from './firebase/index.js'
 import { getStartOfDay } from '../utils/datetime.js'
 import { computeEventFullAddress } from '../utils/splitAddress.js'
-import {
-  EnterpriseSubsidySettingsAppSchema,
-  EnterpriseSubsidySettingsDbSchema,
-  type EnterpriseSubsidySettingsType,
-} from './EnterpriseSubsidySettings.js'
 
 export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill', 'enterprise_subsidy'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
@@ -121,7 +116,6 @@ export const EventDbSchema = z.object({
   sent_popular_event_mail_at: TimestampSchema.optional(),
   community_bill_settings: optionalDeleteField(CommunityBillSettingsDbSchema),
   enterprise_id: EnterpriseIdDbSchema,
-  enterprise_subsidy_settings: optionalDeleteField(EnterpriseSubsidySettingsDbSchema),
   canceled_at: TimestampSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
 })
@@ -195,7 +189,6 @@ const EventAppSchema = z.object({
   sent_popular_event_mail_at: EpochMillisSchema.optional(),
   community_bill_settings: CommunityBillSettingsAppSchema.optional(),
   enterprise_id: z.string().nullable().optional(),
-  enterprise_subsidy_settings: EnterpriseSubsidySettingsAppSchema.optional(),
   canceled_at: EpochMillisSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
 })
@@ -258,7 +251,6 @@ export class Event {
 
   community_bill_settings?: CommunityBillSettingsType
   enterprise_id?: string | null
-  enterprise_subsidy_settings?: EnterpriseSubsidySettingsType
 
   created_at: number
   created_by?: string

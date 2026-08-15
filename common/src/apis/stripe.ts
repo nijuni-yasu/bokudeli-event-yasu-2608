@@ -9,6 +9,7 @@ export type CreateStripeCheckoutSessionRequest = {
 
 export type CreateStripeCheckoutSessionResponse = {
   url: string | null
+  subsidy_recalculated?: boolean
 }
 
 export type CancelOrdersRequest = {

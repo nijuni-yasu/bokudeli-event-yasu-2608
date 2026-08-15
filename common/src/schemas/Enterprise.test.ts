@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { Enterprise, EnterpriseMember } from './Enterprise.js'
 
+const defaultSubsidyHistory = [
+  {
+    effective_from_month: '2026-01',
+    type: 'fixed' as const,
+    value: 500,
+    monthly_limit_per_user: 7500,
+  },
+]
+
 describe('Enterprise', () => {
   it('custom_domain 省略時は toFirestore に custom_domain キーを含めない', () => {
     const enterprise = new Enterprise('ent-1', {
@@ -8,9 +17,7 @@ describe('Enterprise', () => {
       company_name: 'Test Corp',
       subdomain: 'testcorp',
       allowed_email_domains: ['example.com'],
-      discount_type: 'fixed',
-      discount_value: 500,
-      monthly_limit_per_user: 7500,
+      subsidy_settings_history: defaultSubsidyHistory,
       billing_settings: {
         unit_price: 500,
         trial_months: 3,
@@ -29,9 +36,7 @@ describe('Enterprise', () => {
       company_name: 'Test Corp',
       subdomain: 'testcorp',
       allowed_email_domains: ['example.com'],
-      discount_type: 'fixed',
-      discount_value: 500,
-      monthly_limit_per_user: 7500,
+      subsidy_settings_history: defaultSubsidyHistory,
       billing_settings: {
         unit_price: 500,
         trial_months: 3,

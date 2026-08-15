@@ -169,6 +169,7 @@ export type UpdateEnterpriseSettingsResponse = {
 
 export type UpdateEnterpriseSubsidySettingsRequest = {
   enterprise_id: string
+  effective_from_month: string
   discount_type: EnterpriseDiscountType
   discount_value: number
   monthly_limit_per_user: number

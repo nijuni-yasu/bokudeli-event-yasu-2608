@@ -2,25 +2,41 @@ import { describe, expect, it } from 'vitest'
 import { EventMemberOrder } from '../schemas/EventMemberOrder.js'
 import {
   computePaymentEnterpriseSubsidyAmount,
-  enterpriseSubsidySettingsFromEnterprise,
   getMemberOrderDiscountAmount,
   isPaymentEnterpriseSubsidyAmountConsistent,
   replayEnterpriseSubsidyAmountsForOrders,
+  resolveEnterpriseSubsidySettingsForMonth,
 } from './paymentEnterpriseSubsidyAmount.js'
 
-describe('enterpriseSubsidySettingsFromEnterprise', () => {
-  it('フラット discount_* をスナップショット形式に変換する', () => {
-    expect(
-      enterpriseSubsidySettingsFromEnterprise({
-        discount_type: 'fixed',
-        discount_value: 500,
-        monthly_limit_per_user: 7500,
-      }),
-    ).toEqual({
+describe('resolveEnterpriseSubsidySettingsForMonth', () => {
+  const history = [
+    { effective_from_month: '2026-01', type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 },
+    { effective_from_month: '2026-07', type: 'fixed' as const, value: 800, monthly_limit_per_user: 10000 },
+  ]
+
+  it('開始月ちょうどのエントリを採用する', () => {
+    expect(resolveEnterpriseSubsidySettingsForMonth(history, '2026-07')).toEqual({
+      type: 'fixed',
+      value: 800,
+      monthly_limit_per_user: 10000,
+    })
+  })
+
+  it('開始月より前は直前のエントリを採用する', () => {
+    expect(resolveEnterpriseSubsidySettingsForMonth(history, '2026-06')).toEqual({
       type: 'fixed',
       value: 500,
       monthly_limit_per_user: 7500,
     })
+  })
+
+  it('該当エントリがない場合は Error', () => {
+    expect(() =>
+      resolveEnterpriseSubsidySettingsForMonth(
+        [{ effective_from_month: '2026-07', type: 'fixed', value: 500, monthly_limit_per_user: 7500 }],
+        '2026-06',
+      ),
+    ).toThrow('No subsidy settings found for event month 2026-06')
   })
 })
 
