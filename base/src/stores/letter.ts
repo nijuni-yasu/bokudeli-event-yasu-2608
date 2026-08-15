@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore'
 
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
+import { isFirestorePermissionDenied } from '@shokujii/base/utils/firestoreError.js'
 import {
   resolveCommunityDocumentRef,
   resolveCommunityStoreKey,
@@ -66,18 +67,33 @@ export const useLetterStore = (
     }
 
     const letter = ref<BokudeliLetter | null>(null)
+    const permissionDenied = ref(false)
 
     let unsubscribeLetter: Unsubscribe | null = null
     const subscribeLetter = async () => {
       if (unsubscribeLetter == null) {
-        unsubscribeLetter = onSnapshot(await getLetterRef(), (letterDoc) => {
-          try {
-            letter.value = letterDoc.data() ?? null
-          } catch (err) {
-            console.error(err)
-            reportClientError(err, { documentPath: letterDoc.ref.path, severity: 'warn' })
-          }
-        })
+        unsubscribeLetter = onSnapshot(
+          await getLetterRef(),
+          (letterDoc) => {
+            try {
+              letter.value = letterDoc.data() ?? null
+            } catch (err) {
+              console.error(err)
+              reportClientError(err, { documentPath: letterDoc.ref.path, severity: 'warn' })
+            }
+          },
+          (err) => {
+            console.error('subscribeLetter snapshot error', err)
+            if (isFirestorePermissionDenied(err)) {
+              permissionDenied.value = true
+              letter.value = null
+              unsubscribeLetter?.()
+              unsubscribeLetter = null
+              return
+            }
+            reportClientError(err, { documentPath: `communities/*/letters/${letterId}`, severity: 'warn' })
+          },
+        )
       }
     }
     subscribeLetter()
@@ -103,6 +119,7 @@ export const useLetterStore = (
 
     return {
       letter,
+      permissionDenied,
       updateLetter,
       copyLetter,
       unsubscribe,

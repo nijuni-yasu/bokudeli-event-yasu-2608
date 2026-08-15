@@ -265,7 +265,7 @@ service cloud.firestore {
                 allow read, write: if false
             }
             match /letters/{letter} {
-                allow read, write: if isManager()
+                allow read, write: if isManager() || isSupport()
             }
             match /album_items/{albumItemId} {
                 // 公開・非公開にかかわらず誰でも閲覧可（コミュニティページのアルバム表示）

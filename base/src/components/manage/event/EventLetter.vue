@@ -122,6 +122,12 @@ const goToCommunitySettings = () => {
 
 <template>
   <v-container v-if="selectedLetter == null" class="manage-container">
+    <v-row v-if="letterListStore.permissionDenied">
+      <v-col cols="12">
+        <v-alert type="warning" variant="tonal">{{ $t('manage.letter.permission_denied') }}</v-alert>
+      </v-col>
+    </v-row>
+    <template v-else>
     <v-row class="justify-center">
       <v-col md="12" sm="12" cols="12">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
@@ -150,6 +156,7 @@ const goToCommunitySettings = () => {
         />
       </v-col>
     </v-row>
+    </template>
   </v-container>
   <v-container v-else class="manage-container">
     <v-row class="justify-center">
