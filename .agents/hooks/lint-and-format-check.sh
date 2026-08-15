@@ -47,6 +47,15 @@ else
   append_ok "verify:functions-deploy"
 fi
 
+# 0a. test:verify-functions-deploy
+verify_test_output=$(npm run test:verify-functions-deploy 2>&1)
+verify_test_exit=$?
+if [ "${verify_test_exit}" -ne 0 ]; then
+  append_fail "test:verify-functions-deploy" "${verify_test_output}"
+else
+  append_ok "test:verify-functions-deploy"
+fi
+
 # 1. common build
 build_output=$(npm -w common run build 2>&1)
 build_exit=$?

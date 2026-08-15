@@ -181,7 +181,7 @@ PR verify（`pr-verify.yml`）と同じ verify:functions-deploy / build / lint /
 
 ### Functions 追加時の CI 連携
 
-`functions/default` で **Cloud Functions として export する**関数を新規追加・削除したら、同 PR で `.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も更新すること。更新漏れすると development / production では Trigger・Callable が未デプロイのままになる。詳細は `/shokujii-functions-implementation` を参照。PR verify は `npm run verify:functions-deploy` で export と deploy リストの一致を検証する。
+`functions/default` で **Cloud Functions として export する**関数を新規追加・削除したら、同 PR で `functions/default/src/index.ts` に import と export を追加すること（deploy yml への手書きは不要。CI は `--only functions` で default codebase 全 export をデプロイ）。export 漏れすると development / production では Trigger・Callable が未デプロイのままになる。詳細は `/shokujii-functions-implementation` を参照。PR verify は `npm run verify:functions-deploy` で deploy 設定を検証する。CI の方針とデプロイ失敗時の対処は [documents/実装メモ/functionsのCIデプロイ.md](documents/実装メモ/functionsのCIデプロイ.md) を参照。
 
 ### Firestore 操作の必須ルール（厳守）
 

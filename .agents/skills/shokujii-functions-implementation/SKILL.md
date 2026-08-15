@@ -61,20 +61,17 @@ onDocumentWritten 等の Firestore トリガーも createModuleLogger 等の共�
 
 ### CI デプロイ（必須）
 
-`functions/default/src/index.ts` で **Cloud Functions として export する**関数を追加・削除したら、同 PR で `.github/workflows/deploy_functions.yml` の `--only` リストも更新すること。更新漏れすると development / production では Trigger・Callable が未デプロイのままになる（コードはマージ済みでも GCP 上に存在しない）。
+`functions/default/src/index.ts` で **Cloud Functions として export する**関数を追加・削除したら、同 PR で index.ts の Promise.all import と export オブジェクトを更新すること。CI（`.github/workflows/deploy_functions.yml`）は **1 ジョブ + `firebase deploy --only functions`**（`--force` なし）で default codebase の全 export をデプロイするため、yml への手書きリスト追加は不要。
 
-- **hybrid**: 決済・注文系（`addToCart`, `stripeWebhook` 等）
-- **pf**: PF 本体（上記以外の一般 Function）
-- **enterprise**: エンプラ Callable（`createEnterprise` 等）
+export 漏れすると development / production では Trigger・Callable が未デプロイのままになる（コードはマージ済みでも GCP 上に存在しない）。
 
-export しない内部ヘルパー（他 Function から import するだけの関数）は対象外。整合性は `npm run verify:functions-deploy`（PR verify でも実行）で検証する。
+export しない内部ヘルパー（他 Function から import するだけの関数）は対象外。deploy 設定は `npm run verify:functions-deploy`（PR verify でも実行）で検証する。CI の方針とデプロイ失敗時の対処は [functions の CI デプロイ](../../../documents/実装メモ/functionsのCIデプロイ.md)を参照。
 
 ## クイックチェックリスト
 
 新規 Function 作成時:
 
-- [ ] index.ts に import と export を追加したか
-- [ ] `.github/workflows/deploy_functions.yml` の hybrid / pf / enterprise のいずれか `--only` リストに関数名を追加したか（export した Function のみ）
+- [ ] index.ts に import と export を追加したか（deploy yml への手書きは不要）
 - [ ] createModuleLogger を使っているか（console.log / firebase-functions の logger 直接 import は NG）
 - [ ] ログメッセージに接頭辞をつけていないか
 - [ ] API キーを使う場合、defineSecret と secrets オプションを指定しているか
@@ -103,5 +100,5 @@ export しない内部ヘルパー（他 Function から import するだけの�
 **NG**: 新規 Function を追加したが index.ts に export を登録していない  
 **OK**: index.ts の Promise.all に import を追加し、export のオブジェクトに含める
 
-**NG**: index.ts に export を追加したが deploy_functions.yml の `--only` リストを更新していない  
-**OK**: hybrid / pf / enterprise のいずれかに `functions:<関数名>` を追加する（PR verify の deploy list チェックが通ること）
+**NG**: index.ts に export を追加し忘れた（deploy yml への手書きは不要）  
+**OK**: index.ts の Promise.all に import を追加し、export のオブジェクトに含める（PR verify の deploy 設定チェックが通ること）

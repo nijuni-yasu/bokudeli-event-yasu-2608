@@ -193,7 +193,7 @@ Enterprise 版は PF（`enterprise_id == null`）と同じコレクションを�
 
 ### CI / Functions デプロイ
 
-- [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、`.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も同 PR で更新されているか
+- [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、index.ts の import / export が同 PR で更新されているか（deploy yml への手書きは不要）
 - [ ] 更新漏れは 🚨 必須修正（マージ後も Function が未デプロイでサイレント障害になる）
 - [ ] export しない内部ヘルパー（他 Function から import するだけの関数）は対象外
 - [ ] 後方非互換なスキーマ変更・新規 Callable を含む PR で、複数 CI ワークフロー（`deploy_functions` / `deploy_user` / `deploy_partner` 等）間のデプロイ順序を明記・保証しているか

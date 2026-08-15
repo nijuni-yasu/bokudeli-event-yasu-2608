@@ -26,7 +26,7 @@ Slack / LINE bot および旧 legacy Functions は `functions/default` に統合
 
 ### Functions 追加時の CI 連携
 
-`functions/default/src/index.ts` で Cloud Functions として **export する**関数を追加・削除したら、同 PR で `.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も更新すること。PR verify は `npm run verify:functions-deploy` で export と deploy リストの一致を検証する。
+`functions/default/src/index.ts` で Cloud Functions として **export する**関数を追加・削除したら、同 PR で index.ts に import と export を追加すること（deploy yml への手書きは不要）。PR verify は `npm run verify:functions-deploy` で deploy 設定を検証する。
 
 ## 外部サービス連携
 
