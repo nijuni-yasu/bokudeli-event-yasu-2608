@@ -35,11 +35,13 @@ NOT (
 ### 除外されるもの（ノイズ）
 
 - clientError の chunk 読み込み失敗、ServiceWorker 失敗、単体 `Rejected` / `rejected`、`Connection failed.` 等
+- 単体 `Failed to fetch` は **除外しない**（[#2174](https://github.com/nijuniinc/bokudeli-event-new/issues/2174) 調査中。CORS/API 障害の検知経路を維持）
 - Cloud Audit / Cloud Scheduler の infra ERROR
 
 ### 通知されるもの（要対応）
 
 - **ZodError**（`error_type=ZodError`）— filter でも server 側でも ERROR 維持
+- 単体 **`Failed to fetch`**（`error_message="Failed to fetch"`）— #2174 調査中は通知対象
 - Storage / Rules 系 clientError（`storage/unauthorized` 等）
 - サーバー Functions ERROR（Slack 404、`handleEventOgpRequest` HTTP 500 等）
 - 未知の clientError（shareSns TypeError、partner 権限不一致等）

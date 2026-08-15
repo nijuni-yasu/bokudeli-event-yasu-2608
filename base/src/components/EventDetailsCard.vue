@@ -118,7 +118,7 @@ const login = () => {
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
   const skipNewWindow = type === 'copy' || (isMobileDevice() && type === 'twitter')
-  const _window = !skipNewWindow ? window.open('', '_blank', 'width=800,height=500')! : undefined
+  const _window = !skipNewWindow ? window.open('', '_blank', 'width=800,height=500') : undefined
   const partnerStore = usePartnerStore(props.event.partner_id)
   const shop = await new Promise<BokudeliPartnerShop | undefined>((resolve) => {
     watch(

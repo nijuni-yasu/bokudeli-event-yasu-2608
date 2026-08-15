@@ -51,6 +51,20 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: B
 export const isMobileDevice = () =>
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
+const navigateShareUrl = (openUrl: string, popupWindow?: Window | null): void => {
+  if (popupWindow != null) {
+    popupWindow.opener = null
+    popupWindow.location.href = openUrl
+    return
+  }
+  const opened = window.open(openUrl, '_blank')
+  if (opened != null) {
+    opened.opener = null
+    return
+  }
+  window.location.href = openUrl
+}
+
 export const shareSnsButton = async (
   snsType: 'twitter' | 'facebook' | 'line' | 'copy' | 'twitterAfterOrder',
   event: BokudeliEvent,
@@ -58,7 +72,7 @@ export const shareSnsButton = async (
   shop: BokudeliPartnerShop,
   // pop-up block を防ぐため、先に window を開いておく
   // TODO copy 等動作の異なる処理を一関数にまとめるのは本来良くないので、修正する
-  _window?: Window,
+  _window?: Window | null,
 ) => {
   const eventUrl = encodeURIComponent(
     getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id),
@@ -68,6 +82,7 @@ export const shareSnsButton = async (
     const webUrl = `https://x.com/intent/post?text=${text}`
 
     if (_window != null) {
+      _window.opener = null
       _window.location.href = webUrl
     } else {
       // モバイル: twitter:// スキームで X アプリを直接起動する
@@ -88,11 +103,11 @@ export const shareSnsButton = async (
   } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
     const openUrl = `${baseUrl}?&u=${eventUrl}`
-    _window!.location.href = openUrl
+    navigateShareUrl(openUrl, _window)
   } else if (snsType === 'line') {
     const baseUrl = 'https://social-plugins.line.me/lineit/share'
     const openUrl = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
-    _window!.location.href = openUrl
+    navigateShareUrl(openUrl, _window)
   } else if (snsType === 'copy') {
     const text = getCopyText(event, community, shop)
     navigator.clipboard

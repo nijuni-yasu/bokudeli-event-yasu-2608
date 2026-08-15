@@ -282,9 +282,14 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     })
 
     const menus = computed<EventMenu[] | null>(() => {
-      getEventRef().then((eventRef) => {
-        subscribeMenus(eventRef)
-      })
+      getEventRef()
+        .then((eventRef) => {
+          subscribeMenus(eventRef)
+        })
+        .catch((err) => {
+          console.error('getEventRef for menus failed', err)
+          reportClientError(err, { documentPath: `events/${eventId}`, severity: 'warn' })
+        })
       const sortedMenus =
         _menus.value?.sort((a, b) => {
           // menu_sort_numberでソート（昇順）
@@ -392,22 +397,33 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     let unsubscribeEvent: Unsubscribe | null = null
     const subscribeEvent = (eventRef: DocumentReference<BokudeliEvent>) => {
       if (unsubscribeEvent == null) {
-        unsubscribeEvent = onSnapshot(eventRef, (doc) => {
-          try {
-            event.value = doc.data() ?? null
-            _members.value =
-              event.value?.members?.map((memberId) => ({
-                user_id: memberId,
-                store: useUserStore(memberId) as UserStore,
-              })) ?? []
-          } catch (err) {
-            console.error(err)
-            reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
-            if (err instanceof ZodError) {
-              rejectPendingLoadedEvent(err)
+        unsubscribeEvent = onSnapshot(
+          eventRef,
+          (doc) => {
+            try {
+              event.value = doc.data() ?? null
+              _members.value =
+                event.value?.members?.map((memberId) => ({
+                  user_id: memberId,
+                  store: useUserStore(memberId) as UserStore,
+                })) ?? []
+            } catch (err) {
+              console.error(err)
+              reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
+              if (err instanceof ZodError) {
+                rejectPendingLoadedEvent(err)
+              }
             }
-          }
-        })
+          },
+          (err) => {
+            console.error('subscribeEvent snapshot error', err)
+            reportClientError(err, { documentPath: eventRef.path, severity: 'warn' })
+            unsubscribeEvent?.()
+            unsubscribeEvent = null
+            // 購読が切れた以上 event は更新されないため、待機中の getLoadedEvent を timeout 前に失敗させる
+            rejectPendingLoadedEvent(err)
+          },
+        )
       }
     }
 
@@ -422,17 +438,26 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
         const ordersQuery = query(collectionGroup(db, 'member_orders'), ...orderConstraints).withConverter(
           memberOrderConverter,
         )
-        unsubscribeOrders = onSnapshot(ordersQuery, (ordersSnapshot) => {
-          _orders.value = ordersSnapshot.docs.flatMap((orderDoc) => {
-            try {
-              return orderDoc.data()
-            } catch (err) {
-              console.error(err)
-              reportClientError(err, { documentPath: orderDoc.ref.path, severity: 'warn' })
-              return []
-            }
-          })
-        })
+        unsubscribeOrders = onSnapshot(
+          ordersQuery,
+          (ordersSnapshot) => {
+            _orders.value = ordersSnapshot.docs.flatMap((orderDoc) => {
+              try {
+                return orderDoc.data()
+              } catch (err) {
+                console.error(err)
+                reportClientError(err, { documentPath: orderDoc.ref.path, severity: 'warn' })
+                return []
+              }
+            })
+          },
+          (err) => {
+            console.error('subscribeOrders snapshot error', err)
+            reportClientError(err, { documentPath: `events/${eventId}/member_orders`, severity: 'warn' })
+            unsubscribeOrders?.()
+            unsubscribeOrders = null
+          },
+        )
       }
     }
 
@@ -440,17 +465,26 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     const subscribeMenus = (eventRef: DocumentReference) => {
       if (unsubscribeMenus == null) {
         const menusRef = collection(eventRef, 'menus').withConverter(menuConverter)
-        unsubscribeMenus = onSnapshot(menusRef, (menusSnapshot) => {
-          _menus.value = menusSnapshot.docs.flatMap((m) => {
-            try {
-              return m.data()
-            } catch (err) {
-              console.error(err)
-              reportClientError(err, { documentPath: m.ref.path, severity: 'warn' })
-              return []
-            }
-          })
-        })
+        unsubscribeMenus = onSnapshot(
+          menusRef,
+          (menusSnapshot) => {
+            _menus.value = menusSnapshot.docs.flatMap((m) => {
+              try {
+                return m.data()
+              } catch (err) {
+                console.error(err)
+                reportClientError(err, { documentPath: m.ref.path, severity: 'warn' })
+                return []
+              }
+            })
+          },
+          (err) => {
+            console.error('subscribeMenus snapshot error', err)
+            reportClientError(err, { documentPath: `${eventRef.path}/menus`, severity: 'warn' })
+            unsubscribeMenus?.()
+            unsubscribeMenus = null
+          },
+        )
       }
     }
 
@@ -557,8 +591,8 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
         // undefined を渡すと where() が実行時エラーになるため null に正規化する
         eventConstraints.push(where('enterprise_id', '==', mergedOptions.eventsEnterpriseId ?? null))
       }
-      getDocs(query(collectionGroup(db, 'events'), ...eventConstraints).withConverter(eventConverter)).then(
-        (querySnapshot) => {
+      getDocs(query(collectionGroup(db, 'events'), ...eventConstraints).withConverter(eventConverter))
+        .then((querySnapshot) => {
           const eventRef = querySnapshot.docs[0]?.ref?.withConverter(eventConverter)
           if (eventRef == null) {
             if (retry++ < 16) {
@@ -579,8 +613,11 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
           subscribeEvent(eventRef)
           // 遅延評価なので以下を呼ぶ必要はない
           // subscribeOrders(eventRef)
-        },
-      )
+        })
+        .catch((err) => {
+          console.error('event subscribe getDocs error', err)
+          reportClientError(err, { documentPath: `events/${eventId}`, severity: 'warn' })
+        })
     }
 
     const unsubscribe = () => {

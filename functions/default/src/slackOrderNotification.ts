@@ -73,7 +73,7 @@ const sendOrderedMessage = async (params: {
   const userUrl = getUserUrl(userId)
   const message = `<${userUrl}|${user.user_name}> さんが、<${eventUrl}|${event.event_name}> で、${menuPhrase} を注文したよ！`
 
-  await sendCommunityBotsMessageOrThrow(bots, message)
+  await sendCommunityBotsMessageOrThrow(communityId, bots, message)
 }
 
 /** legacy orderNotification から移行。export 名を Slack 専用に変更。 */

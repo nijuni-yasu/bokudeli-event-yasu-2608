@@ -106,7 +106,7 @@ const isProcessing = computed(() => {
 
 const onShareSnsButtonClicked = async (event: BokudeliEvent) => {
   const partnerStore = usePartnerStore(event.partner_id)
-  const _window = !isMobileDevice() ? window.open('', '_blank', 'width=800,height=500')! : undefined
+  const _window = !isMobileDevice() ? window.open('', '_blank', 'width=800,height=500') : undefined
   const community = communityStore.community
   const shop = partnerStore.shops?.[0]
 

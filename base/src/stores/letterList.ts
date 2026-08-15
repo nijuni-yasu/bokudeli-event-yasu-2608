@@ -21,6 +21,8 @@ import {
   resolveCommunityStoreKey,
   type CommunityStoreScope,
 } from '@shokujii/base/stores/community.js'
+import { isFirestorePermissionDenied } from '@shokujii/base/utils/firestoreError.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import type { CollectionReference } from 'firebase/firestore'
 
 export type LetterListStore = ReturnType<typeof useLetterListStore>
@@ -31,6 +33,7 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
     const paginationExecutor = new TaskExecutor(1)
     const letterStores = ref<LetterStore[] | null>(null)
     const totalCount = ref<number | null>(null)
+    const permissionDenied = ref(false)
 
     const lettersSnapsthot: QueryDocumentSnapshot<BokudeliLetter>[] = []
 
@@ -43,28 +46,45 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
       return _letterListRef
     }
 
+    const handleLoadError = (error: unknown) => {
+      if (isFirestorePermissionDenied(error)) {
+        permissionDenied.value = true
+        letterStores.value = []
+        totalCount.value = 0
+        return
+      }
+      reportClientError(error, {
+        documentPath: _letterListRef?.path ?? `communities/${communityAccount}/letters`,
+        severity: 'warn',
+      })
+    }
+
     const next = () => {
-      if (paginationExecutor.totalTaskLength > 0) {
+      if (paginationExecutor.totalTaskLength > 0 || permissionDenied.value) {
         return
       }
       paginationExecutor.addTask(async () => {
-        if (totalCount.value == null) {
-          totalCount.value = (await getCountFromServer(await getLettersRef())).data().count
-        }
-        const lastVisibleDocument = lettersSnapsthot[lettersSnapsthot.length - 1]
-        const q = query(
-          await getLettersRef(),
-          orderBy('updated_at', 'desc'),
-          ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-          limit(pageSize),
-        )
-        const querySnapshot = await getDocs(q)
-        lettersSnapsthot.push(...querySnapshot.docs)
-        window.setTimeout(() => {
-          letterStores.value = lettersSnapsthot.map(
-            (doc) => useLetterStore(communityAccount, doc.data(), scope) as LetterStore,
+        try {
+          if (totalCount.value == null) {
+            totalCount.value = (await getCountFromServer(await getLettersRef())).data().count
+          }
+          const lastVisibleDocument = lettersSnapsthot[lettersSnapsthot.length - 1]
+          const q = query(
+            await getLettersRef(),
+            orderBy('updated_at', 'desc'),
+            ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
+            limit(pageSize),
           )
-        })
+          const querySnapshot = await getDocs(q)
+          lettersSnapsthot.push(...querySnapshot.docs)
+          window.setTimeout(() => {
+            letterStores.value = lettersSnapsthot.map(
+              (doc) => useLetterStore(communityAccount, doc.data(), scope) as LetterStore,
+            )
+          })
+        } catch (error) {
+          handleLoadError(error)
+        }
       })
     }
 
@@ -93,6 +113,7 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
       lettersSnapsthot.splice(0) // clear
       letterStores.value = null
       totalCount.value = null
+      permissionDenied.value = false
       next()
     }
 
@@ -101,6 +122,7 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
     return {
       letterStores,
       totalCount,
+      permissionDenied,
       newLetter,
       updateLetter,
       deleteLetter,

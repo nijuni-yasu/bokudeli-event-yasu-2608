@@ -49,4 +49,14 @@ describe('isClientErrorNoise', () => {
     // eslint-disable-next-line quotes -- Prettier が文字列内の ' により二重引用符を選択
     expect(isClientErrorNoise("null is not an object (evaluating 'h.location')")).toBe(false)
   })
+
+  it('単体 Failed to fetch は false（#2174 調査完了まで ERROR 維持）', () => {
+    expect(isClientErrorNoise('Failed to fetch')).toBe(false)
+  })
+
+  it('Failed to fetch dynamically imported module は true', () => {
+    expect(isClientErrorNoise('Failed to fetch dynamically imported module: https://shokujii.jp/assets/x.js')).toBe(
+      true,
+    )
+  })
 })

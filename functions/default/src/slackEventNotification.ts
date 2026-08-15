@@ -36,7 +36,7 @@ const notifyEvents = async (
       const eventUrl = getEventUrl(event.community_account, event.id)
       const message = buildMessage(event.event_name, eventUrl)
       const bots = await getCommunityBots(event.community_id)
-      await sendCommunityBotsMessage(bots, message)
+      await sendCommunityBotsMessage(event.community_id, bots, message)
     }),
   )
 

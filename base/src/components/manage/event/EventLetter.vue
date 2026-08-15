@@ -122,34 +122,41 @@ const goToCommunitySettings = () => {
 
 <template>
   <v-container v-if="selectedLetter == null" class="manage-container">
-    <v-row class="justify-center">
-      <v-col md="12" sm="12" cols="12">
-        <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
-          {{ $t('manage.new_letter') }}
-        </v-btn>
-      </v-col>
-    </v-row>
-    <v-row class="justify-center">
+    <v-row v-if="letterListStore.permissionDenied">
       <v-col cols="12">
-        <LetterTable
-          :letters="letters"
-          @edit="onEditClick"
-          @delete="onDeleteClick"
-          @copy="onCopyClick"
-          @user-click="onUserClick"
-        />
+        <v-alert type="warning" variant="tonal">{{ $t('manage.letter.permission_denied') }}</v-alert>
       </v-col>
     </v-row>
-    <v-row v-show="(letters.length ?? 0) > 0" class="justify-center">
-      <v-col md="8" sm="9" cols="12" class="text-center">
-        <IncrementalLoader
-          class="my-5"
-          :total-count="letterListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-          :loaded-count="letterListStore.letterStores?.length ?? 0"
-          @load="letterListStore.next()"
-        />
-      </v-col>
-    </v-row>
+    <template v-else>
+      <v-row class="justify-center">
+        <v-col md="12" sm="12" cols="12">
+          <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
+            {{ $t('manage.new_letter') }}
+          </v-btn>
+        </v-col>
+      </v-row>
+      <v-row class="justify-center">
+        <v-col cols="12">
+          <LetterTable
+            :letters="letters"
+            @edit="onEditClick"
+            @delete="onDeleteClick"
+            @copy="onCopyClick"
+            @user-click="onUserClick"
+          />
+        </v-col>
+      </v-row>
+      <v-row v-show="(letters.length ?? 0) > 0" class="justify-center">
+        <v-col md="8" sm="9" cols="12" class="text-center">
+          <IncrementalLoader
+            class="my-5"
+            :total-count="letterListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+            :loaded-count="letterListStore.letterStores?.length ?? 0"
+            @load="letterListStore.next()"
+          />
+        </v-col>
+      </v-row>
+    </template>
   </v-container>
   <v-container v-else class="manage-container">
     <v-row class="justify-center">
