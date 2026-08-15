@@ -25,7 +25,12 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
+import {
+  AddToCartRequest,
+  RemoveFromCartRequest,
+  ConfirmOrderRequest,
+  ConfirmOrderResponse,
+} from '@shokujii/common/apis/order.js'
 import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
   addToCart as _addToCart,
@@ -351,8 +356,9 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
       await _removeFromCart(data)
     }
 
-    const confirmOrder = async (data: ConfirmOrderRequest): Promise<void> => {
-      await _confirmOrder(data)
+    const confirmOrder = async (data: ConfirmOrderRequest): Promise<ConfirmOrderResponse> => {
+      const result = await _confirmOrder(data)
+      return result.data
     }
 
     const deleteEvent = async (): Promise<void> => {

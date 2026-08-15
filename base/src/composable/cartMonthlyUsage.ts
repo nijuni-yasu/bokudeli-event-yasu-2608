@@ -1,3 +1,6 @@
+import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
+import { EnterpriseSubsidySettingsEntryAppSchema } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
+
 export type CartMonthlyUsage = {
   used: number
   limit: number
@@ -23,26 +26,42 @@ export const pfCartMonthlyUsageLoader: CartMonthlyUsageLoader = async () => null
 /** 福利厚生: 開催月 bucket ごとの確定済み利用額（EnterpriseMember.monthly_usage） */
 export type CartEnterpriseSubsidyBudget = {
   monthlyUsage: Record<string, number>
+  subsidySettingsHistory: EnterpriseSubsidySettingsEntryType[]
 }
 
 export type CartEnterpriseSubsidyBudgetLoader = (userId: string) => Promise<CartEnterpriseSubsidyBudget | null>
 
+function isSubsidySettingsHistoryEntry(value: unknown): value is EnterpriseSubsidySettingsEntryType {
+  return EnterpriseSubsidySettingsEntryAppSchema.safeParse(value).success
+}
+
 export function normalizeCartEnterpriseSubsidyBudget(value: unknown): CartEnterpriseSubsidyBudget | null {
-  if (typeof value !== 'object' || value === null || !('monthlyUsage' in value)) {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('monthlyUsage' in value) ||
+    !('subsidySettingsHistory' in value)
+  ) {
     return null
   }
-  const { monthlyUsage } = value
-  if (typeof monthlyUsage !== 'object' || monthlyUsage === null) {
+  const { monthlyUsage, subsidySettingsHistory } = value
+  if (typeof monthlyUsage !== 'object' || monthlyUsage === null || !Array.isArray(subsidySettingsHistory)) {
     return null
   }
-  const normalized: Record<string, number> = {}
+  const normalizedUsage: Record<string, number> = {}
   for (const [key, entry] of Object.entries(monthlyUsage)) {
     if (typeof entry !== 'number' || Number.isNaN(entry)) {
       return null
     }
-    normalized[key] = entry
+    normalizedUsage[key] = entry
   }
-  return { monthlyUsage: normalized }
+  if (!subsidySettingsHistory.every(isSubsidySettingsHistoryEntry)) {
+    return null
+  }
+  if (subsidySettingsHistory.length === 0) {
+    return null
+  }
+  return { monthlyUsage: normalizedUsage, subsidySettingsHistory }
 }
 
 /** PF / user 版: 福利厚生 budget なし */

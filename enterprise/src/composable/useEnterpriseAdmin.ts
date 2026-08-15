@@ -1,5 +1,5 @@
 import { getAuth } from 'firebase/auth'
-import type { EnterpriseDiscountType } from '@shokujii/common/schemas/Enterprise.js'
+import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import { getEnterpriseById } from '@shokujii/base/stores/enterprise.js'
 
 export type EnterpriseDocumentData = {
@@ -9,9 +9,7 @@ export type EnterpriseDocumentData = {
   subdomain: string
   custom_domain?: string
   allowed_email_domains: string[]
-  discount_type: EnterpriseDiscountType
-  discount_value: number
-  monthly_limit_per_user: number
+  subsidy_settings_history: EnterpriseSubsidySettingsEntryType[]
 }
 
 export async function getEnterpriseIdFromToken(): Promise<string | undefined> {
@@ -41,8 +39,6 @@ export async function loadEnterpriseDocument(enterpriseId: string): Promise<Ente
     subdomain: enterprise.subdomain,
     custom_domain: enterprise.custom_domain,
     allowed_email_domains: enterprise.allowed_email_domains,
-    discount_type: enterprise.discount_type,
-    discount_value: enterprise.discount_value,
-    monthly_limit_per_user: enterprise.monthly_limit_per_user,
+    subsidy_settings_history: enterprise.subsidy_settings_history,
   }
 }

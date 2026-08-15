@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeCartEnterpriseSubsidyBudget, normalizeCartMonthlyUsage } from './cartMonthlyUsage.js'
 
+const defaultSubsidyHistory = [
+  { effective_from_month: '2026-01', type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 },
+]
+
 describe('normalizeCartMonthlyUsage', () => {
   it('returns null for null/undefined/primitive', () => {
     expect(normalizeCartMonthlyUsage(null)).toBeNull()
@@ -23,14 +27,40 @@ describe('normalizeCartMonthlyUsage', () => {
 })
 
 describe('normalizeCartEnterpriseSubsidyBudget', () => {
-  it('returns null when monthlyUsage values are not numbers', () => {
-    expect(normalizeCartEnterpriseSubsidyBudget({ monthlyUsage: { '2026-01': '100' } })).toBeNull()
-    expect(normalizeCartEnterpriseSubsidyBudget({ monthlyUsage: { '2026-01': NaN } })).toBeNull()
+  it('returns null when subsidySettingsHistory is missing or empty', () => {
+    expect(normalizeCartEnterpriseSubsidyBudget({ monthlyUsage: { '2026-01': 100 } })).toBeNull()
+    expect(
+      normalizeCartEnterpriseSubsidyBudget({
+        monthlyUsage: { '2026-01': 100 },
+        subsidySettingsHistory: [],
+      }),
+    ).toBeNull()
   })
 
-  it('returns normalized monthlyUsage when all values are numbers', () => {
-    expect(normalizeCartEnterpriseSubsidyBudget({ monthlyUsage: { '2026-01': 100, '2026-02': 0 } })).toEqual({
+  it('returns null when monthlyUsage values are not numbers', () => {
+    expect(
+      normalizeCartEnterpriseSubsidyBudget({
+        monthlyUsage: { '2026-01': '100' },
+        subsidySettingsHistory: defaultSubsidyHistory,
+      }),
+    ).toBeNull()
+    expect(
+      normalizeCartEnterpriseSubsidyBudget({
+        monthlyUsage: { '2026-01': NaN },
+        subsidySettingsHistory: defaultSubsidyHistory,
+      }),
+    ).toBeNull()
+  })
+
+  it('returns normalized budget when monthlyUsage and history are valid', () => {
+    expect(
+      normalizeCartEnterpriseSubsidyBudget({
+        monthlyUsage: { '2026-01': 100, '2026-02': 0 },
+        subsidySettingsHistory: defaultSubsidyHistory,
+      }),
+    ).toEqual({
       monthlyUsage: { '2026-01': 100, '2026-02': 0 },
+      subsidySettingsHistory: defaultSubsidyHistory,
     })
   })
 })

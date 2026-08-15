@@ -2,6 +2,7 @@ import { getAuth } from 'firebase/auth'
 import { getEnterpriseById, getEnterpriseMemberById } from '@shokujii/base/stores/enterprise.js'
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import { resolveEnterpriseSubsidySettingsForMonth } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import {
   toEnterpriseMemberMonthlyUsageView,
   type EnterpriseMemberMonthlyUsageView,
@@ -19,10 +20,30 @@ export {
   toEnterpriseMemberMonthlyUsageView,
 } from './enterpriseMemberMonthlyUsageHistory.js'
 
-/** 利用状況タブ表示可否（monthly_limit_per_user が設定されているか） */
+/** 利用状況タブ表示可否（subsidy_settings_history が 1 件以上あるか） */
 export async function fetchEnterpriseUsageTabEligible(userId: string): Promise<boolean> {
-  const view = await fetchEnterpriseMemberMonthlyUsage(userId)
-  return view != null
+  const auth = getAuth()
+  const user = auth.currentUser
+  if (user == null || user.uid !== userId) {
+    return false
+  }
+  try {
+    const token = await user.getIdTokenResult()
+    const enterpriseId = token.claims.enterprise_id
+    if (typeof enterpriseId !== 'string' || enterpriseId === '') {
+      return false
+    }
+    const enterprise = await getEnterpriseById(enterpriseId)
+    if (enterprise == null || enterprise.subsidy_settings_history.length === 0) {
+      return false
+    }
+    resolveEnterpriseSubsidySettingsForMonth(enterprise.subsidy_settings_history, formatYearMonth(Date.now()))
+    return true
+  } catch (error) {
+    console.warn('Failed to check enterprise usage tab eligibility', error)
+    reportClientError(error, { componentInfo: 'enterpriseMemberMonthlyUsage', severity: 'warn' })
+    return false
+  }
 }
 
 /** enterprise 版: ログインユーザーの月次 usage（カート・利用状況タブ共用） */
@@ -44,23 +65,11 @@ export async function fetchEnterpriseMemberMonthlyUsage(
       getEnterpriseMemberById(enterpriseId, userId),
       getEnterpriseById(enterpriseId),
     ])
-    if (member == null || enterprise == null) {
-      return null
-    }
-    const limit = enterprise.monthly_limit_per_user
-    if (typeof limit !== 'number') {
+    if (member == null || enterprise == null || enterprise.subsidy_settings_history.length === 0) {
       return null
     }
     const currentMonth = formatYearMonth(Date.now())
-    return toEnterpriseMemberMonthlyUsageView(
-      member,
-      {
-        monthlyLimit: limit,
-        discountType: enterprise.discount_type,
-        discountValue: enterprise.discount_value,
-      },
-      currentMonth,
-    )
+    return toEnterpriseMemberMonthlyUsageView(member, enterprise.subsidy_settings_history, currentMonth)
   } catch (error) {
     console.warn('Failed to load enterprise member monthly usage', error)
     reportClientError(error, { componentInfo: 'enterpriseMemberMonthlyUsage', severity: 'warn' })

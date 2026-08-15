@@ -1,6 +1,11 @@
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
-import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
+import {
+  AddToCartRequest,
+  RemoveFromCartRequest,
+  ConfirmOrderRequest,
+  ConfirmOrderResponse,
+} from '@shokujii/common/apis/order.js'
 
 export const addToCart = async (input: AddToCartRequest): Promise<HttpsCallableResult<void>> => {
   const f = httpsCallable<AddToCartRequest, void>(functions, 'addToCart')
@@ -12,7 +17,7 @@ export const removeFromCart = async (input: RemoveFromCartRequest): Promise<Http
   return f(input)
 }
 
-export const confirmOrder = async (input: ConfirmOrderRequest): Promise<HttpsCallableResult<void>> => {
-  const f = httpsCallable<ConfirmOrderRequest, void>(functions, 'confirmOrder')
+export const confirmOrder = async (input: ConfirmOrderRequest): Promise<HttpsCallableResult<ConfirmOrderResponse>> => {
+  const f = httpsCallable<ConfirmOrderRequest, ConfirmOrderResponse>(functions, 'confirmOrder')
   return f(input)
 }

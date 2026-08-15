@@ -146,6 +146,7 @@ export default {
     order_completed: '注文を完了しました。',
     payment_failed: '決済処理に失敗しました。サポートにお問い合わせください。',
     order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
+    subsidy_recalculated: '割引金額が更新されました。内容をご確認のうえ、再度お試しください。',
     update_failed: '個数の更新に失敗しました。',
     delete_failed: '削除に失敗しました。',
     confirm_order_credit_card: 'お支払い画面に進みますか？',
