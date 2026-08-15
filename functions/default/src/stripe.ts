@@ -116,6 +116,14 @@ export const createStripeCheckoutSession = onCall<
         if (ordersInTx.length !== order_ids.length) {
           throw new HttpsError('not-found', '一部の注文が見つかりません')
         }
+        for (const order of ordersInTx) {
+          if (order.user_id !== uid) {
+            throw new HttpsError('permission-denied', 'この注文にアクセスできません')
+          }
+          if (order.status !== 'in_cart') {
+            throw new HttpsError('failed-precondition', 'カート内の注文のみ決済できます')
+          }
+        }
         const syncResult = await syncEnterpriseSubsidyOrdersBeforeConfirm({
           enterpriseId,
           userId: uid,
