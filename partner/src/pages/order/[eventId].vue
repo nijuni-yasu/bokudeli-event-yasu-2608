@@ -40,10 +40,10 @@ const event = await eventStore.getLoadedEvent()
 const originHost = import.meta.env.VITE_ORIGIN_HOST as string
 const eventUrl = getEventUrl(originHost, event.community_account, event.event_id)
 
-if (event.partner_id !== partnerId) {
+const isAuthorized = event.partner_id === partnerId
+if (!isAuthorized) {
   window.alert($t('alert.invalid_account'))
-  router.push(getOrderPath())
-  throw new Error()
+  void router.replace(getOrderPath())
 }
 
 const { requiredValidator } = useValidators()
@@ -133,7 +133,7 @@ const downloadNamesPrint = async () => {
 <template>
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
-      <v-card flat class="mt-2" v-if="eventStore.event != null">
+      <v-card flat class="mt-2" v-if="isAuthorized && eventStore.event != null">
         <template v-slot:title>
           <v-icon size="40" class="text--primary me-3" :icon="mdiTruckOutline" />
           <span>{{ $t(`event_status.${eventStore.event.event_status.value}`) }}</span>
