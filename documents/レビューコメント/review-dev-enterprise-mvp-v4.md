@@ -23,7 +23,9 @@
 | [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `Awaited<ReturnType<typeof ...>>` で型を間接参照<br>`EnterpriseSubsidySettingsType` を直接使用 |
 | [x] | RC-18 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | settings 未解決でも「enterprise_id is required」と表示<br>調査を誤らせるためメッセージを実態に合わせる |
 | [x] | RC-19 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | M | 同一注文を Tx 外 / Tx 内 / Tx 後の 3 回読んでいる<br>Tx から ordersInTx を返し 3 回目 read 削除 |
-| [ ] | RC-20 | なし | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | エージェント一時ファイル pr-body-2257.md がステージ済み<br>PR コミットから除外する |
+| [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | エージェント一時ファイル pr-body-2257.md<br>分割コミット時にコミット対象から除外済み |
+| [x] | RC-21 | 3788956013 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 👤 UX | 🔧 微修正 | M | subsidy_recalculated 後 budget 再取得（#2261）<br>fetchCartEnterpriseSubsidyBudget + cart.vue reload |
+| [x] | RC-22 | 3788956016 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | M | Stripe Tx 内 in_cart 再検証（#2262）<br>memberOrders と同等の status チェック |
 
 ---
 
@@ -852,7 +854,7 @@ Enterprise イベントへ初めてカート追加するユーザーでは、直
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📤 スコープ外
 
@@ -862,6 +864,83 @@ Enterprise イベントへ初めてカート追加するユーザーでは、直
 
 **想定工数**: S
 
-**判断理由**: 実装品質には無関係だが、コミット hygiene 上除外すべき。📤 スコープ外のため本 PR 必須ではない。
+**判断理由**: 分割コミット実行時に `.agents/tmp/pr-body-2257.md` をステージから除外し、リポジトリへコミットしていない。
+
+---
+
+## 評価セッション（2026-08-15 17:27・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-08-15 17:27 JST
+- **ブランチ名**: dev/enterprise-mvp-v4
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2257
+- **REVIEW_REQUEST_SINCE**: 2026-08-15T08:20:00Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼コメント 5301344461、Codex 接続案内 5301353269、RC-3 重複 Copilot 3788952400 / 5301352495）
+- **手順 4a 自動修正**: 該当なし（🚨 2 件は 💰 金銭ラベル・工数 M のため対象外）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | pr-body 一時ファイルをコミット対象から除外済み |
+| [x] | RC-21 | 3788956013 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 👤 UX | 🔧 微修正 | M | subsidy_recalculated 後 budget 再取得（#2261） |
+| [x] | RC-22 | 3788956016 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | M | Stripe Tx 内 in_cart 再検証（#2262） |
+
+---
+
+**識別子**: RC-21（GitHub id: 3788956013・Codex）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `base/src/components/pages/cart.vue:387`
+
+**レビュワーのコメント（原文）**:
+
+P1 再計算後に月次利用額も再取得してください。別注文の確定で monthly_usage が増え、自己負担 0 円だったカートをサーバーが自己負担ありへ再計算した場合、この分岐はアラートを出して戻るだけで、enterpriseSubsidyBudget は userId が変わらない限り再取得されません。注文の Firestore 更新が届いても、表示額は古い usage を使って再 replay されるため needsStripeCheckoutForItem は引き続き false となり、再試行でも confirmOrder を呼んで Stripe 決済が必要ですで失敗し続けます。Stripe 側の同じ分岐も含め、再計算応答後に月次利用額を再取得して決済経路を更新してください。
+
+**コメント要約**: subsidy_recalculated 後に monthly_usage が stale のまま。<br>Stripe 決済が必要なのに confirmOrder へ進み失敗ループ。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭, 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: #2261 で追跡。`fetchCartEnterpriseSubsidyBudget` 追加、`subsidy_recalculated` 後に `reloadEnterpriseSubsidyBudget` を Stripe / confirmOrder 両経路で呼び出し。
+
+---
+
+**識別子**: RC-22（GitHub id: 3788956016・Codex）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `functions/default/src/stripe.ts:119`
+
+**レビュワーのコメント（原文）**:
+
+P1 トランザクション内で注文状態を再検証してください。既存 Checkout 完了直前に同じ注文で新 Checkout を開始すると、Tx 外検証後に Webhook が ordered にし usage を加算、この再読では確定済み注文が返るが件数しか確認せず再計算へ渡す。再計算は当該注文自身を含む最新 usage を起点にするため補助額を減額・削除し、既に決済確定した注文を書き換えうる。ordersInTx の全件が引き続き in_cart であることを、書き戻し前に Tx 内で検証すること。
+
+**コメント要約**: Tx 内で order status を再検証していない。<br>ordered 化後の再計算で確定済み注文を書き換えうる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭, 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: #2262 で追跡。`stripe.ts` Tx 内で `ordersInTx` の `user_id` / `in_cart` を memberOrders と同等に再検証。
 
 ---
