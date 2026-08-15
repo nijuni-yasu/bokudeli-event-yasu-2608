@@ -31,6 +31,11 @@ function isServiceWorkerStandaloneRejected(message: string): boolean {
   return message.trim().toLowerCase() === 'rejected'
 }
 
+/** Fetch API のネットワーク瞬断（単体メッセージ）。dynamic import 失敗は別パターンで除外する。 */
+function isStandaloneFailedToFetch(message: string): boolean {
+  return message.trim().toLowerCase() === 'failed to fetch'
+}
+
 /**
  * Cloud Logging ERROR ではなく WARN 格下げすべき clientError か。
  * ZodError と actionable パターンは常に false（ERROR 維持）。
@@ -45,6 +50,10 @@ export function isClientErrorNoise(message: string, errorType?: string): boolean
   }
 
   if (isServiceWorkerStandaloneRejected(message)) {
+    return true
+  }
+
+  if (isStandaloneFailedToFetch(message)) {
     return true
   }
 

@@ -343,9 +343,14 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
     )
 
     const events = computed<BokudeliEvent[] | null>(() => {
-      getCommunityRef().then((communityRef) => {
-        subscribeEvents(communityRef)
-      })
+      getCommunityRef()
+        .then((communityRef) => {
+          subscribeEvents(communityRef)
+        })
+        .catch((err) => {
+          console.error('getCommunityRef for events failed', err)
+          reportClientError(err, { documentPath: `communities/${communityAccount}`, severity: 'warn' })
+        })
       if (eventStores.value == null) {
         return null
       }
@@ -566,14 +571,23 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
     let unsubscribeCommunity: Unsubscribe | null = null
     const subscribeCommunity = (communityRef: DocumentReference<BokudeliCommunity>) => {
       if (unsubscribeCommunity == null) {
-        unsubscribeCommunity = onSnapshot(communityRef, (doc) => {
-          try {
-            community.value = doc.data() ?? null
-          } catch (err) {
-            console.error(err)
-            reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
-          }
-        })
+        unsubscribeCommunity = onSnapshot(
+          communityRef,
+          (doc) => {
+            try {
+              community.value = doc.data() ?? null
+            } catch (err) {
+              console.error(err)
+              reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
+            }
+          },
+          (err) => {
+            console.error('subscribeCommunity snapshot error', err)
+            reportClientError(err, { documentPath: communityRef.path, severity: 'warn' })
+            unsubscribeCommunity?.()
+            unsubscribeCommunity = null
+          },
+        )
       }
     }
 
@@ -581,15 +595,24 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
     const subscribeEvents = (communityRef: DocumentReference) => {
       const eventsRef = collection(communityRef, 'events')
       if (unsubscribeEvents == null) {
-        unsubscribeEvents = onSnapshot(eventsRef, (querySnapshot) => {
-          eventStores.value = new Map()
-          querySnapshot.docs.forEach((doc) => {
-            const eventId = doc.id
-            const stores = eventStores.value || new Map()
-            stores.set(eventId, useEventStore(eventId, eventStoreOptions) as EventStore)
-            eventStores.value = stores
-          })
-        })
+        unsubscribeEvents = onSnapshot(
+          eventsRef,
+          (querySnapshot) => {
+            eventStores.value = new Map()
+            querySnapshot.docs.forEach((doc) => {
+              const eventId = doc.id
+              const stores = eventStores.value || new Map()
+              stores.set(eventId, useEventStore(eventId, eventStoreOptions) as EventStore)
+              eventStores.value = stores
+            })
+          },
+          (err) => {
+            console.error('subscribeEvents snapshot error', err)
+            reportClientError(err, { documentPath: `${communityRef.path}/events`, severity: 'warn' })
+            unsubscribeEvents?.()
+            unsubscribeEvents = null
+          },
+        )
       }
     }
 
@@ -600,33 +623,38 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
       })
       return getDocs(
         query(collection(db, 'communities'), ...queryConstraints, limit(2)).withConverter(communityConverter),
-      ).then((querySnapshot) => {
-        if (querySnapshot.docs.length > 1) {
-          reportClientError(new Error(`Community "${communityAccount}" is ambiguous for the given scope.`), {
-            severity: 'error',
-          })
-          return
-        }
-        const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
-        if (communityRef == null) {
-          if (retry++ < 10) {
-            console.warn(
-              `The community "${communityAccount}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
-            )
-            window.setTimeout(subscribe, 500)
+      )
+        .then((querySnapshot) => {
+          if (querySnapshot.docs.length > 1) {
+            reportClientError(new Error(`Community "${communityAccount}" is ambiguous for the given scope.`), {
+              severity: 'error',
+            })
             return
           }
-          console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
-          // TODO: マイページ動作しないため、一時的にコメントアウト
-          // router.replace('/404')
-          return
-        }
-        retry = 0
-        _communityRef.value = communityRef
-        subscribeCommunity(communityRef)
-        // 他の Store は遅延評価なので、以下を呼ぶ必要はない
-        // subscribeEvents(communityRef)
-      })
+          const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
+          if (communityRef == null) {
+            if (retry++ < 10) {
+              console.warn(
+                `The community "${communityAccount}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
+              )
+              window.setTimeout(subscribe, 500)
+              return
+            }
+            console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
+            // TODO: マイページ動作しないため、一時的にコメントアウト
+            // router.replace('/404')
+            return
+          }
+          retry = 0
+          _communityRef.value = communityRef
+          subscribeCommunity(communityRef)
+          // 他の Store は遅延評価なので、以下を呼ぶ必要はない
+          // subscribeEvents(communityRef)
+        })
+        .catch((err) => {
+          console.error('community subscribe getDocs error', err)
+          reportClientError(err, { documentPath: `communities/${communityAccount}`, severity: 'warn' })
+        })
     }
 
     const unsubscribe = () => {

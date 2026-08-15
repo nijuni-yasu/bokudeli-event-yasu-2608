@@ -33,6 +33,11 @@ def is_serviceworker_standalone_rejected(message: str) -> bool:
     return message.strip().lower() == "rejected"
 
 
+def is_standalone_failed_to_fetch(message: str) -> bool:
+    """Fetch API のネットワーク瞬断（単体メッセージ）。"""
+    return message.strip().lower() == "failed to fetch"
+
+
 _SEVERITY_ERROR_AND_ABOVE = frozenset({"ERROR", "CRITICAL", "ALERT", "EMERGENCY"})
 
 
@@ -109,6 +114,8 @@ def classify_tier(entry: dict[str, Any], message: str) -> str:
         if any(pattern in lower for pattern in CLIENT_ERROR_ACTIONABLE_PATTERNS):
             return "P1"
         if is_serviceworker_standalone_rejected(message):
+            return "noise"
+        if is_standalone_failed_to_fetch(message):
             return "noise"
         if any(pattern in lower for pattern in CLIENT_ERROR_NOISE_PATTERNS):
             return "noise"
