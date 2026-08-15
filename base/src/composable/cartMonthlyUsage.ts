@@ -66,3 +66,19 @@ export function normalizeCartEnterpriseSubsidyBudget(value: unknown): CartEnterp
 
 /** PF / user 版: 福利厚生 budget なし */
 export const pfCartEnterpriseSubsidyBudgetLoader: CartEnterpriseSubsidyBudgetLoader = async () => null
+
+/** loader 結果を正規化して返す（watch / 再計算後 reload 共通） */
+export async function fetchCartEnterpriseSubsidyBudget(
+  userId: string,
+  loader: CartEnterpriseSubsidyBudgetLoader,
+): Promise<CartEnterpriseSubsidyBudget | null> {
+  if (userId === '') {
+    return null
+  }
+  try {
+    const result = await loader(userId)
+    return normalizeCartEnterpriseSubsidyBudget(result)
+  } catch {
+    return null
+  }
+}

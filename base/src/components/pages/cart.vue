@@ -35,7 +35,7 @@ import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 import {
   pfCartEnterpriseSubsidyBudgetLoader,
-  normalizeCartEnterpriseSubsidyBudget,
+  fetchCartEnterpriseSubsidyBudget,
   type CartEnterpriseSubsidyBudget,
   type CartEnterpriseSubsidyBudgetLoader,
 } from '@shokujii/base/composable/cartMonthlyUsage.js'
@@ -137,28 +137,30 @@ type EnrichedCartItem = CartItem & {
 const enterpriseSubsidyBudget = ref<CartEnterpriseSubsidyBudget | null>(null)
 
 let subsidyBudgetLoadGeneration = 0
+
+const reloadEnterpriseSubsidyBudget = async (): Promise<void> => {
+  const uid = userId.value
+  if (uid === '') {
+    enterpriseSubsidyBudget.value = null
+    return
+  }
+  const generation = ++subsidyBudgetLoadGeneration
+  const normalized = await fetchCartEnterpriseSubsidyBudget(uid, props.enterpriseSubsidyBudgetLoader)
+  if (generation !== subsidyBudgetLoadGeneration) {
+    return
+  }
+  enterpriseSubsidyBudget.value = normalized
+}
+
 watch(
   userId,
   async (uid) => {
     if (uid === '') {
+      subsidyBudgetLoadGeneration++
       enterpriseSubsidyBudget.value = null
       return
     }
-    const generation = ++subsidyBudgetLoadGeneration
-    try {
-      const result = await props.enterpriseSubsidyBudgetLoader(uid)
-      if (generation !== subsidyBudgetLoadGeneration) {
-        return
-      }
-      const normalized = normalizeCartEnterpriseSubsidyBudget(result)
-      enterpriseSubsidyBudget.value = normalized
-    } catch (error) {
-      if (generation !== subsidyBudgetLoadGeneration) {
-        return
-      }
-      console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)
-      enterpriseSubsidyBudget.value = null
-    }
+    await reloadEnterpriseSubsidyBudget()
   },
   { immediate: true },
 )
@@ -366,6 +368,7 @@ const startOrderProcess = async () => {
           origin: window.location.origin,
         })
         if (response.data.subsidy_recalculated) {
+          await reloadEnterpriseSubsidyBudget()
           alertBody.value = $t('cart.subsidy_recalculated')
           return
         }
@@ -383,6 +386,7 @@ const startOrderProcess = async () => {
           order_ids: orderIds,
         })
         if (confirmResult.subsidy_recalculated) {
+          await reloadEnterpriseSubsidyBudget()
           alertBody.value = $t('cart.subsidy_recalculated')
           return
         }

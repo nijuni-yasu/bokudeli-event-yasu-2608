@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
-import { normalizeCartEnterpriseSubsidyBudget, normalizeCartMonthlyUsage } from './cartMonthlyUsage.js'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  fetchCartEnterpriseSubsidyBudget,
+  normalizeCartEnterpriseSubsidyBudget,
+  normalizeCartMonthlyUsage,
+} from './cartMonthlyUsage.js'
 
 const defaultSubsidyHistory = [
   { effective_from_month: '2026-01', type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 },
@@ -62,5 +66,30 @@ describe('normalizeCartEnterpriseSubsidyBudget', () => {
       monthlyUsage: { '2026-01': 100, '2026-02': 0 },
       subsidySettingsHistory: defaultSubsidyHistory,
     })
+  })
+})
+
+describe('fetchCartEnterpriseSubsidyBudget', () => {
+  it('returns normalized budget when loader succeeds', async () => {
+    const loader = vi.fn().mockResolvedValue({
+      monthlyUsage: { '2026-01': 100 },
+      subsidySettingsHistory: defaultSubsidyHistory,
+    })
+    await expect(fetchCartEnterpriseSubsidyBudget('user1', loader)).resolves.toEqual({
+      monthlyUsage: { '2026-01': 100 },
+      subsidySettingsHistory: defaultSubsidyHistory,
+    })
+    expect(loader).toHaveBeenCalledWith('user1')
+  })
+
+  it('returns null when userId is empty', async () => {
+    const loader = vi.fn()
+    await expect(fetchCartEnterpriseSubsidyBudget('', loader)).resolves.toBeNull()
+    expect(loader).not.toHaveBeenCalled()
+  })
+
+  it('returns null when loader throws', async () => {
+    const loader = vi.fn().mockRejectedValue(new Error('network'))
+    await expect(fetchCartEnterpriseSubsidyBudget('user1', loader)).resolves.toBeNull()
   })
 })
