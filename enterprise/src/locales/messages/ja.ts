@@ -189,6 +189,7 @@ export default {
       save: '保存',
       save_success: '設定を保存しました',
       save_failed: '設定の保存に失敗しました',
+      load_failed: '全社設定の読み込みに失敗しました',
       company_name_required: '会社名を入力してください',
     },
     members: {

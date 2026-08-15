@@ -67,6 +67,8 @@ const loadSettings = async () => {
     discountType.value = currentSettings.type
     discountValue.value = currentSettings.value
     monthlyLimitPerUser.value = currentSettings.monthly_limit_per_user
+  } catch {
+    notification.show(t('admin.settings.load_failed'), 'error')
   } finally {
     loading.value = false
   }
