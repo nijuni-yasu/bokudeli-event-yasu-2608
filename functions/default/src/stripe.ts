@@ -101,11 +101,13 @@ export const createStripeCheckoutSession = onCall<
       }
     }
 
+    let checkoutOrders = orders
+
     if (event.event_payment === 'enterprise_subsidy') {
       if (enterpriseId == null) {
         throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
       }
-      const syncResult = await db.runTransaction(async (transaction) => {
+      const { syncResult, ordersInTx } = await db.runTransaction(async (transaction) => {
         const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, uid, transaction)
         if (entMember == null) {
           throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
@@ -114,7 +116,7 @@ export const createStripeCheckoutSession = onCall<
         if (ordersInTx.length !== order_ids.length) {
           throw new HttpsError('not-found', '一部の注文が見つかりません')
         }
-        return syncEnterpriseSubsidyOrdersBeforeConfirm({
+        const syncResult = await syncEnterpriseSubsidyOrdersBeforeConfirm({
           enterpriseId,
           userId: uid,
           communityId: community_id,
@@ -125,6 +127,7 @@ export const createStripeCheckoutSession = onCall<
           member: entMember,
           transaction,
         })
+        return { syncResult, ordersInTx }
       })
       if (syncResult.recalculated) {
         if (syncResult.recalculatedAudit != null) {
@@ -132,6 +135,7 @@ export const createStripeCheckoutSession = onCall<
         }
         return { url: null, subsidy_recalculated: true }
       }
+      checkoutOrders = ordersInTx
     } else {
       for (const order of orders) {
         if (!isPaymentCommunityBillOffAmountConsistent(event.event_payment, event.community_bill_settings, order)) {
@@ -140,15 +144,10 @@ export const createStripeCheckoutSession = onCall<
       }
     }
 
-    const syncedOrders =
-      event.event_payment === 'enterprise_subsidy'
-        ? await getOrdersByIds(community_id, event_id, uid, order_ids)
-        : orders
-
     const totalPayment =
       event.event_payment === 'enterprise_subsidy'
-        ? computeEnterpriseSubsidyTotalPayment(syncedOrders)
-        : computeTotalPayment(syncedOrders, event.event_payment, event.community_bill_settings)
+        ? computeEnterpriseSubsidyTotalPayment(checkoutOrders)
+        : computeTotalPayment(checkoutOrders, event.event_payment, event.community_bill_settings)
     if (totalPayment <= 0) {
       throw new HttpsError('failed-precondition', '支払額が ¥0 の場合は Stripe 決済は不要です')
     }
@@ -166,7 +165,7 @@ export const createStripeCheckoutSession = onCall<
     }
 
     const grouped = new Map<string, { menuName: string; unitAmount: number; quantity: number; imageUrl: string }>()
-    for (const order of syncedOrders) {
+    for (const order of checkoutOrders) {
       const unitAmount = computeOrderSelfPayUnitAmount(order)
       const groupKey = getStripeCheckoutLineItemGroupKey(event.event_payment, order)
       const existing = grouped.get(groupKey)
