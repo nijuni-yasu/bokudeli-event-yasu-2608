@@ -42,6 +42,44 @@
 - `index.ts` の export が 1 件以上ある
 - `firebase.json` の functions が `codebase: default` / `source: functions/default` 単一
 
+## デプロイ成功時の注意（スキップと「CI 緑」）
+
+CI ジョブが **success** でも、**全 Function が GCP に再アップロードされたわけではない**場合がある。ログの `Skipped` / 更新行の内訳を確認する。
+
+### Firebase CLI の差分検出（`Skipped (No changes detected)`）
+
+| 段階 | 挙動 |
+| :-- | :-- |
+| GitHub Actions | `workflow_dispatch` または paths 条件で **毎回** `firebase deploy --only functions` を実行する |
+| Firebase CLI | `index.ts` の全 export についてデプロイ計画を立てる |
+| 各 Function | ソースバンドル・Function 設定（memory 等）・deploy 時に生成する `.env`（`FUNCTIONS_ENV` 由来）に **CLI が差分と判断できる変更がなければ** `Skipped (No changes detected)` — Cloud Build も走らず GCP へ再アップロードしない |
+| 差分あり | 該当 Function のみ `Successful update operation` 等で更新される |
+
+**典型例**: [#2260](https://github.com/nijuniinc/bokudeli-event-new/issues/2260) のように `deploy_functions.yml` や verify スクリプト・ドキュメントだけを変え、`functions/default` の実装に触れていない PR では **全件 Skipped が正常**（Deploy to Firebase が数十秒で終わることもある）。
+
+quota 429 対策として意図的に `--force` 常時再デプロイは廃止している（[デプロイ手順_v2.11 §429](../デプロイ手順/デプロイ手順_v2.11_260716.md)）。
+
+### 「CI 緑」だけでは足りないケース
+
+次は **abort ではなく success のまま**、意図した更新が GCP に入っていないことがある。
+
+| 状況 | ログの目印 | 対処 |
+| :-- | :-- | :-- |
+| トリガー種別の危険な変更 | `Skipping updates for functions that may be unsafe to update` | 下表「デプロイ失敗時の対処」および [デプロイ手順_v2.11](../デプロイ手順/デプロイ手順_v2.11_260716.md) の unsafe migration 節 |
+| GCP 側だけ壊れている（IAM ずれ・インスタンス再起動したい等）でローカルハッシュは同じ | 全件 `Skipped` のまま success | 該当 Function を `--only functions:<name>` で**手動デプロイ**（必要なら `--force`） |
+| `FUNCTIONS_ENV`（GitHub vars）だけ変更 | 通常は `.env` 再生成で差分検出され **更新対象になる** | ログに更新行が出るか確認。出なければ手動デプロイ |
+| sandbox で CI 設定だけ検証した | 全件 `Skipped` | 新 CI が abort せず完走したことの確認としては十分。実装反映は **functions コード変更後の deploy** で行う |
+
+### 旧 CI との違い
+
+| | 旧 CI（3 ジョブ + 明示 `--only` リスト + `--force`） | 新 CI（1 ジョブ + `--only functions`、`--force` なし） |
+| :-- | :-- | :-- |
+| 差分なし Function | リスト内は **毎回再デプロイ** | **Skipped**（再デプロイしない） |
+| quota / 時間 | 重い | 軽い |
+| 「毎回全部載せ直す」 | 暗黙に保証されていた | **保証しない**（差分ベース） |
+
+全件をコード変更なしで載せ直したい運用は、対象 Function を絞った手動 `firebase deploy` に寄せる。
+
 ## デプロイ失敗時の対処
 
 | ログのメッセージ | 原因 | 対処 |
@@ -63,3 +101,4 @@
 | Issue | 内容 |
 | :-- | :-- |
 | [#2260](https://github.com/nijuniinc/bokudeli-event-new/issues/2260) | 3 ジョブ並列 + 関数名の明示リスト + `--force` 常時付与を廃止し、1 ジョブ + `--only functions`（`--force` なし）に統一 |
+| （本 PR 追記） | 「Skipped (No changes detected)」と CI 緑時の注意を §デプロイ成功時の注意 に明文化 |

@@ -36,6 +36,7 @@
 | [x] | RC-30 | 3789316863 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | CI デプロイ検証ファイル変更で lint hook がスキップ<br>source-change-detect にパス追加 |
 | [x] | RC-31 | 3789316864 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | orphan テストが exit code のみで再試行を未検証<br>後に fallback 撤去でテストごと削除 |
 | [x] | RC-32 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | 新設した CI デプロイ仕様書への参照が無い<br>AGENTS.md・functions 実装スキルにリンクを追加 |
+| [x] | RC-33 | 3789401935 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | チャット仕様書に旧 `--only` 更新手順が残存<br>index.ts 更新方式へ修正 |
 
 ---
 
@@ -1497,5 +1498,53 @@ export 漏れすると development / production では Trigger・Callable が未
 **想定工数**: S
 
 **判断理由**: 📌 スコープ内 + S + 📄 ドキュメントのみ + 修正方針が一意のため [auto-fix-policy](../../.agents/skills/review-comments-evaluate/references/auto-fix-policy.md) の条件付き自動修正対象。`AGENTS.md` と `shokujii-functions-implementation/SKILL.md` の CI デプロイ節に相対リンクを追加。
+
+---
+
+## 評価セッション（2026-08-15 22:00・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-15 22:00 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・PR review wake）
+- **ブランチ名**: fix/2260
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2270
+- **REVIEW_REQUEST_SINCE**: 2026-08-15T12:53:19Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼コメント・Copilot サマリ・Codex 接続案内）
+- **手順 4a 自動修正**: RC-33（🟡 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-33 | 3789401935 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | チャット仕様書に旧 `--only` 更新手順が残存<br>index.ts 更新方式へ修正 |
+
+---
+
+**識別子**: RC-33（GitHub id: 3789401935）
+
+**レビュワー**: Codex（chatgpt-codex-connector[bot]）
+
+**指摘箇所**: `AGENTS.md:184`（インライン。指摘内容は `documents/05_コミュニケーションと通知/04_チャット機能_v2.md:250`）
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [P2]: `index.ts` だけを更新する方式へ切り替えていますが、現役のチャット機能仕様書 `documents/05_コミュニケーションと通知/04_チャット機能_v2.md:250` に「export 追加時は `--only` 更新」という旧手順が残っています。今後この仕様書に従って Function を追加すると、不要な workflow 編集を促すうえ、新しい verifier が `--only functions:<name>` を拒否して PR verify を失敗させるため、この行も同じ PR で新方式へ更新してください。
+
+**コメント要約**: チャット機能仕様書に deploy yml 手書きの旧手順が残っている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: [auto-fix-policy](../../.agents/skills/review-comments-evaluate/references/auto-fix-policy.md) の条件付き自動修正対象（📌 + S + 📄）。該当行を `functions/default/src/index.ts` の import / export 更新（deploy yml 手書き不要）に修正。リポジトリ内の同一文言は当該 1 箇所のみ。
 
 ---
