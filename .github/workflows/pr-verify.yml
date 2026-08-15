@@ -73,6 +73,8 @@ jobs:
           cache-dependency-path: ./package-lock.json
       - name: Verify Functions deploy list
         run: npm run verify:functions-deploy
+      - name: Test Functions deploy verifier
+        run: npm run test:verify-functions-deploy
       - name: Install dependencies
         run: npm ci
       - name: Verify vue-tsc gate

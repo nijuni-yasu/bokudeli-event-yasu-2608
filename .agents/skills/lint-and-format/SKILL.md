@@ -12,7 +12,7 @@ description: PR verify（pr-verify.yml）と同じ verify:functions-deploy / ver
 
 | 観点 | 内容 |
 |:-----|:-----|
-| **チェック内容** | verify:functions-deploy / verify:vue-tsc-gate / build / lint / format:check / build:types / vitest の項目・順序・対象パッケージは PR verify と一致 |
+| **チェック内容** | verify:functions-deploy / test:verify-functions-deploy / verify:vue-tsc-gate / build / lint / format:check / build:types / vitest の項目・順序・対象パッケージは PR verify と一致 |
 | **format ローカル自動修正** | `format:check` 失敗時のみ `format` を実行し再チェック。PR verify は check のみ（リモートは修正不可） |
 | **合格状態** | スキル成功時 = PR verify が通る状態（format は自動修正後に check が緑） |
 | **含まないもの** | `npm ci`、Ubuntu 実行環境、実装ターン完了時のセルフレビュー（Stop 検証は [`.agents/hooks/stop-gate-check.sh`](../../hooks/stop-gate-check.sh) が担当） |
@@ -31,12 +31,13 @@ format 自動修正でワーキングツリーに変更が残る。push 前（`g
 
 ## 手順
 
-### 0. Functions deploy list 整合性
+### 0. Functions deploy 設定
 
-`index.ts` の export と `.github/workflows/deploy_functions.yml` の `--only` リストが一致することを確認する。
+`deploy_functions.yml` が 1 ジョブ + `--only functions`（`--force` なし）であること、および index.ts export / firebase.json codebase を確認する。
 
 ```
 npm run verify:functions-deploy
+npm run test:verify-functions-deploy
 ```
 
 ### 0b. vue-tsc gate（build:types 有効性）
@@ -139,7 +140,8 @@ npm -w functions/default run test
 
 ```
 0. verify:functions-deploy
-- functions deploy list: ✅ 成功 / ❌ 失敗
+- functions deploy 設定: ✅ 成功 / ❌ 失敗
+- functions deploy verifier テスト: ✅ 成功 / ❌ 失敗
 
 0b. verify:vue-tsc-gate
 - vue-tsc gate: ✅ 成功 / ❌ 失敗
@@ -194,7 +196,7 @@ npm -w functions/default run test
 
 ## 制約
 
-- **実行順**: verify:functions-deploy → verify:vue-tsc-gate → build common → build terms → lint → format:check → build:types → build functions → vitest
+- **実行順**: verify:functions-deploy → test:verify-functions-deploy → verify:vue-tsc-gate → build common → build terms → lint → format:check → build:types → build functions → vitest
 - **PR verify 相当**: 上記チェックは `pr-verify.yml` の verify ジョブと一致（ローカル再現用）
 - **format ローカル自動修正**: PR verify にはないローカル拡張。成功時は format:check が緑 = CI と同じ合格状態
 - **Stop hook では実行しない**: lint 検証は push / PR / reflect 前に本スキルで行う

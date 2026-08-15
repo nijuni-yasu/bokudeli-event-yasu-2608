@@ -138,6 +138,8 @@
 - `workflow_dispatch` で個別 job も手動発火可
 - PA-24c（マルチ codebase）は Phase 2
 
+> **現行**: [#2260](https://github.com/nijuniinc/bokudeli-event-new/issues/2260) で 1 ジョブ + `--only functions`（`--force` なし）に簡素化済み。上記の 3 job 分類・`deploy_group` は廃止（本節は設計当時の記録）。
+
 ---
 
 ## 変更履歴

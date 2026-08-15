@@ -109,7 +109,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - **A-3**: ✅ PF `user` router guard（`enterpriseUserClaims` + `/` リダイレクト + 通知 i18n）。エンプラ `/admin` token とホスト照合（RC-96）も ✅。
 - **A-4 ✅** — [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) / [#2147](https://github.com/nijuniinc/bokudeli-event-new/pull/2147)。`user/src/router/authEntryGuards.ts`（`rejectNewUserOnLogin` 等）で `/login` の暗黙作成拒否・`/register` と OAuth 復帰の入口分離。Vitest `authEntryGuards.test.ts` あり。
 - **A-5**: ✅ `pr-verify.yml` paths-filter・enterprise verify。#2119 で `development` branch protection に context `verify` / `test`（Rules CI）登録（[03_branch_protection.md](../../AIエージェント/03_branch_protection.md) §0-3-2b）。
-- **A-6**: ✅ `deploy_functions.yml` hybrid / pf / enterprise 3 job 並列 + `workflow_dispatch` 個別発火。
+- **A-6**: ✅ `deploy_functions.yml` hybrid / pf / enterprise 3 job 並列 + `workflow_dispatch` 個別発火（→ [#2260](https://github.com/nijuniinc/bokudeli-event-new/issues/2260) で 1 ジョブ + `--only functions` に簡素化）。
 
 ### WS-B: 認証モデル（IdP・Phase 1・本番投入前に前倒し）
 

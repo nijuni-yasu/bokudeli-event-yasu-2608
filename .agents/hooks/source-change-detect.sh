@@ -48,6 +48,12 @@ is_lint_relevant_path() {
     package.json | package-lock.json)
       return 0
       ;;
+    .agents/scripts/verify_functions_deploy_list.py | .agents/scripts/verify_functions_deploy_list_test.py)
+      return 0
+      ;;
+    .github/scripts/* | .github/actions/*)
+      return 0
+      ;;
     eslint.config.mjs | .prettierrc | tsconfig.base.json | tsconfig.json)
       return 0
       ;;

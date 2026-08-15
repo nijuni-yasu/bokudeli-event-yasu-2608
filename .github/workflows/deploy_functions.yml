@@ -8,7 +8,9 @@ on:
     paths:
       - 'functions/**'
       - 'common/**'
+      - 'firebase.json'
       - '.github/workflows/deploy_functions.yml'
+      - '.github/actions/deploy/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -18,33 +20,14 @@ on:
         options:
           - development
           - production
-      deploy_group:
-        description: 'Function group (all = 3 groups parallel)'
-        required: false
-        type: choice
-        options:
-          - all
-          - hybrid
-          - pf
-          - enterprise
-        default: all
 
 jobs:
   deploy:
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.group }}
+      group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
-    timeout-minutes: 10
+    timeout-minutes: 30
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        group: >-
-          ${{
-            (github.event_name == 'push' || github.event.inputs.deploy_group == 'all')
-            && fromJSON('["hybrid","pf","enterprise"]')
-            || fromJSON(format('["{0}"]', github.event.inputs.deploy_group))
-          }}
     environment: ${{ github.event_name == 'push' && (github.ref_name == 'production' && 'production' || github.ref_name == 'development' && 'development') || inputs.environment }}
     defaults:
       run:
@@ -71,29 +54,13 @@ jobs:
         run: |
           npm -w common run lint
           npm -w functions/default run lint
-      - name: Resolve deploy targets
-        id: targets
-        env:
-          GROUP: ${{ matrix.group }}
-        run: |
-          case "$GROUP" in
-            hybrid)
-              echo "args=--force --only functions:addToCart,functions:removeFromCart,functions:confirmOrder,functions:createStripeCheckoutSession,functions:stripeWebhook,functions:cancelOrders" >> "$GITHUB_OUTPUT"
-              ;;
-            pf)
-              echo "args=--force --only functions:getInvitationUrlForCommunityManager,functions:acceptInvitationForCommunityManager,functions:sendTestLetter,functions:handleEventOgpRequest,functions:handleCommunityOgpRequest,functions:handleSitemapRequest,functions:communityAdded,functions:communityContact,functions:eventInformation,functions:eventInformationPreview,functions:shopStatusChanged,functions:onEventChanged,functions:onEventArchived,functions:onShopReservationChanged,functions:pollingTask,functions:requestEmailLogin,functions:confirmEmailLogin,functions:requestEmailRegistration,functions:confirmEmailRegistration,functions:requestEmailChange,functions:confirmEmailChange,functions:updateProfileFromProviders,functions:deleteUserAccount,functions:getUserFriends,functions:backfillUserFriends,functions:getUserFriendMeetLog,functions:eventReceipt,functions:eventCopy,functions:eventCopyRepeat,functions:copyCommunityCoverToEvent,functions:eventBillInvoice,functions:namesprint,functions:updateEventMenus,functions:sendIndividualLetter,functions:generateUserImageThumbnail,functions:cancelEvent,functions:reportClientError,functions:onCommunityMemberWritten,functions:getUserProfilePreview,functions:getUserFoods,functions:backfillUserProfileCounts,functions:log_event_status,functions:firestoreExportDaily,functions:firestoreExportWeekly,functions:firestoreExportMonthly,functions:storageBackupDaily,functions:storageBackupWeekly,functions:storageBackupMonthly,functions:backupRetentionCleanup,functions:flyer,functions:slackbot,functions:slackEventNotification,functions:slackOrderNotification,functions:broadcast_event_message_request,functions:line_event_information,functions:onChatMessageCreated,functions:onChatReactionWritten,functions:recallChatMessage" >> "$GITHUB_OUTPUT"
-              ;;
-            enterprise)
-              echo "args=--force --only functions:createEnterprise,functions:getEnterpriseByDomain,functions:requestEnterpriseEmailLogin,functions:confirmEnterpriseEmailLogin,functions:logEnterpriseLogout,functions:createEnterpriseMembers,functions:getEnterpriseMembers,functions:disableEnterpriseMember,functions:enableEnterpriseMember,functions:updateEnterpriseMember,functions:updateEnterpriseRole,functions:updateEnterpriseSettings,functions:updateEnterpriseSubsidySettings,functions:getEnterpriseCommunities,functions:createEnterpriseCommunities,functions:getInvitationUrlForEnterpriseCommunityManager,functions:acceptInvitationForEnterpriseCommunityManager,functions:getDashboardMonthlyData,functions:getDashboardMemberData,functions:getEnterpriseAuditLogs,functions:captureEnterpriseBillingSnapshots,functions:recaptureEnterpriseBillingSnapshot,functions:enterpriseBillInvoice" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
           project_id: ${{ vars.PROJECT_ID }}
-      - name: Deploy to Firebase (${{ matrix.group }})
+      - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
           project_id: ${{ vars.PROJECT_ID }}
-          args: ${{ steps.targets.outputs.args }}
+          args: '--only functions'
