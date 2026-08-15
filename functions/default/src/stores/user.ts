@@ -268,6 +268,10 @@ export const updateUserProfileCounts = async (
  * ユーザー個人情報を匿名化する。ドキュメントが存在しない場合も merge で作成する。
  * トランザクション内で呼び出すこと。
  */
+export const setUserTags = async (uid: string, tags: string[]): Promise<void> => {
+  await getUserRef(uid).update({ user_tags: tags })
+}
+
 export const anonymizeUserPersonalInformation = async (uid: string, transaction: Transaction): Promise<void> => {
   const db = getFirestore()
   const userPersonalInformationRef = db

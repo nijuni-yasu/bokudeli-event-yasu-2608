@@ -63,21 +63,29 @@ const onRemove = (t: string) => {
   emit('remove', t)
 }
 
+const findStoredTag = (tag: string) => {
+  const normalized = normalizeTag(tag)
+  return props.tags.find((t) => normalizeTag(t) === normalized)
+}
+
+const isTagSelected = (tag: string) => findStoredTag(tag) !== undefined
+
 const onMasterClick = (tag: string) => {
   if (props.loading) return
-  if (props.tags.includes(tag)) {
-    onRemove(tag)
+  const stored = findStoredTag(tag)
+  if (stored !== undefined) {
+    onRemove(stored)
     return
   }
   if (isAtLimit.value) return
   tryAddTag(tag)
 }
 
-const genreSelectedCount = (genreTags: readonly string[]) => genreTags.filter((t) => props.tags.includes(t)).length
+const genreSelectedCount = (genreTags: readonly string[]) => genreTags.filter((t) => isTagSelected(t)).length
 
-const isMasterSelected = (tag: string) => props.tags.includes(tag)
+const isMasterSelected = (tag: string) => isTagSelected(tag)
 
-const isMasterPickable = (tag: string) => !props.loading && !props.tags.includes(tag) && !isAtLimit.value
+const isMasterPickable = (tag: string) => !props.loading && !isTagSelected(tag) && !isAtLimit.value
 
 const isMasterDisabled = (tag: string) => props.loading || (!isMasterSelected(tag) && isAtLimit.value)
 </script>

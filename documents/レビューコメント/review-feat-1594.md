@@ -29,8 +29,11 @@
 | [x] | RC-23 | 3654654219 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 退会時 user_tags 匿名化 |
 | [x] | RC-24 | 3654654226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip click.prevent 追加 |
 | [x] | RC-25 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 13_アカウント削除に user_tags 匿名化追記 |
+| [x] | RC-26 | 5302033496 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | userTags.ts の update を store 経由に |
+| [x] | RC-27 | 4943743482 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | normalizeTag の強制 lowercase 廃止 |
+| [x] | RC-28 | 4943743482 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagInput マスタタグ選択判定を正規化で比較 |
 
-## 評価セッション（2026-07-24 15:06・review-comments-evaluate auto）
+## 評価セッション（2026-08-15 20:40・review-comments-evaluate auto）
 
 - **評価日時**: 2026-07-24 15:06 JST
 - **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
@@ -945,5 +948,111 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 | [x] | RC-18 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | userTags.test.ts 追加（7 ケース） |
 | [x] | RC-21 | 3652333341 | 🟡 修正提案 | 📤 #2226 別Issue化 | 📤 スコープ外 | — | 🆕 新機能 | L | CI デプロイ順序 → #2226 |
 | [x] | RC-24 | 3654654226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagAddChip @click.stop.prevent |
+
+---
+
+## 評価セッション（2026-08-15 20:40・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-15 20:40 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・partial: Codex connect のみ）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-15T11:24:58Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 1、Codex connect 1）
+- **partial 評価**: はい（Codex substantive なし。Copilot substantive 3 件）
+- **手順 4a 自動修正**: RC-26〜28（🚨 3件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-26 | 5302033496 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | userTags Callable が getUserRef.update を直呼び<br>→ stores/user.setUserTags 経由 |
+| [x] | RC-27 | 4943743482 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | normalizeTag が AI/DX 等を lowercase 化<br>→ trim + 全角半角のみ |
+| [x] | RC-28 | 4943743482 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagInput マスタ選択判定が未正規化比較<br>→ normalizeTag で stored 突合 |
+
+---
+
+**識別子**: RC-26（GitHub id: 5302033496）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/userTags.ts:36,71`
+
+**レビュワーのコメント（原文）**:
+
+`getUserRef(uid).update({ user_tags: ... })` を Callable 本体から直接呼んでおり、「DB 操作は必ず store 経由」のルールから外れています。`stores/user.ts` に `setUserTags` を追加し、`userTags.ts` からはその関数のみを呼ぶ形にしてください。
+
+**コメント要約**: user_tags 更新が store を経由していない。<br>`setUserTags` を stores/user に追加して Callable から呼ぶ。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-14 で update 方針は採用済みだが store 関数化が未完了。手順 4a で `setUserTags` 追加。
+
+---
+
+**識別子**: RC-27（GitHub id: 4943743482・suppressed 1）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `common/src/utils/normalizeTag.ts:39`
+
+**レビュワーのコメント（原文）**:
+
+[must] normalizeTag が ASCII 英字を強制 lowercase 化しているため、マスタタグ定数（例: common/src/constants/tags.ts の「AI」「DX」「CRM」等）を選んだ場合でも保存・表示が「ai」「dx」…になり、表示崩れやマスタタグ突合の不整合が起きます。少なくとも現状のマスタ定数の表記（大文字・混在）を前提にするなら、ここでは case を変えず「全角→半角」「trim」のみに留めてください。
+
+**コメント要約**: マスタタグの大文字表記（AI/DX 等）が lowercase 化され UI と不整合。<br>case 変換をやめ trim + 全角半角のみに。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: マスタ定数 `AI`/`DX`/`CRM` との整合。手順 4a で lowercase 処理を削除。
+
+---
+
+**識別子**: RC-28（GitHub id: 4943743482・suppressed 2）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/TagInput.vue:82`
+
+**レビュワーのコメント（原文）**:
+
+[must] マスタタグ選択の判定が props.tags.includes(tag)（未正規化）になっていますが、tryAddTag() 側で normalizeTag() が走るため、英字タグ（例:「AI」→「ai」）だと「選択済みのはずなのにハイライトされない / クリックで解除できない」状態になります。マスタタグ側も normalizeTag(tag) で比較して、保存値と判定を揃えてください。
+
+**コメント要約**: マスタタグの選択状態判定が未正規化の includes のまま。<br>normalizeTag で stored タグと突合する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-27 とセットで UI 不整合。`findStoredTag` / `isTagSelected` で正規化比較に統一。
 
 ---
