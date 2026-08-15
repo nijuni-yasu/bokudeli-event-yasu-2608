@@ -14,3 +14,28 @@ export const compareEventMemberOrdersForPartnerDetail = (a: EventMemberOrder, b:
 export const sortEventMemberOrdersForPartnerDetail = (orders: EventMemberOrder[]): EventMemberOrder[] => {
   return [...orders].sort(compareEventMemberOrdersForPartnerDetail)
 }
+
+const enterpriseSubsidyReplayCartedAt = (order: EventMemberOrder): number => order.carted_at ?? order.created_at ?? 0
+
+/**
+ * enterprise_subsidy の replay / addToCart / confirmOrder で共通の並び。
+ * carted_at 昇順 → order_id 昇順（updated_at は書き戻しで変わるため使わない）。
+ */
+export const compareEventMemberOrdersForEnterpriseSubsidyReplay = (
+  a: EventMemberOrder,
+  b: EventMemberOrder,
+): number => {
+  const cartedDiff = enterpriseSubsidyReplayCartedAt(a) - enterpriseSubsidyReplayCartedAt(b)
+  if (cartedDiff !== 0) {
+    return cartedDiff
+  }
+  return a.order_id.localeCompare(b.order_id)
+}
+
+export const sortEventMemberOrdersForEnterpriseSubsidyReplay = (orders: EventMemberOrder[]): EventMemberOrder[] => {
+  return [...orders].sort(compareEventMemberOrdersForEnterpriseSubsidyReplay)
+}
+
+export const sortOrderIdsForEnterpriseSubsidyReplay = (orders: EventMemberOrder[]): string[] => {
+  return sortEventMemberOrdersForEnterpriseSubsidyReplay(orders).map((order) => order.order_id)
+}
