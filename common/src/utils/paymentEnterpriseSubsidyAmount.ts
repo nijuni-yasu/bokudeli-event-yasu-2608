@@ -6,14 +6,14 @@ import type {
 import type { EventMemberOrder } from '../schemas/EventMemberOrder.js'
 
 /**
- * 開催月 eventMonth に適用される補助設定を返す。
+ * 開催月 eventMonth に適用される補助設定を返す（該当なしは null）。
  * effective_from_month <= eventMonth を満たすエントリのうち effective_from_month が最大のものを採用。
  * YYYY-MM は辞書順 = 時系列順。
  */
-export function resolveEnterpriseSubsidySettingsForMonth(
+export function resolveEnterpriseSubsidySettingsForMonthOrNull(
   history: EnterpriseSubsidySettingsEntryType[],
   eventMonth: string,
-): EnterpriseSubsidySettingsType {
+): EnterpriseSubsidySettingsType | null {
   let resolved: EnterpriseSubsidySettingsEntryType | undefined
   for (const entry of history) {
     if (entry.effective_from_month <= eventMonth) {
@@ -23,13 +23,29 @@ export function resolveEnterpriseSubsidySettingsForMonth(
     }
   }
   if (resolved == null) {
-    throw new Error(`No subsidy settings found for event month ${eventMonth}`)
+    return null
   }
   return {
     type: resolved.type,
     value: resolved.value,
     monthly_limit_per_user: resolved.monthly_limit_per_user,
   }
+}
+
+/**
+ * 開催月 eventMonth に適用される補助設定を返す。
+ * effective_from_month <= eventMonth を満たすエントリのうち effective_from_month が最大のものを採用。
+ * YYYY-MM は辞書順 = 時系列順。
+ */
+export function resolveEnterpriseSubsidySettingsForMonth(
+  history: EnterpriseSubsidySettingsEntryType[],
+  eventMonth: string,
+): EnterpriseSubsidySettingsType {
+  const resolved = resolveEnterpriseSubsidySettingsForMonthOrNull(history, eventMonth)
+  if (resolved == null) {
+    throw new Error(`No subsidy settings found for event month ${eventMonth}`)
+  }
+  return resolved
 }
 
 /**

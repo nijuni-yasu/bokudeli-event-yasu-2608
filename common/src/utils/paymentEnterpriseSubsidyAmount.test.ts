@@ -6,6 +6,7 @@ import {
   isPaymentEnterpriseSubsidyAmountConsistent,
   replayEnterpriseSubsidyAmountsForOrders,
   resolveEnterpriseSubsidySettingsForMonth,
+  resolveEnterpriseSubsidySettingsForMonthOrNull,
 } from './paymentEnterpriseSubsidyAmount.js'
 
 describe('resolveEnterpriseSubsidySettingsForMonth', () => {
@@ -37,6 +38,29 @@ describe('resolveEnterpriseSubsidySettingsForMonth', () => {
         '2026-06',
       ),
     ).toThrow('No subsidy settings found for event month 2026-06')
+  })
+})
+
+describe('resolveEnterpriseSubsidySettingsForMonthOrNull', () => {
+  const history = [
+    { effective_from_month: '2026-01', type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 },
+  ]
+
+  it('該当エントリがある場合は settings を返す', () => {
+    expect(resolveEnterpriseSubsidySettingsForMonthOrNull(history, '2026-06')).toEqual({
+      type: 'fixed',
+      value: 500,
+      monthly_limit_per_user: 7500,
+    })
+  })
+
+  it('該当エントリがない場合は null', () => {
+    expect(
+      resolveEnterpriseSubsidySettingsForMonthOrNull(
+        [{ effective_from_month: '2026-07', type: 'fixed', value: 500, monthly_limit_per_user: 7500 }],
+        '2026-06',
+      ),
+    ).toBeNull()
   })
 })
 

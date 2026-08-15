@@ -57,6 +57,16 @@ export function formatYearMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy-MM')
 }
 
+/** 補助設定の適用開始月の最小値（JST 翌暦月）。YYYY-MM */
+export function getMinimumEffectiveFromMonth(
+  nowMillis?: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): string {
+  const base = nowMillis != null ? DateTime.fromMillis(nowMillis, { zone, locale }) : DateTime.now().setZone(zone)
+  return base.plus({ months: 1 }).toFormat('yyyy-MM')
+}
+
 export function convertToHourString(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('HH')
 }

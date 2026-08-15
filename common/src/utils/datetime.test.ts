@@ -5,6 +5,7 @@ import {
   formatChatCalendarDate,
   formatChatListTimestamp,
   formatYearMonth,
+  getMinimumEffectiveFromMonth,
   isChatSameCalendarDay,
   isChatToday,
   isChatYesterday,
@@ -31,6 +32,18 @@ describe('formatYearMonth', () => {
   it('月をまたぐ境界でもイベント開催月キーが正しい', () => {
     const millis = DateTime.fromObject({ year: 2026, month: 6, day: 30, hour: 23 }, { zone: 'Asia/Tokyo' }).toMillis()
     expect(formatYearMonth(millis)).toBe('2026-06')
+  })
+})
+
+describe('getMinimumEffectiveFromMonth', () => {
+  it('JST 翌暦月を返す', () => {
+    const millis = jst({ year: 2026, month: 7, day: 15 })
+    expect(getMinimumEffectiveFromMonth(millis)).toBe('2026-08')
+  })
+
+  it('12月は翌年1月になる', () => {
+    const millis = jst({ year: 2026, month: 12, day: 1 })
+    expect(getMinimumEffectiveFromMonth(millis)).toBe('2027-01')
   })
 })
 
