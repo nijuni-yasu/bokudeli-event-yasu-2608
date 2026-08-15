@@ -51,6 +51,17 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: B
 export const isMobileDevice = () =>
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
+const navigateShareUrl = (openUrl: string, popupWindow?: Window | null): void => {
+  if (popupWindow != null) {
+    popupWindow.location.href = openUrl
+    return
+  }
+  const opened = window.open(openUrl, '_blank')
+  if (opened == null) {
+    window.location.href = openUrl
+  }
+}
+
 export const shareSnsButton = async (
   snsType: 'twitter' | 'facebook' | 'line' | 'copy' | 'twitterAfterOrder',
   event: BokudeliEvent,
@@ -88,11 +99,11 @@ export const shareSnsButton = async (
   } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
     const openUrl = `${baseUrl}?&u=${eventUrl}`
-    _window!.location.href = openUrl
+    navigateShareUrl(openUrl, _window)
   } else if (snsType === 'line') {
     const baseUrl = 'https://social-plugins.line.me/lineit/share'
     const openUrl = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
-    _window!.location.href = openUrl
+    navigateShareUrl(openUrl, _window)
   } else if (snsType === 'copy') {
     const text = getCopyText(event, community, shop)
     navigator.clipboard
