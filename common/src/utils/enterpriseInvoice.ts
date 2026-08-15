@@ -71,7 +71,8 @@ export function getEnterpriseInvoicePaymentDeadlineMillis(yearMonth: string, zon
 }
 
 export function buildEnterpriseInvoiceNumber(enterpriseId: string, yearMonth: string): string {
-  return `${enterpriseId.slice(0, 8)}-${yearMonth.replace('-', '')}`
+  const prefix = enterpriseId.replace(/-/g, '').slice(0, 8)
+  return `${prefix}-${yearMonth.replace('-', '')}`
 }
 
 export type EnterpriseInvoiceMergeInput = {
@@ -94,10 +95,6 @@ export function buildEnterpriseInvoiceMergeData(input: EnterpriseInvoiceMergeInp
     number: buildEnterpriseInvoiceNumber(enterpriseId, snapshot.year_month),
     date: convertToDate(issuedAt),
     companyName,
-    companyPersonName: '',
-    companyPostalCode: '',
-    companyAddress: '',
-    companyPhoneNumber: '',
     title: `${snapshot.year_month} ご請求`,
     items: buildEnterpriseInvoiceLineItems(snapshot),
     subTotal: yen(taxBreakdown.subTotal),
