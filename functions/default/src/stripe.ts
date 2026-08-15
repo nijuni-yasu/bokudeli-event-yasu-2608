@@ -26,6 +26,7 @@ import {
   getStripeCheckoutLineItemGroupKey,
   loadEnterpriseMemberForSubsidy,
   syncEnterpriseSubsidyOrdersBeforeConfirm,
+  writeEnterpriseSubsidyRecalculatedAudit,
 } from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('stripe')
@@ -126,6 +127,9 @@ export const createStripeCheckoutSession = onCall<
         })
       })
       if (syncResult.recalculated) {
+        if (syncResult.recalculatedAudit != null) {
+          await writeEnterpriseSubsidyRecalculatedAudit(syncResult.recalculatedAudit)
+        }
         return { url: null, subsidy_recalculated: true }
       }
     } else {

@@ -4,7 +4,7 @@
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-1 | 5301079804 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | トランザクション内 writeAuditLog はリトライで重複リスク<br>成功後に 1 回だけ書く構成へ分離が必要 |
+| [x] | RC-1 | 5301079804 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | recalculatedAudit を返し commit 後に監査ログ記録<br>writeEnterpriseSubsidyRecalculatedAudit で confirmOrder/stripe から呼び出し |
 | [ ] | RC-2 | 3788825683 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 適用開始月変更時にフォームへ当該月の設定を反映<br>save 後に effectiveFromMonth と v-model が不整合 |
 | [ ] | RC-3 | 3788825678 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | subsidy_settings_history 更新を Transaction 化<br>同時保存で read-modify-write 競合 |
 | [x] | RC-4 | 3788825680 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 💰 金銭 | 🔧 微修正 | S | saveMember 前に Enterprise 読み取りが必要<br>Firestore Transaction の read-after-write 違反を解消 |
@@ -12,7 +12,7 @@
 | [x] | RC-6 | 3788806446 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | 監査ログ stored が再計算後値<br>更新前スナップショットを記録するよう修正 |
 | [x] | RC-7 | 3788825667 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | S | expected undefined 時 merge ではフィールド削除不可<br>FieldValue.delete() で明示削除 |
 | [x] | RC-8 | 3788806470 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | S | RC-7 と同一（Copilot [must]）<br>clearOrderPayEnterpriseSubsidyAmount で対応 |
-| [ ] | RC-9 | 3788825673 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | sync 内 writeAuditLog は Transaction 外へ<br>RC-1 と同一論点 |
+| [x] | RC-9 | 3788825673 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | RC-1 と同一。sync から writeAuditLog 削除<br>Transaction 成功後に 1 回だけ記録 |
 | [x] | RC-10 | 3788825676 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | RC-6 と同一（Codex P2）<br>storedBeforeRecalc で対応 |
 
 ---
@@ -32,7 +32,7 @@
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-1 | 5301079804 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | トランザクション内 writeAuditLog はリトライで重複リスク<br>成功後に 1 回だけ書く構成へ分離が必要 |
+| [x] | RC-1 | 5301079804 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | recalculatedAudit を返し commit 後に監査ログ記録<br>writeEnterpriseSubsidyRecalculatedAudit で confirmOrder/stripe から呼び出し |
 | [ ] | RC-2 | 3788825683 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 適用開始月変更時にフォームへ当該月の設定を反映<br>save 後に effectiveFromMonth と v-model が不整合 |
 | [ ] | RC-3 | 3788825678 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | subsidy_settings_history 更新を Transaction 化<br>同時保存で read-modify-write 競合 |
 | [x] | RC-4 | 3788825680 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 💰 金銭 | 🔧 微修正 | S | saveMember 前に Enterprise 読み取りが必要<br>Firestore Transaction の read-after-write 違反を解消 |
@@ -40,7 +40,7 @@
 | [x] | RC-6 | 3788806446 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | 監査ログ stored が再計算後値<br>更新前スナップショットを記録するよう修正 |
 | [x] | RC-7 | 3788825667 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | S | expected undefined 時 merge ではフィールド削除不可<br>FieldValue.delete() で明示削除 |
 | [x] | RC-8 | 3788806470 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | S | RC-7 と同一（Copilot [must]）<br>clearOrderPayEnterpriseSubsidyAmount で対応 |
-| [ ] | RC-9 | 3788825673 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | sync 内 writeAuditLog は Transaction 外へ<br>RC-1 と同一論点 |
+| [x] | RC-9 | 3788825673 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | RC-1 と同一。sync から writeAuditLog 削除<br>Transaction 成功後に 1 回だけ記録 |
 | [x] | RC-10 | 3788825676 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | RC-6 と同一（Codex P2）<br>storedBeforeRecalc で対応 |
 
 ---
@@ -65,11 +65,11 @@ shokujii-code-review チェックリストに沿って Files changed を確認�
 [must] `functions/default/src/utils/enterpriseSubsidyOrders.ts:135-136` 付近  
 監査ログの `stored` が、再計算後に更新済みの `orders` から作られており、`expected` と同値になって差分監査ができません。更新前の補助額スナップショットを先に退避し、`stored` には更新前値を記録するようにしてください。
 
-**コメント要約**: トランザクション内の監査ログ書き込みと stored 記録の 2 点。<br>stored は RC-6/10 で自動修正済み。監査ログの Transaction 外移動は RC-9 と同一で未着手。
+**コメント要約**: トランザクション内の監査ログ書き込みと stored 記録の 2 点。<br>stored は RC-6/10、監査ログ分離は RC-9 と同一対応で ✅。
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手（stored 部分は RC-6 で ✅。監査ログ Transaction 分離は RC-9 と同一論点）
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -79,7 +79,7 @@ shokujii-code-review チェックリストに沿って Files changed を確認�
 
 **想定工数**: M
 
-**判断理由**: Firestore Transaction リトライ時の副作用は shokujii-code-review の Transaction 節に反する。stored 退避は妥当で `storedBeforeRecalc` により解消済み。監査ログ分離は呼び出し側 API 変更が必要。
+**判断理由**: `syncEnterpriseSubsidyOrdersBeforeConfirm` は `recalculatedAudit` のみ返却。`confirmOrder` / `createStripeCheckoutSession` が Transaction commit 成功後に `writeEnterpriseSubsidyRecalculatedAudit` で 1 回記録。stored 退避は `storedBeforeRecalc` で解消済み。
 
 ---
 
@@ -345,7 +345,7 @@ Enterprise イベントへ初めてカート追加するユーザーでは、直
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -355,7 +355,7 @@ Enterprise イベントへ初めてカート追加するユーザーでは、直
 
 **想定工数**: M
 
-**判断理由**: RC-1 と同一。recalculated フラグと audit payload を返し呼び出し側で post-commit 書き込みが必要。工数 M。
+**判断理由**: RC-1 と同一対応。`writeEnterpriseSubsidyRecalculatedAudit` を commit 後に呼び出し。Transaction リトライ時の監査ログ重複と rollback 後の orphan ログを防止。
 
 ---
 
@@ -388,5 +388,17 @@ Enterprise イベントへ初めてカート追加するユーザーでは、直
 **想定工数**: S
 
 **判断理由**: RC-6 と同一修正で解消。
+
+---
+
+## 対応セッション（2026-08-15 16:25・RC-1/RC-9 実装）
+
+- **対応日時**: 2026-08-15 16:25 JST
+- **対象 RC**: RC-1, RC-9
+- **変更ファイル**:
+  - `functions/default/src/utils/enterpriseSubsidyOrders.ts` — `EnterpriseSubsidyRecalculatedAudit` / `writeEnterpriseSubsidyRecalculatedAudit` 追加、`sync` から `writeAuditLog` 削除
+  - `functions/default/src/stripe.ts` — Transaction 成功後に監査ログ記録
+  - `functions/default/src/memberOrders.ts` — `confirmOrder` の recalculated 経路で commit 後に記録
+  - `functions/default/src/utils/enterpriseSubsidyOrders.test.ts` — payload 返却・ヘルパのテスト追加
 
 ---

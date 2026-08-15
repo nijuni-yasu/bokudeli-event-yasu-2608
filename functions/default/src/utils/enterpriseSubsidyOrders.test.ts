@@ -26,6 +26,7 @@ vi.mock('../stores/memberOrder.js', () => ({
 
 import { getEnterpriseMember, getEnterpriseMemberInTransaction } from '../stores/enterprise.js'
 import { createOrder, saveOrder, clearOrderPayEnterpriseSubsidyAmount } from '../stores/memberOrder.js'
+import { writeAuditLog } from './auditLog.js'
 import {
   addEnterpriseSubsidyMenusToCart,
   assertActiveEnterpriseMember,
@@ -39,6 +40,7 @@ import {
   sumEnterpriseUserPaidAmounts,
   syncEnterpriseSubsidyOrdersBeforeConfirm,
   validateEnterpriseSubsidyOrdersSnapshotForWebhook,
+  writeEnterpriseSubsidyRecalculatedAudit,
 } from './enterpriseSubsidyOrders.js'
 
 const settings = { type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 }
@@ -214,7 +216,9 @@ describe('enterprise subsidy order replay', () => {
     })
     expect(replay.subsidyTotal).toBe(500)
     expect(replay.recalculated).toBe(false)
+    expect(replay.recalculatedAudit).toBeUndefined()
     expect(saveOrder).not.toHaveBeenCalled()
+    expect(writeAuditLog).not.toHaveBeenCalled()
   })
 
   it('syncEnterpriseSubsidyOrdersBeforeConfirm は不一致時に書き戻し recalculated=true', async () => {
@@ -251,6 +255,17 @@ describe('enterprise subsidy order replay', () => {
     expect(replay.recalculated).toBe(true)
     expect(orders[0].pay_enterprise_subsidy_amount).toBe(500)
     expect(saveOrder).toHaveBeenCalled()
+    expect(replay.recalculatedAudit).toEqual({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      details: {
+        event_id: 'e1',
+        order_ids: ['o1'],
+        expected: [500],
+        stored: [999],
+      },
+    })
+    expect(writeAuditLog).not.toHaveBeenCalled()
   })
 
   it('syncEnterpriseSubsidyOrdersBeforeConfirm は expected undefined 時に補助額フィールドを削除する', async () => {
@@ -288,6 +303,33 @@ describe('enterprise subsidy order replay', () => {
     expect(orders[0].pay_enterprise_subsidy_amount).toBe(100)
     expect(orders[1].pay_enterprise_subsidy_amount).toBeUndefined()
     expect(clearOrderPayEnterpriseSubsidyAmount).toHaveBeenCalledWith('c1', 'e1', 'u1', 'o2', transaction)
+    expect(replay.recalculatedAudit?.details.stored).toEqual([500, 500])
+    expect(writeAuditLog).not.toHaveBeenCalled()
+  })
+
+  it('writeEnterpriseSubsidyRecalculatedAudit は enterprise_subsidy_recalculated を記録する', async () => {
+    await writeEnterpriseSubsidyRecalculatedAudit({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      details: {
+        event_id: 'e1',
+        order_ids: ['o1'],
+        expected: [500],
+        stored: [999],
+      },
+    })
+    expect(writeAuditLog).toHaveBeenCalledWith({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      action: 'enterprise_subsidy_recalculated',
+      targetType: 'order_session',
+      details: {
+        event_id: 'e1',
+        order_ids: ['o1'],
+        expected: [500],
+        stored: [999],
+      },
+    })
   })
 })
 

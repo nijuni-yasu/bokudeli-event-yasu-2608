@@ -24,6 +24,36 @@ import { clearOrderPayEnterpriseSubsidyAmount, createOrder, saveOrder } from '..
 import type { ShokujiiEvent } from '../stores/event.js'
 import { writeAuditLog } from './auditLog.js'
 
+export type EnterpriseSubsidyRecalculatedAudit = {
+  enterpriseId: string
+  userId: string
+  details: {
+    event_id: string
+    order_ids: string[]
+    expected: (number | undefined)[]
+    stored: (number | null)[]
+  }
+}
+
+export type SyncEnterpriseSubsidyOrdersBeforeConfirmResult = ReturnType<
+  typeof replayEnterpriseSubsidyAmountsForOrders
+> & {
+  recalculated: boolean
+  recalculatedAudit?: EnterpriseSubsidyRecalculatedAudit
+}
+
+export async function writeEnterpriseSubsidyRecalculatedAudit(
+  audit: EnterpriseSubsidyRecalculatedAudit,
+): Promise<void> {
+  await writeAuditLog({
+    enterpriseId: audit.enterpriseId,
+    userId: audit.userId,
+    action: 'enterprise_subsidy_recalculated',
+    targetType: 'order_session',
+    details: audit.details,
+  })
+}
+
 export function assertEnterpriseEventPaymentAllowed(event: ShokujiiEvent): void {
   const enterpriseId = event.enterprise_id
   if (enterpriseId == null || enterpriseId === '') {
@@ -98,7 +128,7 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
   orderIds: string[]
   member: EnterpriseMember
   transaction: Transaction
-}): Promise<ReturnType<typeof replayEnterpriseSubsidyAmountsForOrders> & { recalculated: boolean }> {
+}): Promise<SyncEnterpriseSubsidyOrdersBeforeConfirmResult> {
   const { enterpriseId, userId, communityId, eventId, event, orders, orderIds, member, transaction } = params
   if (event.event_payment !== 'enterprise_subsidy') {
     throw new HttpsError('internal', 'syncEnterpriseSubsidyOrdersBeforeConfirm called for non enterprise_subsidy')
@@ -130,27 +160,25 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
     }
   }
 
-  if (recalculated) {
-    await writeAuditLog({
-      enterpriseId,
-      userId,
-      action: 'enterprise_subsidy_recalculated',
-      targetType: 'order_session',
-      details: {
-        event_id: event.id,
-        order_ids: orderIds,
-        expected: replay.expectedAmounts,
-        stored: storedBeforeRecalc,
-      },
-    })
-  }
+  const recalculatedAudit: EnterpriseSubsidyRecalculatedAudit | undefined = recalculated
+    ? {
+        enterpriseId,
+        userId,
+        details: {
+          event_id: event.id,
+          order_ids: orderIds,
+          expected: replay.expectedAmounts,
+          stored: storedBeforeRecalc,
+        },
+      }
+    : undefined
 
   const used = member.monthly_usage[eventMonth] ?? 0
   if (used + replay.subsidyTotal > settings.monthly_limit_per_user) {
     throw new HttpsError('failed-precondition', '月額上限を超過しました。')
   }
 
-  return { ...replay, recalculated }
+  return { ...replay, recalculated, recalculatedAudit }
 }
 
 export type EnterpriseSubsidyWebhookSnapshotValidation =
@@ -335,7 +363,12 @@ export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
   member: EnterpriseMember
   transaction: Transaction
   orderedAt: number
-}): Promise<{ enterpriseId: string; subsidyTotal: number; recalculated: boolean }> {
+}): Promise<{
+  enterpriseId: string
+  subsidyTotal: number
+  recalculated: boolean
+  recalculatedAudit?: EnterpriseSubsidyRecalculatedAudit
+}> {
   const { enterpriseId, userId, communityId, eventId, event, orders, orderIds, member, transaction, orderedAt } = params
   const sync = await syncEnterpriseSubsidyOrdersBeforeConfirm({
     enterpriseId,
@@ -349,7 +382,12 @@ export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
     transaction,
   })
   if (sync.recalculated) {
-    return { enterpriseId, subsidyTotal: sync.subsidyTotal, recalculated: true }
+    return {
+      enterpriseId,
+      subsidyTotal: sync.subsidyTotal,
+      recalculated: true,
+      recalculatedAudit: sync.recalculatedAudit,
+    }
   }
   const totalPayment = computeEnterpriseSubsidyTotalPayment(orders)
   if (totalPayment !== 0) {

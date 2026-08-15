@@ -34,6 +34,7 @@ import {
   getEventEnterpriseId,
   loadEnterpriseMemberForSubsidy,
   loadResolvedSubsidySettings,
+  writeEnterpriseSubsidyRecalculatedAudit,
 } from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('memberOrders')
@@ -327,6 +328,9 @@ export const confirmOrder = onCall(
     })
 
     if (enterpriseOrderCreateLog?.recalculated) {
+      if (enterpriseOrderCreateLog.recalculatedAudit != null) {
+        await writeEnterpriseSubsidyRecalculatedAudit(enterpriseOrderCreateLog.recalculatedAudit)
+      }
       return { subsidy_recalculated: true }
     }
 
