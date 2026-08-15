@@ -9,7 +9,9 @@ import {
 import { formatYearMonthLabel } from '@/composable/enterpriseMemberMonthlyUsageHistory.js'
 
 const { t: $t } = useI18n()
-const { user: loginUser } = storeToRefs(useCurrentUserStore())
+const { user: loginUser, firebaseUser } = storeToRefs(useCurrentUserStore())
+
+const effectiveUserId = computed(() => loginUser.value?.user_id ?? firebaseUser.value?.uid ?? null)
 
 const loading = ref(true)
 const error = ref(false)
@@ -30,13 +32,7 @@ const perOrderSubsidyLabel = computed(() => {
   return $t('user_profile.usage.settings_per_order_percentage', [settings.discountValue])
 })
 
-const load = async () => {
-  const uid = loginUser.value?.user_id
-  if (uid == null) {
-    loading.value = false
-    error.value = true
-    return
-  }
+const load = async (uid: string) => {
   loading.value = true
   error.value = false
   try {
@@ -55,9 +51,18 @@ const load = async () => {
   }
 }
 
-onMounted(() => {
-  void load()
-})
+watch(
+  effectiveUserId,
+  (uid) => {
+    if (uid == null) {
+      loading.value = true
+      error.value = false
+      return
+    }
+    void load(uid)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

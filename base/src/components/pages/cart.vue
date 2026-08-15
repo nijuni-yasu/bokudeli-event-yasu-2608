@@ -14,7 +14,9 @@ import {
   computeMemberOrdersTotalPayment,
   getMemberOrderDiscountAmount,
   replayEnterpriseSubsidyAmountsForOrders,
+  resolveEnterpriseSubsidySettingsForMonth,
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import type { EnterpriseSubsidySettingsType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -33,7 +35,8 @@ import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 import {
   pfCartEnterpriseSubsidyBudgetLoader,
-  normalizeCartEnterpriseSubsidyBudget,
+  fetchCartEnterpriseSubsidyBudget,
+  type CartEnterpriseSubsidyBudget,
   type CartEnterpriseSubsidyBudgetLoader,
 } from '@shokujii/base/composable/cartMonthlyUsage.js'
 import type { ResolveOrdersPathFn } from '@shokujii/base/types/profilePathResolvers.js'
@@ -131,31 +134,33 @@ type EnrichedCartItem = CartItem & {
   subsidyTotalsFromReplay: boolean
 }
 
-const enterpriseSubsidyBudget = ref<Record<string, number> | null>(null)
+const enterpriseSubsidyBudget = ref<CartEnterpriseSubsidyBudget | null>(null)
 
 let subsidyBudgetLoadGeneration = 0
+
+const reloadEnterpriseSubsidyBudget = async (): Promise<void> => {
+  const uid = userId.value
+  if (uid === '') {
+    enterpriseSubsidyBudget.value = null
+    return
+  }
+  const generation = ++subsidyBudgetLoadGeneration
+  const normalized = await fetchCartEnterpriseSubsidyBudget(uid, props.enterpriseSubsidyBudgetLoader)
+  if (generation !== subsidyBudgetLoadGeneration) {
+    return
+  }
+  enterpriseSubsidyBudget.value = normalized
+}
+
 watch(
   userId,
   async (uid) => {
     if (uid === '') {
+      subsidyBudgetLoadGeneration++
       enterpriseSubsidyBudget.value = null
       return
     }
-    const generation = ++subsidyBudgetLoadGeneration
-    try {
-      const result = await props.enterpriseSubsidyBudgetLoader(uid)
-      if (generation !== subsidyBudgetLoadGeneration) {
-        return
-      }
-      const normalized = normalizeCartEnterpriseSubsidyBudget(result)
-      enterpriseSubsidyBudget.value = normalized?.monthlyUsage ?? null
-    } catch (error) {
-      if (generation !== subsidyBudgetLoadGeneration) {
-        return
-      }
-      console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)
-      enterpriseSubsidyBudget.value = null
-    }
+    await reloadEnterpriseSubsidyBudget()
   },
   { immediate: true },
 )
@@ -163,7 +168,7 @@ watch(
 const computeEnterpriseSubsidyCartTotals = (
   event: BokudeliEvent,
   orders: EventMemberOrder[],
-  monthlyUsageByMonth: Record<string, number> | null,
+  budget: CartEnterpriseSubsidyBudget | null,
 ): Pick<
   EnrichedCartItem,
   | 'totalMenuPrice'
@@ -175,7 +180,15 @@ const computeEnterpriseSubsidyCartTotals = (
   | 'subsidyTotalsFromReplay'
 > => {
   const totalMenuPrice = orders.reduce((sum, o) => sum + o.menu_price, 0)
-  const settings = event.enterprise_subsidy_settings
+  const eventMonth = formatYearMonth(event.event_start_datetime)
+  const monthlyUsageByMonth = budget?.monthlyUsage ?? null
+  let settings: EnterpriseSubsidySettingsType | null
+  try {
+    settings =
+      budget == null ? null : resolveEnterpriseSubsidySettingsForMonth(budget.subsidySettingsHistory, eventMonth)
+  } catch {
+    settings = null
+  }
   if (settings == null || monthlyUsageByMonth == null) {
     const totalDiscount = orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0)
     return {
@@ -188,7 +201,6 @@ const computeEnterpriseSubsidyCartTotals = (
       subsidyTotalsFromReplay: false,
     }
   }
-  const eventMonth = formatYearMonth(event.event_start_datetime)
   const monthlyUsed = monthlyUsageByMonth[eventMonth] ?? 0
   const monthlyLimit = settings.monthly_limit_per_user
   const replay = replayEnterpriseSubsidyAmountsForOrders('enterprise_subsidy', settings, orders, monthlyUsed)
@@ -355,6 +367,11 @@ const startOrderProcess = async () => {
           isPosted: false,
           origin: window.location.origin,
         })
+        if (response.data.subsidy_recalculated) {
+          await reloadEnterpriseSubsidyBudget()
+          alertBody.value = $t('cart.subsidy_recalculated')
+          return
+        }
         window.location.href = response.data.url ?? getEventPath(event.community_account, eventId)
       } catch {
         alertBody.value = $t('cart.payment_failed')
@@ -363,11 +380,16 @@ const startOrderProcess = async () => {
       try {
         const eventStoreOptions = await resolveEventStoreOptions()
         const eventStore = useEventStore(eventId, eventStoreOptions)
-        await eventStore.confirmOrder({
+        const confirmResult = await eventStore.confirmOrder({
           community_id: communityId,
           event_id: eventId,
           order_ids: orderIds,
         })
+        if (confirmResult.subsidy_recalculated) {
+          await reloadEnterpriseSubsidyBudget()
+          alertBody.value = $t('cart.subsidy_recalculated')
+          return
+        }
       } catch {
         alertBody.value = $t('cart.order_failed')
         return

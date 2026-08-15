@@ -16,3 +16,7 @@ export type ConfirmOrderRequest = {
   event_id: string
   order_ids: string[]
 }
+
+export type ConfirmOrderResponse = {
+  subsidy_recalculated?: boolean
+}

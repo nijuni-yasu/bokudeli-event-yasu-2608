@@ -1,6 +1,6 @@
 ---
 name: git-create-pull-request
-description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。gh pr create/edit の前に origin へ push（履歴書き換え確認時のみ force-with-lease、diverge 時はユーザー確認）。その後、**必ず** gh pr edit で @copilot / Codex を reviewer 追加し、Copilot / Codex 向け 2 行固定文の gh pr comment を送り、手順 13 で wait-ai-pr-review へ委譲する（デフォルト ON）。マージ前の整理、force push や squash 後の更新など PR 全般。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
+description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。関連 Issue / closes はコミット log・diff・gh 検証で解決（ブランチ名のみ禁止。Refs と closes を分離）。gh pr create/edit の前に origin へ push（履歴書き換え確認時のみ force-with-lease、diverge 時はユーザー確認）。その後、**必ず** gh pr edit で @copilot / Codex を reviewer 追加し、Copilot / Codex 向け 2 行固定文の gh pr comment を送り、手順 13 で wait-ai-pr-review へ委譲する（デフォルト ON）。マージ前の整理、force push や squash 後の更新など PR 全般。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
 ---
 
 # PR 本文生成
@@ -45,9 +45,30 @@ python3 .agents/scripts/self_review_wake.py list \
 4. `git diff origin/development...HEAD` で全差分を取得する
 5. `git log origin/development...HEAD --oneline` でコミット一覧を取得する
 
-6. `git branch --show-current` でブランチ名を取得し Issue 番号を特定する
-7. `.github/pull_request_template.md` の各セクションを差分をもとに埋める
-8. 生成した PR 本文を出力する
+6. **関連 Issue / closes の解決**（手順 7 の前・必須）
+
+   [pr-issue-closes.md](references/pr-issue-closes.md) に従い、PR 全体 diff に対する **closes 候補**と **Refs 候補**を決める。
+
+   **ブランチ名だけを根拠に closes を書いてはならない**（`dev/foo-v4` 等 Issue 番号無しブランチで漏れやすい）。
+
+   最低限の収集:
+
+   ```bash
+   git log origin/development...HEAD --format=%s | grep -oE '#[0-9]+' | tr -d '#' | sort -nu
+   gh issue view <N> --repo nijuniinc/bokudeli-event-new --json number,title,body,state
+   ```
+
+   - **closes**: OPEN かつ PR で **主目的が完了**した Issue のみ（1 Issue 1 行）
+   - **Refs**: 部分対応・フォローアップ 1 コミット・MERGED 親 Issue への追記・判断保留
+   - **MERGED** Issue は closes 禁止
+   - コミットに無くても diff / 仕様書で実装済みなら closes 候補に含める（例: 仕様書 `#2252` と実装の一致）
+   - メールテンプレ `#12` 等の **偽陽性**は除外（[pr-issue-closes.md §1](references/pr-issue-closes.md)）
+   - 判断が割れた Issue は closes に入れず、本文に「要確認: #NNNN …」を 1 行
+
+   生成前に [pr-issue-closes.md §6 チェックリスト](references/pr-issue-closes.md) を満たすこと。
+
+7. `.github/pull_request_template.md` の各セクションを差分と手順 6 の Issue 分類をもとに埋める
+8. 生成した PR 本文を出力する（**関連 Issue** に closes 候補 + Refs、末尾 **closes** に closes 候補のみ複数行）
 
 9. origin へ push（手順 10 の gh pr create/edit の前・必須）
 
@@ -191,9 +212,15 @@ Issue 番号は PR タイトルには含めず、本文の関連 Issue や close
 `git log origin/development...HEAD --oneline` で取得したコミットタイトルをそのまま全件列挙する。
 要約や改変はせず、コミットタイトルの文字列をそのままコピーする。
 
-#### 関連情報
+#### 関連 Issue
 
-関連 Issue はブランチ名から取得する。例: feat/1826-5min → #1826、fix/1234-typo → #1234。ハイフン以降は無視する。複数の場合は #1234 #1235 のように並べる。
+手順 6（[pr-issue-closes.md](references/pr-issue-closes.md)）で決めた Issue を記載する。
+
+- **closes 候補**（マージで閉じる Issue）を `#2254 #2252` のように先に列挙
+- **Refs 候補**（部分対応・関連のみ）は `Refs #2248 #2249` のように後段に列挙
+- MERGED の Issue は `Refs #2223 (merged)` 等と明記
+- ブランチ名の数字（`fix/1234-typo` → `#1234`）は **候補の一つ**に過ぎない。コミット log・diff・gh 検証を優先する
+
 区分は以下から選ぶ: バグ修正 / 機能追加 / リファクタリング / 運用改善 / ドキュメント
 
 ### 変更内容
@@ -245,8 +272,16 @@ Firestore 変更時・Functions 変更時のチェック項目は該当する場
 
 ### closes
 
-ブランチ名から取得した Issue 番号を記入する。
-複数 Issue がある場合は、PR の変更内容から該当するものを判断し、closes # を複数行に分けて記述する。
+手順 6 で **closes 候補**と判定した OPEN Issue のみ、**1 Issue 1 行**で記述する。
+
+```
+closes #2254
+closes #2252
+```
+
+- **Refs 候補**はここに書かない（関連 Issue セクションのみ）
+- **MERGED / CLOSED**、部分対応のみ、判断保留は closes に含めない
+- 詳細ルール: [pr-issue-closes.md](references/pr-issue-closes.md)
 
 ---
 
@@ -263,5 +298,7 @@ Firestore 変更時・Functions 変更時のチェック項目は該当する場
 ## 運用上の推奨
 
 - force push や squash でブランチ内容が変わった後は、既存 PR の本文を更新することを推奨する
+- PR 本文更新時は **手順 6 を再実行**し、新規コミットで Refs だけだった Issue が closes に昇格していないか / 逆に漏れがないか確認する
 - PR 本文更新だけでなく **手順 9 で origin に push** してからレビュー依頼する（未 push のまま Copilot が古い Files changed を見るのを防ぐ）
 - PR 本文に shokujii のレビュー基準を書き、**手順 11**（reviewer 追加）と **手順 12**（Copilot / Codex 向け 2 行コメント）を必須とする。Copilot が承知返信のみのときは `gh pr edit --add-reviewer @copilot` で再依頼する
+- `closes` が 1 件だけ（ブランチ名由来のみ）になっていないか、生成後に [pr-issue-closes.md §6](references/pr-issue-closes.md) でセルフチェックする

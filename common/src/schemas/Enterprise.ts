@@ -1,5 +1,9 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import {
+  EnterpriseSubsidySettingsEntryDbSchema,
+  type EnterpriseSubsidySettingsEntryType,
+} from './EnterpriseSubsidySettings.js'
 import { omitUndefined } from '../utils/object.js'
 
 export const ENTERPRISE_DISCOUNT_TYPE_VALUES = ['fixed', 'percentage'] as const
@@ -59,9 +63,7 @@ const EnterpriseDbSchema = z.object({
   subdomain: z.string().nonempty(),
   custom_domain: NonEmptyStringSchema.optional(),
   allowed_email_domains: z.array(z.string().nonempty()).min(1),
-  discount_type: z.enum(ENTERPRISE_DISCOUNT_TYPE_VALUES),
-  discount_value: z.number().int().nonnegative(),
-  monthly_limit_per_user: z.number().int().nonnegative(),
+  subsidy_settings_history: z.array(EnterpriseSubsidySettingsEntryDbSchema).min(1),
   payment_method: z.enum(ENTERPRISE_PAYMENT_METHOD_VALUES),
   billing_settings: EnterpriseBillingSettingsDbSchema,
   is_active: z.boolean(),
@@ -77,9 +79,7 @@ const EnterpriseAppSchema = z.object({
   subdomain: z.string().default(''),
   custom_domain: z.string().optional(),
   allowed_email_domains: z.array(z.string()).default([]),
-  discount_type: z.enum(ENTERPRISE_DISCOUNT_TYPE_VALUES).default('fixed'),
-  discount_value: z.number().int().nonnegative().default(500),
-  monthly_limit_per_user: z.number().int().nonnegative().default(7500),
+  subsidy_settings_history: z.array(EnterpriseSubsidySettingsEntryDbSchema).default([]),
   payment_method: z.enum(ENTERPRISE_PAYMENT_METHOD_VALUES).default('credit_card'),
   billing_settings: EnterpriseBillingSettingsAppSchema.optional(),
   is_active: z.boolean().default(true),
@@ -107,9 +107,7 @@ export class Enterprise {
   subdomain!: string
   custom_domain?: string
   allowed_email_domains!: string[]
-  discount_type!: EnterpriseDiscountType
-  discount_value!: number
-  monthly_limit_per_user!: number
+  subsidy_settings_history!: EnterpriseSubsidySettingsEntryType[]
   payment_method!: EnterprisePaymentMethodType
   billing_settings!: EnterpriseBillingSettingsType
   is_active!: boolean

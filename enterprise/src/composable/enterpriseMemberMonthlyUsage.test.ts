@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
+import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import {
   applyBudgetColumnsToHistory,
   buildMonthlyUsageHistory,
@@ -9,11 +10,9 @@ import {
   toEnterpriseMemberMonthlyUsageView,
 } from './enterpriseMemberMonthlyUsageHistory.js'
 
-const defaultSettings = {
-  monthlyLimit: 7500,
-  discountType: 'fixed' as const,
-  discountValue: 500,
-}
+const defaultHistory: EnterpriseSubsidySettingsEntryType[] = [
+  { effective_from_month: '2026-01', type: 'fixed', value: 500, monthly_limit_per_user: 7500 },
+]
 
 describe('compareYearMonth', () => {
   it('orders YYYY-MM chronologically', () => {
@@ -73,11 +72,15 @@ describe('buildMonthlyUsageHistory', () => {
 describe('applyBudgetColumnsToHistory', () => {
   it('fills limit and remaining from current month through newest future month in table', () => {
     const history = buildMonthlyUsageHistory({ '2026-06': 500, '2026-07': 1000, '2026-09': 500 }, {}, {})
-    const enriched = applyBudgetColumnsToHistory(history, '2026-07', 3000)
+    const subsidyHistory: EnterpriseSubsidySettingsEntryType[] = [
+      { effective_from_month: '2026-01', type: 'fixed', value: 500, monthly_limit_per_user: 3000 },
+      { effective_from_month: '2026-07', type: 'fixed', value: 500, monthly_limit_per_user: 5000 },
+    ]
+    const enriched = applyBudgetColumnsToHistory(history, '2026-07', subsidyHistory)
     const byMonth = Object.fromEntries(enriched.map((row) => [row.yearMonth, row]))
     expect(byMonth['2026-06']?.limit).toBeNull()
-    expect(byMonth['2026-07']).toMatchObject({ limit: 3000, remaining: 2000 })
-    expect(byMonth['2026-09']).toMatchObject({ limit: 3000, remaining: 2500 })
+    expect(byMonth['2026-07']).toMatchObject({ limit: 5000, remaining: 4000 })
+    expect(byMonth['2026-09']).toMatchObject({ limit: 5000, remaining: 4500 })
   })
 })
 
@@ -89,7 +92,7 @@ describe('toEnterpriseMemberMonthlyUsageView', () => {
       monthly_order_count: { '2026-06': 2, '2026-05': 1 },
       monthly_user_paid: { '2026-06': 500, '2026-05': 200 },
     })
-    const view = toEnterpriseMemberMonthlyUsageView(member, defaultSettings, '2026-06')
+    const view = toEnterpriseMemberMonthlyUsageView(member, defaultHistory, '2026-06')
     expect(view.used).toBe(3000)
     expect(view.userPaid).toBe(500)
     expect(view.limit).toBe(7500)
@@ -112,7 +115,10 @@ describe('toEnterpriseMemberMonthlyUsageView', () => {
       user_email: 'a@example.com',
       monthly_usage: { '2026-05': 1000 },
     })
-    const view = toEnterpriseMemberMonthlyUsageView(member, { ...defaultSettings, monthlyLimit: 3000 }, '2026-06')
+    const history: EnterpriseSubsidySettingsEntryType[] = [
+      { effective_from_month: '2026-01', type: 'fixed', value: 500, monthly_limit_per_user: 3000 },
+    ]
+    const view = toEnterpriseMemberMonthlyUsageView(member, history, '2026-06')
     const june = view.history.find((r) => r.yearMonth === '2026-06')
     expect(june).toMatchObject({ used: 0, limit: 3000, remaining: 3000 })
     expect(view.history.find((r) => r.yearMonth === '2026-05')?.limit).toBeNull()
@@ -129,7 +135,7 @@ describe('toEnterpriseMemberMonthlyUsageView', () => {
       user_email: 'a@example.com',
       monthly_usage: monthlyUsage,
     })
-    const view = toEnterpriseMemberMonthlyUsageView(member, defaultSettings, '2026-07')
+    const view = toEnterpriseMemberMonthlyUsageView(member, defaultHistory, '2026-07')
     expect(view.history).toHaveLength(12)
     expect(view.history.some((r) => r.yearMonth === '2026-07')).toBe(true)
   })
@@ -154,7 +160,7 @@ describe('toEnterpriseMemberMonthlyUsageView', () => {
       user_email: 'a@example.com',
       monthly_usage: monthlyUsage,
     })
-    const view = toEnterpriseMemberMonthlyUsageView(member, defaultSettings, '2026-07')
+    const view = toEnterpriseMemberMonthlyUsageView(member, defaultHistory, '2026-07')
     expect(view.history).toHaveLength(12)
     expect(view.history.some((r) => r.yearMonth === '2026-07')).toBe(true)
   })
@@ -164,7 +170,10 @@ describe('toEnterpriseMemberMonthlyUsageView', () => {
       user_email: 'a@example.com',
       monthly_usage: { '2026-06': 100 },
     })
-    const view = toEnterpriseMemberMonthlyUsageView(member, { ...defaultSettings, monthlyLimit: 3000 }, '2026-06')
+    const history: EnterpriseSubsidySettingsEntryType[] = [
+      { effective_from_month: '2026-01', type: 'fixed', value: 500, monthly_limit_per_user: 3000 },
+    ]
+    const view = toEnterpriseMemberMonthlyUsageView(member, history, '2026-06')
     expect(view.userPaid).toBe(0)
   })
 })

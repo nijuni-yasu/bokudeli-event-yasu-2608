@@ -42,7 +42,6 @@ const EventNestedEnterpriseWriteSchemaC = EventWriteCoreAppSchema.extend({
   event_payment: z.literal('enterprise_subsidy'),
   enterprise: z.object({
     enterprise_id: z.string().nonempty(),
-    enterprise_subsidy_settings: EnterpriseSubsidySettingsAppSchema,
   }),
 })
 
@@ -60,7 +59,6 @@ export function flattenNestedWriteToFlat(input: EventNestedWriteC): EventWriteAp
     return {
       ...rest,
       enterprise_id: enterprise.enterprise_id,
-      enterprise_subsidy_settings: enterprise.enterprise_subsidy_settings,
     }
   }
   const { enterprise, ...rest } = input

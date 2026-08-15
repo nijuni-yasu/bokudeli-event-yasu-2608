@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { EnterpriseDiscountType } from '@shokujii/common/schemas/Enterprise.js'
+import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import { getEnterpriseLogoStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import { resolveEnterpriseSubsidySettingsForMonth } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { updateEnterpriseSettings } from '@/apis/enterprise'
@@ -26,6 +29,7 @@ const allowedEmailDomains = ref<string[]>([])
 const discountType = ref<EnterpriseDiscountType>('fixed')
 const discountValue = ref(0)
 const monthlyLimitPerUser = ref(0)
+const subsidySettingsHistory = ref<EnterpriseSubsidySettingsEntryType[]>([])
 const logoFile = ref<File | null>(null)
 const logoPreviewUrl = ref('')
 
@@ -55,9 +59,16 @@ const loadSettings = async () => {
     subdomain.value = doc.subdomain
     customDomain.value = doc.custom_domain
     allowedEmailDomains.value = doc.allowed_email_domains
-    discountType.value = doc.discount_type
-    discountValue.value = doc.discount_value
-    monthlyLimitPerUser.value = doc.monthly_limit_per_user
+    subsidySettingsHistory.value = doc.subsidy_settings_history
+    const currentSettings = resolveEnterpriseSubsidySettingsForMonth(
+      doc.subsidy_settings_history,
+      formatYearMonth(Date.now()),
+    )
+    discountType.value = currentSettings.type
+    discountValue.value = currentSettings.value
+    monthlyLimitPerUser.value = currentSettings.monthly_limit_per_user
+  } catch {
+    notification.show(t('admin.settings.load_failed'), 'error')
   } finally {
     loading.value = false
   }
@@ -216,6 +227,8 @@ const saveSettings = async () => {
             v-model:discount-value="discountValue"
             v-model:monthly-limit-per-user="monthlyLimitPerUser"
             :enterprise-id="enterpriseId"
+            :subsidy-settings-history="subsidySettingsHistory"
+            @saved="loadSettings"
           />
         </template>
       </v-col>

@@ -48,11 +48,6 @@ export const enterpriseSubsidyEventFields = {
   ...minimalPfEventFields,
   event_payment: 'enterprise_subsidy' as const,
   enterprise_id: 'ent-a',
-  enterprise_subsidy_settings: {
-    type: 'fixed' as const,
-    value: 500,
-    monthly_limit_per_user: 7500,
-  },
 }
 
 // --- Community ---

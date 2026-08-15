@@ -25,7 +25,12 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
+import {
+  AddToCartRequest,
+  RemoveFromCartRequest,
+  ConfirmOrderRequest,
+  ConfirmOrderResponse,
+} from '@shokujii/common/apis/order.js'
 import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
   addToCart as _addToCart,
@@ -101,6 +106,18 @@ export const eventConverter: FirestoreDataConverter<BokudeliEvent> = {
 /** communities/{communityId}/events/{eventId} への直接参照（collectionGroup 不使用） */
 export const getEventInCommunityRef = (communityId: string, eventId: string) => {
   return doc(db, 'communities', communityId, 'events', eventId).withConverter(eventConverter)
+}
+
+/** communities/{communityId}/events/{eventId} を 1 回読む（chat onOpenEvent 等） */
+export const fetchEventInCommunityDocument = async (
+  communityId: string,
+  eventId: string,
+): Promise<BokudeliEvent | undefined> => {
+  const snapshot = await getDoc(getEventInCommunityRef(communityId, eventId))
+  if (!snapshot.exists()) {
+    return undefined
+  }
+  return snapshot.data()
 }
 
 const menuConverter: FirestoreDataConverter<EventMenu> = {
@@ -351,8 +368,9 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
       await _removeFromCart(data)
     }
 
-    const confirmOrder = async (data: ConfirmOrderRequest): Promise<void> => {
-      await _confirmOrder(data)
+    const confirmOrder = async (data: ConfirmOrderRequest): Promise<ConfirmOrderResponse> => {
+      const result = await _confirmOrder(data)
+      return result.data
     }
 
     const deleteEvent = async (): Promise<void> => {

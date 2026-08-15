@@ -1,5 +1,7 @@
 import { parseYearMonth } from '@shokujii/common/utils/isEnterpriseMemberBillableInYearMonth.js'
 import type { EnterpriseDiscountType, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
+import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
+import { resolveEnterpriseSubsidySettingsForMonth } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 
 export type EnterpriseMemberMonthlyUsageHistoryRow = {
   yearMonth: string
@@ -118,11 +120,12 @@ export function trimMonthlyUsageHistoryPreservingCurrentMonth(
 
 /**
  * カレンダー当月〜テーブル内の最も新しい未来月まで、上限・残りを付与する（過去月は null）。
+ * 各行の yearMonth ごとに subsidy_settings_history から設定を解決する。
  */
 export function applyBudgetColumnsToHistory(
   history: EnterpriseMemberMonthlyUsageHistoryRow[],
   currentMonth: string,
-  monthlyLimit: number,
+  subsidySettingsHistory: EnterpriseSubsidySettingsEntryType[],
 ): EnterpriseMemberMonthlyUsageHistoryRow[] {
   let maxBudgetMonth = currentMonth
   for (const row of history) {
@@ -137,20 +140,31 @@ export function applyBudgetColumnsToHistory(
     if (!inBudgetRange) {
       return { ...row, limit: null, remaining: null }
     }
-    return {
-      ...row,
-      limit: monthlyLimit,
-      remaining: Math.max(0, monthlyLimit - row.used),
+    try {
+      const settings = resolveEnterpriseSubsidySettingsForMonth(subsidySettingsHistory, row.yearMonth)
+      const limit = settings.monthly_limit_per_user
+      return {
+        ...row,
+        limit,
+        remaining: Math.max(0, limit - row.used),
+      }
+    } catch {
+      return { ...row, limit: null, remaining: null }
     }
   })
 }
 
 export function toEnterpriseMemberMonthlyUsageView(
   member: EnterpriseMember,
-  settings: EnterpriseSubsidyCompanySettingsView,
+  subsidySettingsHistory: EnterpriseSubsidySettingsEntryType[],
   currentMonth: string,
 ): EnterpriseMemberMonthlyUsageView {
-  const { monthlyLimit } = settings
+  const resolved = resolveEnterpriseSubsidySettingsForMonth(subsidySettingsHistory, currentMonth)
+  const settings: EnterpriseSubsidyCompanySettingsView = {
+    monthlyLimit: resolved.monthly_limit_per_user,
+    discountType: resolved.type,
+    discountValue: resolved.value,
+  }
   const used = member.monthly_usage[currentMonth] ?? 0
   const userPaid = member.monthly_user_paid[currentMonth] ?? 0
   const orderMenuCount = member.monthly_order_count[currentMonth] ?? 0
@@ -161,13 +175,13 @@ export function toEnterpriseMemberMonthlyUsageView(
   )
   const withCurrentMonth = ensureCurrentMonthInHistory(rawHistory, currentMonth)
   const trimmedHistory = trimMonthlyUsageHistoryPreservingCurrentMonth(withCurrentMonth, currentMonth)
-  const history = applyBudgetColumnsToHistory(trimmedHistory, currentMonth, monthlyLimit)
+  const history = applyBudgetColumnsToHistory(trimmedHistory, currentMonth, subsidySettingsHistory)
   return {
     currentMonth,
     used,
     userPaid,
-    limit: monthlyLimit,
-    remaining: Math.max(0, monthlyLimit - used),
+    limit: settings.monthlyLimit,
+    remaining: Math.max(0, settings.monthlyLimit - used),
     orderMenuCount,
     settings,
     history,

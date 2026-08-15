@@ -8,7 +8,7 @@ import {
   escapeCsvCell,
 } from './memberCsvExport.js'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
-import type { User } from '@shokujii/common/schemas/User'
+import type { User } from '@shokujii/common/schemas/User.js'
 
 const sampleUser = (overrides: Partial<User> = {}): User =>
   ({

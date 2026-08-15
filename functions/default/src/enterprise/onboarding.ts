@@ -7,6 +7,7 @@ import {
 } from '@shokujii/common/apis/enterprise.js'
 import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 import { computeBillingTrialEndsAtMillis } from '@shokujii/common/utils/isEnterpriseMemberBillableInYearMonth.js'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { getConfigGlobal } from '../stores/config.js'
 import {
   deleteEnterprise,
@@ -127,9 +128,14 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
       ...(normalizedCustomDomain != null ? { custom_domain: normalizedCustomDomain } : {}),
       allowed_email_domains: allowedEmailDomains,
       theme_color: themeColor ?? '#1976D2',
-      discount_type: initialSubsidy.type,
-      discount_value: initialSubsidy.value,
-      monthly_limit_per_user: initialSubsidy.monthly_limit_per_user,
+      subsidy_settings_history: [
+        {
+          effective_from_month: formatYearMonth(now),
+          type: initialSubsidy.type,
+          value: initialSubsidy.value,
+          monthly_limit_per_user: initialSubsidy.monthly_limit_per_user,
+        },
+      ],
       billing_settings: {
         unit_price: DEFAULT_UNIT_PRICE,
         trial_months: DEFAULT_TRIAL_MONTHS,

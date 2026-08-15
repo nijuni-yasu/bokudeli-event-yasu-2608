@@ -2,26 +2,35 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { HttpsError } from 'firebase-functions/https'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
-import { EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
+import { EnterpriseMember, Enterprise } from '@shokujii/common/schemas/Enterprise.js'
 import { replayEnterpriseSubsidyAmountsForOrders } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { ShokujiiEvent } from '../stores/event.js'
+
+vi.mock('./auditLog.js', () => ({
+  writeAuditLog: vi.fn().mockResolvedValue(undefined),
+}))
 
 vi.mock('../stores/enterprise.js', () => ({
   getEnterpriseMember: vi.fn(),
   getEnterpriseMemberInTransaction: vi.fn(),
+  getEnterpriseById: vi.fn(),
+  getEnterpriseRef: vi.fn((enterpriseId: string) => ({ path: `enterprises/${enterpriseId}` })),
+  adjustEnterpriseMemberMonthlyUsage: vi.fn(),
 }))
 
 vi.mock('../stores/memberOrder.js', () => ({
   createOrder: vi.fn(),
+  saveOrder: vi.fn(),
+  clearOrderPayEnterpriseSubsidyAmount: vi.fn(),
 }))
 
 import { getEnterpriseMember, getEnterpriseMemberInTransaction } from '../stores/enterprise.js'
-import { createOrder } from '../stores/memberOrder.js'
+import { createOrder, saveOrder, clearOrderPayEnterpriseSubsidyAmount } from '../stores/memberOrder.js'
+import { writeAuditLog } from './auditLog.js'
 import {
   addEnterpriseSubsidyMenusToCart,
   assertActiveEnterpriseMember,
   assertEnterpriseEventPaymentAllowed,
-  assertEnterpriseSubsidyOrdersConsistent,
   applyEnterpriseSubsidyPayFieldToCartTracker,
   buildEnterpriseSubsidyUsageExceededDetails,
   computeOrderSelfPayUnitAmount,
@@ -29,8 +38,27 @@ import {
   getStripeCheckoutLineItemGroupKey,
   sumEnterpriseSubsidyAmounts,
   sumEnterpriseUserPaidAmounts,
+  syncEnterpriseSubsidyOrdersBeforeConfirm,
   validateEnterpriseSubsidyOrdersSnapshotForWebhook,
+  writeEnterpriseSubsidyRecalculatedAudit,
 } from './enterpriseSubsidyOrders.js'
+
+const settings = { type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 }
+const subsidyHistory = [{ effective_from_month: '2026-06', ...settings }]
+
+const mockEnterprise = () =>
+  new Enterprise('ent1', {
+    tenant_id: 'tenant-ent1',
+    company_name: 'Test Corp',
+    subdomain: 'testcorp',
+    allowed_email_domains: ['example.com'],
+    subsidy_settings_history: subsidyHistory,
+    billing_settings: {
+      unit_price: 500,
+      trial_months: 3,
+      billing_trial_ends_at: Date.now(),
+    },
+  })
 
 const baseEventFields = {
   community_id: 'c1',
@@ -127,8 +155,6 @@ describe('assertEnterpriseEventPaymentAllowed', () => {
 })
 
 describe('enterprise subsidy order replay', () => {
-  const settings = { type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 }
-
   const makeOrder = (id: string, menuPrice: number, subsidy?: number) =>
     new EventMemberOrder(id, {
       order_id: id,
@@ -157,14 +183,13 @@ describe('enterprise subsidy order replay', () => {
     expect(replay.totalPayment).toBe(2100)
   })
 
-  it('assertEnterpriseSubsidyOrdersConsistent は一致時に replay を返す', async () => {
+  it('syncEnterpriseSubsidyOrdersBeforeConfirm は一致時に replay を返す', async () => {
     const orders = [makeOrder('o1', 800, 500)]
     const event = new ShokujiiEvent('e1', {
       ...baseEventFields,
       enterprise_id: 'ent1',
       event_payment: 'enterprise_subsidy',
       event_start_datetime: Date.UTC(2026, 5, 15),
-      enterprise_subsidy_settings: settings,
     })
     const member = new EnterpriseMember('u1', {
       user_id: 'u1',
@@ -172,25 +197,37 @@ describe('enterprise subsidy order replay', () => {
       monthly_usage: { '2026-06': 1000 },
       monthly_order_count: {},
     })
-    const replay = await assertEnterpriseSubsidyOrdersConsistent({
+    const transaction = {
+      get: vi.fn().mockResolvedValue({
+        exists: true,
+        data: () => mockEnterprise(),
+      }),
+    } as never
+    const replay = await syncEnterpriseSubsidyOrdersBeforeConfirm({
       enterpriseId: 'ent1',
       userId: 'u1',
+      communityId: 'c1',
+      eventId: 'e1',
       event,
       orders,
       orderIds: ['o1'],
       member,
+      transaction,
     })
     expect(replay.subsidyTotal).toBe(500)
+    expect(replay.recalculated).toBe(false)
+    expect(replay.recalculatedAudit).toBeUndefined()
+    expect(saveOrder).not.toHaveBeenCalled()
+    expect(writeAuditLog).not.toHaveBeenCalled()
   })
 
-  it('assertEnterpriseSubsidyOrdersConsistent は不一致時に failed-precondition', async () => {
+  it('syncEnterpriseSubsidyOrdersBeforeConfirm は不一致時に書き戻し recalculated=true', async () => {
     const orders = [makeOrder('o1', 800, 999)]
     const event = new ShokujiiEvent('e1', {
       ...baseEventFields,
       enterprise_id: 'ent1',
       event_payment: 'enterprise_subsidy',
       event_start_datetime: Date.UTC(2026, 5, 15),
-      enterprise_subsidy_settings: settings,
     })
     const member = new EnterpriseMember('u1', {
       user_id: 'u1',
@@ -198,22 +235,106 @@ describe('enterprise subsidy order replay', () => {
       monthly_usage: {},
       monthly_order_count: {},
     })
-    await expect(
-      assertEnterpriseSubsidyOrdersConsistent({
-        enterpriseId: 'ent1',
-        userId: 'u1',
-        event,
-        orders,
-        orderIds: ['o1'],
-        member,
+    const transaction = {
+      get: vi.fn().mockResolvedValue({
+        exists: true,
+        data: () => mockEnterprise(),
       }),
-    ).rejects.toMatchObject({ code: 'failed-precondition' })
+    } as never
+    const replay = await syncEnterpriseSubsidyOrdersBeforeConfirm({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      communityId: 'c1',
+      eventId: 'e1',
+      event,
+      orders,
+      orderIds: ['o1'],
+      member,
+      transaction,
+    })
+    expect(replay.recalculated).toBe(true)
+    expect(orders[0].pay_enterprise_subsidy_amount).toBe(500)
+    expect(saveOrder).toHaveBeenCalled()
+    expect(replay.recalculatedAudit).toEqual({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      details: {
+        event_id: 'e1',
+        order_ids: ['o1'],
+        expected: [500],
+        stored: [999],
+      },
+    })
+    expect(writeAuditLog).not.toHaveBeenCalled()
+  })
+
+  it('syncEnterpriseSubsidyOrdersBeforeConfirm は expected undefined 時に補助額フィールドを削除する', async () => {
+    const orders = [makeOrder('o1', 800, 500), makeOrder('o2', 800, 500)]
+    const event = new ShokujiiEvent('e1', {
+      ...baseEventFields,
+      enterprise_id: 'ent1',
+      event_payment: 'enterprise_subsidy',
+      event_start_datetime: Date.UTC(2026, 5, 15),
+    })
+    const member = new EnterpriseMember('u1', {
+      user_id: 'u1',
+      user_email: 'user@example.com',
+      monthly_usage: { '2026-06': 7400 },
+      monthly_order_count: {},
+    })
+    const transaction = {
+      get: vi.fn().mockResolvedValue({
+        exists: true,
+        data: () => mockEnterprise(),
+      }),
+    } as never
+    const replay = await syncEnterpriseSubsidyOrdersBeforeConfirm({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      communityId: 'c1',
+      eventId: 'e1',
+      event,
+      orders,
+      orderIds: ['o1', 'o2'],
+      member,
+      transaction,
+    })
+    expect(replay.recalculated).toBe(true)
+    expect(orders[0].pay_enterprise_subsidy_amount).toBe(100)
+    expect(orders[1].pay_enterprise_subsidy_amount).toBeUndefined()
+    expect(clearOrderPayEnterpriseSubsidyAmount).toHaveBeenCalledWith('c1', 'e1', 'u1', 'o2', transaction)
+    expect(replay.recalculatedAudit?.details.stored).toEqual([500, 500])
+    expect(replay.recalculatedAudit?.details.expected).toEqual([100, null])
+    expect(writeAuditLog).not.toHaveBeenCalled()
+  })
+
+  it('writeEnterpriseSubsidyRecalculatedAudit は enterprise_subsidy_recalculated を記録する', async () => {
+    await writeEnterpriseSubsidyRecalculatedAudit({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      details: {
+        event_id: 'e1',
+        order_ids: ['o1'],
+        expected: [500],
+        stored: [999],
+      },
+    })
+    expect(writeAuditLog).toHaveBeenCalledWith({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      action: 'enterprise_subsidy_recalculated',
+      targetType: 'order_session',
+      details: {
+        event_id: 'e1',
+        order_ids: ['o1'],
+        expected: [500],
+        stored: [999],
+      },
+    })
   })
 })
 
 describe('validateEnterpriseSubsidyOrdersSnapshotForWebhook', () => {
-  const settings = { type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 }
-
   const makeOrder = (id: string, menuPrice: number, subsidy?: number) =>
     new EventMemberOrder(id, {
       order_id: id,
@@ -232,7 +353,6 @@ describe('validateEnterpriseSubsidyOrdersSnapshotForWebhook', () => {
       enterprise_id: 'ent1',
       event_payment: 'enterprise_subsidy',
       event_start_datetime: Date.UTC(2026, 5, 15),
-      enterprise_subsidy_settings: settings,
     })
 
   it('保存済み補助額の合計を返す', () => {
@@ -272,13 +392,13 @@ describe('enterprise subsidy cart tracker', () => {
       enterprise_id: 'ent1',
       event_payment: 'enterprise_subsidy',
       event_start_datetime: Date.UTC(2026, 5, 15),
-      enterprise_subsidy_settings: settings,
     })
 
   it('applyEnterpriseSubsidyPayFieldToCartTracker は残枠内で補助額を付与する', () => {
     const tracker = createEnterpriseSubsidyAddToCartTracker(1000)
     const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
       event: makeEvent(),
+      settings,
       menuPrice: 800,
       tracker,
     })
@@ -291,6 +411,7 @@ describe('enterprise subsidy cart tracker', () => {
     const tracker = createEnterpriseSubsidyAddToCartTracker(7500)
     const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
       event: makeEvent(),
+      settings,
       menuPrice: 800,
       tracker,
     })
@@ -307,7 +428,6 @@ describe('enterprise subsidy cart tracker', () => {
 })
 
 describe('addEnterpriseSubsidyMenusToCart', () => {
-  const settings = { type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 }
   const transaction = {} as never
 
   const makeEnterpriseMember = (monthlyUsage: Record<string, number> = { '2026-06': 1000 }) =>
@@ -325,7 +445,6 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
       enterprise_id: 'ent1',
       event_payment: 'enterprise_subsidy',
       event_start_datetime: Date.UTC(2026, 5, 15),
-      enterprise_subsidy_settings: settings,
       ...overrides,
     })
 
@@ -354,6 +473,7 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
       userId: 'u1',
       enterpriseId: 'ent1',
       event: makeEvent(),
+      settings,
       menus: [{ menu_id: 'm1', count: 2 }],
       eventMenus,
       transaction,
@@ -379,6 +499,7 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
       userId: 'u1',
       enterpriseId: 'ent1',
       event: makeEvent(),
+      settings,
       menus: [{ menu_id: 'm1', count: 1 }],
       eventMenus,
       transaction,
@@ -386,23 +507,6 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
     })
 
     expect(result).toMatchObject({ enterpriseId: 'ent1', eventMonth: '2026-06', unfilledCount: 1 })
-  })
-
-  it('enterprise_subsidy_settings 欠落は failed-precondition', async () => {
-    await expect(
-      addEnterpriseSubsidyMenusToCart({
-        communityId: 'c1',
-        eventId: 'e1',
-        userId: 'u1',
-        enterpriseId: 'ent1',
-        event: makeEvent({ enterprise_subsidy_settings: undefined }),
-        menus: [{ menu_id: 'm1', count: 1 }],
-        eventMenus,
-        transaction,
-        enterpriseMember: makeEnterpriseMember(),
-      }),
-    ).rejects.toMatchObject({ code: 'failed-precondition' })
-    expect(createOrder).not.toHaveBeenCalled()
   })
 
   it('EnterpriseMember 不在は failed-precondition', async () => {
@@ -415,6 +519,7 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
         userId: 'u1',
         enterpriseId: 'ent1',
         event: makeEvent(),
+        settings,
         menus: [{ menu_id: 'm1', count: 1 }],
         eventMenus,
         transaction,
@@ -431,6 +536,7 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
         userId: 'u1',
         enterpriseId: 'ent1',
         event: makeEvent(),
+        settings,
         menus: [{ menu_id: 'unknown', count: 1 }],
         eventMenus,
         transaction,
@@ -447,6 +553,7 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
       userId: 'u1',
       enterpriseId: 'ent1',
       event: makeEvent(),
+      settings,
       menus: [{ menu_id: 'm1', count: 2 }],
       eventMenus,
       transaction,
@@ -465,9 +572,8 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
       eventId: 'e1',
       userId: 'u1',
       enterpriseId: 'ent1',
-      event: makeEvent({
-        enterprise_subsidy_settings: { type: 'fixed', value: 0, monthly_limit_per_user: 7500 },
-      }),
+      event: makeEvent(),
+      settings: { type: 'fixed', value: 0, monthly_limit_per_user: 7500 },
       menus: [{ menu_id: 'm1', count: 1 }],
       eventMenus,
       transaction,

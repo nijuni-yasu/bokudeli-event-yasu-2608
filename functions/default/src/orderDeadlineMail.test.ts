@@ -8,6 +8,8 @@ const getEventMemberEmailsMock = vi.fn()
 const getCommunityMemberEmailsExcludingOrderedMock = vi.fn()
 const getEventPartnerShopMock = vi.fn()
 const createOrdersForOrderDeadlineMock = vi.fn()
+const getEventUrlForEventMock = vi.fn()
+const loggerErrorMock = vi.fn()
 
 vi.mock('./utils/sendgridBulk.js', () => ({
   sendDynamicTemplateWithPersonalizations: (...args: unknown[]) => sendDynamicTemplateWithPersonalizationsMock(...args),
@@ -36,13 +38,13 @@ vi.mock('./utils/order.js', () => ({
 
 vi.mock('./utils/urls.js', () => ({
   convertStoragePathToURL: (path: string) => `https://storage.example/${path}`,
-  getEventUrlForEvent: async () => 'https://example.com/event',
+  getEventUrlForEvent: (...args: unknown[]) => getEventUrlForEventMock(...args),
   getPartnerOrderUrl: () => 'https://example.com/partner/order',
 }))
 
 vi.mock('./utils/logger.js', () => ({
   createModuleLogger: () => ({
-    error: vi.fn(),
+    error: (...args: unknown[]) => loggerErrorMock(...args),
     info: vi.fn(),
     warn: vi.fn(),
   }),
@@ -85,6 +87,7 @@ function createMockEvent(overrides: Partial<ShokujiiEvent> = {}): ShokujiiEvent 
 
 beforeEach(() => {
   vi.clearAllMocks()
+  getEventUrlForEventMock.mockResolvedValue('https://example.com/event')
   sendDynamicTemplateWithPersonalizationsMock.mockResolvedValue({
     batchesAttempted: 1,
     batchesSucceeded: 1,
@@ -129,6 +132,30 @@ describe('sendOrderDeadlineMailToOrganizers', () => {
 
     expect(sendDynamicTemplateWithPersonalizationsMock).toHaveBeenCalledTimes(1)
   })
+
+  it('ホスト未解決 enterprise でも空 event_url で bulk 送信する', async () => {
+    getEventUrlForEventMock.mockResolvedValue(null)
+    getAcceptingOrderEventsByTimeMock.mockResolvedValue([createMockEvent({ enterprise_id: 'ent-a' })])
+
+    await sendOrderDeadlineMailToOrganizers(0, 1)
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Enterprise host unresolved for organizer order deadline mail',
+      expect.objectContaining({
+        eventId: 'evt1',
+        enterpriseId: 'ent-a',
+      }),
+    )
+    expect(sendDynamicTemplateWithPersonalizationsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.arrayContaining([
+        expect.objectContaining({
+          dynamicTemplateData: expect.objectContaining({ event_url: '' }),
+        }),
+      ]),
+      expect.anything(),
+    )
+  })
 })
 
 describe('sendOrderDeadlineMailToMembers', () => {
@@ -138,5 +165,29 @@ describe('sendOrderDeadlineMailToMembers', () => {
     await sendOrderDeadlineMailToMembers(0, 1)
 
     expect(sendDynamicTemplateWithPersonalizationsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('ホスト未解決 enterprise でも空 event_url で bulk 送信する', async () => {
+    getEventUrlForEventMock.mockResolvedValue(null)
+    getAcceptingOrderEventsByTimeMock.mockResolvedValue([createMockEvent({ enterprise_id: 'ent-a' })])
+
+    await sendOrderDeadlineMailToMembers(0, 1)
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Enterprise host unresolved for order deadline member mail',
+      expect.objectContaining({
+        eventId: 'evt1',
+        enterpriseId: 'ent-a',
+      }),
+    )
+    expect(sendDynamicTemplateWithPersonalizationsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.arrayContaining([
+        expect.objectContaining({
+          dynamicTemplateData: expect.objectContaining({ event_url: '' }),
+        }),
+      ]),
+      expect.anything(),
+    )
   })
 })

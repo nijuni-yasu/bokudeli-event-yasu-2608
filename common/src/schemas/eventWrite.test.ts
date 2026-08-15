@@ -19,13 +19,6 @@ describe('G1-2 enterprise write strict', () => {
     const result = EnterpriseEventWriteAppSchema.safeParse(omitKeys(enterpriseSubsidyEventFields, 'enterprise_id'))
     expect(result.success).toBe(false)
   })
-
-  it('enterprise_subsidy_settings 欠落を reject', () => {
-    const result = EnterpriseEventWriteAppSchema.safeParse(
-      omitKeys(enterpriseSubsidyEventFields, 'enterprise_subsidy_settings'),
-    )
-    expect(result.success).toBe(false)
-  })
 })
 
 describe('G1-4 pf write strict', () => {
@@ -71,7 +64,7 @@ describe('G1-5 write toFirestore golden', () => {
 })
 
 describe('assertEnterpriseEventDraftStrict', () => {
-  it('enterprise_subsidy + enterprise_id + subsidy_settings を受理', () => {
+  it('enterprise_subsidy + enterprise_id を受理', () => {
     const event = new Event(ENT_EVENT_ID, enterpriseSubsidyEventFields)
     expect(() => assertEnterpriseEventDraftStrict(event)).not.toThrow()
   })

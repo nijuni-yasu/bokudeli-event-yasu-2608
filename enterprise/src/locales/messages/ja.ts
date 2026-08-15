@@ -189,6 +189,7 @@ export default {
       save: '保存',
       save_success: '設定を保存しました',
       save_failed: '設定の保存に失敗しました',
+      load_failed: '全社設定の読み込みに失敗しました',
       company_name_required: '会社名を入力してください',
     },
     members: {
@@ -266,7 +267,16 @@ export default {
     },
     discount: {
       title: '割引設定',
-      note: '公開済みイベントの割引設定には反映されません。未公開イベントは次回保存時に反映されます。',
+      note:
+        '補助設定は翌月以降（適用開始月）から有効になります。当月分は変更できません。\n\n' +
+        '適用開始月以降に開催されるイベントでは、設定変更後に新規にカートへ追加する注文から新設定が適用されます。\n\n' +
+        'すでに確定済み（注文完了）の注文には反映されません。補助額の差額が自動で返金・再請求されることはありません。自己負担額の見直しが必要な場合は、注文期限内であればキャンセル後に再注文してください（キャンセル時の Stripe 返金は自己負担分のみ）。',
+      effective_from_month: '適用開始月',
+      effective_from_month_hint: '翌暦月以降のみ選択できます',
+      effective_from_month_invalid: '適用開始月は翌暦月以降の YYYY-MM を指定してください',
+      history_title: '設定履歴',
+      history_effective_from_month: '適用開始月',
+      history_value: '補助値',
       type: '補助タイプ',
       type_fixed: '固定金額（円）',
       type_percentage: '割合（%）',
