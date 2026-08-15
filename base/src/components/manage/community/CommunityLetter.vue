@@ -128,46 +128,46 @@ const goToCommunitySettings = () => {
       </v-col>
     </v-row>
     <template v-else>
-    <v-row>
-      <v-col md="12" sm="9" cols="12">
-        <v-card class="pa-10 mb-10">
-          <v-row>
-            <v-card-text class="pa-3 title"><div v-html="$t('manage.letter.hint.title')" /></v-card-text>
-          </v-row>
-          <v-row>
-            <v-card-text class="pa-3 description"><div v-html="$t('manage.letter.hint.description')" /></v-card-text>
-          </v-row>
-          <v-row>
-            <v-card-text class="pa-3 description">
-              <v-btn color="primary" size="large" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
-                {{ $t('manage.new_letter') }}
-              </v-btn>
-            </v-card-text>
-          </v-row>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row class="justify-center">
-      <v-col cols="12">
-        <LetterTable
-          :letters="letters"
-          @edit="onEditClick"
-          @delete="onDeleteClick"
-          @copy="onCopyClick"
-          @user-click="onUserClick"
-        />
-      </v-col>
-    </v-row>
-    <v-row v-show="(letters.length ?? 0) > 0" class="justify-center">
-      <v-col md="8" sm="9" cols="12" class="text-center">
-        <IncrementalLoader
-          class="my-5"
-          :total-count="letterListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-          :loaded-count="letterListStore.letterStores?.length ?? 0"
-          @load="letterListStore.next()"
-        />
-      </v-col>
-    </v-row>
+      <v-row>
+        <v-col md="12" sm="9" cols="12">
+          <v-card class="pa-10 mb-10">
+            <v-row>
+              <v-card-text class="pa-3 title"><div v-html="$t('manage.letter.hint.title')" /></v-card-text>
+            </v-row>
+            <v-row>
+              <v-card-text class="pa-3 description"><div v-html="$t('manage.letter.hint.description')" /></v-card-text>
+            </v-row>
+            <v-row>
+              <v-card-text class="pa-3 description">
+                <v-btn color="primary" size="large" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
+                  {{ $t('manage.new_letter') }}
+                </v-btn>
+              </v-card-text>
+            </v-row>
+          </v-card>
+        </v-col>
+      </v-row>
+      <v-row class="justify-center">
+        <v-col cols="12">
+          <LetterTable
+            :letters="letters"
+            @edit="onEditClick"
+            @delete="onDeleteClick"
+            @copy="onCopyClick"
+            @user-click="onUserClick"
+          />
+        </v-col>
+      </v-row>
+      <v-row v-show="(letters.length ?? 0) > 0" class="justify-center">
+        <v-col md="8" sm="9" cols="12" class="text-center">
+          <IncrementalLoader
+            class="my-5"
+            :total-count="letterListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+            :loaded-count="letterListStore.letterStores?.length ?? 0"
+            @load="letterListStore.next()"
+          />
+        </v-col>
+      </v-row>
     </template>
   </v-container>
   <v-container v-else class="manage-container">

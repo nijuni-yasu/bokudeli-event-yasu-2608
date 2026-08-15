@@ -38,7 +38,6 @@ const handleInvalidSlackBot = async (communityId: string, bot: CommunityBot, sta
   logger.warn('Slack webhook is gone; removing community bot binding', {
     communityId,
     botId: bot.id,
-    botKey: bot.id,
     status,
   })
   try {
@@ -53,11 +52,7 @@ const handleInvalidSlackBot = async (communityId: string, bot: CommunityBot, sta
   }
 }
 
-export const sendCommunityBotMessage = async (
-  communityId: string,
-  bot: CommunityBot,
-  text: string,
-): Promise<void> => {
+export const sendCommunityBotMessage = async (communityId: string, bot: CommunityBot, text: string): Promise<void> => {
   if (bot.type !== 'slack') {
     return
   }

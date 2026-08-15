@@ -69,7 +69,7 @@ export const shareSnsButton = async (
   shop: BokudeliPartnerShop,
   // pop-up block を防ぐため、先に window を開いておく
   // TODO copy 等動作の異なる処理を一関数にまとめるのは本来良くないので、修正する
-  _window?: Window,
+  _window?: Window | null,
 ) => {
   const eventUrl = encodeURIComponent(
     getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id),

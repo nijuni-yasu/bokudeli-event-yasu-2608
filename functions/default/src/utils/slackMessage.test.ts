@@ -91,9 +91,9 @@ describe('sendCommunityBotsMessageOrThrow', () => {
     const goneBot = createSlackBot('slack-gone')
     const okBot = createSlackBot('slack-ok')
 
-    getSlackWebhookUrlMock.mockResolvedValueOnce('https://hooks.slack.com/gone').mockResolvedValueOnce(
-      'https://hooks.slack.com/ok',
-    )
+    getSlackWebhookUrlMock
+      .mockResolvedValueOnce('https://hooks.slack.com/gone')
+      .mockResolvedValueOnce('https://hooks.slack.com/ok')
     vi.stubGlobal(
       'fetch',
       vi.fn().mockImplementation(async (url: string) => {
@@ -104,9 +104,7 @@ describe('sendCommunityBotsMessageOrThrow', () => {
       }),
     )
 
-    await expect(
-      sendCommunityBotsMessageOrThrow(communityId, [goneBot, okBot], 'hello'),
-    ).resolves.toBeUndefined()
+    await expect(sendCommunityBotsMessageOrThrow(communityId, [goneBot, okBot], 'hello')).resolves.toBeUndefined()
 
     expect(removeCommunityBotMock).toHaveBeenCalledWith(communityId, 'slack-gone')
     expect(loggerWarnMock).toHaveBeenCalledWith(
@@ -155,9 +153,9 @@ describe('sendCommunityBotsMessageOrThrow', () => {
     const goneBot = createSlackBot('slack-gone')
     const okBot = createSlackBot('slack-ok')
 
-    getSlackWebhookUrlMock.mockResolvedValueOnce('https://hooks.slack.com/gone').mockResolvedValueOnce(
-      'https://hooks.slack.com/ok',
-    )
+    getSlackWebhookUrlMock
+      .mockResolvedValueOnce('https://hooks.slack.com/gone')
+      .mockResolvedValueOnce('https://hooks.slack.com/ok')
     removeCommunityBotMock.mockRejectedValueOnce(new Error('firestore unavailable'))
     vi.stubGlobal(
       'fetch',
@@ -169,9 +167,7 @@ describe('sendCommunityBotsMessageOrThrow', () => {
       }),
     )
 
-    await expect(
-      sendCommunityBotsMessageOrThrow(communityId, [goneBot, okBot], 'hello'),
-    ).resolves.toBeUndefined()
+    await expect(sendCommunityBotsMessageOrThrow(communityId, [goneBot, okBot], 'hello')).resolves.toBeUndefined()
 
     expect(loggerWarnMock).toHaveBeenCalledWith(
       'Failed to remove community bot after gone webhook',

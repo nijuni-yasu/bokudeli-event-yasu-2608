@@ -72,8 +72,9 @@ export const useLetterStore = (
     let unsubscribeLetter: Unsubscribe | null = null
     const subscribeLetter = async () => {
       if (unsubscribeLetter == null) {
+        const letterRef = await getLetterRef()
         unsubscribeLetter = onSnapshot(
-          await getLetterRef(),
+          letterRef,
           (letterDoc) => {
             try {
               letter.value = letterDoc.data() ?? null
@@ -91,7 +92,7 @@ export const useLetterStore = (
               unsubscribeLetter = null
               return
             }
-            reportClientError(err, { documentPath: `communities/*/letters/${letterId}`, severity: 'warn' })
+            reportClientError(err, { documentPath: letterRef.path, severity: 'warn' })
           },
         )
       }
