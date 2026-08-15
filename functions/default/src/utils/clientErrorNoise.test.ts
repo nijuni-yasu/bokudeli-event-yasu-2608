@@ -50,8 +50,11 @@ describe('isClientErrorNoise', () => {
     expect(isClientErrorNoise("null is not an object (evaluating 'h.location')")).toBe(false)
   })
 
-  it('単体 Failed to fetch は true', () => {
-    expect(isClientErrorNoise('Failed to fetch')).toBe(true)
+  it('単体 Failed to fetch は false（#2174 調査完了まで ERROR 維持）', () => {
+    expect(isClientErrorNoise('Failed to fetch')).toBe(false)
+  })
+
+  it('Failed to fetch dynamically imported module は true', () => {
     expect(isClientErrorNoise('Failed to fetch dynamically imported module: https://shokujii.jp/assets/x.js')).toBe(
       true,
     )
