@@ -9,12 +9,18 @@
 | [x] | RC-1 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `window.open()!` の非 null アサーションが別コンポーネントに残存<br>#2164 と同じ型の嘘。`?? undefined` 相当へ統一 |
 | [x] | RC-2 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Prettier 未整形で `format:check` が落ちる<br>`<template v-else>` 追加時のインデント崩れ等 3 ファイル |
 | [x] | RC-3 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `reportClientError` の `documentPath` が `communities/*/...` の擬似パス<br>実 ref の path を渡さないと調査時にドキュメントを特定できない |
-| [ ] | RC-4 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | `useLetterStore` の `permissionDenied` が未使用 export<br>UI へ配線するか公開をやめるかの方針判断が必要 |
-| [ ] | RC-5 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | `window.open(url, '_blank')` に noopener なし（reverse tabnabbing）<br>`'noopener'` 指定は戻り値 null で fallback が誤発火するため方針検討が必要 |
+| [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | `useLetterStore` の `permissionDenied` export を削除<br>内部 unsubscribe 用 ref は維持。UI は letterListStore のみ |
+| [x] | RC-5 | 3788927430, 3788932053 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | `opened.opener = null` で reverse tabnabbing 対策<br>`'noopener'` feature は fallback 破壊のため不使用 |
 | [x] | RC-6 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `_window?: Window` に対しテストが `null` を渡している<br>`base/tsconfig.json` が `*.test.ts` を除外しており型検査で検出されない |
-| [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 📋 仕様追加 | M | `firestore.rules` の letters 権限拡張に対する rules テストが無い<br>`tests/firestore-rules` に support / 非 support の read・write ケースを追加したい |
-| [ ] | RC-8 | なし | 🟡 修正提案 | 未着手 | ❓ 要確認 | 💾 データ | 📋 仕様追加 | M | 単発の 404 / 410 で bot 紐付けを即削除する<br>誤削除時は Slack 再インストールが必要。連続失敗閾値・削除前の情報退避を検討 |
+| [x] | RC-7 | 3788927446, 3788932055 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 📋 仕様追加 | M | `letters.test.ts` で manager/support/拒否ケースを追加<br>isManager \|\| isSupport() の回帰検知 |
+| [x] | RC-8 | 3788932061 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | 404/410 本文パースで削除対象を限定<br>no_service / channel_is_archived / channel_not_found 等のみ remove。未知 404 は WARN のみ |
 | [x] | RC-9 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | warn ログに `botId` と `botKey` で同一値を二重出力<br>読み手に別値と誤解させるため重複を削除 |
+| [x] | RC-10 | 5301311591 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letterList` の `handleLoadError` が re-throw し TaskExecutor で握りつぶされる<br>`reportClientError` を呼ぶよう修正 |
+| [x] | RC-11 | 5301311591 | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | partner 権限不一致時に setup が継続する点<br>`v-if` で非表示のため現状実害なし |
+| [x] | RC-12 | 3788932059 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | 単体 `Failed to fetch` のノイズ化を revert<br>#2174 調査完了まで ERROR 維持。store 購読耐性は残す |
+| [x] | RC-13 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | RC-8/7 追修正後に Prettier 未整形が 3 ファイル残存<br>`slackMessage.ts` / `slackMessage.test.ts` / `letters.test.ts` |
+| [x] | RC-14 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letter.ts` の内部 `permissionDenied` ref が未参照の dead code<br>RC-4 で export 削除後も setter のみ残っていた |
+| [x] | RC-15 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letterList.handleLoadError` の `documentPath` が community_account 擬似パス<br>`_letterListRef?.path` を優先 |
 
 ---
 
@@ -42,11 +48,11 @@
 | [x] | RC-1 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `window.open()!` の非 null アサーションが別コンポーネントに残存<br>#2164 と同じ型の嘘。`?? undefined` 相当へ統一 |
 | [x] | RC-2 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Prettier 未整形で `format:check` が落ちる<br>`<template v-else>` 追加時のインデント崩れ等 3 ファイル |
 | [x] | RC-3 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `reportClientError` の `documentPath` が `communities/*/...` の擬似パス<br>実 ref の path を渡さないと調査時にドキュメントを特定できない |
-| [ ] | RC-4 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | `useLetterStore` の `permissionDenied` が未使用 export<br>UI へ配線するか公開をやめるかの方針判断が必要 |
-| [ ] | RC-5 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | `window.open(url, '_blank')` に noopener なし（reverse tabnabbing）<br>`'noopener'` 指定は戻り値 null で fallback が誤発火するため方針検討が必要 |
+| [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | `useLetterStore` の `permissionDenied` export を削除<br>内部 unsubscribe 用 ref は維持。UI は letterListStore のみ |
+| [x] | RC-5 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | `opened.opener = null` で reverse tabnabbing 対策<br>`'noopener'` feature は fallback 破壊のため不使用 |
 | [x] | RC-6 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `_window?: Window` に対しテストが `null` を渡している<br>`base/tsconfig.json` が `*.test.ts` を除外しており型検査で検出されない |
-| [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 📋 仕様追加 | M | `firestore.rules` の letters 権限拡張に対する rules テストが無い<br>`tests/firestore-rules` に support / 非 support の read・write ケースを追加したい |
-| [ ] | RC-8 | なし | 🟡 修正提案 | 未着手 | ❓ 要確認 | 💾 データ | 📋 仕様追加 | M | 単発の 404 / 410 で bot 紐付けを即削除する<br>誤削除時は Slack 再インストールが必要。連続失敗閾値・削除前の情報退避を検討 |
+| [x] | RC-7 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 📋 仕様追加 | M | `letters.test.ts` で manager/support/拒否ケースを追加<br>isManager \|\| isSupport() の回帰検知 |
+| [x] | RC-8 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📋 仕様追加 | M | 404/410 本文パースで削除対象を限定<br>webhook 失効・channel 不可のみ remove。未知 404 は WARN のみ |
 | [x] | RC-9 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | warn ログに `botId` と `botKey` で同一値を二重出力<br>読み手に別値と誤解させるため重複を削除 |
 
 ---
@@ -197,7 +203,7 @@
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -207,7 +213,7 @@
 
 **想定工数**: S
 
-**判断理由**: 規約の「未使用 export を残さない」に該当するが、修正方針が「UI へ配線」「非公開化」の 2 択で一意に定まらないため [auto-fix-policy](../../.agents/skills/review-comments-evaluate/references/auto-fix-policy.md) の条件付き 🟡 自動修正の対象外とした。
+**判断理由**: UI 配線は不要（`letterListStore.permissionDenied` が CommunityLetter / EventLetter で表示済み）。return から `permissionDenied` を外し、内部 unsubscribe 用 ref のみ維持。
 
 ---
 
@@ -240,7 +246,7 @@
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -250,7 +256,7 @@
 
 **想定工数**: S
 
-**判断理由**: 遷移先が信頼できる固定ホスト（facebook.com / social-plugins.line.me）で緊急性は低い。一方で `'noopener'` を付けると戻り値が null になりフォールバックが壊れるため、修正方針が一意でなく自動修正の対象外とした。
+**判断理由**: `'noopener'` feature 文字列は戻り値 null でフォールバック誤発火するため、`opened.opener = null` / `popupWindow.opener = null` で reverse tabnabbing 対策。Twitter 事前 open 経路も同様。`shareSnsButton.test.ts` で opener クリアと fallback 非破壊を検証。
 
 ---
 
@@ -315,7 +321,7 @@
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -325,7 +331,7 @@
 
 **想定工数**: M
 
-**判断理由**: チェックリスト「`firestore.rules` を変更した場合、`tests/firestore-rules` 側のテストも追加・更新しているか」に該当する。ただし letters 用のテストファイル新規作成（エミュレータのセットアップ・`configs/global` の support_user_ids 準備を含む）が必要で工数 M のため、条件付き 🟡 自動修正の対象外とした。ルール自体は同ファイル内の `album_items` / `members` と同じ `isManager() || isSupport()` パターンで、記述の妥当性に問題はない。
+**判断理由**: `tests/firestore-rules/src/letters.test.ts` を新規追加。`configs/global.support_user_ids` seed、manager/support/member/outsider/未認証/クロスコミュニティの read・write・delete を 12 ケースで検証。emulator CI で pass。
 
 ---
 
@@ -358,9 +364,9 @@
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
-**PRスコープ**: ❓ 要確認
+**PRスコープ**: 📌 スコープ内
 
 **ラベル**: 💾 データ
 
@@ -368,7 +374,7 @@
 
 **想定工数**: M
 
-**判断理由**: 自動 remove は Issue #2141 で意図された仕様のため、変更するかどうかは仕様判断が必要（[auto-fix-policy](../../.agents/skills/review-comments-evaluate/references/auto-fix-policy.md) の「仕様判断が必要」に該当し自動修正対象外）。PRスコープを ❓ 要確認としたのは、Issue #2141 の要件が「404/410 で即削除」までを含むのか、耐性強化を別 Issue に切り出すのかがコード上から確定できないため。
+**判断理由**: Issue #2141 の ERROR 止血を維持しつつ、404/410 一律削除をやめレスポンス本文で判定する。削除対象は `no_service` / `no_active_hooks` / `invalid_token` / `channel_is_archived` / `channel_not_found` および HTTP 410。消すのは `communities/{id}/bots` の紐付けのみで、復旧は `/shokujii add` で可能。未知の 404 本文は remove せず WARN のみ（ERROR 量産も回避）。
 
 ---
 
@@ -408,5 +414,222 @@
 **想定工数**: S
 
 **判断理由**: 冗長かつ誤読を招くフィールドで、削除以外の妥当な修正方針がない（`botKey` に別値を入れる余地がない）。削除しても Cloud Logging での追跡性は `botId` で維持される。テスト（`slackMessage.test.ts` 7 件）は `objectContaining` で `botId` を検証しており影響なし。
+
+---
+
+## 評価セッション（2026-08-15 17:14・review-comments-evaluate）
+
+- **評価日時**: 2026-08-15 17:14 JST
+- **ブランチ名**: `fix/2141`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2259
+- **REVIEW_REQUEST_SINCE**: 2026-08-15T08:04:00Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 #5301285134、Codex 接続案内 #5301311933）
+- **手順 4a 自動修正**: RC-10（🟡 1 件）
+- **重複 RC 化せず**: RC-5（Copilot #3788927430 / Codex #3788932053）、RC-7（Copilot #3788927446 / Codex #3788932055）、RC-8（Codex #3788932061 で channel_archived 論点を追記）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-10 | 5301311591 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letterList` の `handleLoadError` が re-throw し TaskExecutor で握りつぶされる<br>`reportClientError` を呼ぶよう修正 |
+| [x] | RC-11 | 5301311591 | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | partner 権限不一致時に setup が継続する点<br>`v-if` で非表示のため現状実害なし |
+| [x] | RC-12 | 3788932059 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | 単体 `Failed to fetch` のノイズ化を revert<br>#2174 調査完了まで ERROR 維持。store 購読耐性は残す |
+
+---
+
+**識別子**: RC-10（GitHub id: 5301311591・Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/letterList.ts:55`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      throw error
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 `handleLoadError` で permission-denied 以外を re-throw すると TaskExecutor に `.catch()` がなく unhandled rejection となり `reportClientError` が呼ばれない。`community.ts` / `event.ts` と非一貫 → re-throw をやめ `reportClientError` を呼ぶ。
+
+**コメント要約**: letterList の pagination エラーが TaskExecutor 経由で握りつぶされログに残らない。permission-denied 以外も `reportClientError` で報告する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: Copilot 指摘どおり `throw error` は TaskExecutor の `finally()` のみで捕捉されず実害がある。修正案が一意のため手順 4a で `reportClientError` 呼び出しに置換した。
+
+---
+
+**識別子**: RC-11（GitHub id: 5301311591・Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `partner/src/pages/order/[eventId].vue:44`
+
+**レビュワーのコメント（原文）**:
+
+🟡 権限不一致時に `return` がなく setup が継続する。現状は `v-if="isAuthorized && ..."` で非表示のため実害は小さい。必須ではない。
+
+**コメント要約**: 非認可時も setup が走るが、テンプレート側でガード済み。現 PR では対応不要。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: レビュワー自身が「必須ではない」と明記。`isAuthorized` ガードと `router.replace` で UX は確保されている。
+
+---
+
+**識別子**: RC-12（GitHub id: 3788932059）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/utils/clientErrorNoise.ts:57`
+
+**レビュワーのコメント（原文）**:
+
+🟡 単体 `Failed to fetch` を一律ノイズ扱いしない。CORS/DNS/API 停止でも同メッセージになり、Monitoring からも除外され検知経路がなくなる。
+
+**コメント要約**: #2174 の noise 化が障害検知を弱める可能性。発生箇所限定や頻度監視など設計判断が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: Codex 指摘どおり、#2174 原因未特定のうち単体 `Failed to fetch` を WARN 格下げすると CORS/API 障害の検知経路が弱くなる。`clientErrorNoise.ts` / Monitoring filter / `parse_logs.py` から単体 `Failed to fetch` のノイズ化のみ revert し、`community.ts` / `event.ts` の store 購読エラー耐性は維持。主因特定後に route 限定ノイズ化等を #2174 で再検討する。
+
+---
+
+## 評価セッション（2026-08-15 18:57・shokujii-code-review）
+
+- **評価日時**: 2026-08-15 18:57 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: `fix/2141`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2259
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+**レビュー範囲**: `git diff origin/development...HEAD` + 未コミット差分（RC-4〜12 対応・`letters.test.ts` 追加・Failed to fetch revert 等）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-13 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | RC-8/7 追修正後に Prettier 未整形が 3 ファイル残存<br>`slackMessage.ts` / `slackMessage.test.ts` / `letters.test.ts` |
+| [x] | RC-14 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letter.ts` の内部 `permissionDenied` ref が未参照の dead code<br>RC-4 で export 削除後も setter のみ残っていた |
+| [x] | RC-15 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letterList.handleLoadError` の `documentPath` が community_account 擬似パス<br>`_letterListRef?.path` を優先 |
+
+---
+
+**識別子**: RC-13（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/slackMessage.ts`、`functions/default/src/utils/slackMessage.test.ts`、`tests/firestore-rules/src/letters.test.ts`
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: RC-2 対応後に Slack 本文パース・rules テスト追加で 3 ファイルが再び Prettier 未整形になっている。`npx prettier --check` が失敗し PR verify の `format:check` が落ちる → `prettier --write` で整形する。
+
+**コメント要約**: 追修正で整形漏れが再発。3 ファイルを Prettier 整形すれば CI format ゲートを通過できる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: PR verify 必須ゲート。機械的修正のみで挙動影響なし。本セッションで `prettier --write` 実行済み。
+
+---
+
+**識別子**: RC-14（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/letter.ts:70`
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-4 で `permissionDenied` の export を削除したが、内部 ref と `permissionDenied.value = true` の代入が残り、参照箇所が無い dead code になっている → ref と setter を削除し、permission-denied 時は `letter.value = null` と unsubscribe のみ行う。
+
+**コメント要約**: export 削除後も内部 ref が書き込み専用で残っていた。UI は `letterListStore.permissionDenied` のみ使用するため letter store 側の ref は不要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 修正方針が一意。本セッションで ref 削除済み。
+
+---
+
+**識別子**: RC-15（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/letterList.ts:56`
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-10 で追加した `handleLoadError` の `reportClientError` が `communities/${communityAccount}/letters` という擬似パスを渡している。RC-3 と同様、解決済み ref があれば実 path を使うべき → `_letterListRef?.path` を優先し、未取得時のみフォールバックする。
+
+**コメント要約**: letterList のエラー報告 path が community_account スラッグベースの擬似パス。`_letterListRef` があれば Firestore 実 path を渡す。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-3 と同一方針。1 行で修正可能。本セッションで `_letterListRef?.path ?? ...` に変更済み。
 
 ---
