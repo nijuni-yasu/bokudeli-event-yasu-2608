@@ -16,6 +16,7 @@ import {
   replayEnterpriseSubsidyAmountsForOrders,
   resolveEnterpriseSubsidySettingsForMonth,
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import type { EnterpriseSubsidySettingsType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -179,7 +180,7 @@ const computeEnterpriseSubsidyCartTotals = (
   const totalMenuPrice = orders.reduce((sum, o) => sum + o.menu_price, 0)
   const eventMonth = formatYearMonth(event.event_start_datetime)
   const monthlyUsageByMonth = budget?.monthlyUsage ?? null
-  let settings
+  let settings: EnterpriseSubsidySettingsType | null
   try {
     settings =
       budget == null ? null : resolveEnterpriseSubsidySettingsForMonth(budget.subsidySettingsHistory, eventMonth)

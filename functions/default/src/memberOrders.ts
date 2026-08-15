@@ -7,6 +7,7 @@ import {
   ConfirmOrderResponse,
 } from '@shokujii/common/apis/order.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import type { EnterpriseSubsidySettingsType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import { EventMember } from '@shokujii/common/schemas/EventMemberOrder.js'
 import {
   computePaymentCommunityBillOffAmount,
@@ -83,7 +84,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       }
     }
 
-    let resolvedSubsidySettings: Awaited<ReturnType<typeof loadResolvedSubsidySettings>> | undefined
+    let resolvedSubsidySettings: EnterpriseSubsidySettingsType | undefined
     if (eventData.event_payment === 'enterprise_subsidy') {
       if (enterpriseId == null || enterpriseMember == null) {
         throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
@@ -109,7 +110,10 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
 
     if (eventData.event_payment === 'enterprise_subsidy') {
       if (resolvedSubsidySettings == null || enterpriseId == null || enterpriseMember == null) {
-        throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
+        throw new HttpsError(
+          'failed-precondition',
+          'enterprise_id and resolved subsidy settings are required for enterprise_subsidy',
+        )
       }
       return addEnterpriseSubsidyMenusToCart({
         communityId: community_id,
