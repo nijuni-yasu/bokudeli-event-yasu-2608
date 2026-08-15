@@ -22,10 +22,11 @@ vi.mock('../stores/memberOrder.js', () => ({
   createOrder: vi.fn(),
   saveOrder: vi.fn(),
   clearOrderPayEnterpriseSubsidyAmount: vi.fn(),
+  getOrdersInCart: vi.fn(),
 }))
 
 import { getEnterpriseMember, getEnterpriseMemberInTransaction } from '../stores/enterprise.js'
-import { createOrder, saveOrder, clearOrderPayEnterpriseSubsidyAmount } from '../stores/memberOrder.js'
+import { createOrder, saveOrder, clearOrderPayEnterpriseSubsidyAmount, getOrdersInCart } from '../stores/memberOrder.js'
 import { writeAuditLog } from './auditLog.js'
 import {
   addEnterpriseSubsidyMenusToCart,
@@ -268,6 +269,63 @@ describe('enterprise subsidy order replay', () => {
     expect(writeAuditLog).not.toHaveBeenCalled()
   })
 
+  it('syncEnterpriseSubsidyOrdersBeforeConfirm は carted_at 順に固定し書き戻し後の再試行で recalculated=false に収束する', async () => {
+    const orderFirst = makeOrder('o-first', 800, 500)
+    orderFirst.carted_at = 1000
+    const orderSecond = makeOrder('o-second', 800, 500)
+    orderSecond.carted_at = 2000
+    const event = new ShokujiiEvent('e1', {
+      ...baseEventFields,
+      enterprise_id: 'ent1',
+      event_payment: 'enterprise_subsidy',
+      event_start_datetime: Date.UTC(2026, 5, 15),
+    })
+    const member = new EnterpriseMember('u1', {
+      user_id: 'u1',
+      user_email: 'user@example.com',
+      monthly_usage: { '2026-06': 7400 },
+      monthly_order_count: {},
+    })
+    const transaction = {
+      get: vi.fn().mockResolvedValue({
+        exists: true,
+        data: () => mockEnterprise(),
+      }),
+    } as never
+
+    const ordersFirstTry = [orderSecond, orderFirst]
+    const first = await syncEnterpriseSubsidyOrdersBeforeConfirm({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      communityId: 'c1',
+      eventId: 'e1',
+      event,
+      orders: ordersFirstTry,
+      orderIds: ['o-second', 'o-first'],
+      member,
+      transaction,
+    })
+    expect(first.recalculated).toBe(true)
+    expect(ordersFirstTry.map((o) => o.order_id)).toEqual(['o-first', 'o-second'])
+    expect(orderFirst.pay_enterprise_subsidy_amount).toBe(100)
+    expect(orderSecond.pay_enterprise_subsidy_amount).toBeUndefined()
+    expect(first.recalculatedAudit?.details.order_ids).toEqual(['o-first', 'o-second'])
+
+    const ordersSecondTry = [orderSecond, orderFirst]
+    const second = await syncEnterpriseSubsidyOrdersBeforeConfirm({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      communityId: 'c1',
+      eventId: 'e1',
+      event,
+      orders: ordersSecondTry,
+      orderIds: ['o-second', 'o-first'],
+      member,
+      transaction,
+    })
+    expect(second.recalculated).toBe(false)
+  })
+
   it('syncEnterpriseSubsidyOrdersBeforeConfirm は expected undefined 時に補助額フィールドを削除する', async () => {
     const orders = [makeOrder('o1', 800, 500), makeOrder('o2', 800, 500)]
     const event = new ShokujiiEvent('e1', {
@@ -452,6 +510,8 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
 
   beforeEach(() => {
     vi.mocked(getEnterpriseMemberInTransaction).mockReset()
+    vi.mocked(getOrdersInCart).mockReset()
+    vi.mocked(getOrdersInCart).mockResolvedValue([])
     vi.mocked(createOrder).mockReset()
     vi.mocked(createOrder).mockResolvedValue(
       new EventMemberOrder('new-order', {

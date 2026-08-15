@@ -18,6 +18,10 @@ import {
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import type { EnterpriseSubsidySettingsType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import {
+  sortEventMemberOrdersForEnterpriseSubsidyReplay,
+  sortOrderIdsForEnterpriseSubsidyReplay,
+} from '@shokujii/common/utils/eventMemberOrderSort.js'
 import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
@@ -180,6 +184,7 @@ const computeEnterpriseSubsidyCartTotals = (
   | 'subsidyTotalsFromReplay'
 > => {
   const totalMenuPrice = orders.reduce((sum, o) => sum + o.menu_price, 0)
+  const replayOrders = sortEventMemberOrdersForEnterpriseSubsidyReplay(orders)
   const eventMonth = formatYearMonth(event.event_start_datetime)
   const monthlyUsageByMonth = budget?.monthlyUsage ?? null
   let settings: EnterpriseSubsidySettingsType | null
@@ -203,7 +208,7 @@ const computeEnterpriseSubsidyCartTotals = (
   }
   const monthlyUsed = monthlyUsageByMonth[eventMonth] ?? 0
   const monthlyLimit = settings.monthly_limit_per_user
-  const replay = replayEnterpriseSubsidyAmountsForOrders('enterprise_subsidy', settings, orders, monthlyUsed)
+  const replay = replayEnterpriseSubsidyAmountsForOrders('enterprise_subsidy', settings, replayOrders, monthlyUsed)
   return {
     totalMenuPrice,
     totalDiscount: replay.subsidyTotal,
@@ -354,7 +359,7 @@ const startOrderProcess = async () => {
     if (enriched === undefined) return
 
     const { event, orders } = cartItem
-    const orderIds = orders.map((o) => o.order_id)
+    const orderIds = sortOrderIdsForEnterpriseSubsidyReplay(orders)
     const communityId = event.community_id
     const eventId = event.event_id
 
