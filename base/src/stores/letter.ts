@@ -67,7 +67,6 @@ export const useLetterStore = (
     }
 
     const letter = ref<BokudeliLetter | null>(null)
-    const permissionDenied = ref(false)
 
     let unsubscribeLetter: Unsubscribe | null = null
     const subscribeLetter = async () => {
@@ -86,7 +85,6 @@ export const useLetterStore = (
           (err) => {
             console.error('subscribeLetter snapshot error', err)
             if (isFirestorePermissionDenied(err)) {
-              permissionDenied.value = true
               letter.value = null
               unsubscribeLetter?.()
               unsubscribeLetter = null
@@ -120,7 +118,6 @@ export const useLetterStore = (
 
     return {
       letter,
-      permissionDenied,
       updateLetter,
       copyLetter,
       unsubscribe,
