@@ -26,7 +26,6 @@ NOT (
     OR jsonPayload.error_message="Rejected"
     OR jsonPayload.error_message="rejected"
     OR jsonPayload.error_message=~"Load failed"
-    OR jsonPayload.error_message="Failed to fetch"
     OR jsonPayload.error_message=~"ServiceWorker"
     OR jsonPayload.error_message=~"serviceworker"
   )
@@ -35,12 +34,14 @@ NOT (
 
 ### 除外されるもの（ノイズ）
 
-- clientError の chunk 読み込み失敗、ServiceWorker 失敗、単体 `Rejected` / `rejected`、`Connection failed.`、単体 `Failed to fetch` 等
+- clientError の chunk 読み込み失敗、ServiceWorker 失敗、単体 `Rejected` / `rejected`、`Connection failed.` 等
+- 単体 `Failed to fetch` は **除外しない**（[#2174](https://github.com/nijuniinc/bokudeli-event-new/issues/2174) 調査中。CORS/API 障害の検知経路を維持）
 - Cloud Audit / Cloud Scheduler の infra ERROR
 
 ### 通知されるもの（要対応）
 
 - **ZodError**（`error_type=ZodError`）— filter でも server 側でも ERROR 維持
+- 単体 **`Failed to fetch`**（`error_message="Failed to fetch"`）— #2174 調査中は通知対象
 - Storage / Rules 系 clientError（`storage/unauthorized` 等）
 - サーバー Functions ERROR（Slack 404、`handleEventOgpRequest` HTTP 500 等）
 - 未知の clientError（shareSns TypeError、partner 権限不一致等）
@@ -80,7 +81,7 @@ python3 .agents/skills/gcp-logging-error-analysis/scripts/fetch_logs.py \
 # 新 filter（正本を --filter に1行で渡す）
 python3 .agents/skills/gcp-logging-error-analysis/scripts/fetch_logs.py \
   --project=bokudeli-event-dev --freshness=24h \
-  --filter='severity>=ERROR AND NOT (logName=~"cloudaudit.googleapis.com" OR logName=~"cloudscheduler.googleapis.com") AND NOT (jsonPayload.module="clientError" AND (jsonPayload.error_message=~"Failed to fetch dynamically imported module" OR jsonPayload.error_message=~"Failed to register a ServiceWorker" OR jsonPayload.error_message=~"Connection failed." OR jsonPayload.error_message="Rejected" OR jsonPayload.error_message="rejected" OR jsonPayload.error_message=~"Load failed" OR jsonPayload.error_message="Failed to fetch" OR jsonPayload.error_message=~"ServiceWorker" OR jsonPayload.error_message=~"serviceworker"))' \
+  --filter='severity>=ERROR AND NOT (logName=~"cloudaudit.googleapis.com" OR logName=~"cloudscheduler.googleapis.com") AND NOT (jsonPayload.module="clientError" AND (jsonPayload.error_message=~"Failed to fetch dynamically imported module" OR jsonPayload.error_message=~"Failed to register a ServiceWorker" OR jsonPayload.error_message=~"Connection failed." OR jsonPayload.error_message="Rejected" OR jsonPayload.error_message="rejected" OR jsonPayload.error_message=~"Load failed" OR jsonPayload.error_message=~"ServiceWorker" OR jsonPayload.error_message=~"serviceworker"))' \
   -o /tmp/after.json --parse
 ```
 
