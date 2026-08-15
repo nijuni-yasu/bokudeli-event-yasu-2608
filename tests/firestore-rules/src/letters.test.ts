@@ -32,11 +32,7 @@ function unauthenticated() {
   return testEnv.unauthenticatedContext()
 }
 
-function letterRef(
-  context: ReturnType<RulesTestEnvironment['authenticatedContext']>,
-  communityId: string,
-  letterId: string,
-) {
+function letterRef(context: RulesTestContext, communityId: string, letterId: string) {
   return context.firestore().collection('communities').doc(communityId).collection('letters').doc(letterId)
 }
 
@@ -88,7 +84,7 @@ function minimalLetterData(communityId: string, letterId: string) {
 }
 
 async function seedLetter(context: RulesTestContext, communityId: string, letterId: string): Promise<void> {
-  await letterRef(context as never, communityId, letterId).set(minimalLetterData(communityId, letterId))
+  await letterRef(context, communityId, letterId).set(minimalLetterData(communityId, letterId))
 }
 
 describe('letters firestore rules', () => {
@@ -172,7 +168,7 @@ describe('letters firestore rules', () => {
   })
 
   it('unauthenticated user cannot read letters', async () => {
-    await assertFails(letterRef(unauthenticated() as never, COMMUNITY_A, LETTER_ID).get())
+    await assertFails(letterRef(unauthenticated(), COMMUNITY_A, LETTER_ID).get())
   })
 
   it('outsider cannot read or write letters', async () => {

@@ -21,6 +21,9 @@
 | [x] | RC-13 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | RC-8/7 追修正後に Prettier 未整形が 3 ファイル残存<br>`slackMessage.ts` / `slackMessage.test.ts` / `letters.test.ts` |
 | [x] | RC-14 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letter.ts` の内部 `permissionDenied` ref が未参照の dead code<br>RC-4 で export 削除後も setter のみ残っていた |
 | [x] | RC-15 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letterList.handleLoadError` の `documentPath` が community_account 擬似パス<br>`_letterListRef?.path` を優先 |
+| [x] | RC-16 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `subscribeEvent` の snapshot error で `rejectPendingLoadedEvent` を呼んでいない<br>購読が切れても `getLoadedEvent` が timeout まで待ち、原因が timeout Error にすり替わる |
+| [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letters.test.ts` に不要な `as never` キャストが 2 箇所<br>`RulesTestContext` で型が一致するためキャスト不要 |
+| [x] | RC-18 | なし | 👌 修正不要 | — | 📤 スコープ外 | — | 👀 確認のみ | — | `community.ts` は snapshot error 時も `getLoadedCommunity` が timeout まで待つ<br>pending reject 機構自体が無く新設は M。本 PR で回帰は無いため対象外 |
 
 ---
 
@@ -631,5 +634,146 @@
 **想定工数**: S
 
 **判断理由**: RC-3 と同一方針。1 行で修正可能。本セッションで `_letterListRef?.path ?? ...` に変更済み。
+
+---
+
+## 評価セッション（2026-08-15 19:05・shokujii-code-review）
+
+- **評価日時**: 2026-08-15 19:05 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: `fix/2141`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2259
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+**レビュー範囲**: `git diff origin/development...HEAD`（15 コミット / 24 ファイル・作業ツリー clean）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-16 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `subscribeEvent` の snapshot error で `rejectPendingLoadedEvent` を呼んでいない<br>購読が切れても `getLoadedEvent` が timeout まで待ち、原因が timeout Error にすり替わる |
+| [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letters.test.ts` に不要な `as never` キャストが 2 箇所<br>`RulesTestContext` で型が一致するためキャスト不要 |
+| [x] | RC-18 | なし | 👌 修正不要 | — | 📤 スコープ外 | — | 👀 確認のみ | — | `community.ts` は snapshot error 時も `getLoadedCommunity` が timeout まで待つ<br>pending reject 機構自体が無く新設は M。本 PR で回帰は無いため対象外 |
+
+---
+
+**識別子**: RC-16（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/event.ts:400`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++          (err) => {
++            console.error('subscribeEvent snapshot error', err)
++            reportClientError(err, { documentPath: eventRef.path, severity: 'warn' })
++            unsubscribeEvent?.()
++            unsubscribeEvent = null
++          },
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 本 PR で追加した `onSnapshot` の error コールバックが購読を破棄するだけで、待機中の `getLoadedEvent` を reject していない。購読が切れた以上 `event` は二度と更新されないため、待機者は timeout まで空振りする（`user` guard 5s、`enterprise` guard は 8s × 2 回リトライで最大 16s）。しかも最終的に投げられるのは実際の原因（permission-denied 等）ではなく `Event not loaded within Nms` にすり替わる → ZodError と同様に error コールバックでも `rejectPendingLoadedEvent(err)` を呼ぶ。
+
+**コメント要約**: snapshot error で購読を捨てているのに pending の `getLoadedEvent` を reject しないため、ガード待ちが数秒〜十数秒伸び、原因も timeout Error に置き換わる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 既存の `rejectPendingLoadedEvent` を 1 行呼ぶだけで方針が一意。呼び出し元（`user` / `enterprise` / `partner` の guard・`currentUser.ts`）はいずれも catch 済みで、ZodError 以外は `/404` へ倒す挙動のため遷移先は変わらず、待ち時間と Cloud Logging に残る原因のみ改善する。pending が無いときは no-op のため unhandled rejection も生じない。`base` の vitest 119 件 pass。
+
+---
+
+**識別子**: RC-17（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `tests/firestore-rules/src/letters.test.ts:36`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++function letterRef(
++  context: ReturnType<RulesTestEnvironment['authenticatedContext']>,
++  communityId: string,
++  letterId: string,
++) {
+...
++  await letterRef(context as never, communityId, letterId).set(minimalLetterData(communityId, letterId))
+...
++    await assertFails(letterRef(unauthenticated() as never, COMMUNITY_A, LETTER_ID).get())
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-7 で追加した rules テストに `as never` が 2 箇所ある。`authenticatedContext()` / `unauthenticatedContext()` / `withSecurityRulesDisabled()` はいずれも `RulesTestContext` を返すため、`letterRef` の引数型を `RulesTestContext` にすればキャストは不要になる。AGENTS.md の `as` 禁止に反し、将来 API が変わっても型エラーで気づけない → 引数型を `RulesTestContext` に変更し `as never` を削除する。
+
+**コメント要約**: rules テストの `as never` は型が一致しているため不要。`as` を残すと将来のシグネチャ変更を型検査で検出できない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `@firebase/rules-unit-testing` の型定義上 3 メソッドとも戻り値は `RulesTestContext` で、キャスト削除後も `tsc --noEmit --strict` と `eslint --max-warnings=0` が pass することを確認済み。修正方針が一意。
+
+---
+
+**識別子**: RC-18（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/community.ts:574`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++          (err) => {
++            console.error('subscribeCommunity snapshot error', err)
++            reportClientError(err, { documentPath: communityRef.path, severity: 'warn' })
++            unsubscribeCommunity?.()
++            unsubscribeCommunity = null
++          },
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: RC-16 と同じ構造で、`getLoadedCommunity` の待機者は snapshot error 後も timeout（既定 5s）まで待つ。ただし `community.ts` には `event.ts` の `rejectPendingLoadedEvent` に相当する pending reject 機構が無く、新設は `getLoadedCommunity` の Promise 管理まで含む中規模改修になる → 本 PR は購読エラーの ERROR 化を止血する範囲に留め、対応しない。
+
+**コメント要約**: community 側も同じ待ちが残るが、reject 機構の新設は本 PR のスコープ外。エラー未報告だった従来比で回帰は無い。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📤 スコープ外
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: 変更前は error コールバック自体が無く、同じく timeout まで待っていたため本 PR による回帰ではない。`getLoadedCommunity` の pending 管理新設は工数 M で auto-fix 条件（S・方針一意）を満たさない。必要になった時点で `event.ts` と同じ機構を横展開する。
 
 ---

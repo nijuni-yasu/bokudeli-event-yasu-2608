@@ -420,6 +420,8 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
             reportClientError(err, { documentPath: eventRef.path, severity: 'warn' })
             unsubscribeEvent?.()
             unsubscribeEvent = null
+            // 購読が切れた以上 event は更新されないため、待機中の getLoadedEvent を timeout 前に失敗させる
+            rejectPendingLoadedEvent(err)
           },
         )
       }
