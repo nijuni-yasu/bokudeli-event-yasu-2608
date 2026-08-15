@@ -2,7 +2,7 @@
 import type { EnterpriseDiscountType } from '@shokujii/common/schemas/Enterprise.js'
 import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import { YEAR_MONTH_PATTERN } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
-import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import { getMinimumEffectiveFromMonth } from '@shokujii/common/utils/datetime.js'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { updateEnterpriseSubsidySettings } from '@/apis/enterprise'
 import { formatYearMonthLabel } from '@/composable/enterpriseMemberMonthlyUsageHistory.js'
@@ -30,16 +30,6 @@ const saving = ref(false)
 const discountValueError = ref<string>()
 const monthlyLimitError = ref<string>()
 const effectiveFromMonthError = ref<string>()
-
-function getMinimumEffectiveFromMonth(): string {
-  const current = formatYearMonth(Date.now())
-  const [yearText, monthText] = current.split('-')
-  const year = Number(yearText)
-  const month = Number(monthText)
-  const nextMonth = month === 12 ? 1 : month + 1
-  const nextYear = month === 12 ? year + 1 : year
-  return `${nextYear}-${String(nextMonth).padStart(2, '0')}`
-}
 
 const effectiveFromMonth = ref(getMinimumEffectiveFromMonth())
 
