@@ -83,9 +83,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       }
     }
 
-    let resolvedSubsidySettings:
-      | Awaited<ReturnType<typeof loadResolvedSubsidySettings>>
-      | undefined
+    let resolvedSubsidySettings: Awaited<ReturnType<typeof loadResolvedSubsidySettings>> | undefined
     if (eventData.event_payment === 'enterprise_subsidy') {
       if (enterpriseId == null || enterpriseMember == null) {
         throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
