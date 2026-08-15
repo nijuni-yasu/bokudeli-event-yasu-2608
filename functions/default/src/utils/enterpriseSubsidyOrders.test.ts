@@ -21,10 +21,11 @@ vi.mock('../stores/enterprise.js', () => ({
 vi.mock('../stores/memberOrder.js', () => ({
   createOrder: vi.fn(),
   saveOrder: vi.fn(),
+  clearOrderPayEnterpriseSubsidyAmount: vi.fn(),
 }))
 
 import { getEnterpriseMember, getEnterpriseMemberInTransaction } from '../stores/enterprise.js'
-import { createOrder, saveOrder } from '../stores/memberOrder.js'
+import { createOrder, saveOrder, clearOrderPayEnterpriseSubsidyAmount } from '../stores/memberOrder.js'
 import {
   addEnterpriseSubsidyMenusToCart,
   assertActiveEnterpriseMember,
@@ -250,6 +251,43 @@ describe('enterprise subsidy order replay', () => {
     expect(replay.recalculated).toBe(true)
     expect(orders[0].pay_enterprise_subsidy_amount).toBe(500)
     expect(saveOrder).toHaveBeenCalled()
+  })
+
+  it('syncEnterpriseSubsidyOrdersBeforeConfirm は expected undefined 時に補助額フィールドを削除する', async () => {
+    const orders = [makeOrder('o1', 800, 500), makeOrder('o2', 800, 500)]
+    const event = new ShokujiiEvent('e1', {
+      ...baseEventFields,
+      enterprise_id: 'ent1',
+      event_payment: 'enterprise_subsidy',
+      event_start_datetime: Date.UTC(2026, 5, 15),
+    })
+    const member = new EnterpriseMember('u1', {
+      user_id: 'u1',
+      user_email: 'user@example.com',
+      monthly_usage: { '2026-06': 7400 },
+      monthly_order_count: {},
+    })
+    const transaction = {
+      get: vi.fn().mockResolvedValue({
+        exists: true,
+        data: () => mockEnterprise(),
+      }),
+    } as never
+    const replay = await syncEnterpriseSubsidyOrdersBeforeConfirm({
+      enterpriseId: 'ent1',
+      userId: 'u1',
+      communityId: 'c1',
+      eventId: 'e1',
+      event,
+      orders,
+      orderIds: ['o1', 'o2'],
+      member,
+      transaction,
+    })
+    expect(replay.recalculated).toBe(true)
+    expect(orders[0].pay_enterprise_subsidy_amount).toBe(100)
+    expect(orders[1].pay_enterprise_subsidy_amount).toBeUndefined()
+    expect(clearOrderPayEnterpriseSubsidyAmount).toHaveBeenCalledWith('c1', 'e1', 'u1', 'o2', transaction)
   })
 })
 

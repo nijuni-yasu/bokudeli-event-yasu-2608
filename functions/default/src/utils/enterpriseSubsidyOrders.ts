@@ -20,7 +20,7 @@ import {
   getEnterpriseRef,
 } from '../stores/enterprise.js'
 import type { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
-import { createOrder, saveOrder } from '../stores/memberOrder.js'
+import { clearOrderPayEnterpriseSubsidyAmount, createOrder, saveOrder } from '../stores/memberOrder.js'
 import type { ShokujiiEvent } from '../stores/event.js'
 import { writeAuditLog } from './auditLog.js'
 
@@ -113,13 +113,20 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
     member.monthly_usage[eventMonth] ?? 0,
   )
 
+  const storedBeforeRecalc = orders.map((order) => order.pay_enterprise_subsidy_amount ?? null)
+
   let recalculated = false
   for (let i = 0; i < orders.length; i++) {
     const expected = replay.expectedAmounts[i]
     if (orders[i].pay_enterprise_subsidy_amount !== expected) {
       recalculated = true
-      orders[i].pay_enterprise_subsidy_amount = expected
-      saveOrder(communityId, eventId, userId, orders[i], transaction)
+      if (expected === undefined) {
+        delete orders[i].pay_enterprise_subsidy_amount
+        await clearOrderPayEnterpriseSubsidyAmount(communityId, eventId, userId, orders[i].id, transaction)
+      } else {
+        orders[i].pay_enterprise_subsidy_amount = expected
+        saveOrder(communityId, eventId, userId, orders[i], transaction)
+      }
     }
   }
 
@@ -133,7 +140,7 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
         event_id: event.id,
         order_ids: orderIds,
         expected: replay.expectedAmounts,
-        stored: orders.map((o) => o.pay_enterprise_subsidy_amount ?? null),
+        stored: storedBeforeRecalc,
       },
     })
   }

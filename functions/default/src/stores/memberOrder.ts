@@ -1,5 +1,6 @@
 import {
   DocumentData,
+  FieldValue,
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
@@ -219,6 +220,22 @@ export const saveOrder = async (
     await orderRef.set(order, { merge: true })
   } else {
     transaction.set(orderRef, order, { merge: true })
+  }
+}
+
+export const clearOrderPayEnterpriseSubsidyAmount = async (
+  communityId: string,
+  eventId: string,
+  userId: string,
+  orderId: string,
+  transaction?: Transaction,
+): Promise<void> => {
+  const orderRef = ordersCollection(communityId, eventId, userId).doc(orderId)
+
+  if (transaction === undefined) {
+    await orderRef.update({ pay_enterprise_subsidy_amount: FieldValue.delete() })
+  } else {
+    transaction.update(orderRef, { pay_enterprise_subsidy_amount: FieldValue.delete() })
   }
 }
 

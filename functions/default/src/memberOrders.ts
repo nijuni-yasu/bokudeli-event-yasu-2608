@@ -82,6 +82,17 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       }
     }
 
+    let resolvedSubsidySettings:
+      | Awaited<ReturnType<typeof loadResolvedSubsidySettings>>
+      | undefined
+    if (eventData.event_payment === 'enterprise_subsidy') {
+      if (enterpriseId == null || enterpriseMember == null) {
+        throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
+      }
+      const eventMonth = formatYearMonth(eventData.event_start_datetime)
+      resolvedSubsidySettings = await loadResolvedSubsidySettings(enterpriseId, eventMonth, transaction)
+    }
+
     const existingMember = await getMember(community_id, event_id, uid, transaction)
 
     if (existingMember == null) {
@@ -98,18 +109,16 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
     }
 
     if (eventData.event_payment === 'enterprise_subsidy') {
-      if (enterpriseId == null || enterpriseMember == null) {
+      if (resolvedSubsidySettings == null || enterpriseId == null || enterpriseMember == null) {
         throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
       }
-      const eventMonth = formatYearMonth(eventData.event_start_datetime)
-      const settings = await loadResolvedSubsidySettings(enterpriseId, eventMonth, transaction)
       return addEnterpriseSubsidyMenusToCart({
         communityId: community_id,
         eventId: event_id,
         userId: uid,
         enterpriseId,
         event: eventData,
-        settings,
+        settings: resolvedSubsidySettings,
         menus,
         eventMenus,
         transaction,
