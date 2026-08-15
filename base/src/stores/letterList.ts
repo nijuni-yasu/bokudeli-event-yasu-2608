@@ -22,6 +22,7 @@ import {
   type CommunityStoreScope,
 } from '@shokujii/base/stores/community.js'
 import { isFirestorePermissionDenied } from '@shokujii/base/utils/firestoreError.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import type { CollectionReference } from 'firebase/firestore'
 
 export type LetterListStore = ReturnType<typeof useLetterListStore>
@@ -52,7 +53,10 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
         totalCount.value = 0
         return
       }
-      throw error
+      reportClientError(error, {
+        documentPath: _letterListRef?.path ?? `communities/${communityAccount}/letters`,
+        severity: 'warn',
+      })
     }
 
     const next = () => {
