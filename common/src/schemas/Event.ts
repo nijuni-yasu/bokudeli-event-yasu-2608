@@ -26,7 +26,6 @@ const CommunityBillSettingsDbSchema = CommunityBillSettingsAppSchema.transform((
   return val
 })
 export type CommunityBillSettingsType = z.infer<typeof CommunityBillSettingsAppSchema>
-export type { EnterpriseSubsidySettingsType }
 
 /**
  * DB上に保存されるイベントステータス

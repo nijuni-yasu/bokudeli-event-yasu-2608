@@ -3,17 +3,21 @@ import type { CallableRequest } from 'firebase-functions/https'
 import type { Transaction } from 'firebase-admin/firestore'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import type { EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
+import type { EnterpriseSubsidySettingsType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
 import type { EventPaymentType } from '@shokujii/common/schemas/Event.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import {
   computePaymentEnterpriseSubsidyAmount,
   computeEnterpriseSubsidyTotalPayment,
   replayEnterpriseSubsidyAmountsForOrders,
+  resolveEnterpriseSubsidySettingsForMonth,
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import {
   adjustEnterpriseMemberMonthlyUsage,
   getEnterpriseMember,
   getEnterpriseMemberInTransaction,
+  getEnterpriseById,
+  getEnterpriseRef,
 } from '../stores/enterprise.js'
 import type { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { createOrder, saveOrder } from '../stores/memberOrder.js'
@@ -46,6 +50,23 @@ export async function loadEnterpriseMemberForSubsidy(
   return getEnterpriseMember(enterpriseId, userId)
 }
 
+export async function loadResolvedSubsidySettings(
+  enterpriseId: string,
+  eventMonth: string,
+  transaction?: Transaction,
+): Promise<EnterpriseSubsidySettingsType> {
+  const snapshot = transaction != null ? await transaction.get(getEnterpriseRef(enterpriseId)) : undefined
+  const enterprise = transaction != null ? snapshot?.data() : await getEnterpriseById(enterpriseId)
+  if (enterprise == null) {
+    throw new HttpsError('not-found', 'enterprise not found')
+  }
+  try {
+    return resolveEnterpriseSubsidySettingsForMonth(enterprise.subsidy_settings_history, eventMonth)
+  } catch {
+    throw new HttpsError('failed-precondition', `subsidy settings not found for event month ${eventMonth}`)
+  }
+}
+
 /** enterprise_id 付きイベントは自社アクティブメンバーのみ注文可能 */
 export async function assertActiveEnterpriseMember(
   enterpriseId: string | undefined,
@@ -67,32 +88,42 @@ export async function assertActiveEnterpriseMember(
   return member
 }
 
-export async function assertEnterpriseSubsidyOrdersConsistent(params: {
+export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
   enterpriseId: string
   userId: string
+  communityId: string
+  eventId: string
   event: ShokujiiEvent
   orders: EventMemberOrder[]
   orderIds: string[]
   member: EnterpriseMember
-}): Promise<ReturnType<typeof replayEnterpriseSubsidyAmountsForOrders>> {
-  const { enterpriseId, userId, event, orders, orderIds, member } = params
+  transaction: Transaction
+}): Promise<ReturnType<typeof replayEnterpriseSubsidyAmountsForOrders> & { recalculated: boolean }> {
+  const { enterpriseId, userId, communityId, eventId, event, orders, orderIds, member, transaction } = params
   if (event.event_payment !== 'enterprise_subsidy') {
-    throw new HttpsError('internal', 'assertEnterpriseSubsidyOrdersConsistent called for non enterprise_subsidy')
-  }
-  if (event.enterprise_subsidy_settings == null) {
-    throw new HttpsError('failed-precondition', 'enterprise_subsidy_settings is required')
+    throw new HttpsError('internal', 'syncEnterpriseSubsidyOrdersBeforeConfirm called for non enterprise_subsidy')
   }
 
   const eventMonth = formatYearMonth(event.event_start_datetime)
+  const settings = await loadResolvedSubsidySettings(enterpriseId, eventMonth, transaction)
   const replay = replayEnterpriseSubsidyAmountsForOrders(
     event.event_payment,
-    event.enterprise_subsidy_settings,
+    settings,
     orders,
     member.monthly_usage[eventMonth] ?? 0,
   )
 
-  const consistent = orders.every((order, i) => order.pay_enterprise_subsidy_amount === replay.expectedAmounts[i])
-  if (!consistent) {
+  let recalculated = false
+  for (let i = 0; i < orders.length; i++) {
+    const expected = replay.expectedAmounts[i]
+    if (orders[i].pay_enterprise_subsidy_amount !== expected) {
+      recalculated = true
+      orders[i].pay_enterprise_subsidy_amount = expected
+      saveOrder(communityId, eventId, userId, orders[i], transaction)
+    }
+  }
+
+  if (recalculated) {
     await writeAuditLog({
       enterpriseId,
       userId,
@@ -105,15 +136,14 @@ export async function assertEnterpriseSubsidyOrdersConsistent(params: {
         stored: orders.map((o) => o.pay_enterprise_subsidy_amount ?? null),
       },
     })
-    throw new HttpsError('failed-precondition', '割引金額が一致しません。再度カートを確認してください。')
   }
 
   const used = member.monthly_usage[eventMonth] ?? 0
-  if (used + replay.subsidyTotal > event.enterprise_subsidy_settings.monthly_limit_per_user) {
+  if (used + replay.subsidyTotal > settings.monthly_limit_per_user) {
     throw new HttpsError('failed-precondition', '月額上限を超過しました。')
   }
 
-  return replay
+  return { ...replay, recalculated }
 }
 
 export type EnterpriseSubsidyWebhookSnapshotValidation =
@@ -131,9 +161,6 @@ export function validateEnterpriseSubsidyOrdersSnapshotForWebhook(params: {
   const { event, orders } = params
   if (event.event_payment !== 'enterprise_subsidy') {
     return { ok: false, message: 'validateEnterpriseSubsidyOrdersSnapshotForWebhook called for non enterprise_subsidy' }
-  }
-  if (event.enterprise_subsidy_settings == null) {
-    return { ok: false, message: 'enterprise_subsidy_settings is required' }
   }
 
   let subsidyTotal = 0
@@ -175,14 +202,11 @@ export function createEnterpriseSubsidyAddToCartTracker(monthlyUsage: number): E
 /** カート追加時: 1 品目分の pay_enterprise_subsidy_amount を計算し tracker を更新 */
 export function applyEnterpriseSubsidyPayFieldToCartTracker(params: {
   event: ShokujiiEvent
+  settings: EnterpriseSubsidySettingsType
   menuPrice: number
   tracker: EnterpriseSubsidyAddToCartTracker
 }): number | undefined {
-  const { event, menuPrice, tracker } = params
-  const settings = event.enterprise_subsidy_settings
-  if (settings == null) {
-    throw new HttpsError('failed-precondition', 'enterprise_subsidy_settings is required')
-  }
+  const { event, settings, menuPrice, tracker } = params
   const remaining = Math.max(0, settings.monthly_limit_per_user - tracker.runningUsage)
   const candidateBase =
     computePaymentEnterpriseSubsidyAmount(event.event_payment, settings, menuPrice, Number.MAX_SAFE_INTEGER) ?? 0
@@ -224,17 +248,25 @@ export async function addEnterpriseSubsidyMenusToCart(params: {
   userId: string
   enterpriseId: string
   event: ShokujiiEvent
+  settings: EnterpriseSubsidySettingsType
   menus: AddToCartMenuInput[]
   eventMenus: EventMenu[]
   transaction: Transaction
   /** assertActiveEnterpriseMember 等で取得済みの場合は渡し、Transaction 内 read を省略 */
   enterpriseMember?: EnterpriseMember
 }): Promise<EnterpriseSubsidyUsageExceededDetails | null> {
-  const { communityId, eventId, userId, enterpriseId, event, menus, eventMenus, transaction, enterpriseMember } = params
-
-  if (event.enterprise_subsidy_settings == null) {
-    throw new HttpsError('failed-precondition', 'enterprise_subsidy_settings is required')
-  }
+  const {
+    communityId,
+    eventId,
+    userId,
+    enterpriseId,
+    event,
+    settings,
+    menus,
+    eventMenus,
+    transaction,
+    enterpriseMember,
+  } = params
 
   const eventMonth = formatYearMonth(event.event_start_datetime)
   const entMember = enterpriseMember ?? (await loadEnterpriseMemberForSubsidy(enterpriseId, userId, transaction))
@@ -253,6 +285,7 @@ export async function addEnterpriseSubsidyMenusToCart(params: {
     for (let i = 0; i < menu.count; i++) {
       const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
         event,
+        settings,
         menuPrice: masterMenu.menu_price,
         tracker,
       })
@@ -295,16 +328,22 @@ export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
   member: EnterpriseMember
   transaction: Transaction
   orderedAt: number
-}): Promise<{ enterpriseId: string; subsidyTotal: number }> {
+}): Promise<{ enterpriseId: string; subsidyTotal: number; recalculated: boolean }> {
   const { enterpriseId, userId, communityId, eventId, event, orders, orderIds, member, transaction, orderedAt } = params
-  const replay = await assertEnterpriseSubsidyOrdersConsistent({
+  const sync = await syncEnterpriseSubsidyOrdersBeforeConfirm({
     enterpriseId,
     userId,
+    communityId,
+    eventId,
     event,
     orders,
     orderIds,
     member,
+    transaction,
   })
+  if (sync.recalculated) {
+    return { enterpriseId, subsidyTotal: sync.subsidyTotal, recalculated: true }
+  }
   const totalPayment = computeEnterpriseSubsidyTotalPayment(orders)
   if (totalPayment !== 0) {
     throw new HttpsError(
@@ -318,7 +357,7 @@ export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
     enterpriseId,
     userId,
     eventMonth,
-    replay.subsidyTotal,
+    sync.subsidyTotal,
     orders.length,
     userPaidTotal,
     transaction,
@@ -328,7 +367,7 @@ export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
     order.ordered_at = orderedAt
     saveOrder(communityId, eventId, userId, order, transaction)
   }
-  return { enterpriseId, subsidyTotal: replay.subsidyTotal }
+  return { enterpriseId, subsidyTotal: sync.subsidyTotal, recalculated: false }
 }
 
 export function computeOrderSelfPayUnitAmount(order: EventMemberOrder): number {

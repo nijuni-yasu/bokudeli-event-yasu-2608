@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { defineSecret } from 'firebase-functions/params'
-import { Timestamp } from 'firebase-admin/firestore'
+import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import Stripe from 'stripe'
 import {
   CreateStripeCheckoutSessionRequest,
@@ -21,14 +21,15 @@ import { computeEnterpriseSubsidyTotalPayment } from '@shokujii/common/utils/pay
 import {
   assertActiveEnterpriseMember,
   assertEnterpriseEventPaymentAllowed,
-  assertEnterpriseSubsidyOrdersConsistent,
   computeOrderSelfPayUnitAmount,
   getEventEnterpriseId,
   getStripeCheckoutLineItemGroupKey,
   loadEnterpriseMemberForSubsidy,
+  syncEnterpriseSubsidyOrdersBeforeConfirm,
 } from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('stripe')
+const db = getFirestore()
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
 const CHECKOUT_SESSION_EXPIRES_SECONDS = 31 * 60
 const ORDER_IDS_CHUNK_SIZE = 20
@@ -103,18 +104,30 @@ export const createStripeCheckoutSession = onCall<
       if (enterpriseId == null) {
         throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
       }
-      const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, uid)
-      if (entMember == null) {
-        throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
-      }
-      await assertEnterpriseSubsidyOrdersConsistent({
-        enterpriseId,
-        userId: uid,
-        event,
-        orders,
-        orderIds: order_ids,
-        member: entMember,
+      const syncResult = await db.runTransaction(async (transaction) => {
+        const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, uid, transaction)
+        if (entMember == null) {
+          throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
+        }
+        const ordersInTx = await getOrdersByIds(community_id, event_id, uid, order_ids, transaction)
+        if (ordersInTx.length !== order_ids.length) {
+          throw new HttpsError('not-found', '一部の注文が見つかりません')
+        }
+        return syncEnterpriseSubsidyOrdersBeforeConfirm({
+          enterpriseId,
+          userId: uid,
+          communityId: community_id,
+          eventId: event_id,
+          event,
+          orders: ordersInTx,
+          orderIds: order_ids,
+          member: entMember,
+          transaction,
+        })
       })
+      if (syncResult.recalculated) {
+        return { url: null, subsidy_recalculated: true }
+      }
     } else {
       for (const order of orders) {
         if (!isPaymentCommunityBillOffAmountConsistent(event.event_payment, event.community_bill_settings, order)) {
@@ -123,10 +136,15 @@ export const createStripeCheckoutSession = onCall<
       }
     }
 
+    const syncedOrders =
+      event.event_payment === 'enterprise_subsidy'
+        ? await getOrdersByIds(community_id, event_id, uid, order_ids)
+        : orders
+
     const totalPayment =
       event.event_payment === 'enterprise_subsidy'
-        ? computeEnterpriseSubsidyTotalPayment(orders)
-        : computeTotalPayment(orders, event.event_payment, event.community_bill_settings)
+        ? computeEnterpriseSubsidyTotalPayment(syncedOrders)
+        : computeTotalPayment(syncedOrders, event.event_payment, event.community_bill_settings)
     if (totalPayment <= 0) {
       throw new HttpsError('failed-precondition', '支払額が ¥0 の場合は Stripe 決済は不要です')
     }
@@ -144,7 +162,7 @@ export const createStripeCheckoutSession = onCall<
     }
 
     const grouped = new Map<string, { menuName: string; unitAmount: number; quantity: number; imageUrl: string }>()
-    for (const order of orders) {
+    for (const order of syncedOrders) {
       const unitAmount = computeOrderSelfPayUnitAmount(order)
       const groupKey = getStripeCheckoutLineItemGroupKey(event.event_payment, order)
       const existing = grouped.get(groupKey)

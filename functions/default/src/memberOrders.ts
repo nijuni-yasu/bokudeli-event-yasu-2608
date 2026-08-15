@@ -1,6 +1,12 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
+import {
+  AddToCartRequest,
+  RemoveFromCartRequest,
+  ConfirmOrderRequest,
+  ConfirmOrderResponse,
+} from '@shokujii/common/apis/order.js'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { EventMember } from '@shokujii/common/schemas/EventMemberOrder.js'
 import {
   computePaymentCommunityBillOffAmount,
@@ -27,6 +33,7 @@ import {
   finalizeEnterpriseSubsidyZeroPaymentOrder,
   getEventEnterpriseId,
   loadEnterpriseMemberForSubsidy,
+  loadResolvedSubsidySettings,
 } from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('memberOrders')
@@ -94,12 +101,15 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       if (enterpriseId == null || enterpriseMember == null) {
         throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
       }
+      const eventMonth = formatYearMonth(eventData.event_start_datetime)
+      const settings = await loadResolvedSubsidySettings(enterpriseId, eventMonth, transaction)
       return addEnterpriseSubsidyMenusToCart({
         communityId: community_id,
         eventId: event_id,
         userId: uid,
         enterpriseId,
         event: eventData,
+        settings,
         menus,
         eventMenus,
         transaction,
@@ -205,7 +215,7 @@ export const confirmOrder = onCall(
   {
     secrets: ['SENDGRID_API_KEY'],
   },
-  async (request) => {
+  async (request): Promise<ConfirmOrderResponse> => {
     const uid = request.auth?.uid
     if (uid == null) {
       throw new HttpsError('unauthenticated', '認証が必要です')
@@ -307,6 +317,10 @@ export const confirmOrder = onCall(
       return null
     })
 
+    if (enterpriseOrderCreateLog?.recalculated) {
+      return { subsidy_recalculated: true }
+    }
+
     if (enterpriseOrderCreateLog != null) {
       await writeAuditLog({
         enterpriseId: enterpriseOrderCreateLog.enterpriseId,
@@ -337,5 +351,7 @@ export const confirmOrder = onCall(
       userId: uid,
       orderCount: order_ids.length,
     })
+
+    return {}
   },
 )

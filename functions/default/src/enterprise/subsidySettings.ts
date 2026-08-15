@@ -3,10 +3,12 @@ import {
   UpdateEnterpriseSubsidySettingsRequest,
   UpdateEnterpriseSubsidySettingsResponse,
 } from '@shokujii/common/apis/enterprise.js'
+import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
+import { resolveEnterpriseSubsidySettingsForMonth } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { getEnterpriseById, saveEnterprise } from '../stores/enterprise.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { assertEnterpriseAdmin, getClientIp } from '../utils/enterpriseAuthHelpers.js'
-import { validateSubsidySettings } from './subsidyValidation.js'
+import { assertEffectiveFromMonthIsFuture, validateSubsidySettings } from './subsidyValidation.js'
 
 export const updateEnterpriseSubsidySettings = onCall<
   UpdateEnterpriseSubsidySettingsRequest,
@@ -16,15 +18,17 @@ export const updateEnterpriseSubsidySettings = onCall<
   const uid = request.auth!.uid
   const {
     enterprise_id: enterpriseId,
+    effective_from_month: effectiveFromMonth,
     discount_type: discountType,
     discount_value: discountValue,
     monthly_limit_per_user: monthlyLimitPerUser,
   } = request.data
 
-  if (discountType == null || discountValue == null || monthlyLimitPerUser == null) {
+  if (effectiveFromMonth == null || discountType == null || discountValue == null || monthlyLimitPerUser == null) {
     throw new HttpsError('invalid-argument', 'subsidy settings are incomplete')
   }
 
+  assertEffectiveFromMonthIsFuture(effectiveFromMonth)
   validateSubsidySettings(discountType, discountValue, monthlyLimitPerUser)
 
   const enterprise = await getEnterpriseById(enterpriseId)
@@ -32,16 +36,32 @@ export const updateEnterpriseSubsidySettings = onCall<
     throw new HttpsError('not-found', 'enterprise not found')
   }
 
-  const details = {
-    discount_type: { old: enterprise.discount_type, new: discountType },
-    discount_value: { old: enterprise.discount_value, new: discountValue },
-    monthly_limit_per_user: { old: enterprise.monthly_limit_per_user, new: monthlyLimitPerUser },
+  const previousSettings = resolveEnterpriseSubsidySettingsForMonth(
+    enterprise.subsidy_settings_history,
+    effectiveFromMonth,
+  )
+
+  const newEntry: EnterpriseSubsidySettingsEntryType = {
+    effective_from_month: effectiveFromMonth,
+    type: discountType,
+    value: discountValue,
+    monthly_limit_per_user: monthlyLimitPerUser,
   }
 
-  enterprise.discount_type = discountType
-  enterprise.discount_value = discountValue
-  enterprise.monthly_limit_per_user = monthlyLimitPerUser
+  const historyWithoutTarget = enterprise.subsidy_settings_history.filter(
+    (entry) => entry.effective_from_month !== effectiveFromMonth,
+  )
+  enterprise.subsidy_settings_history = [...historyWithoutTarget, newEntry].sort((a, b) =>
+    a.effective_from_month.localeCompare(b.effective_from_month),
+  )
   await saveEnterprise(enterprise)
+
+  const details = {
+    effective_from_month: effectiveFromMonth,
+    type: { old: previousSettings.type, new: discountType },
+    value: { old: previousSettings.value, new: discountValue },
+    monthly_limit_per_user: { old: previousSettings.monthly_limit_per_user, new: monthlyLimitPerUser },
+  }
 
   await writeAuditLog({
     enterpriseId,

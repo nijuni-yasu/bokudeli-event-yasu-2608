@@ -1,5 +1,18 @@
 import { HttpsError } from 'firebase-functions/https'
+import { DateTime } from 'luxon'
 import { ENTERPRISE_DISCOUNT_TYPE_VALUES, type EnterpriseDiscountType } from '@shokujii/common/schemas/Enterprise.js'
+import { YEAR_MONTH_PATTERN } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
+import { DEFAULT_TIME_ZONE } from '@shokujii/common/utils/datetime.js'
+
+export function assertEffectiveFromMonthIsFuture(effectiveFromMonth: string): void {
+  if (!YEAR_MONTH_PATTERN.test(effectiveFromMonth)) {
+    throw new HttpsError('invalid-argument', 'effective_from_month must be YYYY-MM')
+  }
+  const minMonth = DateTime.now().setZone(DEFAULT_TIME_ZONE).plus({ months: 1 }).toFormat('yyyy-MM')
+  if (effectiveFromMonth < minMonth) {
+    throw new HttpsError('invalid-argument', 'effective_from_month must be the next calendar month or later')
+  }
+}
 
 export function validateSubsidySettings(
   discountType: EnterpriseDiscountType,

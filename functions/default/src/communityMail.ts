@@ -47,7 +47,10 @@ async function getEmailList(communityId: string): Promise<string[]> {
   return Array.from(emailSet)
 }
 
-export async function sendCommunityAddedMailToOrganizer(templateId: string, community: ShokujiiCommunity): Promise<void[]> {
+export async function sendCommunityAddedMailToOrganizer(
+  templateId: string,
+  community: ShokujiiCommunity,
+): Promise<void[]> {
   const emails = await getEmailList(community.id)
   if (!emails.includes(SUPPORT_MAIL)) {
     emails.push(SUPPORT_MAIL)
