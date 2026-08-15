@@ -24,6 +24,10 @@
 | [x] | RC-16 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `subscribeEvent` の snapshot error で `rejectPendingLoadedEvent` を呼んでいない<br>購読が切れても `getLoadedEvent` が timeout まで待ち、原因が timeout Error にすり替わる |
 | [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `letters.test.ts` に不要な `as never` キャストが 2 箇所<br>`RulesTestContext` で型が一致するためキャスト不要 |
 | [x] | RC-18 | なし | 👌 修正不要 | — | 📤 スコープ外 | — | 👀 確認のみ | — | `community.ts` は snapshot error 時も `getLoadedCommunity` が timeout まで待つ<br>pending reject 機構自体が無く新設は M。本 PR で回帰は無いため対象外 |
+| [x] | RC-19 | 5301752612 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Copilot: letterList re-throw → reportClientError は RC-10 と重複・既修正 |
+| [x] | RC-20 | 5301752612 | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | partner replace 後 return なしは RC-11 と同趣旨 |
+| [x] | RC-21 | 3789150054 | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | `channel_is_archived` remove は RC-8 意図どおり |
+| [x] | RC-22 | 3789150055 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `afterEach` + `vi.unstubAllGlobals()` 追加 |
 
 ---
 
@@ -775,5 +779,192 @@
 **想定工数**: —
 
 **判断理由**: 変更前は error コールバック自体が無く、同じく timeout まで待っていたため本 PR による回帰ではない。`getLoadedCommunity` の pending 管理新設は工数 M で auto-fix 条件（S・方針一意）を満たさない。必要になった時点で `event.ts` と同じ機構を横展開する。
+
+---
+
+## 評価セッション（2026-08-15 19:12・review-comments-evaluate）
+
+- **評価日時**: 2026-08-15 19:12 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: `fix/2141`
+- **PR**: #2259
+- **REVIEW_REQUEST_SINCE**: 2026-08-15T10:03:04Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（5301727913 レビュー依頼定型文、5301753111 Codex 接続案内）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-19 | 5301752612 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Copilot: letterList re-throw → reportClientError は RC-10 と重複・既修正 |
+| [x] | RC-20 | 5301752612 | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | partner replace 後 return なしは RC-11 と同趣旨 |
+| [x] | RC-21 | 3789150054 | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | 👀 確認のみ | — | `channel_is_archived` remove は RC-8 意図どおり |
+| [x] | RC-22 | 3789150055 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `afterEach` + `vi.unstubAllGlobals()` 追加 |
+
+**識別子**: RC-19（GitHub id: 5301752612）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/letterList.ts`（インライン指摘なし・トップレベル）
+
+**該当コード（レビュー時点の diff）**:
+
+（インライン指摘なし）
+
+**レビュワーのコメント（原文）**:
+
+> @codex この PR の Files changed をコードレビューしてください。指摘は shokujii-code-review チェックリストに沿って日本語でお願いします。
+> 
+> @copilot この PR ��...
+
+shokujii-code-review チェックリストに沿って Files changed をレビューしました。
+
+---
+
+## 🟡 RC-1: `letterList.ts` — permission-denied 以外のエラーが握りつぶされる
+
+**ファイル**: `base/src/stores/letterList.ts`
+
+`handleLoadError` 内で permission-denied 以外のエラーを `throw` しても、`TaskExecutor` の `runNextTask` は `.catch()` を持たずに `.finally()` のみのため、unhandled rejection となり `reportClientError` が呼ばれません。`community.ts` / `event.ts` の getDocs catch では直接 `reportClientError` を呼んでいる実装と非一貫です。
+
+**コメント要約**: letterList の pagination エラーが TaskExecutor 経由で握りつぶされる。reportClientError を直接呼ぶべき。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-10（5301311591）と同一指摘。71901a126 で `handleLoadError` が `reportClientError` を呼ぶよう修正済み。push 後の Copilot 再レビューは古い diff ベースの重複。
+
+---
+
+**識別子**: RC-20（GitHub id: 5301752612）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `partner/src/pages/order/[eventId].vue`（インライン指摘なし・トップレベル）
+
+**該当コード（レビュー時点の diff）**:
+
+（インライン指摘なし）
+
+**レビュワーのコメント（原文）**:
+
+## 🟡 RC-2: `partner/[eventId].vue` — 権限不一致時に後続コードが継続実行される
+
+`isAuthorized === false` 時に `router.replace` 後の `return` がないため、`<script setup>` の後続初期化処理がすべて実行されます。現状は `v-if="isAuthorized"` で非表示になっているため実害はありませんが、意図を示すコメントか `return` 追加を検討してください。
+
+**コメント要約**: 権限不一致時に setup が継続する。return 追加を推奨。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: RC-11 と同趣旨。`v-if="isAuthorized"` で DOM 非表示のため実害なし。return 追加は可読性改善だがマージ必須ではない。
+
+---
+
+**識別子**: RC-21（GitHub id: 3789150054）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `functions/default/src/utils/slackMessage.ts:12`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -1,9 +1,49 @@
+ import { CommunityBot } from '@shokujii/common/schemas/CommunityBot.js'
+ import { createModuleLogger } from './logger.js'
+-import { getSlackWebhookUrl } from '../stores/slackBot.js'
++import { getSlackWebhookUrl, removeCommunityBot } from '../stores/slackBot.js'
+ 
+ const logger = cr
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  アーカイブ時は bot 紐付けを削除しない**
+
+前回指摘後の新しい本文判定でも `channel_is_archived` が削除対象として明示的に残っています。チャンネルを一時的にアーカイブして後から解除する運用では、この応答を契機に `communities/{id}/bots/{botId}` が削除されるため、解除後も Slack 通知は復旧せず、再追加するまで以後の通知が停止します。失効を示すエラーだけを削除対象とし、復旧可能なチャンネル状態では紐付けを維持してください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: アーカイブ解除後も通知を復旧したい運用では channel_is_archived で remove すべきでない。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: RC-8 で webhook 失効・チャンネル不可状態（`channel_is_archived` / `channel_not_found` 等）を remove 対象とする設計を採用済み。アーカイブ中は Slack 配信不可であり、紐付けを残しても通知は失敗し続ける。解除後の再設定コストと、無効 bot が DB に残るコストのトレードオフで前者を許容。
+
+---
+
+**識別子**: RC-22（GitHub id: 3789150055）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `functions/default/src/utils/slackMessage.test.ts:51`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -0,0 +1,269 @@
++import { beforeEach, describe, expect, it, vi } from 'vitest'
++import { CommunityBot } from '@shokujii/common/schemas/CommunityBot.js'
++
++const { getSlackWebhookUrlMock, removeCommunityBotMock, loggerErrorMock, loggerWarnMock } = vi.hoisted(() => ({
++  getSlackWebhookUrlMock: vi.f
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  fetch のグローバルスタブを各テスト後に戻す**
+
+このファイルでは多数のテストが `vi.stubGlobal('fetch', ...)` を実行しますが、`afterEach` の `vi.unstubAllGlobals()` がなく、`beforeEach` の `vi.restoreAllMocks()` は `stubGlobal` で置換した値を復元しません。`functions/default/vitest.config.ts` にも `unstubGlobals: true` がないため、同じワーカーで後続ファイルが実行されると最後の fetch モックが残り、テスト順によって通信処理の結果が変わります。既存の `shareSnsButton.test.ts` と同様に必ず teardown してください。
+
+AGENTS.md reference: [AGENTS.md:L241-L244](https://github.com/nijuniinc/bokudeli-event-new/blob/93e122591bd3c6d8e528606ee9750cdef2df169a/AGENTS.md#L241-L244)
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: stubGlobal 後の teardown 不足でテスト間汚染の恐れ。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `shareSnsButton.test.ts` と同パターンでファイルスコープ `afterEach(() => vi.unstubAllGlobals())` を追加。vitest 11 テスト pass 確認済み。
 
 ---

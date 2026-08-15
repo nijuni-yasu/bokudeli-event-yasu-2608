@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CommunityBot } from '@shokujii/common/schemas/CommunityBot.js'
 
 const { getSlackWebhookUrlMock, removeCommunityBotMock, loggerErrorMock, loggerWarnMock } = vi.hoisted(() => ({
@@ -22,6 +22,10 @@ vi.mock('./logger.js', () => ({
 }))
 
 import { sendCommunityBotsMessage, sendCommunityBotsMessageOrThrow, sendSlackWebhookMessage } from './slackMessage.js'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 const communityId = 'comm-1'
 const reference = { path: 'slackbots/T1/channels/C1' } as CommunityBot['reference']
