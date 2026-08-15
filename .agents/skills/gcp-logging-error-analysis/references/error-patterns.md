@@ -28,7 +28,8 @@
 |-----------|------|-----------------|-------------|
 | `requires an index` / `FAILED_PRECONDITION` + index URL | P1 | errorGroups.id または index URL | `firestore.indexes.json` を Grep → `/shokujii-firestore` |
 | `httpRequest.status=500` + 上記 trace | P1 | trace | 同一 trace の stderr を読む |
-| `jsonPayload.module=clientError` + SW / chunk / 単体 Rejected / Connection failed / 単体 Failed to fetch | noise | fingerprint | 件数のみ報告。サーバー障害と混同しない。**`error_type=ZodError` は常に P1**（message がノイズ部分一致でも） |
+| `jsonPayload.module=clientError` + SW / chunk / 単体 Rejected / Connection failed | noise | fingerprint | 件数のみ報告。サーバー障害と混同しない。**`error_type=ZodError` は常に P1**（message がノイズ部分一致でも） |
+| `jsonPayload.module=clientError` + 単体 `Failed to fetch` | P1 | fingerprint + route | [#2174](https://github.com/nijuniinc/bokudeli-event-new/issues/2174) 調査中。ノイズ化は主因特定後に再検討（RC-12） |
 | `jsonPayload.module=clientError` + storage/unauthorized | P1 | fingerprint | `storage.rules` + 管理画面権限 |
 | `jsonPayload.module=clientError` + ZodError / invalid_enum | P1 | fingerprint + route | 該当 event データ or UI |
 | `jsonPayload.module=clientError` + Missing or insufficient permissions | P1 | fingerprint | `firestore.rules` |
