@@ -26,6 +26,14 @@
 | [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | エージェント一時ファイル pr-body-2257.md<br>分割コミット時にコミット対象から除外済み |
 | [x] | RC-21 | 3788956013 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 👤 UX | 🔧 微修正 | M | subsidy_recalculated 後 budget 再取得（#2261）<br>fetchCartEnterpriseSubsidyBudget + cart.vue reload |
 | [x] | RC-22 | 3788956016 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 💾 データ | 🔧 微修正 | M | Stripe Tx 内 in_cart 再検証（#2262）<br>memberOrders と同等の status チェック |
+| [ ] | RC-23 | 3789079913 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🚀 デプロイ, 💾 データ | 📋 仕様追加 | M | enterprise/functions 独立デプロイ時の旧管理画面互換<br>effective_from_month 省略時の移行契約が未整備 |
+| [x] | RC-24 | 5301624458 | 👌 修正不要 | — | 📌 スコープ内 | 💰 金銭 | ❓ 要確認 | S | recalculated 後も月額上限 check は sync 内で実行済み<br>早期 return は caller 側の UI 更新用 |
+| [ ] | RC-25 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | budget 取得失敗が完全に無言（console.warn も削除）<br>割引非表示の原因が追跡不能。reportClientError を追加 |
+| [ ] | RC-26 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | チャットのイベント遷移失敗が無反応<br>エラー報告もユーザー通知もない |
+| [x] | RC-27 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `z.infer<typeof ...DbSchema>[]` で型を間接参照<br>`EnterpriseSubsidySettingsEntryType` を直接使用 |
+| [ ] | RC-28 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 監査ログ old 値の解決に throw 版を使用<br>解決不能時に設定保存自体が internal で失敗する |
+| [x] | RC-29 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | 監査ログ `expected` 配列に undefined が混入<br>Firestore 書き込み失敗で再計算ログが欠落 |
+| [ ] | RC-30 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭, 💾 データ | 📐 リファクタ | M | 月額上限超過時に再計算の書き戻しが rollback<br>監査ログも残らず stored のズレが解消されない |
 
 ---
 
@@ -942,5 +950,366 @@ P1 トランザクション内で注文状態を再検証してください。�
 **想定工数**: M
 
 **判断理由**: #2262 で追跡。`stripe.ts` Tx 内で `ordersInTx` の `user_id` / `in_cart` を memberOrders と同等に再検証。
+
+---
+
+## 評価セッション（2026-08-15 18:38・review-comments-evaluate）
+
+- **評価日時**: 2026-08-15 18:38 JST
+- **ブランチ名**: dev/enterprise-mvp-v4
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2257
+- **REVIEW_REQUEST_SINCE**: 2026-08-15T09:28:21Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（依頼コメント 5301598970、Codex 接続案内 5301624877、Copilot [must] は RC-3 重複、Copilot [確認済み] は既対応確認のみ）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-23 | 3789079913 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🚀 デプロイ, 💾 データ | 📋 仕様追加 | M | 旧管理画面互換の移行契約<br>effective_from_month 省略時の Callable 互換 |
+| [x] | RC-24 | 5301624458 | 👌 修正不要 | — | 📌 スコープ内 | 💰 金銭 | ❓ 要確認 | S | recalculated 後も sync 内で月額上限 check 実行<br>caller の早期 return は UI 更新用 |
+
+---
+
+**識別子**: RC-23（GitHub id: 3789079913・Codex）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `common/src/apis/enterprise.ts:172`
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  旧管理画面を受け付ける移行契約を追加してください**
+
+`deploy_enterprise.yml` と `deploy_functions.yml` はそれぞれ `common/**` の変更で独立して起動されるため、Functions が先に更新された場合、旧バンドルや更新前から開かれている管理画面は `effective_from_month` を送信せず、新しい Callable の 27 行目で一律 `invalid-argument` になります。逆に Hosting が先なら旧 Callable は追加フィールドを無視して廃止予定のフラット設定だけを更新し得るため、保存成功後も履歴へ反映されません。省略時を翌月として受理する互換版 Functions を先行配備するなど、ロールアウト中も旧・新クライアントの双方を扱える契約にしてください。確認範囲は `.github/workflows/deploy_enterprise.yml:3-12` と `.github/workflows/deploy_functions.yml:3-12` です。
+
+AGENTS.md reference: [AGENTS.md:L242-L244](https://github.com/nijuniinc/bokudeli-event-new/blob/f3bd18e05c5588cc47b9063a3c48ba11f421e821/AGENTS.md#L242-L244)
+
+Useful? React with 👍 / 👎.
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -169,6 +169,7 @@ export type UpdateEnterpriseSettingsResponse = {
+ 
+ export type UpdateEnterpriseSubsidySettingsRequest = {
+   enterprise_id: string
++  effective_from_month: string
+```
+
+**コメント要約**: enterprise/functions 独立デプロイ時、旧 UI が effective_from_month 未送信で Callable が reject する。<br>Hosting 先行時は旧 Callable が履歴を更新しないリスク。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🚀 デプロイ, 💾 データ
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 本番ロールアウト時のデプロイ順序問題として妥当。MVP 初回デプロイでは旧 UI 不在だが、Functions/Hosting 独立 CI では再発しうる。省略時デフォルト受理またはデプロイ順序の仕様化が必要。
+
+---
+
+**識別子**: RC-24（GitHub id: 5301624458・Copilot）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/enterpriseSubsidyOrders.ts:syncEnterpriseSubsidyOrdersBeforeConfirm`
+
+**レビュワーのコメント（原文）**:
+
+**[ask] `functions/default/src/utils/enterpriseSubsidyOrders.ts:syncEnterpriseSubsidyOrdersBeforeConfirm`**
+`used + replay.subsidyTotal > settings.monthly_limit_per_user` のチェックが `recalculated` 判定後に行われているため、再計算で補助額が変更された場合はこの check に到達する前に早期 return します。再計算後に補助額が変わった場合の月額上限チェックは行われていますか？設計意図の確認をお願いします。
+
+**コメント要約**: recalculated 時に月額上限 check がスキップされるのでは。<br>sync 内の check 順序に対する設計確認。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭
+
+**変更種別**: ❓ 要確認
+
+**想定工数**: S
+
+**判断理由**: `syncEnterpriseSubsidyOrdersBeforeConfirm` は recalculated フラグ設定後も L176-179 で月額上限を検証してから return する。caller（stripe/memberOrders）が `recalculated: true` で早期 return するのは §5.2 の UI 更新用。上限超過時は `failed-precondition` で reject される。
+
+---
+
+## 評価セッション（2026-08-15 19:15・shokujii-code-review）
+
+- **評価日時**: 2026-08-15 19:15 JST
+- **ブランチ名**: dev/enterprise-mvp-v4
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2257
+- **レビュー範囲**: `git diff origin/development...HEAD`（24 コミット / 72 ファイル・ブランチ全体）
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3a / 3b 自動修正**: RC-29（🚨 1 件）、RC-27（🟡 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-25 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | budget 取得失敗が完全に無言（console.warn も削除）<br>割引非表示の原因が追跡不能。reportClientError を追加 |
+| [ ] | RC-26 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | チャットのイベント遷移失敗が無反応<br>エラー報告もユーザー通知もない |
+| [x] | RC-27 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `z.infer<typeof ...DbSchema>[]` で型を間接参照<br>`EnterpriseSubsidySettingsEntryType` を直接使用 |
+| [ ] | RC-28 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 監査ログ old 値の解決に throw 版を使用<br>解決不能時に設定保存自体が internal で失敗する |
+| [x] | RC-29 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | 監査ログ `expected` 配列に undefined が混入<br>Firestore 書き込み失敗で再計算ログが欠落 |
+| [ ] | RC-30 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭, 💾 データ | 📐 リファクタ | M | 月額上限超過時に再計算の書き戻しが rollback<br>監査ログも残らず stored のズレが解消されない |
+
+---
+
+**識別子**: RC-25（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/cartMonthlyUsage.ts:81`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export async function fetchCartEnterpriseSubsidyBudget(
++  userId: string,
++  loader: CartEnterpriseSubsidyBudgetLoader,
++): Promise<CartEnterpriseSubsidyBudget | null> {
++  try {
++    const result = await loader(userId)
++    return normalizeCartEnterpriseSubsidyBudget(result)
++  } catch {
++    return null
++  }
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `cart.vue` にあった `console.warn('[cart] enterpriseSubsidyBudgetLoader failed', error)` が本関数への集約時に失われ、例外も `normalizeCartEnterpriseSubsidyBudget` の null 返却（loader は値を返したがスキーマ不一致）もログなしで握りつぶされます。budget が null になるとカートの補助額表示が replay なしにフォールバックするため、ユーザーからは「割引が出ない」としか見えず原因を追跡できません → catch 節で `reportClientError(error, { componentInfo: 'cartMonthlyUsage.fetchCartEnterpriseSubsidyBudget', severity: 'warn' })` を呼び、loader が非 null を返したのに normalize が null になったケースも報告してください。
+
+**コメント要約**: budget 取得・正規化の失敗が完全に無言。<br>`reportClientError` で調査可能にする。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 自動修正の対象外とした。`reportClientError` を import すると `@shokujii/base/firebase` / `firebase/auth` が評価され、現状モックを持たない `cartMonthlyUsage.test.ts` の実行に影響しうる（`event.test.ts` は両者を `vi.mock` している）。報告を composable 側で行うか呼び出し側の `cart.vue` に戻すかで方針が一意に定まらないため、テスト追補とあわせて別途対応する。
+
+---
+
+**識別子**: RC-26（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/useChatOpenEvent.ts:18`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    try {
++      const event = await fetchEventInCommunityDocument(payload.communityId, payload.eventId)
++      if (event == null) {
++        return
++      }
++      void router.push(options.getEventPath(event.community_account, payload.eventId))
++    } catch {
++      // getDoc 失敗時（ネットワーク / 権限）: イベントハンドラからの unhandled rejection を防ぐ
++    }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 各 app から base composable へ集約した際に、失敗時の挙動（無反応）もそのまま持ち込まれています。チャットからイベントを開こうとして `getDoc` が権限エラー・ネットワークエラーになった場合、ユーザーには何も起きず、`reportClientError` も呼ばれないため発生自体を検知できません → catch 節で `reportClientError(err, { componentInfo: 'useChatOpenEvent', severity: 'warn' })` を呼び、あわせて `event == null`（削除済みイベント）との切り分けができるようにしてください。
+
+**コメント要約**: チャットのイベント遷移失敗が無反応かつ無記録。<br>エラー報告と原因の切り分けを追加。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 自動修正の対象外とした。挙動自体は移設前から変わっておらず本 PR の新規欠陥ではない。ユーザーへ通知するか記録のみに留めるかは UX 仕様の判断を含む。
+
+---
+
+**識別子**: RC-27（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/Enterprise.ts:110`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-  discount_type!: EnterpriseDiscountType
+-  discount_value!: number
+-  monthly_limit_per_user!: number
++  subsidy_settings_history!: z.infer<typeof EnterpriseSubsidySettingsEntryDbSchema>[]
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `EnterpriseSubsidySettings.ts` が `EnterpriseSubsidySettingsEntryType` を export しているのに、`z.infer<typeof EnterpriseSubsidySettingsEntryDbSchema>` で型を間接参照しています。RC-17 と同じく、公開済みの型エイリアスを直接使ってください → `subsidy_settings_history!: EnterpriseSubsidySettingsEntryType[]`。
+
+**コメント要約**: `z.infer<typeof ...DbSchema>[]` で型を間接参照。<br>`EnterpriseSubsidySettingsEntryType` を直接使用。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-17 と同一方針で修正方法が一意のため手順 3b で自動修正。
+
+---
+
+**識別子**: RC-28（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/enterprise/subsidySettings.ts:39`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const previousSettings = resolveEnterpriseSubsidySettingsForMonth(
++    enterprise.subsidy_settings_history,
++    effectiveFromMonth,
++  )
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `previousSettings` は監査ログの `old` 値を作るためだけに使われますが、`resolveEnterpriseSubsidySettingsForMonth` は素の `Error` を throw するため、該当月以前のエントリが 1 件も無い履歴では Callable が `internal` で失敗し、**設定の保存そのものができなくなります**（`createEnterprise` が作成月のエントリを必ず入れるため通常は到達しませんが、監査ログの都合で本処理を落とすのは過剰です）。→ RC-13 の OrNull 移行対象に含め、`resolveEnterpriseSubsidySettingsForMonthOrNull` を使って `old` を `null` にするか、`HttpsError` へ変換してください。
+
+**コメント要約**: 監査ログ old 値の解決に throw 版を使用。<br>解決不能時に設定保存自体が internal で失敗する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 自動修正の対象外とした。`old` を null にするか `HttpsError` へ変換するかで監査ログの表現が変わり、方針が一意に定まらない。RC-13（OrNull 移行）の残タスクとあわせて判断する。
+
+---
+
+**識別子**: RC-29（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/enterpriseSubsidyOrders.ts:33`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export type EnterpriseSubsidyRecalculatedAudit = {
++  details: {
++    expected: (number | undefined)[]
++    stored: (number | null)[]
++  }
++}
+...
++        details: {
++          expected: replay.expectedAmounts,
++          stored: storedBeforeRecalc,
++        },
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `replay.expectedAmounts` は補助対象外の注文で `undefined` を含む `(number | undefined)[]` です。本プロジェクトは `ignoreUndefinedProperties` を設定していないため、配列要素の `undefined` は Firestore Admin SDK が `Cannot use "undefined" as a Firestore value` で拒否します。`writeAuditLog` はベストエフォートで例外を握るため、**`enterprise_subsidy_recalculated` の監査ログだけが無言で欠落**します。しかも再計算が起きるのは上限到達・設定変更の直後、すなわち `undefined` が入りやすい局面です（同種の欠落は pr-2071 でも指摘済み）。`stored` は `?? null` 済みなので `expected` だけ漏れています → `expected: replay.expectedAmounts.map((amount) => amount ?? null)` とし、型も `(number | null)[]` に揃えてください。
+
+**コメント要約**: 監査ログ `expected` 配列に undefined が混入。<br>Firestore 書き込み失敗で再計算ログが欠落する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 仕様判断を伴わず `stored` と同じ正規化を揃えるだけのため手順 3a で自動修正。`expected undefined 時に補助額フィールドを削除する` テストに `expected: [100, null]` の検証を追加した。
+
+---
+
+**識別子**: RC-30（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/enterpriseSubsidyOrders.ts:178`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  for (let i = 0; i < orders.length; i++) {
++    ...
++        saveOrder(communityId, eventId, userId, orders[i], transaction)
++  }
+   const used = member.monthly_usage[eventMonth] ?? 0
+-  if (used + replay.subsidyTotal > event.enterprise_subsidy_settings.monthly_limit_per_user) {
++  if (used + replay.subsidyTotal > settings.monthly_limit_per_user) {
+     throw new HttpsError('failed-precondition', '月額上限を超過しました。')
+   }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/M]: 再計算した `pay_enterprise_subsidy_amount` を Transaction 内で書き戻した**後**に月額上限チェックで throw するため、上限超過時は Transaction が rollback され、再計算の書き戻しが破棄されます。`recalculatedAudit` も Transaction 成功後に記録する設計（RC-1）なので監査ログも残りません。結果として「月額上限を超過しました」だけが表示され、stored と replay のズレは次回確定時まで解消されないまま残ります → 上限チェックを replay 直後（書き戻し前）に移すか、再計算の書き戻しと上限判定を別 Transaction に分けることを検討してください。
+
+**コメント要約**: 上限超過時に再計算の書き戻しが rollback される。<br>監査ログも残らず stored のズレが解消されない。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭, 💾 データ
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 自動修正の対象外とした。チェック順序の変更は「上限超過時にも再計算を確定させるか」という仕様判断を含み、RC-24 で確認済みの check 順序の設計意図にも触れる。
 
 ---

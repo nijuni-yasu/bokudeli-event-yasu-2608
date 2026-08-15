@@ -30,7 +30,7 @@ export type EnterpriseSubsidyRecalculatedAudit = {
   details: {
     event_id: string
     order_ids: string[]
-    expected: (number | undefined)[]
+    expected: (number | null)[]
     stored: (number | null)[]
   }
 }
@@ -167,7 +167,7 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
         details: {
           event_id: event.id,
           order_ids: orderIds,
-          expected: replay.expectedAmounts,
+          expected: replay.expectedAmounts.map((amount) => amount ?? null),
           stored: storedBeforeRecalc,
         },
       }

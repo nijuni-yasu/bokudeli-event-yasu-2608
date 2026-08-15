@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
-import { EnterpriseSubsidySettingsEntryDbSchema } from './EnterpriseSubsidySettings.js'
+import {
+  EnterpriseSubsidySettingsEntryDbSchema,
+  type EnterpriseSubsidySettingsEntryType,
+} from './EnterpriseSubsidySettings.js'
 import { omitUndefined } from '../utils/object.js'
 
 export const ENTERPRISE_DISCOUNT_TYPE_VALUES = ['fixed', 'percentage'] as const
@@ -104,7 +107,7 @@ export class Enterprise {
   subdomain!: string
   custom_domain?: string
   allowed_email_domains!: string[]
-  subsidy_settings_history!: z.infer<typeof EnterpriseSubsidySettingsEntryDbSchema>[]
+  subsidy_settings_history!: EnterpriseSubsidySettingsEntryType[]
   payment_method!: EnterprisePaymentMethodType
   billing_settings!: EnterpriseBillingSettingsType
   is_active!: boolean

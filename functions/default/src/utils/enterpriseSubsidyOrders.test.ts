@@ -304,6 +304,7 @@ describe('enterprise subsidy order replay', () => {
     expect(orders[1].pay_enterprise_subsidy_amount).toBeUndefined()
     expect(clearOrderPayEnterpriseSubsidyAmount).toHaveBeenCalledWith('c1', 'e1', 'u1', 'o2', transaction)
     expect(replay.recalculatedAudit?.details.stored).toEqual([500, 500])
+    expect(replay.recalculatedAudit?.details.expected).toEqual([100, null])
     expect(writeAuditLog).not.toHaveBeenCalled()
   })
 
