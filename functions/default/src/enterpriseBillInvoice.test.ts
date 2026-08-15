@@ -52,6 +52,10 @@ vi.mock('./utils/enterpriseAuthHelpers.js', () => ({
   assertEnterpriseAdminFromUid: vi.fn(),
 }))
 
+vi.mock('./utils/enterpriseBillInvoiceCors.js', () => ({
+  handleEnterpriseBillInvoiceCors: vi.fn().mockResolvedValue('continue'),
+}))
+
 vi.mock('./utils/PdfGenerator.js', () => ({
   PdfGenerator: vi.fn(),
 }))
