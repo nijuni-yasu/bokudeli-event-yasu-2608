@@ -53,13 +53,16 @@ export const isMobileDevice = () =>
 
 const navigateShareUrl = (openUrl: string, popupWindow?: Window | null): void => {
   if (popupWindow != null) {
+    popupWindow.opener = null
     popupWindow.location.href = openUrl
     return
   }
   const opened = window.open(openUrl, '_blank')
-  if (opened == null) {
-    window.location.href = openUrl
+  if (opened != null) {
+    opened.opener = null
+    return
   }
+  window.location.href = openUrl
 }
 
 export const shareSnsButton = async (
@@ -79,6 +82,7 @@ export const shareSnsButton = async (
     const webUrl = `https://x.com/intent/post?text=${text}`
 
     if (_window != null) {
+      _window.opener = null
       _window.location.href = webUrl
     } else {
       // モバイル: twitter:// スキームで X アプリを直接起動する
