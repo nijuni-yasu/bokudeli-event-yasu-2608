@@ -197,7 +197,7 @@ gcloud iam service-accounts keys create firebase-deploy-key.json \
 
 Firebase への GitHub Actions デプロイは、各 `deploy_*.yml` の job 内で **`google-github-actions/auth@v2`** を呼び出し、`secrets.GCLOUD_SERVICE_KEY` を `credentials_json` として渡します。これにより `GOOGLE_APPLICATION_CREDENTIALS` が job 全体に export され、共通 composite action [`.github/actions/deploy/action.yml`](../../.github/actions/deploy/action.yml) は **Firebase CLI のインストールと `firebase deploy` のみ**を担当します（composite action の input 経由で JSON 鍵を渡す方式は使いません）。
 
-`deploy_firestore.yml` / `deploy_storage.yml` では、デプロイ前に **`actions/setup-node@v6`**（[`./.node-version`](../../.node-version) = Node 20）を必ず実行してください。hosting / functions 系 workflow はもともと `setup-node` がありますが、firestore / storage だけ欠けると runner デフォルトの Node 24 上で firebase-tools の OAuth トークン取得が失敗することがあります（`Failed to authenticate`）。`Generate .firebaserc`（`vars.FIREBASERC`）も user / partner と同様に生成します。
+`deploy_firestore.yml` / `deploy_storage.yml` では、デプロイ前に **`actions/setup-node@v6`**（[`./.node-version`](../../.node-version) = Node 24）を必ず実行してください。hosting / functions 系 workflow はもともと `setup-node` がありますが、firestore / storage だけ欠けると runner デフォルトの Node 24 上で firebase-tools の OAuth トークン取得が失敗することがあります（`Failed to authenticate`）。`Generate .firebaserc`（`vars.FIREBASERC`）も user / partner と同様に生成します。
 
 関連: Issue [#2117](https://github.com/nijuniinc/bokudeli-event-new/issues/2117)
 

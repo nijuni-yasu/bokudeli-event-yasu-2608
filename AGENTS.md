@@ -72,7 +72,7 @@ AIエージェント向けプロジェクトガイド。
 | **/user**              | 一般ユーザー向けアプリ       | Vue 3 + Vite + Vuetify 3                     |
 | **/partner**           | 飲食店向け管理画面           | Vue 3 + Vite + Vuetify 3                     |
 | **/enterprise**        | エンタープライズ向けアプリ   | Vue 3 + Vite + Vuetify 3                     |
-| **/functions/default** | バックエンドロジック         | Firebase Functions v2 (Node 20) + TypeScript |
+| **/functions/default** | バックエンドロジック         | Firebase Functions v2 (Node 24) + TypeScript |
 | **/common**            | 共有コード             | TypeScript (Schema, Utils)                   |
 | **/base**              | 共有UIコンポーネント   | Vue 3 (Materio Template)                     |
 
