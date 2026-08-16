@@ -1,6 +1,7 @@
-import express from 'express'
+import type { HttpResponse } from './utils/httpResponse.js'
 import { getStorage } from 'firebase-admin/storage'
 import { https } from 'firebase-functions/v2'
+import type { HttpsFunction } from 'firebase-functions/v2/https'
 import { getEvent, type ShokujiiEvent } from './stores/event.js'
 import { getCommunityByAccount } from './stores/community.js'
 import { convertStoragePathToURL, getEventSiteOrigin } from './utils/urls.js'
@@ -26,7 +27,7 @@ const SEO_CACHE_CONTROL = 'public, max-age=600, s-maxage=600'
  * Firebase Hosting から取得したレスポンスヘッダを、圧縮や接続制御に関するものだけ除外して転送する。
  * これにより、Content-Security-Policy などのセキュリティ関連ヘッダは維持される。
  */
-const forwardSafeHeaders = (from: Response, to: express.Response, options?: { excludeCacheControl?: boolean }) => {
+const forwardSafeHeaders = (from: Response, to: HttpResponse, options?: { excludeCacheControl?: boolean }) => {
   const excludedHeaderKeys = new Set([
     'content-encoding',
     'transfer-encoding',
@@ -64,7 +65,7 @@ const applyCoverImageFromMetadata = (
   context.imageType = resolveOgpImageType(metadata.contentType)
 }
 
-const sendNotFound = (res: express.Response): void => {
+const sendNotFound = (res: HttpResponse): void => {
   res
     .status(404)
     .set('Content-Type', 'text/html; charset=utf-8')
@@ -81,7 +82,7 @@ const fetchIndexHtml = async (): Promise<{ html: string; response: Response } | 
 }
 
 const sendSeoHtml = (
-  res: express.Response,
+  res: HttpResponse,
   indexHtmlResponse: Response,
   html: string,
   context: SeoPageContext,
@@ -196,12 +197,12 @@ const normalizeEventPaths = (reqPath: string): string[] => {
   return paths
 }
 
-export const handleEventOgpRequest = https.onRequest(
+export const handleEventOgpRequest: HttpsFunction = https.onRequest(
   {
     region: 'asia-northeast1',
     memory: '1GiB',
   },
-  async (req: https.Request, res: express.Response) => {
+  async (req, res) => {
     const site = resolveRequestSite(req)
     if (site == null) {
       res.status(400).send('Bad Request')
@@ -280,12 +281,12 @@ const normalizeCommunityPaths = (reqPath: string): string[] => {
   return paths
 }
 
-export const handleCommunityOgpRequest = https.onRequest(
+export const handleCommunityOgpRequest: HttpsFunction = https.onRequest(
   {
     region: 'asia-northeast1',
     memory: '1GiB',
   },
-  async (req: https.Request, res: express.Response) => {
+  async (req, res) => {
     const site = resolveRequestSite(req)
     if (site == null) {
       res.status(400).send('Bad Request')
