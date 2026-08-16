@@ -81,12 +81,7 @@ const fetchIndexHtml = async (): Promise<{ html: string; response: Response } | 
   return { html, response }
 }
 
-const sendSeoHtml = (
-  res: HttpResponse,
-  indexHtmlResponse: Response,
-  html: string,
-  context: SeoPageContext,
-): void => {
+const sendSeoHtml = (res: HttpResponse, indexHtmlResponse: Response, html: string, context: SeoPageContext): void => {
   forwardSafeHeaders(indexHtmlResponse, res, { excludeCacheControl: true })
   const injected = injectSeoHtml(html, context)
   res.status(200).set('Cache-Control', SEO_CACHE_CONTROL).set('Content-Type', 'text/html; charset=utf-8').send(injected)

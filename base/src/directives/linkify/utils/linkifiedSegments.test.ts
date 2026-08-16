@@ -63,7 +63,7 @@ describe('buildLinkifiedSegments', () => {
   it('preserves HTML token and linkifies the next token', () => {
     const segments = buildLinkifiedSegments('<b>太字</b> https://example.com')
     expect(textValues(segments)).toEqual(['<b>太字</b>', ' '])
-    expect(segments.at(-1)).toEqual({
+    expect(segments[segments.length - 1]).toEqual({
       kind: 'url',
       href: 'https://example.com',
       label: 'https://example.com',
