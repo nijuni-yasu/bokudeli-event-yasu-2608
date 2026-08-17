@@ -1,6 +1,11 @@
-import type { Response } from 'express'
 import { getEnterpriseById } from '../stores/enterprise.js'
 import { isOriginAllowedForEnterprise } from './enterpriseBaseDomain.js'
+
+/** onRequest の res（firebase-functions 内 express）とルート @types/express の Response 不一致を避ける */
+export type EnterpriseBillInvoiceCorsResponse = {
+  setHeader(name: string, value: string): unknown
+  status(code: number): { send(body?: unknown): unknown }
+}
 
 export function parseStaticCorsOrigins(): string[] {
   const raw = process.env.CORS
@@ -15,7 +20,10 @@ export function parseStaticCorsOrigins(): string[] {
   }
 }
 
-export function applyEnterpriseBillInvoiceCorsHeaders(res: Response, allowedOrigin: string | undefined): void {
+export function applyEnterpriseBillInvoiceCorsHeaders(
+  res: EnterpriseBillInvoiceCorsResponse,
+  allowedOrigin: string | undefined,
+): void {
   if (allowedOrigin == null) {
     return
   }
@@ -62,7 +70,7 @@ export type EnterpriseBillInvoiceCorsRequest = {
 /** 動的 CORS を適用。OPTIONS はここで完結。許可外 Origin の GET 等は 403。 */
 export async function handleEnterpriseBillInvoiceCors(
   req: EnterpriseBillInvoiceCorsRequest,
-  res: Response,
+  res: EnterpriseBillInvoiceCorsResponse,
   enterpriseId: string,
 ): Promise<'continue' | 'handled'> {
   const rawOrigin = req.headers.origin
