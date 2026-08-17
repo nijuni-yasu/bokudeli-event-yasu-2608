@@ -1,6 +1,6 @@
 import { onRequest } from 'firebase-functions/https'
-import type { Response } from 'express'
 import { defineSecret } from 'firebase-functions/params'
+import type { HttpResponse } from './utils/httpResponse.js'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { createModuleLogger } from './utils/logger.js'
 import Stripe from 'stripe'
@@ -281,7 +281,7 @@ async function handleAsyncPaymentFailed(args: HandlerArgs): Promise<void> {
 }
 
 /** checkout.session.completed (paid / no_payment_required) と async_payment_succeeded の確定フロー */
-async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event; res: Response }): Promise<void> {
+async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event; res: HttpResponse }): Promise<void> {
   const { session, event, eventId, communityId, userId, orderIds, res } = args
 
   // no_payment_required では payment_intent が null の可能性があるため、必須はしない

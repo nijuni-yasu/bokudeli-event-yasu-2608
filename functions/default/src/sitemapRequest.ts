@@ -1,5 +1,5 @@
-import express from 'express'
 import { https } from 'firebase-functions/v2'
+import type { HttpsFunction } from 'firebase-functions/v2/https'
 import { createModuleLogger } from './utils/logger.js'
 import { resolveRequestSite } from './utils/resolveRequestSite.js'
 import { getPublicCommunitiesForSitemap, getPublicEventsForSitemap } from './stores/seoSitemap.js'
@@ -33,12 +33,12 @@ const buildSitemapEntries = (
   return entries
 }
 
-export const handleSitemapRequest = https.onRequest(
+export const handleSitemapRequest: HttpsFunction = https.onRequest(
   {
     region: 'asia-northeast1',
     memory: '512MiB',
   },
-  async (req: https.Request, res: express.Response) => {
+  async (req, res) => {
     const site = resolveRequestSite(req)
     if (site == null) {
       res.status(400).send('Bad Request')

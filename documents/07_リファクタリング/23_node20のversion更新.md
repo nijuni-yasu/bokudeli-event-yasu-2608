@@ -69,12 +69,14 @@ Firebase Functions の実行ランタイム `nodejs20` が Deprecated となり�
 
 | 種別 | パス | 現在値 | 備考 |
 | :--- | :--- | :----- | :--- |
-| Functions ランタイム（正本） | `functions/default/package.json` `engines.node` | `"20"` | Firebase デプロイ時の実行ランタイム決定。**最重要** |
-| ローカル / CI Node | `.node-version`（ルート） | `20.19.1` | CI 全 workflow が `node-version-file: ./.node-version` を参照 |
+| Functions ランタイム（正本） | `functions/default/package.json` `engines.node` | `"24"` | Firebase デプロイ時の実行ランタイム決定。**最重要** |
+| ローカル / CI Node | `.node-version`（ルート） | `24.19.0` | CI 全 workflow が `node-version-file: ./.node-version` を参照 |
 | firebase.json runtime | `firebase.json` `functions[]` | **未指定** | package.json の `engines` に依存 |
-| 型定義 | `base/package.json` `@types/node` | `^20.12.5` | 任意（整合性） |
+| TS node 設定 | `base/package.json` `@tsconfig/node24` + `user`/`partner`/`enterprise` の `tsconfig.node.json` | `@tsconfig/node24` | Vite 設定用 |
+| 型定義 | `base/package.json` `@types/node` | `^24` | 任意（整合性） |
+| CI 例外 | `.github/workflows/test_firestore_rules.yml` | `node-version-file: ./.node-version` | 2026-08 以前は `node-version: '20'` ハードコード |
 | TS target | `tsconfig.base.json` | `ES2020` | 本移行とは切り離す（別タスク推奨） |
-| ドキュメント | `AGENTS.md` / `CLAUDE.md`、`.github/copilot-instructions.md` | `Node 20` 表記 | 表記更新 |
+| ドキュメント | `AGENTS.md` / `CLAUDE.md`、`.github/copilot-instructions.md` | `Node 24` 表記 | 表記更新済み |
 
 **スコープ外**: `manager/.node-version`（`16.14.2`）は legacy（運営向け管理画面）。本対応の対象外。
 
@@ -82,7 +84,7 @@ Firebase Functions の実行ランタイム `nodejs20` が Deprecated となり�
 
 - `.github/actions/deploy/action.yml` の `firebase-tools@15.15.0` は nodejs24 を GA としてデプロイ可能
 - firebase-tools 自体も v14.25.0 以降 Node 24 上での実行をサポート
-- CI workflow は個別に Node バージョンをハードコードしておらず、ルート `.node-version` 更新で波及する
+- CI workflow は個別に Node バージョンをハードコードしておらず、ルート `.node-version` 更新で波及する（例外: `test_firestore_rules.yml` は 2026-08 以前 `node-version: '20'` だったが `.node-version` 参照に統一済み）
 
 ---
 
@@ -90,7 +92,7 @@ Firebase Functions の実行ランタイム `nodejs20` が Deprecated となり�
 
 ### 3.1 Functions ランタイム（必須・正本）
 
-- [ ] `functions/default/package.json` の `engines.node` を `"20"` → `"24"`
+- [x] `functions/default/package.json` の `engines.node` を `"20"` → `"24"`
 
   ```json
   "engines": {
@@ -103,7 +105,7 @@ Firebase Functions の実行ランタイム `nodejs20` が Deprecated となり�
 
 ### 3.2 ローカル / CI Node（必須）
 
-- [ ] ルート `.node-version` を `20.19.1` → `24.x`（Node 24 LTS 最新パッチ。更新時は [Node.js 24 リリース](https://nodejs.org/en/blog/release/) を確認）
+- [x] ルート `.node-version` を `20.19.1` → `24.19.0`（Node 24 LTS 最新パッチ。更新時は [Node.js 24 リリース](https://nodejs.org/en/blog/release/) を確認）
 
   波及先 workflow（いずれも `node-version-file: ./.node-version`）:
 
@@ -111,27 +113,32 @@ Firebase Functions の実行ランタイム `nodejs20` が Deprecated となり�
   - `.github/workflows/deploy_functions.yml`
   - `.github/workflows/deploy_user.yml`
   - `.github/workflows/deploy_partner.yml`
+  - `.github/workflows/deploy_enterprise.yml`
+  - `.github/workflows/deploy_terms.yml`
   - `.github/workflows/deploy_firestore.yml`
   - `.github/workflows/deploy_storage.yml`
+  - `.github/workflows/test_firestore_rules.yml`
 
-- [ ] ローカルの Node バージョンマネージャ（nodenv / fnm 等）を Node 24 に切替
+- [x] ローカルの Node バージョンマネージャ（nodenv / fnm 等）を Node 24 に切替
 
 ### 3.3 firebase.json（任意）
 
-- [ ] **方針: package.json の `engines` 運用を継続し、`firebase.json` には `runtime` を追記しない**（二重管理を避ける）
+- [x] **方針: package.json の `engines` 運用を継続し、`firebase.json` には `runtime` を追記しない**（二重管理を避ける）
 
   CLI は `firebase.json` の `runtime` を package.json の `engines` より優先する。
   明示したい場合のみ `"runtime": "nodejs24"` を `functions[]` に追加する。
 
 ### 3.4 型定義・整合性（任意）
 
-- [ ] `base/package.json` の `@types/node` を `^20` → `^24`
+- [x] `base/package.json` の `@types/node` を `^20` → `^24`
+- [x] `base/package.json` の `@tsconfig/node20` を `@tsconfig/node24` へ差し替え、`user`/`partner`/`enterprise` の `tsconfig.node.json` を追随
 - [ ] `tsconfig.base.json` の `target`（現 `ES2020`）引き上げは **本移行とは切り離す**（影響範囲が広いため別タスク）
 
 ### 3.5 ドキュメント表記更新
 
-- [ ] `AGENTS.md` / `CLAUDE.md` の「Firebase Functions v2 (Node 20) + TypeScript」→ Node 24
-- [ ] `.github/copilot-instructions.md` ディレクトリ表の「Node 20」表記
+- [x] `AGENTS.md` / `CLAUDE.md` の「Firebase Functions v2 (Node 20) + TypeScript」→ Node 24
+- [x] `.github/copilot-instructions.md` ディレクトリ表の「Node 20」表記
+- [x] `documents/firebaseプロジェクト/firebaseプロジェクト新規作成.md` の Node 表記
 
 ---
 
@@ -143,7 +150,7 @@ nodejs24 はベースイメージが **google-24（Ubuntu 24）** に変わる�
   - `sharp@0.34.5`（画像処理・ネイティブバイナリ）
   - `@google-cloud/firestore@7.11.0` / `@google-cloud/storage@7.15.0`
   - `@adobe/pdfservices-node-sdk@4.1.0`
-- [ ] **`firebase-functions@6.3.2` の Node 24 動作確認**（ローカル / sandbox で実関数起動）
+- [x] **`firebase-functions@7.3.2` の Node 24 動作確認**（#1933 と同 PR で更新。`HttpResponse` 型で `@types/express` バージョン差異を回避）
 - [ ] firebase-tools のバージョンは **15.15.0 のままで可**（変更不要）
 
 ---
@@ -156,12 +163,16 @@ nodejs24 はベースイメージが **google-24（Ubuntu 24）** に変わる�
 
 ```sh
 npm ci
+npm run verify:functions-deploy
+npm run test:verify-functions-deploy
+npm run verify:vue-tsc-gate
 npm -w common run build
-npm -w base run lint && npm -w user run lint && npm -w partner run lint && npm -w functions/default run lint
-npm -w common run format:check && npm -w base run format:check && npm -w user run format:check && npm -w partner run format:check && npm -w functions/default run format:check
-npm -w base run build:types && npm -w user run build:types && npm -w partner run build:types
+npm -w terms run build
+npm -w common run lint && npm -w base run lint && npm -w user run lint && npm -w partner run lint && npm -w enterprise run lint && npm -w terms run lint && npm -w functions/default run lint
+npm -w common run format:check && npm -w base run format:check && npm -w user run format:check && npm -w partner run format:check && npm -w enterprise run format:check && npm -w terms run format:check && npm -w functions/default run format:check
+npm -w base run build:types && npm -w user run build:types && npm -w partner run build:types && npm -w enterprise run build:types
 npm -w functions/default run build
-npm -w common run test && npm -w base run test && npm -w user run test && npm -w partner run test && npm -w functions/default run test
+npm -w common run test && npm -w base run test && npm -w user run test && npm -w partner run test && npm -w enterprise run test && npm -w functions/default run test
 ```
 
 ### 5.2 エミュレータ動作確認
