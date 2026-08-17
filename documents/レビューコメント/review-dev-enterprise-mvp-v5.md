@@ -15,6 +15,10 @@
 | [ ] | RC-9 | 3789443883 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 動的 CORS で http Origin を拒否<br>本番テナントは https のみ、localhost は静的 CORS |
 | [x] | RC-10 | 3789440623 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Origin trim 不整合で許可判定と返却 Origin がズレる<br>`trim()` を入口で一貫適用 |
 | [x] | RC-11 | 3789443876 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ, 🐛 実害 | 🔧 微修正 | S | saveMember write 後の getOrdersInCart read<br>初回参加者の addToCart が Transaction 失敗 |
+| [ ] | RC-12 | 5318372077 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | EnterpriseBillInvoiceCorsResponse 型追加は deploy 互換として妥当 |
+| [ ] | RC-13 | 5318372077 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | 403 時 CORS ヘッダーなしは許可外 Origin の意図どおり |
+| [ ] | RC-14 | 5318372077 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Origin trim 回帰テスト追加は妥当 |
+| [ ] | RC-15 | 3797691526 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 📋 仕様追加 | M | ハイフン除去後の請求書番号が enterprise_id 間で衝突しうる |
 
 ---
 
@@ -466,5 +470,168 @@ Useful? React with 👍 / 👎.
 **想定工数**: S
 
 **判断理由**: `memberOrders.ts` で `saveMember` 前に `getOrdersInCart` を実行し `existingInCart` として `addEnterpriseSubsidyMenusToCart` に渡すよう修正。関数側も `existingInCart` 省略時のみ read する後方互換を維持。
+
+---
+
+## 評価セッション（2026-08-18 03:01・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-18 03:01 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・wait wake）
+- **ブランチ名**: `dev/enterprise-mvp-v5`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2274
+- **REVIEW_REQUEST_SINCE**: 2026-08-17T17:53:26Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼コメント id:5318362993、Codex 接続案内 id:5318372979）
+- **重複スキップ**: Copilot `orderIds` 指摘は既存 RC-4 と同一のため新規 RC なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-12 | 5318372077 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | EnterpriseBillInvoiceCorsResponse 型追加は deploy 互換として妥当 |
+| [ ] | RC-13 | 5318372077 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | 403 時 CORS ヘッダーなしは許可外 Origin の意図どおり |
+| [ ] | RC-14 | 5318372077 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Origin trim 回帰テスト追加は妥当 |
+| [ ] | RC-15 | 3797691526 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 📋 仕様追加 | M | ハイフン除去後の請求書番号が enterprise_id 間で衝突しうる |
+
+---
+
+**識別子**: RC-12（GitHub id: 5318372077・Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/enterpriseBillInvoiceCors.ts:4–8`
+
+**該当コード（レビュー時点の diff）**:
+
+```typescript
+export type EnterpriseBillInvoiceCorsResponse = {
+  setHeader(name: string, value: string): unknown
+  status(code: number): { send(body?: unknown): unknown }
+}
+```
+
+**レビュワーのコメント（原文）**:
+
+**[fyi]** `EnterpriseBillInvoiceCorsResponse` の最小インターフェースが追加され、`express.Response` 直接依存が解消されています。`status(code).send(body?)` のチェーン型も正しく定義されており、deploy ビルドの TS2345 解消として適切な対応です。
+
+**コメント要約**: CORS Response 最小型は deploy ビルド互換として妥当。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: 意図どおりの型分離。追加対応不要。
+
+---
+
+**識別子**: RC-13（GitHub id: 5318372077・Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/enterpriseBillInvoiceCors.ts:82`
+
+**該当コード（レビュー時点の diff）**:
+
+（403 応答時に `allowedOrigin == null` のため CORS ヘッダー未付与）
+
+**レビュワーのコメント（原文）**:
+
+**[nits]** `res.status(403).send('Forbidden')` の場合、`applyEnterpriseBillInvoiceCorsHeaders` で CORS ヘッダーは付いていません（`allowedOrigin == null` なので）。許可外 Origin からの fetch では CORS エラーが先に発生するため、403 のボディがブラウザに届かないことが多いですが、意図した挙動であればこのままで問題ありません。
+
+**コメント要約**: 許可外 Origin の 403 で CORS ヘッダーなしはブラウザ上 CORS エラーになるが意図どおり。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: セキュリティ上、許可外 Origin へ CORS を返さないのは正しい。RC-9（https 限定）と整合。
+
+---
+
+**識別子**: RC-14（GitHub id: 5318372077・Copilot トップレベル）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/enterpriseBillInvoiceCors.test.ts:60–74`
+
+**該当コード（レビュー時点の diff）**:
+
+（Origin trim 許可テスト追加）
+
+**レビュワーのコメント（原文）**:
+
+**[fyi]** `Origin 前後スペースを trim して許可判定する` テストが追加されています。前回指摘（Origin trim 一貫性）の回帰テストとして機能しており、修正の意図が明示されています。
+
+**コメント要約**: trim 回帰テストは RC-10 対応の妥当な補強。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: テスト追加のみ。対応不要。
+
+---
+
+**識別子**: RC-15（GitHub id: 3797691526）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `common/src/utils/enterpriseInvoice.ts:75`
+
+**該当コード（レビュー時点の diff）**:
+
+```typescript
+export function buildEnterpriseInvoiceNumber(enterpriseId: string, yearMonth: string): string {
+  const prefix = enterpriseId.replace(/-/g, '').slice(0, 8)
+  return `${prefix}-${yearMonth.replace('-', '')}`
+}
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  ハイフン除去後も請求書番号を一意にしてください**
+
+`enterprise_id` には `company-a` と `companya` のような値をどちらも登録できますが、この正規化では両方が同月に `companya-202607` となります。変更前は先頭8文字にハイフンが残るためこの組み合わせを区別できており、変更後は別企業の請求書に同一番号が印字されて照合や経理処理を誤るため、ハイフンを除去する場合も元IDを区別できる短縮方式にしてください。
+
+**コメント要約**: `company-a` と `companya` が同一請求書番号 `companya-YYYYMM` に正規化され衝突しうる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。ただし enterprise_id の登録制約（Firestore 上の一意性）や PDF 表示要件の確認が必要。ハッシュ短縮・Firestore doc id 利用等は仕様判断が要るため自動修正対象外。
 
 ---
