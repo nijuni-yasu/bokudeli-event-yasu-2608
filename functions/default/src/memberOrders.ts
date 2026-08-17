@@ -20,6 +20,7 @@ import {
   deleteOrder,
   getOrder,
   getOrdersByIds,
+  getOrdersInCart,
   getMember,
   saveMember,
   saveOrder,
@@ -95,6 +96,11 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
 
     const existingMember = await getMember(community_id, event_id, uid, transaction)
 
+    const existingCartOrders =
+      eventData.event_payment === 'enterprise_subsidy'
+        ? await getOrdersInCart(community_id, event_id, uid, transaction)
+        : undefined
+
     if (existingMember == null) {
       const member = new EventMember(uid, {
         user_id: uid,
@@ -126,6 +132,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
         eventMenus,
         transaction,
         enterpriseMember,
+        existingInCart: existingCartOrders,
       })
     }
 

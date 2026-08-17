@@ -33,24 +33,25 @@ export async function resolveEnterpriseBillInvoiceCorsOrigin(
     return undefined
   }
 
+  const trimmedOrigin = origin.trim()
+  if (trimmedOrigin === '') {
+    return undefined
+  }
+
   const staticOrigins = parseStaticCorsOrigins()
-  if (staticOrigins.includes(origin)) {
-    return origin
+  if (staticOrigins.includes(trimmedOrigin)) {
+    return trimmedOrigin
   }
 
   const enterprise = await getEnterpriseById(enterpriseId)
   if (enterprise == null) {
     return undefined
   }
-  if (!isOriginAllowedForEnterprise(origin, enterprise)) {
+  if (!isOriginAllowedForEnterprise(trimmedOrigin, enterprise)) {
     return undefined
   }
 
-  try {
-    return new URL(origin).origin
-  } catch {
-    return undefined
-  }
+  return new URL(trimmedOrigin).origin
 }
 
 export type EnterpriseBillInvoiceCorsRequest = {

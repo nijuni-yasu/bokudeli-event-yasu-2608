@@ -15,11 +15,12 @@ export const sortEventMemberOrdersForPartnerDetail = (orders: EventMemberOrder[]
   return [...orders].sort(compareEventMemberOrdersForPartnerDetail)
 }
 
+/** carted_at 欠損時は created_at、それも無ければ 0 として replay 順を決める */
 const enterpriseSubsidyReplayCartedAt = (order: EventMemberOrder): number => order.carted_at ?? order.created_at ?? 0
 
 /**
  * enterprise_subsidy の replay / addToCart / confirmOrder で共通の並び。
- * carted_at 昇順 → order_id 昇順（updated_at は書き戻しで変わるため使わない）。
+ * carted_at 昇順（欠損時 created_at → 0）→ order_id 昇順（updated_at は書き戻しで変わるため使わない）。
  */
 export const compareEventMemberOrdersForEnterpriseSubsidyReplay = (
   a: EventMemberOrder,

@@ -66,6 +66,15 @@ describe('resolveEnterpriseBillInvoiceCorsOrigin', () => {
     expect(origin).toBe('https://lunch.company-a.example')
   })
 
+  it('Origin 前後スペースを trim して許可判定する', async () => {
+    vi.mocked(getEnterpriseById).mockResolvedValue(enterprise)
+    const origin = await resolveEnterpriseBillInvoiceCorsOrigin(
+      '  https://company-a.sandbox2510.tabete.co  ',
+      'company-a',
+    )
+    expect(origin).toBe('https://company-a.sandbox2510.tabete.co')
+  })
+
   it('別 enterprise のホストは拒否する', async () => {
     vi.mocked(getEnterpriseById).mockResolvedValue(enterprise)
     const origin = await resolveEnterpriseBillInvoiceCorsOrigin('https://evil-other.sandbox2510.tabete.co', 'company-a')
