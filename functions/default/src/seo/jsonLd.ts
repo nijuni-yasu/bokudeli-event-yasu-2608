@@ -1,9 +1,8 @@
-import { DateTime } from 'luxon'
 import { computeEventFullAddress, JAPAN_PREFECTURE_NAMES } from '@shokujii/common/utils/splitAddress.js'
+import { convertToIso8601 } from '@shokujii/common/utils/datetime.js'
 import { OGP_SITE_NAME } from './metaTags.js'
 import { toPlainTextExcerpt } from './escape.js'
 
-const DEFAULT_TIME_ZONE = 'Asia/Tokyo'
 const SCHEMA_CONTEXT = 'https://schema.org'
 const OFFLINE_EVENT_ATTENDANCE_MODE = `${SCHEMA_CONTEXT}/OfflineEventAttendanceMode`
 
@@ -49,9 +48,6 @@ export interface WebSiteJsonLdInput {
   name: string
   publisherId: string
 }
-
-const toIso8601 = (millis: number): string =>
-  DateTime.fromMillis(millis, { zone: DEFAULT_TIME_ZONE }).toISO({ suppressMilliseconds: true }) ?? ''
 
 const stripJsonLdContext = (node: Record<string, unknown>): Record<string, unknown> => {
   const result = { ...node }
@@ -103,8 +99,8 @@ export const buildEventJsonLdNode = (input: EventJsonLdInput): Record<string, un
     description: toPlainTextExcerpt(input.eventDesc),
     url: input.url,
     image: input.imageUrl,
-    startDate: toIso8601(input.startDatetimeMillis),
-    endDate: toIso8601(input.endDatetimeMillis),
+    startDate: convertToIso8601(input.startDatetimeMillis),
+    endDate: convertToIso8601(input.endDatetimeMillis),
     eventStatus: input.isCanceled ? `${SCHEMA_CONTEXT}/EventCancelled` : `${SCHEMA_CONTEXT}/EventScheduled`,
     eventAttendanceMode: OFFLINE_EVENT_ATTENDANCE_MODE,
     location: {
