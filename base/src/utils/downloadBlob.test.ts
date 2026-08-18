@@ -138,24 +138,15 @@ describe('downloadBlob', () => {
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
   })
 
-  it('share 失敗時は anchor ダウンロードにフォールバックする', async () => {
-    Object.defineProperty(globalThis, 'navigator', {
-      configurable: true,
-      value: {
-        userAgent: 'Mozilla/5.0 (Linux; Android 14)',
-        canShare,
-        share,
-      },
-      writable: true,
-    })
+  it('iOS で share が reject した場合は unavailable を返す', async () => {
     canShare.mockReturnValue(true)
     share.mockRejectedValue(new Error('cancelled'))
     const blob = new Blob(['x'], { type: 'image/png' })
 
     const result = await downloadBlob(blob, 'photo.png')
 
-    expect(result).toBe('downloaded')
-    expect(anchorClick).toHaveBeenCalledOnce()
+    expect(result).toBe('unavailable')
+    expect(anchorClick).not.toHaveBeenCalled()
   })
 
   it('iOS で share 不能時は unavailable を返す', async () => {

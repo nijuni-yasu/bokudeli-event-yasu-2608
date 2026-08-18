@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
 import { mdiAccountGroup } from '@mdi/js'
-import { useI18n } from 'vue-i18n'
 import type { UserProfileCommunityPreviewItem } from '@shokujii/common/apis/userProfile.js'
 import type { ProfileCommunityIconUrlFn } from '@shokujii/base/composable/useProfilePreviewMedia.js'
 import type { ProfileLinkPolicyFn, ResolveCommunityPathFn } from '@shokujii/base/types/profilePathResolvers.js'
@@ -22,8 +21,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   showMore: []
 }>()
-
-const { t } = useI18n()
 
 const communityLinkTo = (
   c: UserProfileCommunityPreviewItem,
@@ -48,7 +45,7 @@ const communityLinkTo = (
         </v-col>
       </v-row>
       <div v-else-if="props.isEmpty" class="text-body-2 text-medium-emphasis">
-        {{ t('user_profile.empty.communities') }}
+        {{ $t('user_profile.empty.communities') }}
       </div>
       <template v-else>
         <template v-if="props.showJoinedSection">
