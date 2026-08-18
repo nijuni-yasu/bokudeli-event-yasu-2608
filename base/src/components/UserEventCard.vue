@@ -356,12 +356,12 @@ const submitCancel = () => {
     </v-card-text>
   </v-card>
 
-  <v-dialog v-model="cancelDialogOpen" :persistent="cancelLoading" max-width="750px">
-    <v-card class="pa-5">
-      <v-card-title class="py-6 px-6 text-wrap text-h4">
+  <v-dialog v-model="cancelDialogOpen" :persistent="cancelLoading" max-width="750px" scrollable>
+    <v-card class="pa-3 pa-sm-5">
+      <v-card-title class="py-4 py-sm-6 px-0 px-sm-2 text-wrap text-h5 text-sm-h4">
         {{ $t('user_event_card.cancel_dialog.title') }}
       </v-card-title>
-      <v-card-text class="mb-4">
+      <v-card-text class="mb-2 mb-sm-4 px-0 px-sm-2">
         <div class="text-body-2 mb-4" style="line-height: 1.5rem">
           <div v-if="event.event_payment === 'user_advance'">
             <div v-html="$t('user_event_card.cancel_dialog.description_user_advance')" />
@@ -398,7 +398,7 @@ const submitCancel = () => {
         </div>
 
         <div
-          class="cancel-dialog-table text-body-1 pa-5"
+          class="cancel-dialog-table text-body-1 pa-3 pa-sm-5"
           :class="{ 'cancel-dialog-table--show-payment': showCancelPaymentColumn }"
         >
           <div class="cancel-dialog-table__head text-medium-emphasis">
@@ -418,24 +418,55 @@ const submitCancel = () => {
               class="cancel-dialog-table__check"
               :disabled="cancelLoading"
             />
-            <span>{{ row.menu_name }}</span>
-            <span class="cancel-dialog-table__col-date">{{ cancelDialogOrderDateLabel(row.orderDateMillis) }}</span>
-            <span class="text-end">{{ $n(row.menu_price, 'currency') }}</span>
-            <span v-if="showCancelPaymentColumn" class="text-end">{{ $n(row.line_net, 'currency') }}</span>
+            <span class="cancel-dialog-table__menu">{{ row.menu_name }}</span>
+            <div class="cancel-dialog-table__details">
+              <span class="cancel-dialog-table__col-date">
+                <span class="cancel-dialog-table__mobile-label d-sm-none">{{
+                  $t('user_event_card.cancel_dialog.column_order_date')
+                }}</span>
+                {{ cancelDialogOrderDateLabel(row.orderDateMillis) }}
+              </span>
+              <span class="cancel-dialog-table__col-price text-end text-sm-end">
+                <span class="cancel-dialog-table__mobile-label d-sm-none">{{
+                  $t('user_event_card.cancel_dialog.column_menu_price')
+                }}</span>
+                {{ $n(row.menu_price, 'currency') }}
+              </span>
+              <span v-if="showCancelPaymentColumn" class="cancel-dialog-table__col-pay text-end text-sm-end">
+                <span class="cancel-dialog-table__mobile-label d-sm-none">{{ $t(cancelDialogAmountColumnKey) }}</span>
+                {{ $n(row.line_net, 'currency') }}
+              </span>
+            </div>
           </div>
           <div
             v-for="row in cancelCanceledRows"
             :key="row.orderId"
             class="cancel-dialog-table__row cancel-dialog-table__row--canceled text-disabled"
           >
-            <span />
-            <span>{{ row.menu_name }}</span>
-            <span class="cancel-dialog-table__col-date">{{ cancelDialogOrderDateLabel(row.orderDateMillis) }}</span>
-            <template v-if="showCancelPaymentColumn">
-              <span class="text-end">{{ $n(row.menu_price, 'currency') }}</span>
-              <span class="text-end">{{ $t('user_event_card.canceled') }}</span>
-            </template>
-            <span v-else class="text-end">{{ $t('user_event_card.canceled') }}</span>
+            <span class="cancel-dialog-table__check-spacer" aria-hidden="true" />
+            <span class="cancel-dialog-table__menu">{{ row.menu_name }}</span>
+            <div class="cancel-dialog-table__details">
+              <span class="cancel-dialog-table__col-date">
+                <span class="cancel-dialog-table__mobile-label d-sm-none">{{
+                  $t('user_event_card.cancel_dialog.column_order_date')
+                }}</span>
+                {{ cancelDialogOrderDateLabel(row.orderDateMillis) }}
+              </span>
+              <template v-if="showCancelPaymentColumn">
+                <span class="cancel-dialog-table__col-price text-end text-sm-end">
+                  <span class="cancel-dialog-table__mobile-label d-sm-none">{{
+                    $t('user_event_card.cancel_dialog.column_menu_price')
+                  }}</span>
+                  {{ $n(row.menu_price, 'currency') }}
+                </span>
+                <span class="cancel-dialog-table__col-pay text-end text-sm-end">
+                  {{ $t('user_event_card.canceled') }}
+                </span>
+              </template>
+              <span v-else class="cancel-dialog-table__col-pay text-end text-sm-end">
+                {{ $t('user_event_card.canceled') }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -443,17 +474,24 @@ const submitCancel = () => {
           {{ $t('user_event_card.cancel_dialog.refund_total', [$n(cancelRefundAmount, 'currency')]) }}
         </div>
       </v-card-text>
-      <v-card-actions>
-        <v-btn variant="text" @click="selectAll" :disabled="cancelLoading || cancelOrderedRows.length === 0">
+      <v-card-actions class="flex-wrap px-0 px-sm-2">
+        <v-btn
+          variant="text"
+          class="mb-1 mb-sm-0"
+          @click="selectAll"
+          :disabled="cancelLoading || cancelOrderedRows.length === 0"
+        >
           {{ $t('user_event_card.cancel_dialog.select_all') }}
         </v-btn>
-        <v-spacer />
-        <v-btn @click="cancelDialogOpen = false" :disabled="cancelLoading">
-          {{ $t('user_event_card.cancel_dialog.not_cancel') }}
-        </v-btn>
-        <v-btn variant="tonal" color="error" :disabled="!canSubmit" :loading="cancelLoading" @click="submitCancel">
-          {{ $t('user_event_card.cancel_dialog.submit') }}
-        </v-btn>
+        <v-spacer class="d-none d-sm-flex" />
+        <div class="d-flex flex-wrap ga-2 ms-sm-auto w-100 w-sm-auto justify-end">
+          <v-btn @click="cancelDialogOpen = false" :disabled="cancelLoading">
+            {{ $t('user_event_card.cancel_dialog.not_cancel') }}
+          </v-btn>
+          <v-btn variant="tonal" color="error" :disabled="!canSubmit" :loading="cancelLoading" @click="submitCancel">
+            {{ $t('user_event_card.cancel_dialog.submit') }}
+          </v-btn>
+        </div>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -483,20 +521,99 @@ const submitCancel = () => {
   grid-template-columns: 2.75rem minmax(0, 1fr) minmax(7rem, auto) minmax(5.5rem, auto) minmax(5.5rem, auto);
 }
 
+.cancel-dialog-table__details {
+  display: contents;
+}
+
+.cancel-dialog-table__menu {
+  min-width: 0;
+  word-break: break-word;
+}
+
 .cancel-dialog-table__head {
   padding-bottom: 0.25rem;
   margin-bottom: 0.125rem;
   border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
-.cancel-dialog-table__check {
+.cancel-dialog-table__check,
+.cancel-dialog-table__check-spacer {
   margin: -0.5rem 0;
   padding: 0;
   justify-self: start;
 }
 
+.cancel-dialog-table__check-spacer {
+  display: block;
+  width: 2.75rem;
+  margin: 0;
+}
+
 .cancel-dialog-table__row--canceled {
   font-size: 0.8125rem;
+}
+
+.cancel-dialog-table__mobile-label {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  margin-bottom: 0.125rem;
+}
+
+@media (max-width: 599.98px) {
+  .cancel-dialog-table__head {
+    display: none;
+  }
+
+  .cancel-dialog-table__row,
+  .cancel-dialog-table--show-payment .cancel-dialog-table__row {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    grid-template-areas:
+      'check menu'
+      'details details';
+    column-gap: 0.5rem;
+    row-gap: 0.375rem;
+    align-items: start;
+    min-height: unset;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  }
+
+  .cancel-dialog-table__row:last-child {
+    border-bottom: none;
+  }
+
+  .cancel-dialog-table__check,
+  .cancel-dialog-table__check-spacer {
+    grid-area: check;
+    align-self: start;
+    margin: 0;
+  }
+
+  .cancel-dialog-table__menu {
+    grid-area: menu;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .cancel-dialog-table__details {
+    display: flex;
+    grid-area: details;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding-left: 2.5rem;
+  }
+
+  .cancel-dialog-table__col-date,
+  .cancel-dialog-table__col-price,
+  .cancel-dialog-table__col-pay {
+    flex: 1 1 auto;
+    min-width: 4.5rem;
+    text-align: start !important;
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
 }
 
 .user-event-card-detail-link:focus-visible {
