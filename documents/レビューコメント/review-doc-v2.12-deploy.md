@@ -84,6 +84,8 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 | [ ] | RC-72 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `adminDashboardCsv.ts:10` CSV 列見出しが日本語リテラルで `ja.ts` を通っておらず、`'表示名'` が画面の `'氏名'` と不一致<br>画面とダウンロードで列名が変わる |
 | [ ] | RC-73 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | `adminDashboardPeriod.ts:2` `DEFAULT_TIME_ZONE` をアプリ層で新規参照し、luxon による月シフト・当月算出を call site で組み立てている（4 箇所）<br>`common` 側に閉じた util を追加して呼ぶ方針に反する |
 | [ ] | RC-74 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | `enterpriseTenantCache.ts:72` `cached_at` を持つのに読み出し側で有効期限判定に使っておらず、テナント再割り当て後も古い `tenant_id` が bootstrap に使われる<br>照合は fail-closed なので不正アクセスにはならないが、`cached_at` の意図が未実装 |
+| [ ] | RC-75 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:25` 不正な `role` を UI が無条件に `member` へ丸めており、CSV の typo を検知できない<br>空欄だけ `member` にフォールバックし、それ以外の未知値は行単位エラーに戻す |
+| [ ] | RC-76 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
 
 ---
 
@@ -373,5 +375,105 @@ collectionGroup クエリに対して未認証 read を許可しているため�
 **想定工数**: S
 
 **判断理由**: user hosting は本番も同一 target を使うため、`X-Robots-Tag: noindex` を単純に追加すると本番までインデックス対象外になり、今回の SEO 施策を無効化してしまう。ホスト名による分岐（Functions rewrite）か環境別 `robots.txt` の配置かで実装が分かれ、修正方針が一意でないため自動修正の対象外とした。少なくともデプロイ手順への注記だけでも先に入れるかを含め、方針をユーザーに確認する。
+
+---
+
+## 評価セッション（2026-08-18 23:53・shokujii-code-review）
+
+- **評価日時**: 2026-08-18 23:53 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: `doc/v2.12-deploy`
+- **PR**: 未作成
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-75 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:25` 不正な `role` を UI が無条件に `member` へ丸めており、CSV の typo を検知できない<br>空欄だけ `member` にフォールバックし、それ以外の未知値は行単位エラーに戻す |
+| [ ] | RC-76 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
+
+---
+
+**識別子**: RC-75（GitHub id: なし）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/admin/members/import.vue:25`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const resolveRole = (rawRole: string): EnterpriseMemberRoleType => {
++  const role = ENTERPRISE_MEMBER_ROLE_VALUES.find((value) => value === rawRole)
++  return role ?? 'member'
++}
+...
++      role: resolveRole(cells[3]?.trim() ?? ''),
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 必須修正 [🔧微修正/S]: `enterprise/src/pages/admin/members/import.vue:25-42`
+CSV インポートで `role` の不正値を `resolveRole()` が無条件に `'member'` へ丸めています。これだと `admn` / `Admin` などの typo がエラーにならず、そのまま一般メンバーとして作成されてしまい、入力ミスを検知できません。サーバー側は `functions/default/src/enterprise/members.ts:122-124` で不正ロールを `"ロールが不正です"` として弾く前提なので、今回の変更でその検証経路を UI 側が潰しています。空欄時だけ `'member'` にフォールバックし、それ以外の未知値は行単位エラーとして返す形に戻すべきです。
+
+**コメント要約**: `members/import.vue:25` 不正な `role` を UI が無条件に `member` へ丸めており、CSV の typo を検知できない。
+空欄だけ `member` にフォールバックし、それ以外の未知値は行単位エラーに戻す。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 既存のサーバー側バリデーションは未知ロールを弾く前提であり、今回の UI 変更でのみ typo が静かに別権限へ変換される退行が入っている。権限昇格ではないものの、誤ったロールでメンバーを作成してもユーザーが気づけず、取り込み結果の信頼性を損なうため、マージ前に戻すべき実害バグとして 🚨 とした。修正方針も「空欄のみ既定値、それ以外はエラー」で一意である。
+
+---
+
+**識別子**: RC-76（GitHub id: なし）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/admin/invoices/index.vue:23`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-  if (periodError.value != null) return
++  if (periodError.value != null) {
++    // 期間が不正なまま前回の行を残すと、新しい見出しの下に古い請求内容が有効値として見えてしまう
++    rows.value = []
++    return
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 修正提案 [🔧微修正/S]: `enterprise/src/pages/admin/invoices/index.vue:21-37`
+不正期間時に `rows.value = []` して return するだけだと、直前の有効期間で飛んでいた `getDashboardMonthlyData()` のレスポンスを無効化できません。`loadSeq` は有効期間のときしか更新していないため、期間変更の途中で一時的に不正状態になると、後から返った古いレスポンスが `seq === loadSeq` のまま通って、現在の期間表示の下に別期間の請求データを再描画します。無効期間へ遷移した時点でも in-flight 応答を失効させるよう `loadSeq` を進めるか、リクエスト時の period スナップショット一致を確認してください。
+
+**コメント要約**: `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる。
+invalid 遷移時にも in-flight 応答を失効させる必要がある。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 現在の実装は「不正期間では前回行を消す」改善自体は入っているが、先行リクエストの完了タイミング次第で別期間の請求行が再描画される race を残している。表示データの整合性に影響するものの、必ず発生するわけではなくサーバー不整合も伴わないため、優先度は 🟡 に留めた。`loadSeq` の失効または period snapshot 比較で局所修正できる。
 
 ---
