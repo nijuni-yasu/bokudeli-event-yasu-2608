@@ -2,10 +2,9 @@ import type { BillingStatusType } from '../schemas/Enterprise.js'
 import {
   getYearMonthRangeMillis,
   isEnterpriseMemberBillableInYearMonth,
+  parseYearMonth,
   type BillableMemberTimestamps,
 } from './isEnterpriseMemberBillableInYearMonth.js'
-
-const YEAR_MONTH_PATTERN = /^\d{4}-\d{2}$/
 
 export class BillingSnapshotPeriodError extends Error {
   constructor(message: string) {
@@ -15,7 +14,9 @@ export class BillingSnapshotPeriodError extends Error {
 }
 
 export function assertRecapturableYearMonth(yearMonth: string, currentCalendarYearMonth: string): void {
-  if (!YEAR_MONTH_PATTERN.test(yearMonth)) {
+  try {
+    parseYearMonth(yearMonth)
+  } catch {
     throw new BillingSnapshotPeriodError('year_month must be YYYY-MM')
   }
   if (yearMonth >= currentCalendarYearMonth) {

@@ -81,7 +81,9 @@ export function enumerateYearMonths(startYearMonth: string, endYearMonth: string
 }
 
 export function countMonthsInRange(startYearMonth: string, endYearMonth: string): number {
-  return enumerateYearMonthsUnchecked(startYearMonth, endYearMonth).length
+  const { year: startYear, month: startMonth } = parseYearMonth(startYearMonth)
+  const { year: endYear, month: endMonth } = parseYearMonth(endYearMonth)
+  return (endYear - startYear) * 12 + (endMonth - startMonth) + 1
 }
 
 export function validateDashboardPeriod(

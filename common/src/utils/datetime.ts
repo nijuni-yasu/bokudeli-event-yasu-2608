@@ -57,6 +57,11 @@ export function formatYearMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy-MM')
 }
 
+/** オフセット付き ISO 8601 文字列に変換する（JSON-LD 等の機械可読な日時用）。例: "2026-07-01T19:00:00+09:00" */
+export function convertToIso8601(millis: number, zone = DEFAULT_TIME_ZONE): string {
+  return DateTime.fromMillis(millis, { zone }).toISO({ suppressMilliseconds: true }) ?? ''
+}
+
 /** 補助設定の適用開始月の最小値（JST 翌暦月）。YYYY-MM */
 export function getMinimumEffectiveFromMonth(
   nowMillis?: number,
