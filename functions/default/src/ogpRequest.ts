@@ -23,6 +23,9 @@ const logger = createModuleLogger('ogpRequest')
 
 const SEO_CACHE_CONTROL = 'public, max-age=600, s-maxage=600'
 
+/** 限定公開・未承認ページは共有 URL を知る人にだけ配信するため、CDN・共有キャッシュに載せない */
+const PRIVATE_CACHE_CONTROL = 'private, no-store'
+
 /**
  * Firebase Hosting から取得したレスポンスヘッダを、圧縮や接続制御に関するものだけ除外して転送する。
  * これにより、Content-Security-Policy などのセキュリティ関連ヘッダは維持される。
@@ -85,6 +88,22 @@ const sendSeoHtml = (res: HttpResponse, indexHtmlResponse: Response, html: strin
   forwardSafeHeaders(indexHtmlResponse, res, { excludeCacheControl: true })
   const injected = injectSeoHtml(html, context)
   res.status(200).set('Cache-Control', SEO_CACHE_CONTROL).set('Content-Type', 'text/html; charset=utf-8').send(injected)
+}
+
+/**
+ * 限定公開イベント・非公開／未承認コミュニティ向け。
+ * `firebase.json` の rewrite は全リクエストをこのハンドラに通すため、404 を返すと
+ * URL 共有・直リンク・リロードで画面自体に到達できなくなる。インデックス除外は
+ * `X-Robots-Tag` で行い、SEO メタ・JSON-LD を注入しない素の SPA を配信する。
+ */
+const sendNoindexSpaHtml = (res: HttpResponse, indexHtmlResponse: Response, html: string): void => {
+  forwardSafeHeaders(indexHtmlResponse, res, { excludeCacheControl: true })
+  res
+    .status(200)
+    .set('Cache-Control', PRIVATE_CACHE_CONTROL)
+    .set('X-Robots-Tag', 'noindex, nofollow')
+    .set('Content-Type', 'text/html; charset=utf-8')
+    .send(html)
 }
 
 const buildEventSeoContext = (params: {
@@ -206,7 +225,7 @@ export const handleEventOgpRequest: HttpsFunction = https.onRequest(
     const paths = normalizeEventPaths(req.path)
     const path = paths.join('/')
 
-    if (paths[1] !== 'c' || paths[3] !== 'e') {
+    if (paths[1] !== 'c' || paths[3] !== 'e' || paths.length !== 5) {
       sendNotFound(res)
       return
     }
@@ -225,7 +244,7 @@ export const handleEventOgpRequest: HttpsFunction = https.onRequest(
       }
 
       const eventData = await getEvent(eventId)
-      if (eventData === undefined || !eventData.is_public || eventData.is_deleted || eventData.enterprise_id != null) {
+      if (eventData === undefined || eventData.is_deleted || eventData.enterprise_id != null) {
         sendNotFound(res)
         return
       }
@@ -233,6 +252,12 @@ export const handleEventOgpRequest: HttpsFunction = https.onRequest(
       const communityAccountFromPath = paths[2]
       if (communityAccountFromPath !== eventData.community_account.toLowerCase()) {
         sendNotFound(res)
+        return
+      }
+
+      // 限定公開イベントは URL を知る参加者が到達できる必要があるため、404 にせず noindex で配信する
+      if (!eventData.is_public) {
+        sendNoindexSpaHtml(res, indexResult.response, indexResult.html)
         return
       }
 
@@ -305,13 +330,14 @@ export const handleCommunityOgpRequest: HttpsFunction = https.onRequest(
       }
 
       const communityData = await getCommunityByAccount(communityAccount)
-      if (
-        communityData === undefined ||
-        !communityData.is_public ||
-        !communityData.is_approved ||
-        communityData.enterprise_id != null
-      ) {
+      if (communityData === undefined || communityData.enterprise_id != null) {
         sendNotFound(res)
+        return
+      }
+
+      // 非公開コミュニティは URL 共有で、未承認コミュニティは管理者の確認用に到達できる必要がある
+      if (!communityData.is_public || !communityData.is_approved) {
+        sendNoindexSpaHtml(res, indexResult.response, indexResult.html)
         return
       }
 
