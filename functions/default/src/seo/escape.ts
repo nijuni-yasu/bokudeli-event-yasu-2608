@@ -15,7 +15,8 @@ const decodeHtmlEntitiesForExcerpt = (input: string): string =>
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
-    .replace(/&apos;|&#0?39;/gi, "'")
+    // eslint の quotes: single と prettier の singleQuote が競合するため `'` はコードポイントで書く
+    .replace(/&apos;|&#0?39;/gi, '\u0027')
     .replace(/&amp;/gi, '&')
 
 /** 改行・HTML タグを除去し、メタ description 用に先頭 N 文字を返す */
