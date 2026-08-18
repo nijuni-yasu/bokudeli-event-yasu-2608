@@ -482,7 +482,7 @@ describe('enterprise firestore rules', () => {
     )
     expect(pfSnapUnauthed.docs.length).toBe(1)
     expect(pfSnapUnauthed.docs[0].data().menu_name).toBe('PF Menu')
-    // エンプラ member_orders の CG 露出は T2（enterprise_id == null フィルタ）で遮断。未認証 CG は PF doc のみ検証。
+    // 未認証 CG: エンプラ doc は Rules（docEnterpriseId != null）で per-document deny。PF doc のみ上記 assertSucceeds で検証。
     await assertFails(db.collectionGroup('member_orders').where('enterprise_id', '==', 'ent-a').get())
 
     const owner = enterpriseAuth('user-a', 'ent-a', TENANT_A)
