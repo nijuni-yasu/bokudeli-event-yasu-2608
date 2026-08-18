@@ -244,6 +244,7 @@ export default {
       import_format:
         'CSV形式: email, display_name（氏名）, department, role（role は admin または member。省略時 member）',
       import_failed: '一括作成に失敗しました',
+      import_invalid_role: 'ロールが不正です',
     },
     communities: {
       title: 'コミュニティ管理',

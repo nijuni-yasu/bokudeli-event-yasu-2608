@@ -61,7 +61,7 @@ const handleExecute = async (rows: string[][]) => {
           row: rowNum,
           label: cells[0] ?? '',
           status: 'error',
-          error_message: 'ロールが不正です',
+          error_message: t('admin.members.import_invalid_role'),
         })
         return
       }
@@ -79,7 +79,7 @@ const handleExecute = async (rows: string[][]) => {
     const apiResults: Array<{
       row: number
       label: string
-      status: string
+      status: 'success' | 'error'
       error_message?: string
     }> = []
 
