@@ -636,7 +636,7 @@ Firestore データ構造の変更は伴わないため、データマイグレ�
 - [ ] `firebase deploy --only functions` が default のみで exit code 0 を確認（Gen1 削除後に実施）
 - [x] CI（`deploy_functions.yml`）も 1 ジョブ + `--only functions`（`--force` なし）に統一（[#2260](https://github.com/nijuniinc/bokudeli-event-new/issues/2260)。仕様は [functions の CI デプロイ](../実装メモ/functionsのCIデプロイ.md)）
 
-> **#2260 マージ後の初回デプロイ前に必須**: `--force` なしのデプロイは、`default` codebase の関数が GCP 上に残っていて `index.ts` に export が無い場合、削除確認プロンプトで **非対話のため abort（exit 非 0）** する。旧 CI は `--only functions:<明示リスト>` だったため、リスト外の残存関数は削除対象にならず温存されている。各環境（development / production / sandbox）で `firebase --project <PROJECT_ID> functions:list` を確認し、5.10（旧 Gen1 8 件）・[5.12](#512-slack-通知関数のリネームと-gen2-旧名削除)（旧 Gen2 名 `eventNotification` / `orderNotification`）・[デプロイ手順_v2.12 §C-1](../デプロイ手順/デプロイ手順_v2.12_260719.md)（旧 `backupFirestore`）の明示削除を先に完了させること。
+> **#2260 マージ後の初回デプロイ前に必須**: `--force` なしのデプロイは、`default` codebase の関数が GCP 上に残っていて `index.ts` に export が無い場合、削除確認プロンプトで **非対話のため abort（exit 非 0）** する。旧 CI は `--only functions:<明示リスト>` だったため、リスト外の残存関数は削除対象にならず温存されている。各環境（development / production / sandbox）で `firebase --project <PROJECT_ID> functions:list` を確認し、5.10（旧 Gen1 8 件）・[5.12](#512-slack-通知関数のリネームと-gen2-旧名削除)（旧 Gen2 名 `eventNotification` / `orderNotification`）・[デプロイ手順_v2.12 §B-4](../デプロイ手順/デプロイ手順_v2.12_260818.md)（旧 `backupFirestore`）の明示削除を先に完了させること。
 
 ## 8. 注意事項
 
