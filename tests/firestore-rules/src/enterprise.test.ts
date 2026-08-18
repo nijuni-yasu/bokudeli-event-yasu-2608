@@ -434,7 +434,7 @@ describe('enterprise firestore rules', () => {
     )
   })
 
-  it('collectionGroup member_orders: PF は read 可、エンプラ doc は未認証で拒否', async () => {
+  it('collectionGroup member_orders: PF は未認証でも read 可、エンプラ doc は未認証で拒否', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore()
       await db
@@ -448,6 +448,7 @@ describe('enterprise firestore rules', () => {
         .doc('order-pf')
         .set({
           user_id: 'user-a',
+          event_id: 'event-pf',
           enterprise_id: null,
           menu_name: 'PF Menu',
           menu_price: 500,
@@ -472,8 +473,17 @@ describe('enterprise firestore rules', () => {
 
     const unauthed = testEnv.unauthenticatedContext()
     const db = unauthed.firestore()
-    await assertFails(db.collectionGroup('member_orders').where('menu_name', '==', 'Enterprise Menu').get())
-    await assertFails(db.collectionGroup('member_orders').where('menu_name', '==', 'PF Menu').get())
+    const pfSnapUnauthed = await assertSucceeds(
+      db
+        .collectionGroup('member_orders')
+        .where('event_id', '==', 'event-pf')
+        .where('enterprise_id', '==', null)
+        .get(),
+    )
+    expect(pfSnapUnauthed.docs.length).toBe(1)
+    expect(pfSnapUnauthed.docs[0].data().menu_name).toBe('PF Menu')
+    // 未認証 CG: エンプラ doc は Rules（docEnterpriseId != null）で per-document deny。PF doc のみ上記 assertSucceeds で検証。
+    await assertFails(db.collectionGroup('member_orders').where('enterprise_id', '==', 'ent-a').get())
 
     const owner = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     const authDb = owner.firestore()
