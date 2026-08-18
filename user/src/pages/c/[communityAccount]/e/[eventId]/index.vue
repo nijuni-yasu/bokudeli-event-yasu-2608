@@ -285,31 +285,27 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="event != null && communityStore.community != null" class="justify-center px-0 px-sm-0">
+  <div
+    v-if="event != null && communityStore.community != null"
+    class="event-page justify-center px-0 px-sm-0"
+    :class="{ 'event-page--with-bottom-cta': event.event_status.value === 'accepting_order' }"
+  >
     <v-row class="justify-center mt-lg-10">
-      <v-col md="8" sm="9" cols="12" class="py-0 py-sm-1 px-0">
-        <div
-          class="event-page-toolbar my-0 py-0 mb-0"
-          :class="{
-            'event-page-toolbar--compact': display.xs.value,
-            'event-page-toolbar--compact-single-row': display.xs.value && !hasManagerActions,
-          }"
-        >
-          <div class="event-page-toolbar__leading">
-            <v-btn
-              class="event-page-toolbar__home"
-              :icon="mdiHome"
-              size="x-large"
-              variant="text"
-              to="/"
-              :aria-label="$t('back_to_top')"
-            />
-            <div class="event-page-toolbar__status-chips">
-              <EventStatusChip :status="event.calculatedEventStatus" size="large" />
-              <v-chip v-if="!event.is_public" color="primary" size="large">
-                {{ $t('private_event') }}
-              </v-chip>
-            </div>
+      <v-col md="8" sm="9" cols="12" class="event-page-main py-0 py-sm-1 px-0 px-sm-0">
+        <div class="event-page-toolbar mb-0">
+          <v-btn
+            class="event-page-toolbar__home"
+            :icon="mdiHome"
+            size="large"
+            variant="text"
+            to="/"
+            :aria-label="$t('back_to_top')"
+          />
+          <div class="event-page-toolbar__status-chips">
+            <EventStatusChip :status="event.calculatedEventStatus" size="large" />
+            <v-chip v-if="!event.is_public" color="primary" size="large">
+              {{ $t('private_event') }}
+            </v-chip>
           </div>
           <div v-if="hasManagerActions" class="event-page-toolbar__actions">
             <v-btn
@@ -344,10 +340,6 @@ onUnmounted(() => {
             </v-btn>
           </div>
         </div>
-      </v-col>
-    </v-row>
-    <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12" class="mt-0 pt-0 px-0">
         <EventDetailsCard
           :event="event"
           :community="communityStore.community"
@@ -357,14 +349,16 @@ onUnmounted(() => {
           @open-chat="onOpenChat"
         />
         <!-- メニュ -->
-        <event-menu-list
-          ref="menuListRef"
-          :event-id="eventId"
-          :disabled="menuDisabled !== false"
-          @select-menu="selectMenu"
-        />
+        <div class="event-page-menu">
+          <event-menu-list
+            ref="menuListRef"
+            :event-id="eventId"
+            :disabled="menuDisabled !== false"
+            @select-menu="selectMenu"
+          />
+        </div>
       </v-col>
-      <v-col md="6" sm="8" cols="11" class="ma-0 mt-md-16">
+      <v-col md="6" sm="8" cols="11" class="event-page-banners ma-0 mt-md-16 px-0 px-sm-0">
         <Banners :banners="bannersStore.banners ?? []" />
       </v-col>
     </v-row>
@@ -419,15 +413,15 @@ onUnmounted(() => {
     touchless
     border="0"
     color="#FFFFFF00"
-    style="height: 70px; z-index: 100; text-align: center"
+    class="event-page-bottom-cta"
   >
     <v-row class="justify-center mb-2">
       <v-col xl="6" lg="8" md="8" sm="9" cols="12">
         <v-btn
-          class="text-md-h4 text-h5 font-weight-bold"
+          class="event-page-bottom-cta__btn text-md-h4 text-body-1 font-weight-bold"
           size="large"
           rounded="pill"
-          elevation="15"
+          elevation="10"
           color="primary"
           width="85%"
           @click="scrollToMenu"
@@ -441,20 +435,58 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+.event-page--with-bottom-cta {
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 599px) {
+  .event-page-main.v-col,
+  .event-page-banners.v-col {
+    padding-inline: 14px !important;
+  }
+}
+
+.event-page-menu {
+  margin-top: 24px;
+  margin-bottom: 32px;
+
+  @media (min-width: 600px) {
+    margin-top: 32px;
+    margin-bottom: 40px;
+  }
+}
+
+.event-page-banners {
+  margin-bottom: 24px;
+
+  @media (min-width: 960px) {
+    margin-bottom: 32px;
+  }
+}
+
+.event-page-bottom-cta {
+  z-index: 100;
+  text-align: center;
+  height: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.event-page-bottom-cta__btn {
+  @media (max-width: 599px) {
+    font-size: 0.9375rem !important;
+    letter-spacing: 0;
+  }
+}
+
 .event-page-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 12px 15px;
+  gap: 8px 10px;
 }
 
-.event-page-toolbar__leading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-inline-end: auto;
+.event-page-toolbar__home {
+  flex-shrink: 0;
 }
 
 .event-page-toolbar__status-chips {
@@ -462,6 +494,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-inline-start: auto;
 }
 
 .event-page-toolbar__actions {
@@ -476,28 +509,9 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.event-page-toolbar--compact {
-  display: grid;
-  grid-template-areas:
-    'leading'
-    'actions';
-  align-items: center;
-  row-gap: 8px;
-
-  .event-page-toolbar__leading {
-    grid-area: leading;
-    margin-inline-end: 0;
+@media (max-width: 599px) {
+  .event-page-toolbar__status-chips :deep(.v-chip) {
+    font-size: 0.8125rem;
   }
-
-  .event-page-toolbar__actions {
-    grid-area: actions;
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
-.event-page-toolbar--compact-single-row {
-  grid-template-areas: 'leading';
-  row-gap: 0;
 }
 </style>
