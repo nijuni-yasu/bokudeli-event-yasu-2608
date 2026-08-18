@@ -14,11 +14,18 @@ const loading = ref(false)
 const enterpriseId = ref<string>()
 
 onMounted(async () => {
-  enterpriseId.value = await getEnterpriseIdFromToken()
+  try {
+    enterpriseId.value = await getEnterpriseIdFromToken()
+  } catch {
+    notification.show(t('admin.communities.import_failed'), 'error')
+  }
 })
 
 const handleExecute = async (rows: string[][]) => {
-  if (enterpriseId.value == null) return
+  if (enterpriseId.value == null) {
+    notification.show(t('admin.communities.import_failed'), 'error')
+    return
+  }
   loading.value = true
   try {
     const communities = rows.map((cells) => ({

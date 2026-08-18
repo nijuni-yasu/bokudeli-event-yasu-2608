@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { EnterpriseMemberRoleType } from '@shokujii/common/schemas/Enterprise.js'
+import { ENTERPRISE_MEMBER_ROLE_VALUES, type EnterpriseMemberRoleType } from '@shokujii/common/schemas/Enterprise.js'
 import CsvImportPanel from '@/components/admin/CsvImportPanel.vue'
 import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import { createEnterpriseMembers } from '@/apis/enterprise'
@@ -15,22 +15,31 @@ const loading = ref(false)
 const enterpriseId = ref<string>()
 
 onMounted(async () => {
-  enterpriseId.value = await getEnterpriseIdFromToken()
+  try {
+    enterpriseId.value = await getEnterpriseIdFromToken()
+  } catch {
+    notification.show(t('admin.members.import_failed'), 'error')
+  }
 })
 
+const resolveRole = (rawRole: string): EnterpriseMemberRoleType => {
+  const role = ENTERPRISE_MEMBER_ROLE_VALUES.find((value) => value === rawRole)
+  return role ?? 'member'
+}
+
 const handleExecute = async (rows: string[][]) => {
-  if (enterpriseId.value == null) return
+  if (enterpriseId.value == null) {
+    notification.show(t('admin.members.import_failed'), 'error')
+    return
+  }
   loading.value = true
   try {
-    const members = rows.map((cells) => {
-      const rawRole = cells[3]?.trim() ?? ''
-      return {
-        email: cells[0] ?? '',
-        display_name: cells[1] ?? '',
-        department: cells[2] || undefined,
-        role: (rawRole === '' ? 'member' : rawRole) as EnterpriseMemberRoleType,
-      }
-    })
+    const members = rows.map((cells) => ({
+      email: cells[0] ?? '',
+      display_name: cells[1] ?? '',
+      department: cells[2] || undefined,
+      role: resolveRole(cells[3]?.trim() ?? ''),
+    }))
 
     const result = await createEnterpriseMembers({
       enterprise_id: enterpriseId.value,

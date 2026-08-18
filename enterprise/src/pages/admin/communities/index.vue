@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { EnterpriseCommunityListItem } from '@shokujii/common/apis/enterprise.js'
 import { convertToDate } from '@shokujii/common/utils/datetime.js'
 import { mdiOpenInNew, mdiUpload } from '@mdi/js'
 import { getCommunityPath, getAdminCommunitiesImportPath, getManageCommunityPath } from '@/router/utils'
@@ -14,16 +15,7 @@ const router = useRouter()
 
 const loading = ref(false)
 const enterpriseId = ref<string>()
-const communities = ref<
-  {
-    community_id: string
-    community_name: string
-    community_account: string
-    community_num_members: number
-    created_at: number
-    manager_display_names?: string[]
-  }[]
->([])
+const communities = ref<EnterpriseCommunityListItem[]>([])
 const totalCount = ref(0)
 const page = ref(1)
 const pageSize = 50
@@ -39,8 +31,7 @@ const paginationRangeText = computed(() => {
   return t('admin.common.pagination_range', { total: totalCount.value, start, end })
 })
 
-const managersDisplay = (community: (typeof communities.value)[number]) =>
-  community.manager_display_names?.join(', ') ?? ''
+const managersDisplay = (community: EnterpriseCommunityListItem) => community.manager_display_names?.join(', ') ?? ''
 
 const loadCommunities = async () => {
   if (enterpriseId.value == null) return
@@ -61,7 +52,11 @@ const loadCommunities = async () => {
 }
 
 onMounted(async () => {
-  enterpriseId.value = await getEnterpriseIdFromToken()
+  try {
+    enterpriseId.value = await getEnterpriseIdFromToken()
+  } catch {
+    notification.show(t('admin.communities.load_failed'), 'error')
+  }
   await loadCommunities()
 })
 
@@ -121,6 +116,7 @@ watch(page, loadCommunities)
                     variant="text"
                     :to="getCommunityPath(community.community_account)"
                     target="_blank"
+                    rel="noopener noreferrer"
                     :append-icon="mdiOpenInNew"
                   >
                     {{ $t('admin.communities.view_public') }}
