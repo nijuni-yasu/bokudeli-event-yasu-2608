@@ -21,10 +21,9 @@ function toHalfWidthAsciiChar(code: number): string | null {
 }
 
 export function normalizeTag(raw: string): string {
-  let s = raw.trim()
+  const s = raw.trim()
   let out = ''
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i]!
+  for (const c of s) {
     const code = c.codePointAt(0)!
     const half = toHalfWidthAsciiChar(code)
     if (half !== null) {
