@@ -64,28 +64,22 @@ function applyCommonFilters(
   return { query, pageSize, startMillis, endMillis }
 }
 
-async function applyStartAfter(
-  query: Query<AuditLog>,
-  enterpriseId: string,
-  cursor: AuditLogCursor,
-): Promise<Query<AuditLog>> {
-  const cursorRef = getAuditLogsCollectionRef(enterpriseId).doc(cursor.log_id)
-  const cursorSnap = await cursorRef.get()
-  if (!cursorSnap.exists) {
-    return query
-  }
-  return query.startAfter(cursorSnap)
+/**
+ * カーソル doc を読み直さず、orderBy と同じ値（timestamp, documentId）で再開位置を指定する。
+ * doc を read する実装ではカーソル doc が削除されていた場合に `startAfter` が付かず先頭へ巻き戻る。
+ */
+function applyStartAfter(query: Query<AuditLog>, cursor: AuditLogCursor): Query<AuditLog> {
+  return query.startAfter(Timestamp.fromMillis(cursor.timestamp), cursor.log_id)
 }
 
 async function fetchPage(
   baseQuery: Query<AuditLog>,
-  enterpriseId: string,
   pageSize: number,
   cursor: QueryCursor,
 ): Promise<{ docs: QueryDocumentSnapshot<AuditLog>[]; hasNext: boolean }> {
   let query = baseQuery
   if (cursor != null) {
-    query = await applyStartAfter(query, enterpriseId, cursor)
+    query = applyStartAfter(query, cursor)
   }
 
   const snapshot = await query.limit(pageSize + 1).get()
@@ -122,7 +116,7 @@ async function listAuditLogsGuest(enterpriseId: string, params: ListAuditLogsPar
     const fetchLimit = Math.min(pageSize * 2, remaining)
     let query = baseQuery
     if (scanCursor != null) {
-      query = await applyStartAfter(query, enterpriseId, scanCursor)
+      query = applyStartAfter(query, scanCursor)
     }
     const snapshot = await query.limit(fetchLimit).get()
     if (snapshot.docs.length < fetchLimit) {
@@ -159,7 +153,7 @@ export const listAuditLogs = async (params: ListAuditLogsParams): Promise<ListAu
   }
 
   const { query: baseQuery, pageSize } = applyCommonFilters(enterpriseId, params)
-  const { docs, hasNext } = await fetchPage(baseQuery, enterpriseId, pageSize, params.cursor ?? null)
+  const { docs, hasNext } = await fetchPage(baseQuery, pageSize, params.cursor ?? null)
   const logs = docs.map((doc) => doc.data())
   return {
     logs,

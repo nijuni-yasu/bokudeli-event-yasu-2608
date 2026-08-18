@@ -4,7 +4,7 @@ import {
   UpdateEnterpriseSubsidySettingsResponse,
 } from '@shokujii/common/apis/enterprise.js'
 import type { EnterpriseSubsidySettingsEntryType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
-import { resolveEnterpriseSubsidySettingsForMonth } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import { resolveEnterpriseSubsidySettingsForMonthOrNull } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { getEnterpriseById, saveEnterprise } from '../stores/enterprise.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { assertEnterpriseAdmin, getClientIp } from '../utils/enterpriseAuthHelpers.js'
@@ -36,7 +36,8 @@ export const updateEnterpriseSubsidySettings = onCall<
     throw new HttpsError('not-found', 'enterprise not found')
   }
 
-  const previousSettings = resolveEnterpriseSubsidySettingsForMonth(
+  // 履歴が空（初回設定）は正当な状態のため、監査ログの old 値は null とする
+  const previousSettings = resolveEnterpriseSubsidySettingsForMonthOrNull(
     enterprise.subsidy_settings_history,
     effectiveFromMonth,
   )
@@ -58,9 +59,9 @@ export const updateEnterpriseSubsidySettings = onCall<
 
   const details = {
     effective_from_month: effectiveFromMonth,
-    type: { old: previousSettings.type, new: discountType },
-    value: { old: previousSettings.value, new: discountValue },
-    monthly_limit_per_user: { old: previousSettings.monthly_limit_per_user, new: monthlyLimitPerUser },
+    type: { old: previousSettings?.type ?? null, new: discountType },
+    value: { old: previousSettings?.value ?? null, new: discountValue },
+    monthly_limit_per_user: { old: previousSettings?.monthly_limit_per_user ?? null, new: monthlyLimitPerUser },
   }
 
   await writeAuditLog({
