@@ -280,7 +280,7 @@ GSC: [URL 検査](https://search.google.com/search-console/inspect?resource_id=s
 | [S] | [x] **P2-2** `ogpRequest.ts` で `<meta name="description">` を動的注入<br>`og:description` と同値で可 |
 | [S] | [x] **P2-3** `ogpRequest.ts` で `<link rel="canonical">` を注入<br>正規形: 小文字 `/c/{account}` / `/c/{account}/e/{eventId}` |
 | [M] | [x] **P2-4** JSON-LD 構造化データを注入<br>イベント: schema.org `Event` / コミュニティ: `Organization`<br>検証: [Google Rich Results Test](https://search.google.com/test/rich-results)（**デプロイ後に実施**） |
-| [S] | [x] **P2-5** データ不在時の HTTP ステータス改善<br>イベント / コミュニティ不在・非公開時: 404 を返す |
+| [S] | [x] **P2-5** データ不在時の HTTP ステータス改善<br>不在・削除済み・エンプラ配下（`enterprise_id != null`）・パス不正: **404**<br>限定公開イベント / 非公開・未承認コミュニティ: **200 + `X-Robots-Tag: noindex, nofollow`**（SEO メタ・JSON-LD は注入しない）<br>`firebase.json` の rewrite はブラウザの直リンク・リロードも同ハンドラに通すため、限定公開の「URL を知る人だけが参加できる」仕様を守るには 404 にできない |
 | [S] | [ ] **P2-6** 旧パス `/community/**` から `/c/**` への 301 リダイレクト<br>Function 側または router 側で方針決定 |
 | [M] | [x] **P2-7** `sitemap.xml` の動的生成<br>対象: `is_public == true` のコミュニティ・イベント<br>方式: onRequest + rewrite（`handleSitemapRequest`） |
 | [S] | [x] **P2-8** クライアント側 `document.title` 更新<br>router `afterEach` でページ遷移時に更新 |
@@ -513,6 +513,7 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 - [ ] Schema.org Validator で JSON-LD エラーが無い（**P2-4-V 本番**）
 - [ ] GSC URL 検査ライブテストで Soft 404 が解消される（代表: `/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf`）
 - [ ] 存在しないイベント URL が 404 を返す（**P2-5 実装済み・デプロイ後確認**）
+- [ ] 限定公開イベント URL が 200 + `X-Robots-Tag: noindex` で SPA を返す（**P2-5 実装済み・デプロイ後確認**）
 - [ ] partner / enterprise に `X-Robots-Tag: noindex` が付く
 - [ ] Search Console に sitemap を送信済み
 

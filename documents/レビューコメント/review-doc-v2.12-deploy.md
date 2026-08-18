@@ -10,12 +10,12 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-1 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | `ogpRequest.ts:209` イベント側にパス長チェックが無く `/c/a/e/{id}/foo` が 200 + 自己参照 canonical を返す<br>コミュニティ側（`:293`）は `paths.length !== 3` で検証済み。`paths.length !== 5` を追加する |
-| [ ] | RC-2 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🆕 新機能 | M | `ogpRequest.ts:228` 限定公開イベント / 非公開・未承認コミュニティが素の 404 になり、URL 共有・直リンク・リロードで到達不能（v2.11.0 からの退行）<br>SEO 要件（P2-5）は `noindex` で達成できる。「インデックス除外」と「画面配信」の分離が必要。仕様確認が必要なため自動修正の対象外 |
+| [x] | RC-1 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | `ogpRequest.ts:209` イベント側にパス長チェックが無く `/c/a/e/{id}/foo` が 200 + 自己参照 canonical を返す<br>コミュニティ側（`:293`）と揃えて `paths.length !== 5` を追加。回帰テストも追加 |
+| [x] | RC-2 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 📑 仕様書 | 🆕 新機能 | M | `ogpRequest.ts:228` 限定公開イベント / 非公開・未承認コミュニティが素の 404 になり、URL 共有・直リンク・リロードで到達不能（v2.11.0 からの退行）<br>「インデックス除外」と「画面配信」を分離。不在・削除・エンプラ配下は 404 のまま、限定公開・未承認は 200 + `X-Robots-Tag: noindex, nofollow` で素の SPA を返す。SEO タスク P2-5 の記述も更新 |
 | [x] | RC-3 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | `seo/escape.ts:11` `&amp;` が二重エスケープされ meta description に `&amp;` が露出<br>エンティティのデコードを拡張し、タグ除去 → デコードの順に変更。テスト 2 件追加 |
 | [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `seo/jsonLd.ts:6` `DEFAULT_TIME_ZONE` をローカル再定義し ISO 変換も call site 実装<br>`common/utils/datetime.ts` に `convertToIso8601` を追加して置換 |
-| [ ] | RC-5 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `slackEventNotification.ts:36` `EVENT_HOST` 固定の `getEventUrl` のままで、enterprise イベントの Slack リンクが必ず 404 になる<br>メール系は `getEventUrlForEvent` へ移行済み。移行または `isEnterpriseEvent` ガードで揃える |
-| [ ] | RC-6 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `slackOrderNotification.ts:72` RC-5 と同一問題（注文通知の URL）<br>RC-5 と同じ方針に統一し、URL 解決とガードを共通ヘルパーへ |
+| [x] | RC-5 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `slackEventNotification.ts:36` `EVENT_HOST` 固定の `getEventUrl` のままで、enterprise イベントの Slack リンクが必ず 404 になる<br>メール系と同じ `getEventUrlForEvent` に移行。host 未解決時は `logger.error` を出して通知を送らない |
+| [x] | RC-6 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `slackOrderNotification.ts:72` RC-5 と同一問題（注文通知の URL）<br>RC-5 と同じ方針で `getEventUrlForEvent` に移行。同一メッセージ内のプロフィール URL も同じ理由で 404 になるため `getUserUrlForCommunity` を追加して解決 |
 | [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | `stores/community.ts:214` `limit(1)` + `docs[0]` で `community_account` 重複を無警告に片方だけ返す<br>PF 側にアカウント一意性キーが無い。`limit(2)` + 重複時 `logger.error` に変更 |
 | [ ] | RC-8 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `stripe.ts:33` モジュールトップレベルで `getFirestore()` を呼んでいる<br>現状は `index.ts` の動的 import で動くが、静的 import された瞬間に `initializeApp` 前評価で落ちる |
 | [x] | RC-9 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `common/billingSnapshot.ts:8` 正規表現が月範囲を検証せず `2026-00` が通過し 500 になる<br>`parseYearMonth` による検証に置換。月範囲外のテスト 2 件追加 |
@@ -24,8 +24,8 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 | [x] | RC-12 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `functions/enterprise/members.ts:302` `'Asia/Tokyo'` 直書きで当月キーを call site 生成<br>`formatYearMonth(Date.now())` に置換 |
 | [ ] | RC-13 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害, 🔒 セキュリティ | 📐 リファクタ | M | `functions/enterprise/members.ts:379` 「最低 1 人の有効な管理者」を Transaction 外の read-then-write で担保しており、同時無効化で管理者 0 人になりうる<br>`role.ts:28-33` の降格チェックも同型。Callable では復旧不能になる |
 | [ ] | RC-14 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | S | `functions/enterprise/role.ts:35` Auth クレームを先に更新し member doc を後で更新するため、失敗時にクレームと Firestore が乖離する<br>実害はアクセス不能側に倒れるが自動復旧しない。Firestore 先行に変更 |
-| [ ] | RC-15 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `functions/enterprise/subsidySettings.ts:39` 履歴が空の企業で監査ログの old 値取得が素の `Error` を投げ、初回の補助設定を保存できない<br>クライアントは `length === 0` を正当な状態として扱っており非対称。`...OrNull` 版に変更 |
-| [ ] | RC-16 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | S | `functions/stores/auditLog.ts:67` カーソル doc を毎ページ read しており、doc 不在時は `startAfter` なしで**先頭に巻き戻る**<br>guest フィルタのループでは同じバッチを走査し続ける。値指定の `startAfter` に変更 |
+| [x] | RC-15 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `functions/enterprise/subsidySettings.ts:39` 履歴が空の企業で監査ログの old 値取得が素の `Error` を投げ、初回の補助設定を保存できない<br>`resolveEnterpriseSubsidySettingsForMonthOrNull` に変更し、初回は監査ログの old 値を `null` にする |
+| [x] | RC-16 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | S | `functions/stores/auditLog.ts:67` カーソル doc を毎ページ read しており、doc 不在時は `startAfter` なしで**先頭に巻き戻る**<br>orderBy と同じ値（`timestamp`・`documentId`）指定の `startAfter` に変更。カーソル doc の read も不要になった |
 | [ ] | RC-17 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | `functions/stores/dashboard.ts:30` 期間フィルタ・limit なしの全件取得を `Promise.all` でメモリに載せる<br>表示は最大 12 ヶ月。読み取り課金が累積データ量に線形。snapshot バッチで乗算される |
 | [x] | RC-18 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `functions/utils/enterpriseSubsidyOrders.ts:104` `auth.token.enterprise_id as string \| undefined` の `as` キャスト<br>`typeof` 型ガードに置換 |
 | [ ] | RC-19 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 📐 リファクタ | M | `functions/utils/enterpriseSubsidyOrders.ts:104` 注文系ガードが `enterprise_id` クレームの単純比較のみで、`user_type` 確認と `firebase.tenant` 照合が無い<br>管理者系（`assertEnterpriseAdminFromUid`）は強化済みで非対称。現時点で悪用経路は未確認 |
@@ -112,6 +112,42 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 
 ---
 
+## 追加対応セッション（2026-08-18 23:45・v2.12 優先修正）
+
+ユーザー依頼「優先して修正すべきものがあれば進める / v2.12 に修正しなくても良いものはそのまま」に基づき、**実害が確定していて修正方針が一意な 6 件**を追加対応した。
+
+| RC | 評価 | 内容 | 対応 |
+|:---|:---|:---|:---|
+| RC-2 | 🚨 | 限定公開イベント / 非公開・未承認コミュニティの素の 404（v2.11.0 退行） | noindex + 200 で SPA 配信に分離。回帰テスト 8 件追加 |
+| RC-1 | 🟡 | イベント側のパス長チェック欠落 | `paths.length !== 5` を追加 |
+| RC-5 | 🟡 | enterprise イベントの Slack 通知リンクが必ず 404 | `getEventUrlForEvent` に移行 |
+| RC-6 | 🟡 | 同（注文通知）。プロフィール URL も同じ理由で 404 | `getEventUrlForEvent` に移行し、`getUserUrlForCommunity` を新規追加 |
+| RC-15 | 🟡 | 履歴が空の企業で初回の補助設定を保存できない | `...OrNull` 版に変更 |
+| RC-16 | 🟡 | 監査ログのカーソル doc 不在時に先頭へ巻き戻る | 値指定 `startAfter` に変更 |
+
+**v2.12 では対応しないと判断した主な指摘**
+
+| RC | 評価 | 据え置き理由 |
+|:---|:---|:---|
+| RC-70 | 🚨 | Storage のパス設計（固定パス + `updated_at` キャッシュバスター）の変更が必要。保存失敗時にエラー表示自体は出るため、リリース阻害ではない |
+| RC-13 | 🟡 | 管理者 2 名の同時操作が前提で発生確率が低い。Auth と Firestore をまたぐ Transaction 化は設計判断が必要 |
+| RC-40 | 🟡 | #2282 として据え置き済み。コード変更ではなくリリース受容判断が必要 |
+| RC-38 | 🟡 | dev / sandbox のみ noindex にする実装が Functions rewrite / 環境別 `robots.txt` の 2 案に分かれる |
+| RC-11 | 🟡 | 請求書番号の採番方式変更（工数 M・仕様判断） |
+| その他 🟡 | 🟡 | PAGE_SIZE 定義の分散、base への i18n キー移設、dead code 削除、`as` キャスト整理等。工数 M 以上または方針が複数 |
+
+### 検証結果（追加対応分）
+
+| チェック | 対象 | 結果 |
+|:---|:---|:---|
+| build（tsc -b） | functions/default | ✅ |
+| lint | functions/default | ✅ |
+| format:check | functions/default | ✅ |
+| test | functions/default | ✅（65 files / 452 tests。`ogpRequest.test.ts` 8 件を新規追加、`urls.test.ts` に 3 件追加） |
+| verify:functions-deploy | root | ✅（export 87 件） |
+
+---
+
 **識別子**: RC-2（GitHub id: なし）
 
 **レビュワー**: Cursor Agent（shokujii-code-review）
@@ -147,7 +183,7 @@ SEO 要件（P2-5）は `noindex` で達成できるため、「インデック�
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -157,7 +193,17 @@ SEO 要件（P2-5）は `noindex` で達成できるため、「インデック�
 
 **想定工数**: M
 
-**判断理由**: v2.11.0 と比較して機能が失われる退行であり、限定公開の「URL を知る人だけが参加できる」という機能仕様そのものを壊す。一方で `documents/12_SEO対策/01_SEO対策_タスク.md` P2-5 の「非公開時は 404」という記述と正面から矛盾するため、どちらを正とするか（404 を維持して限定公開の共有仕様を変更するのか、`noindex` + 200 に変更して SEO タスクの記述を改めるのか）は仕様判断が必要。[auto-fix-policy](../../.agents/skills/review-comments-evaluate/references/auto-fix-policy.md) の「仕様判断が必要なものは自動修正の対象外」に該当するため、実装せずユーザー判断を仰ぐ。`v2.12_テスト項目書.md` の SEO-06（「404 または noindex 相当（仕様どおり）」）と PF-06（限定公開チップ）も、この判断に合わせて確定させる必要がある。
+**判断理由**: v2.11.0 と比較して機能が失われる退行であり、限定公開の「URL を知る人だけが参加できる」という機能仕様そのものを壊す。`documents/12_SEO対策/01_SEO対策_タスク.md` P2-5 の記述は「非公開時は 404」だが、同ドキュメントの検証項目は「**存在しない**イベント URL が 404 を返す」であり、P2-5 の実質的な目的は**ソフト 404 の解消**である。インデックス除外は `X-Robots-Tag: noindex` で達成できるため、機能仕様を壊さない「インデックス除外と画面配信の分離」を採用した。
+
+**対応内容**:
+
+- `sendNoindexSpaHtml` を追加し、`Cache-Control: private, no-store` + `X-Robots-Tag: noindex, nofollow` で SEO メタ・JSON-LD を注入しない素の `index.html` を 200 で返す
+- イベント: 不在 / `is_deleted` / `enterprise_id != null` / `community_account` 不一致は 404 のまま。`!is_public` のみ noindex 配信に変更
+- コミュニティ: 不在 / `enterprise_id != null` は 404 のまま。`!is_public` または `!is_approved` を noindex 配信に変更
+- `documents/12_SEO対策/01_SEO対策_タスク.md` の P2-5 と検証チェックリストを実装に合わせて更新
+- `functions/default/src/ogpRequest.test.ts` を新規追加し、限定公開・未承認・404 条件・パス長を回帰テストで固定（8 件）
+
+**残る確認事項**: `v2.12_テスト項目書.md` の SEO-06（「404 または noindex 相当（仕様どおり）」）は本対応により **noindex 相当**が正となる。PF-06（限定公開チップ）は URL 共有で到達できる前提が回復した。
 
 ---
 
