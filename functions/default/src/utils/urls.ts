@@ -92,6 +92,18 @@ export async function getEventUrlForEvent(event: EventHostSource): Promise<strin
   return getEventUrlForCommunity(event, event.id)
 }
 
+/** エンプラ配下ではプロフィールもテナントの host で配信されるため、community から host を解決する */
+export async function getUserUrlForCommunity(
+  community: Pick<CommunityHostSource, 'enterprise_id'>,
+  userId: string,
+): Promise<string | undefined> {
+  const host = await resolveAppHostForCommunity(community)
+  if (host == null) {
+    return undefined
+  }
+  return common.getUserUrl(host, userId)
+}
+
 /** LINE 等の外部ブラウザ起動用クエリ付きイベント URL */
 export const getEventUrlForExternalBrowser = (communityAccount: string, eventId: string): string =>
   `${getEventUrl(communityAccount, eventId)}?openExternalBrowser=1`

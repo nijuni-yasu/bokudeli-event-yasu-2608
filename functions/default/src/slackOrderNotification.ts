@@ -4,7 +4,7 @@ import { getEventInCommunity } from './stores/event.js'
 import { getRecentOrderedOrdersForMember } from './stores/memberOrder.js'
 import { getCommunityBots } from './stores/slackBot.js'
 import { getUser } from './stores/user.js'
-import { getEventUrl, getUserUrl } from './utils/urls.js'
+import { getEventUrlForEvent, getUserUrlForCommunity } from './utils/urls.js'
 import { sendCommunityBotsMessageOrThrow } from './utils/slackMessage.js'
 import { createModuleLogger } from './utils/logger.js'
 
@@ -69,8 +69,16 @@ const sendOrderedMessage = async (params: {
     return
   }
 
-  const eventUrl = getEventUrl(event.community_account, event.id)
-  const userUrl = getUserUrl(userId)
+  // エンプラコミュニティのイベント・プロフィールは EVENT_HOST では 404 になるため、テナントの host を解決する
+  const [eventUrl, userUrl] = await Promise.all([getEventUrlForEvent(event), getUserUrlForCommunity(event, userId)])
+  if (eventUrl == null || userUrl == null) {
+    logger.error('Skipped Slack order notification because event host is unresolved', {
+      communityId,
+      eventId,
+      enterpriseId: event.enterprise_id,
+    })
+    return
+  }
   const message = `<${userUrl}|${user.user_name}> さんが、<${eventUrl}|${event.event_name}> で、${menuPhrase} を注文したよ！`
 
   await sendCommunityBotsMessageOrThrow(communityId, bots, message)

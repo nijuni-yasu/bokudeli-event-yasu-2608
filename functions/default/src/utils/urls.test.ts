@@ -22,6 +22,7 @@ import {
   getCommunityUrlForCommunity,
   getEventUrlForCommunity,
   getEventUrlForEvent,
+  getUserUrlForCommunity,
   resolveAppHostForCommunity,
 } from './urls.js'
 
@@ -119,6 +120,29 @@ describe('urls community host resolution', () => {
           enterprise_id: 'ent-1',
         }),
       ).resolves.toBeUndefined()
+    })
+  })
+
+  describe('getUserUrlForCommunity', () => {
+    it('PF コミュニティは EVENT_HOST で profile URL を生成する', async () => {
+      await expect(getUserUrlForCommunity({ enterprise_id: null }, 'user-1')).resolves.toBe(
+        'https://pf.example.com/u/user-1',
+      )
+    })
+
+    it('enterprise コミュニティは enterprise host で profile URL を生成する', async () => {
+      getEnterpriseById.mockResolvedValue({
+        subdomain: 'acme',
+        custom_domain: 'lunch.acme.co.jp',
+      })
+      await expect(getUserUrlForCommunity({ enterprise_id: 'ent-1' }, 'user-1')).resolves.toBe(
+        'https://lunch.acme.co.jp/u/user-1',
+      )
+    })
+
+    it('enterprise 未存在時は undefined', async () => {
+      getEnterpriseById.mockResolvedValue(undefined)
+      await expect(getUserUrlForCommunity({ enterprise_id: 'ent-missing' }, 'user-1')).resolves.toBeUndefined()
     })
   })
 })

@@ -6,7 +6,7 @@ import {
   getAcceptingOrderEventsByTime,
 } from './stores/event.js'
 import { getCommunityBots } from './stores/slackBot.js'
-import { getEventUrl } from './utils/urls.js'
+import { getEventUrlForEvent } from './utils/urls.js'
 import { sendCommunityBotsMessage } from './utils/slackMessage.js'
 import { createModuleLogger } from './utils/logger.js'
 
@@ -33,7 +33,15 @@ const notifyEvents = async (
 
   const results = await Promise.allSettled(
     events.map(async (event) => {
-      const eventUrl = getEventUrl(event.community_account, event.id)
+      // エンプラコミュニティのイベントは EVENT_HOST では 404 になるため、テナントの host を解決する
+      const eventUrl = await getEventUrlForEvent(event)
+      if (eventUrl == null) {
+        logger.error('Skipped Slack notification because event host is unresolved', {
+          eventId: event.id,
+          enterpriseId: event.enterprise_id,
+        })
+        return
+      }
       const message = buildMessage(event.event_name, eventUrl)
       const bots = await getCommunityBots(event.community_id)
       await sendCommunityBotsMessage(event.community_id, bots, message)
