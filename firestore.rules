@@ -377,11 +377,12 @@ service cloud.firestore {
                             || isSameEnterprise(resource.data);
             }
             match /member_orders/{order} {
-                // collectionGroup はネスト path とは別評価。未認証の CG クエリを拒否し direct path の PF read をネスト側に委ねる
-                allow read: if request.auth != null
-                            && (docEnterpriseId(resource.data) == null
-                                || isSameEnterprise(resource.data)
-                                || request.auth.uid == resource.data.user_id);
+                // collectionGroup はネスト path とは別評価。read 条件はネスト側 member_orders と同一（#2278: PF は未認証 CG も可）
+                allow read: if docEnterpriseId(resource.data) == null
+                            || (request.auth != null && (
+                                 isSameEnterprise(resource.data)
+                                 || request.auth.uid == resource.data.user_id
+                               ));
             }
             match /stripes/{stripeId} {
                 allow read: if request.auth != null
