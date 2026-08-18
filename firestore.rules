@@ -96,9 +96,6 @@ service cloud.firestore {
                 || emoji == '🎉'
                 || emoji == '🙏';
         }
-        function chatMessageExists(roomId, messageId) {
-            return exists(/databases/$(database)/documents/chat_rooms/$(roomId)/messages/$(messageId));
-        }
         function chatMessageAllowsReaction(roomId, messageId) {
             let message = get(/databases/$(database)/documents/chat_rooms/$(roomId)/messages/$(messageId));
             return message.data.message_type == 'user'
