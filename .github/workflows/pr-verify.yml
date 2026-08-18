@@ -52,6 +52,7 @@ jobs:
             root:
               - 'package.json'
               - 'package-lock.json'
+              - '.node-version'
               - 'scripts/verify-vue-tsc-gate.sh'
               - '.github/workflows/pr-verify.yml'
 
