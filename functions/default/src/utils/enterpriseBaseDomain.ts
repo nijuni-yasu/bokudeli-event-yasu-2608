@@ -31,6 +31,23 @@ export function resolveEnterpriseAppHost(
   return getEnterpriseSubdomainHost(enterprise.subdomain)
 }
 
+/** Origin が当該 enterprise の許可ホスト（subdomain.base / custom_domain）に一致するか */
+export function isOriginAllowedForEnterprise(
+  origin: string,
+  enterprise: Pick<Enterprise, 'subdomain' | 'custom_domain'>,
+): boolean {
+  const allowedHosts = getAllowedEnterpriseHosts(enterprise)
+  try {
+    const parsed = new URL(origin.trim())
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return false
+    }
+    return allowedHosts.includes(parsed.hostname.toLowerCase())
+  } catch {
+    return false
+  }
+}
+
 /** 企業に紐づく許可ホスト一覧（subdomain ホスト + custom_domain） */
 export function getAllowedEnterpriseHosts(enterprise: Pick<Enterprise, 'subdomain' | 'custom_domain'>): string[] {
   const hosts: string[] = []

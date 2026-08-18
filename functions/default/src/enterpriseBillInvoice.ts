@@ -9,21 +9,11 @@ import { getEnterpriseById } from './stores/enterprise.js'
 import { getBillingSnapshot } from './stores/enterpriseBillingSnapshot.js'
 import { getInvoiceFileMeta, setInvoiceFileMeta } from './stores/enterpriseInvoiceFile.js'
 import { assertEnterpriseAdminFromUid } from './utils/enterpriseAuthHelpers.js'
+import { handleEnterpriseBillInvoiceCors } from './utils/enterpriseBillInvoiceCors.js'
 import { createModuleLogger } from './utils/logger.js'
 import { PdfGenerator } from './utils/PdfGenerator.js'
 
 const logger = createModuleLogger('enterpriseBillInvoice')
-
-const CORS_ORIGINS: string[] = (() => {
-  const raw = process.env.CORS
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-})()
 
 const INVOICE_BUCKET_NAME = `gs://${process.env.GCLOUD_PROJECT}-invoice`
 const TEMPLATE_PATH = path.join('templates', 'enterpriseBillInvoice.docx')
@@ -208,7 +198,7 @@ export const createEnterpriseBillInvoice = async (
 
 export const enterpriseBillInvoice = onRequest(
   {
-    cors: CORS_ORIGINS,
+    cors: false,
     timeoutSeconds: 120,
     secrets: ['PDF_SERVICES_CLIENT_ID', 'PDF_SERVICES_CLIENT_SECRET'],
   },
@@ -216,6 +206,10 @@ export const enterpriseBillInvoice = onRequest(
     const [, enterpriseId] = req.path.split('/')
     if (enterpriseId == null || enterpriseId === '') {
       res.status(400).send('Bad Request')
+      return
+    }
+
+    if ((await handleEnterpriseBillInvoiceCors(req, res, enterpriseId)) === 'handled') {
       return
     }
 

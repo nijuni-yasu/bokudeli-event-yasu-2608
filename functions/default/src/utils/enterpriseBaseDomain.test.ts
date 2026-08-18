@@ -9,6 +9,7 @@ vi.mock('firebase-functions/params', () => ({
 import {
   getAllowedEnterpriseHosts,
   getEnterpriseSubdomainHost,
+  isOriginAllowedForEnterprise,
   resolveEnterpriseAppHost,
   resolveEnterpriseCheckoutOrigin,
 } from './enterpriseBaseDomain.js'
@@ -32,6 +33,16 @@ describe('enterpriseBaseDomain checkout origin', () => {
   describe('getAllowedEnterpriseHosts', () => {
     it('subdomain ホストと custom_domain の両方を返す', () => {
       expect(getAllowedEnterpriseHosts(enterprise)).toEqual(['acme.enterprise.example.com', 'lunch.acme.co.jp'])
+    })
+  })
+
+  describe('isOriginAllowedForEnterprise', () => {
+    it('許可ホストの origin を true にする', () => {
+      expect(isOriginAllowedForEnterprise('https://lunch.acme.co.jp/path', enterprise)).toBe(true)
+    })
+
+    it('許可外 origin を false にする', () => {
+      expect(isOriginAllowedForEnterprise('https://evil.example.com', enterprise)).toBe(false)
     })
   })
 

@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import {
   buildEnterpriseInvoiceLineItems,
   buildEnterpriseInvoiceMergeData,
+  buildEnterpriseInvoiceNumber,
   calculateEnterpriseInvoiceTaxBreakdown,
   getEnterpriseInvoicePaymentDeadlineMillis,
 } from './enterpriseInvoice.js'
@@ -36,6 +37,13 @@ describe('buildEnterpriseInvoiceLineItems', () => {
   })
 })
 
+describe('buildEnterpriseInvoiceNumber', () => {
+  it('enterpriseId のハイフンを除去して先頭8文字と年月を連結', () => {
+    expect(buildEnterpriseInvoiceNumber('company-ab', '2026-07')).toBe('companya-202607')
+    expect(buildEnterpriseInvoiceNumber('enterprise123', '2026-06')).toBe('enterpri-202606')
+  })
+})
+
 describe('buildEnterpriseInvoiceMergeData', () => {
   it('merge データに companyName と total を含む', () => {
     const data = buildEnterpriseInvoiceMergeData({
@@ -44,6 +52,7 @@ describe('buildEnterpriseInvoiceMergeData', () => {
       snapshot,
     })
     expect(data.companyName).toBe('テスト株式会社')
+    expect(data.number).toBe('enterpri-202606')
     expect(data.total).toBe('130,000円')
     expect(data.billingNote).toContain('暦月')
   })

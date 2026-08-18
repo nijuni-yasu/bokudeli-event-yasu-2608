@@ -34,6 +34,7 @@
 | [ ] | RC-28 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 監査ログ old 値の解決に throw 版を使用<br>解決不能時に設定保存自体が internal で失敗する |
 | [x] | RC-29 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | 監査ログ `expected` 配列に undefined が混入<br>Firestore 書き込み失敗で再計算ログが欠落 |
 | [ ] | RC-30 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭, 💾 データ | 📐 リファクタ | M | 月額上限超過時に再計算の書き戻しが rollback<br>監査ログも残らず stored のズレが解消されない |
+| [x] | RC-31 | 3789190552 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 🔧 微修正 | M | replay 順を carted_at+order_id に固定<br>sync / cart / addToCart で subsidy_recalculated ループ解消 |
 
 ---
 
@@ -1065,6 +1066,7 @@ Useful? React with 👍 / 👎.
 | [ ] | RC-28 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 監査ログ old 値の解決に throw 版を使用<br>解決不能時に設定保存自体が internal で失敗する |
 | [x] | RC-29 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | 監査ログ `expected` 配列に undefined が混入<br>Firestore 書き込み失敗で再計算ログが欠落 |
 | [ ] | RC-30 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭, 💾 データ | 📐 リファクタ | M | 月額上限超過時に再計算の書き戻しが rollback<br>監査ログも残らず stored のズレが解消されない |
+| [x] | RC-31 | 3789190552 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 🔧 微修正 | M | replay 順を carted_at+order_id に固定<br>sync / cart / addToCart で subsidy_recalculated ループ解消 |
 
 ---
 
@@ -1311,5 +1313,65 @@ Useful? React with 👍 / 👎.
 **想定工数**: M
 
 **判断理由**: 自動修正の対象外とした。チェック順序の変更は「上限超過時にも再計算を確定させるか」という仕様判断を含み、RC-24 で確認済みの check 順序の設計意図にも触れる。
+
+---
+
+## 評価セッション（2026-08-15 19:34・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-08-15 19:34 JST
+- **ブランチ名**: dev/enterprise-mvp-v4
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2257
+- **REVIEW_REQUEST_SINCE**: 2026-08-15T10:24:43Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼コメント 5301805718、Codex 接続案内 5301809461）
+- **手順 4a 自動修正**: なし（RC-31 は全 replay 経路への順序固定が必要で工数 M）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-31 | 3789190552 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 🔧 微修正 | M | replay 順を carted_at+order_id に固定<br>sync / cart / addToCart で subsidy_recalculated ループ解消 |
+
+---
+
+**識別子**: RC-31（GitHub id: 3789190552・Codex）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `functions/default/src/utils/enterpriseSubsidyOrders.ts:139`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const replay = replayEnterpriseSubsidyAmountsForOrders(
++    event.event_payment,
++    settings,
++    orders,
++    member.monthly_usage[eventMonth] ?? 0,
++  )
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/M]: 月額上限の残枠が複数品目の途中で尽きる場合、補助額は配列順に依存しますが、ここへ渡る `orders` はカートの `updated_at desc` 順です。不一致時の `saveOrder` は保存のたびに `updated_at` を更新するため、例えば A=500円・B=100円だった補助を `[B, A]` で再計算すると両方を書き換えて次の購読順が `[A, B]` になり、再試行では再び逆の金額へ書き換わります。その結果 `subsidy_recalculated` が毎回返り、confirmOrder と Stripe Checkout のどちらにも永続的に進めません。`carted_at` と `order_id` など書き戻しで変化しないキーに全経路の replay 順を固定してください。
+
+**コメント要約**: replay 順が updated_at desc で不安定。<br>再計算の書き戻しで順序が反転し subsidy_recalculated がループする。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: 月額残枠の按分は replay 配列順に依存するため、順序がリクエスト／購読ごとに変わると補助額が反転しうる。Codex が示す subsidy_recalculated ループは実害あり。`carted_at` + `order_id` で全 replay 経路（sync / カート UI / addToCart）を固定する必要がある。Copilot は RC-29/27 の対応確認と RC-3/30 の再掲のみ（新規 RC なし）。
+
+**対応内容**: `common/src/utils/eventMemberOrderSort.ts` に `compareEventMemberOrdersForEnterpriseSubsidyReplay` / `sortOrderIdsForEnterpriseSubsidyReplay` を追加。`syncEnterpriseSubsidyOrdersBeforeConfirm` で in-place sort、`cart.vue` の replay 表示・checkout `order_ids`、`addEnterpriseSubsidyMenusToCart` の既存カート usage 加算に適用。収束テストを `enterpriseSubsidyOrders.test.ts` に追加。
 
 ---

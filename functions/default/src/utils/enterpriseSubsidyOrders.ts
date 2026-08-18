@@ -13,6 +13,10 @@ import {
   resolveEnterpriseSubsidySettingsForMonth,
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import {
+  compareEventMemberOrdersForEnterpriseSubsidyReplay,
+  sortEventMemberOrdersForEnterpriseSubsidyReplay,
+} from '@shokujii/common/utils/eventMemberOrderSort.js'
+import {
   adjustEnterpriseMemberMonthlyUsage,
   getEnterpriseMember,
   getEnterpriseMemberInTransaction,
@@ -20,7 +24,7 @@ import {
   getEnterpriseRef,
 } from '../stores/enterprise.js'
 import type { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
-import { clearOrderPayEnterpriseSubsidyAmount, createOrder, saveOrder } from '../stores/memberOrder.js'
+import { clearOrderPayEnterpriseSubsidyAmount, createOrder, getOrdersInCart, saveOrder } from '../stores/memberOrder.js'
 import type { ShokujiiEvent } from '../stores/event.js'
 import { writeAuditLog } from './auditLog.js'
 
@@ -129,10 +133,14 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
   member: EnterpriseMember
   transaction: Transaction
 }): Promise<SyncEnterpriseSubsidyOrdersBeforeConfirmResult> {
-  const { enterpriseId, userId, communityId, eventId, event, orders, orderIds, member, transaction } = params
+  const { enterpriseId, userId, communityId, eventId, event, orders, member, transaction } = params
   if (event.event_payment !== 'enterprise_subsidy') {
     throw new HttpsError('internal', 'syncEnterpriseSubsidyOrdersBeforeConfirm called for non enterprise_subsidy')
   }
+
+  /** 引数 orders を破壊的に enterprise_subsidy replay 順へ並べ替える */
+  orders.sort(compareEventMemberOrdersForEnterpriseSubsidyReplay)
+  const sortedOrderIds = orders.map((order) => order.order_id)
 
   const eventMonth = formatYearMonth(event.event_start_datetime)
   const settings = await loadResolvedSubsidySettings(enterpriseId, eventMonth, transaction)
@@ -166,7 +174,7 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
         userId,
         details: {
           event_id: event.id,
-          order_ids: orderIds,
+          order_ids: sortedOrderIds,
           expected: replay.expectedAmounts.map((amount) => amount ?? null),
           stored: storedBeforeRecalc,
         },
@@ -289,6 +297,8 @@ export async function addEnterpriseSubsidyMenusToCart(params: {
   transaction: Transaction
   /** assertActiveEnterpriseMember 等で取得済みの場合は渡し、Transaction 内 read を省略 */
   enterpriseMember?: EnterpriseMember
+  /** memberOrders 等で saveMember より前に取得済みの場合は渡し、write 後 read を避ける */
+  existingInCart?: EventMemberOrder[]
 }): Promise<EnterpriseSubsidyUsageExceededDetails | null> {
   const {
     communityId,
@@ -301,6 +311,7 @@ export async function addEnterpriseSubsidyMenusToCart(params: {
     eventMenus,
     transaction,
     enterpriseMember,
+    existingInCart: existingInCartParam,
   } = params
 
   const eventMonth = formatYearMonth(event.event_start_datetime)
@@ -310,6 +321,12 @@ export async function addEnterpriseSubsidyMenusToCart(params: {
   }
 
   const tracker = createEnterpriseSubsidyAddToCartTracker(entMember.monthly_usage[eventMonth] ?? 0)
+  const existingInCart = sortEventMemberOrdersForEnterpriseSubsidyReplay(
+    existingInCartParam ?? (await getOrdersInCart(communityId, eventId, userId, transaction)),
+  )
+  for (const order of existingInCart) {
+    tracker.runningUsage += order.pay_enterprise_subsidy_amount ?? 0
+  }
 
   for (const menu of menus) {
     const masterMenu = eventMenus.find((m) => m.id === menu.menu_id)
