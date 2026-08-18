@@ -22,9 +22,12 @@ onMounted(async () => {
   }
 })
 
-const resolveRole = (rawRole: string): EnterpriseMemberRoleType => {
-  const role = ENTERPRISE_MEMBER_ROLE_VALUES.find((value) => value === rawRole)
-  return role ?? 'member'
+const parseRole = (rawRole: string): EnterpriseMemberRoleType | null => {
+  const trimmed = rawRole.trim()
+  if (trimmed === '') {
+    return 'member'
+  }
+  return ENTERPRISE_MEMBER_ROLE_VALUES.find((value) => value === trimmed) ?? null
 }
 
 const handleExecute = async (rows: string[][]) => {
@@ -34,34 +37,91 @@ const handleExecute = async (rows: string[][]) => {
   }
   loading.value = true
   try {
-    const members = rows.map((cells) => ({
-      email: cells[0] ?? '',
-      display_name: cells[1] ?? '',
-      department: cells[2] || undefined,
-      role: resolveRole(cells[3]?.trim() ?? ''),
-    }))
+    const clientErrors: Array<{
+      row: number
+      label: string
+      status: 'error'
+      error_message: string
+    }> = []
+    const membersToSend: Array<{
+      row: number
+      member: {
+        email: string
+        display_name: string
+        department?: string
+        role: EnterpriseMemberRoleType
+      }
+    }> = []
 
-    const result = await createEnterpriseMembers({
-      enterprise_id: enterpriseId.value,
-      members,
+    rows.forEach((cells, index) => {
+      const rowNum = index + 1
+      const role = parseRole(cells[3] ?? '')
+      if (role == null) {
+        clientErrors.push({
+          row: rowNum,
+          label: cells[0] ?? '',
+          status: 'error',
+          error_message: 'ロールが不正です',
+        })
+        return
+      }
+      membersToSend.push({
+        row: rowNum,
+        member: {
+          email: cells[0] ?? '',
+          display_name: cells[1] ?? '',
+          department: cells[2] || undefined,
+          role,
+        },
+      })
     })
 
-    panelRef.value?.showResults(
-      result.data.results.map((item) => ({
-        row: item.row,
-        label: item.email,
-        status: item.status,
-        error_message: item.error_message,
-      })),
-    )
+    const apiResults: Array<{
+      row: number
+      label: string
+      status: string
+      error_message?: string
+    }> = []
 
-    notification.show(
-      t('admin.csv.result_summary', {
-        success: result.data.success_count,
-        error: result.data.error_count,
-      }),
-      result.data.error_count === 0 ? 'success' : 'warning',
-    )
+    if (membersToSend.length > 0) {
+      const result = await createEnterpriseMembers({
+        enterprise_id: enterpriseId.value,
+        members: membersToSend.map((item) => item.member),
+      })
+
+      apiResults.push(
+        ...result.data.results.map((item) => {
+          const sentIndex = item.row - 1
+          const originalRow = membersToSend[sentIndex]?.row ?? item.row
+          return {
+            row: originalRow,
+            label: item.email,
+            status: item.status,
+            error_message: item.error_message,
+          }
+        }),
+      )
+
+      const errorCount = clientErrors.length + result.data.error_count
+      const successCount = result.data.success_count
+      notification.show(
+        t('admin.csv.result_summary', {
+          success: successCount,
+          error: errorCount,
+        }),
+        errorCount === 0 ? 'success' : 'warning',
+      )
+    } else {
+      notification.show(
+        t('admin.csv.result_summary', {
+          success: 0,
+          error: clientErrors.length,
+        }),
+        'warning',
+      )
+    }
+
+    panelRef.value?.showResults([...clientErrors, ...apiResults])
   } catch {
     notification.show(t('admin.members.import_failed'), 'error')
   } finally {

@@ -84,8 +84,15 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 | [ ] | RC-72 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `adminDashboardCsv.ts:10` CSV 列見出しが日本語リテラルで `ja.ts` を通っておらず、`'表示名'` が画面の `'氏名'` と不一致<br>画面とダウンロードで列名が変わる |
 | [ ] | RC-73 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | `adminDashboardPeriod.ts:2` `DEFAULT_TIME_ZONE` をアプリ層で新規参照し、luxon による月シフト・当月算出を call site で組み立てている（4 箇所）<br>`common` 側に閉じた util を追加して呼ぶ方針に反する |
 | [ ] | RC-74 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | `enterpriseTenantCache.ts:72` `cached_at` を持つのに読み出し側で有効期限判定に使っておらず、テナント再割り当て後も古い `tenant_id` が bootstrap に使われる<br>照合は fail-closed なので不正アクセスにはならないが、`cached_at` の意図が未実装 |
-| [ ] | RC-75 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:25` 不正な `role` を UI が無条件に `member` へ丸めており、CSV の typo を検知できない<br>空欄だけ `member` にフォールバックし、それ以外の未知値は行単位エラーに戻す |
-| [ ] | RC-76 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
+| [x] | RC-75 | 3805184137 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:27` 不正な role を `member` に黙って置換し、Functions の行単位拒否が効かなくなる退行<br>空欄のみ `member` 既定化。非空の不正値はクライアントで行エラーにし API へ送らない |
+| [x] | RC-76 | 3805184152 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | `review-fix-2260.md:634` が削除済み `デプロイ手順_v2.12_260719.md` を参照しリンク 404<br>`デプロイ手順_v2.12_260818.md` に更新 |
+| [x] | RC-77 | 4962399563 | 👌 修正不要 | — | 📤 スコープ外 | — | 確認のみ | — | Copilot `Pull request overview`（変更サマリのみ・具体指摘なし）<br>情報提供として有用だが対応不要 |
+| [x] | RC-78 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📄 ドキュメントのみ | S | `デプロイ手順_v2.12_260818.md:106` 手動デプロイの参照が `B-7`（CI デプロイ監視）になっており、実体は `B-8`（3 箇所）<br>`B-8` に修正。B-7 を見ても手動 `--force` デプロイの手順に行き着かない |
+| [x] | RC-79 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `members/import.vue:64` 行エラー文言 `'ロールが不正です'` が `ja.ts` を経由せずハードコード<br>`admin.members.import_invalid_role` を追加し `t()` 経由に変更 |
+| [x] | RC-80 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:82` `apiResults` の `status: string` が `CsvImportPanel` の `ResultRow`（`'success' \| 'error'`）に不適合で `vue-tsc` が TS2345。PR verify の `build:types` が落ちる<br>RC-75 の対応で導入。`status: 'success' \| 'error'` に修正 |
+| [ ] | RC-81 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `user/components/Footer.vue:60` `compact` / 非 `compact` でリンク一覧を全文複製し、下部 5 リンクが完全重複<br>リンク定義の配列化 + `v-for` で解消できるが、既存踏襲の未 i18n 文言の扱いと合わせた判断が必要 |
+| [ ] | RC-82 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | S | `user/layouts/default.vue:37` 新規 `isEventPageRoute` がイベント詳細パスを正規表現で直書き（同 PR で enterprise 側は `getChatPath()` に置換済みで非対称）<br>`route.name` 判定 / `router/utils` に判定関数追加の 2 案に分かれるため未着手 |
+| [ ] | RC-83 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
 
 ---
 
@@ -424,52 +431,88 @@ collectionGroup クエリに対して未認証 read を許可しているため�
 
 ---
 
-## 評価セッション（2026-08-18 23:53・shokujii-code-review）
+## 評価セッション（2026-08-18 23:51 JST・review-comments-evaluate auto）
 
-- **評価日時**: 2026-08-18 23:53 JST
-- **評価者**: Cursor Agent（`/shokujii-code-review`）
-- **ブランチ名**: `doc/v2.12-deploy`
-- **PR**: 未作成
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 0
+- **評価日時**: 2026-08-18 23:51 JST
+- **ブランチ名**: doc/v2.12-deploy
+- **PR**: #2286
+- **REVIEW_REQUEST_SINCE**: 2026-08-18T14:42:38Z
+- **partial**: false
+- **新規 RC**: RC-75〜RC-77（Codex インライン 2 件 + Copilot overview 1 件）。レビュー依頼コメント・Codex ボイラープレートはスキップ
 
 ### RC 一覧（サマリ）
 
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-75 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:25` 不正な `role` を UI が無条件に `member` へ丸めており、CSV の typo を検知できない<br>空欄だけ `member` にフォールバックし、それ以外の未知値は行単位エラーに戻す |
-| [ ] | RC-76 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|
+| [x] | RC-75 | 3805184137 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 不正 role の黙示 `member` 化を修正 |
+| [x] | RC-76 | 3805184152 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 旧デプロイ手順リンクを 260818 に更新 |
+| [x] | RC-77 | 4962399563 | 👌 修正不要 | — | 📤 スコープ外 | Copilot overview（サマリのみ） |
+
+### 自動修正
+
+- RC-75: `enterprise/src/pages/admin/members/import.vue` — 空欄のみ `member`、不正 role は行エラー
+- RC-76: `documents/レビューコメント/review-fix-2260.md` — リンク先を `_260818.md` に更新
 
 ---
 
-**識別子**: RC-75（GitHub id: なし）
+## 評価セッション（2026-08-19 00:30・shokujii-code-review）
+
+- **評価日時**: 2026-08-19 00:30 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: `doc/v2.12-deploy`
+- **PR**: [#2286](https://github.com/nijuniinc/bokudeli-event-new/pull/2286)
+- **レビュー範囲**: `origin/development...HEAD`（5 コミット / 52 ファイル）。RC-75・RC-76 の追加対応後の差分を対象に再レビュー
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **既存 review doc との重複除外**: RC-1〜RC-77 と同一の指摘は再掲していない
+- **自動修正**: 🚨 1 件（RC-80）と条件付き 🟡 2 件（RC-78・RC-79）を修正
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | 評価 | ステータス | 要約 |
+|:----:|:---|:---|:---|:---|
+| [x] | RC-78 | 🟡 修正提案 | ✅ 対応済み | デプロイ手順の `B-7` 参照を `B-8` に修正（3 箇所） |
+| [x] | RC-79 | 🟡 修正提案 | ✅ 対応済み | CSV 行エラー文言を `ja.ts` 経由に変更 |
+| [x] | RC-80 | 🚨 必須修正 | ✅ 対応済み | `apiResults.status` の型不一致で `build:types` が失敗していたのを修正 |
+| [ ] | RC-81 | 🟡 修正提案 | 未着手 | Footer の compact / 非 compact でリンク一覧が全文複製 |
+| [ ] | RC-82 | 🟡 修正提案 | 未着手 | `isEventPageRoute` がイベント詳細パスを正規表現で直書き |
+
+---
+
+**識別子**: RC-80（GitHub id: なし・エージェントレビュー）
 
 **レビュワー**: Cursor Agent（shokujii-code-review）
 
-**指摘箇所**: `enterprise/src/pages/admin/members/import.vue:25`
+**指摘箇所**: `enterprise/src/pages/admin/members/import.vue:82`
 
 **該当コード（レビュー時点の diff）**:
 
 ```diff
-+const resolveRole = (rawRole: string): EnterpriseMemberRoleType => {
-+  const role = ENTERPRISE_MEMBER_ROLE_VALUES.find((value) => value === rawRole)
-+  return role ?? 'member'
-+}
++    const apiResults: Array<{
++      row: number
++      label: string
++      status: string
++      error_message?: string
++    }> = []
 ...
-+      role: resolveRole(cells[3]?.trim() ?? ''),
+     panelRef.value?.showResults([...clientErrors, ...apiResults])
 ```
 
 **レビュワーのコメント（原文）**:
 
-🚨 必須修正 [🔧微修正/S]: `enterprise/src/pages/admin/members/import.vue:25-42`
-CSV インポートで `role` の不正値を `resolveRole()` が無条件に `'member'` へ丸めています。これだと `admn` / `Admin` などの typo がエラーにならず、そのまま一般メンバーとして作成されてしまい、入力ミスを検知できません。サーバー側は `functions/default/src/enterprise/members.ts:122-124` で不正ロールを `"ロールが不正です"` として弾く前提なので、今回の変更でその検証経路を UI 側が潰しています。空欄時だけ `'member'` にフォールバックし、それ以外の未知値は行単位エラーとして返す形に戻すべきです。
+🚨 **必須修正** [🔧微修正/S]: `apiResults` の要素型を `status: string` と明示したため、`CsvImportPanel` の `showResults(items: ResultRow[])`（`status: 'success' | 'error'`）に渡せません。`npm -w enterprise run build:types` は次のエラーで失敗し、PR verify の Typecheck が落ちます。→ API 応答（`CreateEnterpriseMembersResultItem.status`）と同じ `'success' | 'error'` に揃えてください。
 
-**コメント要約**: `members/import.vue:25` 不正な `role` を UI が無条件に `member` へ丸めており、CSV の typo を検知できない。
-空欄だけ `member` にフォールバックし、それ以外の未知値は行単位エラーに戻す。
+```text
+src/pages/admin/members/import.vue(124,33): error TS2345: Argument of type '{ ...; status: string; ... }[]'
+is not assignable to parameter of type 'ResultRow[]'.
+```
+
+**コメント要約**: RC-75 の対応で追加した `apiResults` の `status` を `string` に広げたため、`ResultRow`（`'success' | 'error'`）に代入できず `vue-tsc` が TS2345 で失敗する。
+`common/src/apis/enterprise.ts:83` の応答型は既に union なので、注釈を合わせるだけで解消する。
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -479,11 +522,47 @@ CSV インポートで `role` の不正値を `resolveRole()` が無条件に `'
 
 **想定工数**: S
 
-**判断理由**: 既存のサーバー側バリデーションは未知ロールを弾く前提であり、今回の UI 変更でのみ typo が静かに別権限へ変換される退行が入っている。権限昇格ではないものの、誤ったロールでメンバーを作成してもユーザーが気づけず、取り込み結果の信頼性を損なうため、マージ前に戻すべき実害バグとして 🚨 とした。修正方針も「空欄のみ既定値、それ以外はエラー」で一意である。
+**判断理由**: マージ前に PR verify（`build:types`）が必ず失敗するため、リリース阻害。修正方針は応答型と同一の union に揃える 1 通りに定まるため、確認なしで自動修正した。
+
+**対応内容**:
+
+- `apiResults` の要素型を `status: 'success' | 'error'` に変更
+- `npm -w enterprise run build:types` の再実行で緑を確認
+
+### 自動修正
+
+- RC-78: `documents/デプロイ手順/デプロイ手順_v2.12_260818.md` — 手動デプロイ参照を `B-7` → `B-8`（0-1 チェックリスト / トラブルシュート 2 箇所）
+- RC-79: `enterprise/src/locales/messages/ja.ts` に `admin.members.import_invalid_role` を追加し、`import.vue` から `t()` で参照
+- RC-80: `enterprise/src/pages/admin/members/import.vue` — `apiResults` の `status` を `'success' | 'error'` に
+
+### 検証結果
+
+| チェック | 対象 | 結果 |
+|:---|:---|:---|
+| build:types | enterprise | ✅（修正前は TS2345 で失敗） |
+| format:check | 変更 3 ファイル | ✅ |
 
 ---
 
-**識別子**: RC-76（GitHub id: なし）
+## 評価セッション（2026-08-18 23:53・shokujii-code-review）
+
+- **評価日時**: 2026-08-18 23:53 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: `doc/v2.12-deploy`
+- **PR**: [#2286](https://github.com/nijuniinc/bokudeli-event-new/pull/2286)
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **既存 review doc との重複除外**: RC-75（Codex 指摘・23:51 セッションで ✅ 対応済み）は再掲していない
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-83 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
+
+---
+
+**識別子**: RC-83（GitHub id: なし）
 
 **レビュワー**: Cursor Agent（shokujii-code-review）
 

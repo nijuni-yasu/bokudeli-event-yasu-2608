@@ -631,7 +631,7 @@ workflow の実際の Deploy ステップを `--only hosting` や変数参照へ
 
 **レビュワーのコメント（原文）**:
 
-🚨 **必須修正** [📄ドキュメントのみ/S]: `--force` なし × `--only functions`（codebase 全体）では、`default` codebase の関数が GCP 上に残っていて `index.ts` に export が無い場合、Firebase CLI が削除確認を出し、非対話の Actions では `Command aborted.` で exit 非 0 になります。旧 CI は `--force --only functions:<明示リスト>` だったため、**リスト外の残存関数は削除対象にすらならず温存**されています。実際に [21_bot_legacy移行.md §7.5](../07_リファクタリング/21_bot_legacy移行.md) の「旧 Gen1 8 件の明示削除」「`--only functions` の exit 0 確認」は未実施 `[ ]`、§5.12 の旧 Gen2 名（`eventNotification` / `orderNotification`）と [デプロイ手順_v2.12 §C-1](../デプロイ手順/デプロイ手順_v2.12_260719.md) の旧 `backupFirestore` も削除チェックが `[ ]` のままです。→ マージ後の初回デプロイ前に各環境で orphan を明示削除する前提を手順書に明記してください。
+🚨 **必須修正** [📄ドキュメントのみ/S]: `--force` なし × `--only functions`（codebase 全体）では、`default` codebase の関数が GCP 上に残っていて `index.ts` に export が無い場合、Firebase CLI が削除確認を出し、非対話の Actions では `Command aborted.` で exit 非 0 になります。旧 CI は `--force --only functions:<明示リスト>` だったため、**リスト外の残存関数は削除対象にすらならず温存**されています。実際に [21_bot_legacy移行.md §7.5](../07_リファクタリング/21_bot_legacy移行.md) の「旧 Gen1 8 件の明示削除」「`--only functions` の exit 0 確認」は未実施 `[ ]`、§5.12 の旧 Gen2 名（`eventNotification` / `orderNotification`）と [デプロイ手順_v2.12 §C-1](../デプロイ手順/デプロイ手順_v2.12_260818.md) の旧 `backupFirestore` も削除チェックが `[ ]` のままです。→ マージ後の初回デプロイ前に各環境で orphan を明示削除する前提を手順書に明記してください。
 
 **コメント要約**: `--force` 廃止により、GCP に残る default codebase の orphan があると初回デプロイが abort する。前提条件がどのドキュメントにも書かれていない。
 
