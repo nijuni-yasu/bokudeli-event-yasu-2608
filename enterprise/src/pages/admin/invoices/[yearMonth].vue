@@ -56,7 +56,7 @@ onMounted(async () => {
   <div v-else-if="loadState === 'error'" class="loading text-center">
     <p>{{ $t('admin.invoices.error') }}</p>
   </div>
-  <iframe v-else class="fit-page" :src="url!" />
+  <iframe v-else-if="url != null" class="fit-page" :src="url" />
 </template>
 
 <style lang="scss" scoped>

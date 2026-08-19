@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { EnterpriseMemberRoleType } from '@shokujii/common/schemas/Enterprise.js'
+import { ENTERPRISE_MEMBER_ROLE_VALUES, type EnterpriseMemberRoleType } from '@shokujii/common/schemas/Enterprise.js'
 import CsvImportPanel from '@/components/admin/CsvImportPanel.vue'
 import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import { createEnterpriseMembers } from '@/apis/enterprise'
@@ -15,44 +15,113 @@ const loading = ref(false)
 const enterpriseId = ref<string>()
 
 onMounted(async () => {
-  enterpriseId.value = await getEnterpriseIdFromToken()
+  try {
+    enterpriseId.value = await getEnterpriseIdFromToken()
+  } catch {
+    notification.show(t('admin.members.import_failed'), 'error')
+  }
 })
 
+const parseRole = (rawRole: string): EnterpriseMemberRoleType | null => {
+  const trimmed = rawRole.trim()
+  if (trimmed === '') {
+    return 'member'
+  }
+  return ENTERPRISE_MEMBER_ROLE_VALUES.find((value) => value === trimmed) ?? null
+}
+
 const handleExecute = async (rows: string[][]) => {
-  if (enterpriseId.value == null) return
+  if (enterpriseId.value == null) {
+    notification.show(t('admin.members.import_failed'), 'error')
+    return
+  }
   loading.value = true
   try {
-    const members = rows.map((cells) => {
-      const rawRole = cells[3]?.trim() ?? ''
-      return {
-        email: cells[0] ?? '',
-        display_name: cells[1] ?? '',
-        department: cells[2] || undefined,
-        role: (rawRole === '' ? 'member' : rawRole) as EnterpriseMemberRoleType,
+    const clientErrors: Array<{
+      row: number
+      label: string
+      status: 'error'
+      error_message: string
+    }> = []
+    const membersToSend: Array<{
+      row: number
+      member: {
+        email: string
+        display_name: string
+        department?: string
+        role: EnterpriseMemberRoleType
       }
+    }> = []
+
+    rows.forEach((cells, index) => {
+      const rowNum = index + 1
+      const role = parseRole(cells[3] ?? '')
+      if (role == null) {
+        clientErrors.push({
+          row: rowNum,
+          label: cells[0] ?? '',
+          status: 'error',
+          error_message: t('admin.members.import_invalid_role'),
+        })
+        return
+      }
+      membersToSend.push({
+        row: rowNum,
+        member: {
+          email: cells[0] ?? '',
+          display_name: cells[1] ?? '',
+          department: cells[2] || undefined,
+          role,
+        },
+      })
     })
 
-    const result = await createEnterpriseMembers({
-      enterprise_id: enterpriseId.value,
-      members,
-    })
+    const apiResults: Array<{
+      row: number
+      label: string
+      status: 'success' | 'error'
+      error_message?: string
+    }> = []
 
-    panelRef.value?.showResults(
-      result.data.results.map((item) => ({
-        row: item.row,
-        label: item.email,
-        status: item.status,
-        error_message: item.error_message,
-      })),
-    )
+    if (membersToSend.length > 0) {
+      const result = await createEnterpriseMembers({
+        enterprise_id: enterpriseId.value,
+        members: membersToSend.map((item) => item.member),
+      })
 
-    notification.show(
-      t('admin.csv.result_summary', {
-        success: result.data.success_count,
-        error: result.data.error_count,
-      }),
-      result.data.error_count === 0 ? 'success' : 'warning',
-    )
+      apiResults.push(
+        ...result.data.results.map((item) => {
+          const sentIndex = item.row - 1
+          const originalRow = membersToSend[sentIndex]?.row ?? item.row
+          return {
+            row: originalRow,
+            label: item.email,
+            status: item.status,
+            error_message: item.error_message,
+          }
+        }),
+      )
+
+      const errorCount = clientErrors.length + result.data.error_count
+      const successCount = result.data.success_count
+      notification.show(
+        t('admin.csv.result_summary', {
+          success: successCount,
+          error: errorCount,
+        }),
+        errorCount === 0 ? 'success' : 'warning',
+      )
+    } else {
+      notification.show(
+        t('admin.csv.result_summary', {
+          success: 0,
+          error: clientErrors.length,
+        }),
+        'warning',
+      )
+    }
+
+    panelRef.value?.showResults([...clientErrors, ...apiResults])
   } catch {
     notification.show(t('admin.members.import_failed'), 'error')
   } finally {

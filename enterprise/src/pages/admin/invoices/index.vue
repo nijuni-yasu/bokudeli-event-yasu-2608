@@ -20,7 +20,12 @@ let loadSeq = 0
 
 const loadInvoices = async () => {
   if (enterpriseId.value == null) return
-  if (periodError.value != null) return
+  if (periodError.value != null) {
+    // 期間が不正なまま前回の行を残すと、新しい見出しの下に古い請求内容が有効値として見えてしまう
+    loadSeq++
+    rows.value = []
+    return
+  }
   const seq = ++loadSeq
   loading.value = true
   try {

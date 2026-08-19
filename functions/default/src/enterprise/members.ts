@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { DateTime } from 'luxon'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import {
   CreateEnterpriseMembersRequest,
   CreateEnterpriseMembersResponse,
@@ -299,7 +299,7 @@ function filterAndSortMembers(
   const sortBy = params.sort_by ?? 'created_at'
   const sortOrder = params.sort_order ?? 'desc'
   const direction = sortOrder === 'asc' ? 1 : -1
-  const currentYearMonth = DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM')
+  const currentYearMonth = formatYearMonth(Date.now())
 
   filtered = [...filtered].sort((a, b) => {
     let cmp = 0

@@ -28,8 +28,9 @@ const chatStore = useChatStore()
 
 /** チャット画面ではサイトフッターを隠し、ビューポートをチャット UI に専有する */
 const isChatRoute = (path: string) => {
+  const chatBase = getChatPath()
   const normalized = path.replace(/\/$/, '') || '/'
-  return normalized === '/chat' || normalized.startsWith('/chat/')
+  return normalized === chatBase || normalized.startsWith(`${chatBase}/`)
 }
 
 watch(

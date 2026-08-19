@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import {
   registerVerticalOverlayNavClose,
+  unregisterVerticalOverlayNavClose,
   type VerticalOverlayNavToggleFn,
 } from '@/composable/useVerticalOverlayNavClose'
 
@@ -14,7 +15,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  registerVerticalOverlayNavClose(null)
+  unregisterVerticalOverlayNavClose(props.toggle)
 })
 </script>
 

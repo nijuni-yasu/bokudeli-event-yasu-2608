@@ -38,8 +38,10 @@ import { usePartnerStore } from '@shokujii/base/stores/partner'
 import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
 import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
+import { useDisplay } from 'vuetify'
 
 const router = useRouter()
+const display = useDisplay()
 
 const qrcodeSize = 300
 
@@ -138,10 +140,13 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
 const isShowMember = computed(() =>
   props.community.is_show_member !== undefined ? props.community.is_show_member : true,
 )
+
+const shareButtonSize = computed(() => (display.xs.value ? 'small' : 'large'))
+const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
 </script>
 
 <template>
-  <v-card class="align-center justify-center mt-0 mb-4 pa-1 pa-sm-10">
+  <v-card class="event-details-card align-center justify-center mt-0 mb-4 pa-1 pa-sm-10">
     <PublicAlbumGallery
       :cover-url="eventStore.coverImageUrl ?? ''"
       :cover-title="event.event_name"
@@ -151,64 +156,61 @@ const isShowMember = computed(() =>
     <v-row>
       <v-col>
         <!-- イベント情報 -->
-        <h1 class="event-details-card__event-name pt-6 pb-0 font-weight-black text-wrap">
-          {{ event.event_name }}
-        </h1>
-        <v-card-text class="event-item text-right px-0 py-0 ma-1">
-          <template v-if="!hideShareSns">
+        <div class="event-details-card__header">
+          <h1 class="event-details-card__event-name pt-4 pt-sm-6 pb-4 font-weight-black text-wrap">
+            {{ event.event_name }}
+          </h1>
+          <div class="event-details-card__share-row">
+            <template v-if="!hideShareSns">
+              <v-btn
+                :icon="XIcon"
+                :elevation="shareButtonElevation"
+                color="grey-900"
+                :size="shareButtonSize"
+                density="compact"
+                variant="text"
+                @click="onShareSnsButtonClicked('twitter')"
+              ></v-btn>
+              <v-btn
+                :icon="mdiFacebook"
+                :elevation="shareButtonElevation"
+                color="#1877F2"
+                :size="shareButtonSize"
+                density="compact"
+                variant="text"
+                @click="onShareSnsButtonClicked('facebook')"
+              ></v-btn>
+              <v-btn
+                :icon="LineIcon"
+                :elevation="shareButtonElevation"
+                color="#06c755"
+                :size="shareButtonSize"
+                density="compact"
+                variant="text"
+                @click="onShareSnsButtonClicked('line')"
+              ></v-btn>
+            </template>
             <v-btn
-              class="ml-3"
-              :icon="XIcon"
-              elevation="2"
+              :icon="mdiQrcode"
+              :elevation="shareButtonElevation"
               color="grey-900"
-              size="large"
+              :size="shareButtonSize"
               density="compact"
               variant="text"
-              @click="onShareSnsButtonClicked('twitter')"
+              @click="showQrCode()"
             ></v-btn>
             <v-btn
-              class="ml-3"
-              :icon="mdiFacebook"
-              elevation="2"
-              color="#1877F2"
-              size="large"
+              :icon="mdiContentCopy"
+              :elevation="shareButtonElevation"
+              color="grey-900"
+              :size="shareButtonSize"
               density="compact"
               variant="text"
-              @click="onShareSnsButtonClicked('facebook')"
+              @click="onShareSnsButtonClicked('copy')"
             ></v-btn>
-            <v-btn
-              class="ml-3"
-              :icon="LineIcon"
-              elevation="2"
-              color="#06c755"
-              size="large"
-              density="compact"
-              variant="text"
-              @click="onShareSnsButtonClicked('line')"
-            ></v-btn>
-          </template>
-          <v-btn
-            class="ml-3"
-            :icon="mdiQrcode"
-            elevation="2"
-            color="grey-900"
-            size="large"
-            density="compact"
-            variant="text"
-            @click="showQrCode()"
-          ></v-btn>
-          <v-btn
-            class="mx-3"
-            :icon="mdiContentCopy"
-            elevation="2"
-            color="grey-900"
-            size="large"
-            density="compact"
-            variant="text"
-            @click="onShareSnsButtonClicked('copy')"
-          ></v-btn>
-        </v-card-text>
-        <v-card-text class="text-h4 font-weight-black mt-6 pb-4">
+          </div>
+        </div>
+        <v-card-text class="event-details-card__section-title font-weight-black pb-4">
           {{ $t('event_details.overview') }}
         </v-card-text>
         <v-divider class="custom-divider mt-0 mb-3" />
@@ -314,7 +316,7 @@ const isShowMember = computed(() =>
             </tr>
           </tbody>
         </v-table>
-        <v-card-text class="text-h4 font-weight-black mt-6 pb-4">
+        <v-card-text class="event-details-card__section-title font-weight-black mt-6 pb-4">
           {{ $t('event_details.event_details') }}
         </v-card-text>
         <v-divider class="custom-divider mt-0 mb-3" />
@@ -325,9 +327,11 @@ const isShowMember = computed(() =>
         <div class="mb-6">
           <v-card-text class="mt-6 pb-3">
             <div class="d-flex align-center flex-wrap ga-2">
-              <span class="text-h4 font-weight-black">
+              <span class="event-details-card__section-title font-weight-black">
                 {{ $t('event_details.participants') }}
-                <span class="text-h5"> {{ members.length }} / {{ event.event_max_people }} </span>
+                <span class="event-details-card__section-title-count">
+                  {{ members.length }} / {{ event.event_max_people }}
+                </span>
               </span>
               <div
                 v-if="showOpenChatButton || members.length > 0"
@@ -451,6 +455,33 @@ const isShowMember = computed(() =>
   </show-dialog>
 </template>
 <style lang="scss" scoped>
+.event-details-card__header {
+  padding-inline: 0;
+}
+
+.event-details-card__share-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 0;
+}
+
+.event-details-card__section-title {
+  font-size: 1.375rem !important; /* 22px: text-h4(34px) とモバイル18px の中間 */
+  line-height: 1.4;
+
+  @media (min-width: 600px) {
+    font-size: 1.625rem !important; /* 26px */
+  }
+}
+
+.event-details-card__section-title-count {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
 /* text-h4 は付けない（Vuetify の font-size が !important で競合するため）。ここで xs / sm を定義 */
 .event-details-card__event-name {
   line-height: 1.3;

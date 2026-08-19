@@ -1,5 +1,6 @@
 import { onUnmounted } from 'vue'
 import { getAuth } from 'firebase/auth'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { performEnterpriseLogout } from '@/utils/enterpriseLogout'
 import { SESSION_LAST_ACTIVITY_KEY, SESSION_TIMEOUT_FLAG_KEY, SESSION_TIMEOUT_MS } from '@/constants/sessionTimeout'
 
@@ -42,8 +43,9 @@ export function useSessionTimeout() {
   }
 
   const runCheckTimeout = () => {
+    // ここが失敗するとタイムアウトによる強制ログアウトが成立しないため、運用側から検知できるようにする
     void checkTimeout().catch((err: unknown) => {
-      console.error('session timeout check failed', err)
+      reportClientError(err, { componentInfo: 'useSessionTimeout' })
     })
   }
 

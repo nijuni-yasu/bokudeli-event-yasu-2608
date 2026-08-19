@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { EnterpriseMemberListItem } from '@shokujii/common/apis/enterprise.js'
 import type { EnterpriseMemberRoleType } from '@shokujii/common/schemas/Enterprise.js'
+import { FirebaseError } from 'firebase/app'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { convertToDate } from '@shokujii/common/utils/datetime.js'
 import { mdiAccountPlus, mdiArrowDown, mdiArrowUp, mdiDotsVertical, mdiUpload } from '@mdi/js'
@@ -58,6 +59,10 @@ const hasActiveFilters = computed(
 const roleLabel = (role: EnterpriseMemberRoleType) =>
   role === 'admin' ? t('admin.members.role_admin') : t('admin.members.role_member')
 
+/** 業務エラー（最低 1 人の管理者が必要 等）はサーバー文言をそのまま出し、それ以外は既定文言にフォールバックする */
+const resolveCallableErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof FirebaseError && error.code === 'functions/failed-precondition' ? error.message : fallback
+
 const sortIcon = (column: typeof sortBy.value) => {
   if (sortBy.value !== column) return undefined
   return sortOrder.value === 'asc' ? mdiArrowUp : mdiArrowDown
@@ -87,7 +92,11 @@ const loadMembers = async () => {
 }
 
 onMounted(async () => {
-  enterpriseId.value = await getEnterpriseIdFromToken()
+  try {
+    enterpriseId.value = await getEnterpriseIdFromToken()
+  } catch {
+    notification.show(t('admin.members.load_failed'), 'error')
+  }
   await loadMembers()
 })
 
@@ -179,9 +188,13 @@ const confirmDisable = (member: EnterpriseMemberListItem) => {
   confirmDialog.message = t('admin.members.disable_message', { name: member.display_name })
   confirmDialog.action = async () => {
     if (enterpriseId.value == null) return
-    await disableEnterpriseMember({ enterprise_id: enterpriseId.value, user_id: member.user_id })
-    notification.show(t('admin.members.disable_success'), 'success')
-    await loadMembers()
+    try {
+      await disableEnterpriseMember({ enterprise_id: enterpriseId.value, user_id: member.user_id })
+      notification.show(t('admin.members.disable_success'), 'success')
+      await loadMembers()
+    } catch (error: unknown) {
+      notification.show(resolveCallableErrorMessage(error, t('admin.members.disable_failed')), 'error')
+    }
   }
   confirmDialog.open = true
 }
@@ -191,9 +204,13 @@ const confirmEnable = (member: EnterpriseMemberListItem) => {
   confirmDialog.message = t('admin.members.enable_message', { name: member.display_name })
   confirmDialog.action = async () => {
     if (enterpriseId.value == null) return
-    await enableEnterpriseMember({ enterprise_id: enterpriseId.value, user_id: member.user_id })
-    notification.show(t('admin.members.enable_success'), 'success')
-    await loadMembers()
+    try {
+      await enableEnterpriseMember({ enterprise_id: enterpriseId.value, user_id: member.user_id })
+      notification.show(t('admin.members.enable_success'), 'success')
+      await loadMembers()
+    } catch (error: unknown) {
+      notification.show(resolveCallableErrorMessage(error, t('admin.members.enable_failed')), 'error')
+    }
   }
   confirmDialog.open = true
 }
@@ -209,11 +226,7 @@ const confirmRoleChange = (member: EnterpriseMemberListItem, role: EnterpriseMem
       notification.show(t('admin.members.role_success'), 'success')
       await loadMembers()
     } catch (error: unknown) {
-      const message =
-        typeof error === 'object' && error != null && 'message' in error
-          ? String((error as { message: unknown }).message)
-          : t('admin.members.role_failed')
-      notification.show(message, 'error')
+      notification.show(resolveCallableErrorMessage(error, t('admin.members.role_failed')), 'error')
     }
   }
   confirmDialog.open = true

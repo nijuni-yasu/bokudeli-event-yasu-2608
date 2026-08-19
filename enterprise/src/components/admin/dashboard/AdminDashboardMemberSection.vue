@@ -11,10 +11,12 @@ const props = defineProps<{
   endYearMonth: string
 }>()
 
+const { t } = useI18n()
+
 const formatYen = (amount: number) => `${priceString(amount)}円`
 
 const downloadCsv = () => {
-  downloadMemberDashboardCsv(props.rows, props.startYearMonth, props.endYearMonth)
+  downloadMemberDashboardCsv(props.rows, props.startYearMonth, props.endYearMonth, t)
 }
 </script>
 

@@ -53,7 +53,7 @@ const chartOptions = computed(() => ({
 }))
 
 const downloadCsv = () => {
-  downloadMonthlyDashboardCsv(props.rows)
+  downloadMonthlyDashboardCsv(props.rows, t)
 }
 </script>
 

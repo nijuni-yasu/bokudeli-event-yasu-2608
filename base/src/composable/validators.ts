@@ -45,11 +45,11 @@ export const useValidators = () => {
     return (Number.isInteger(numValue) && numValue >= 1) || $t('validator.positive_integer')
   }
 
-  const phoneValidator = (value: string | null | undefined) => {
+  const phoneValidator = (value: unknown) => {
     if (isEmpty(value)) {
       return true
     }
-    return isValidPhone(value as string) || $t('validator.phone')
+    return (typeof value === 'string' && isValidPhone(value)) || $t('validator.phone')
   }
 
   /**

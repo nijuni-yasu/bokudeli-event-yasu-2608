@@ -5,6 +5,7 @@ import { User } from '@shokujii/common/schemas/User.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { listChatReactions } from '@shokujii/base/stores/chatReaction.js'
 import { getUserById } from '@shokujii/base/stores/user.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 
 const props = defineProps<{
   modelValue: boolean
@@ -43,10 +44,12 @@ const dialogTitle = computed(() => {
   return t('chat.reaction_detail_title', { count: reactionCount.value })
 })
 
+/** 1 名分の取得失敗は他のリアクション表示を止めない（表示名は UID 先頭にフォールバック） */
 const fetchUser = async (userId: string): Promise<User | null> => {
   try {
     return (await getUserById(userId)) ?? null
-  } catch {
+  } catch (error: unknown) {
+    reportClientError(error, { componentInfo: 'ChatReactionDetailDialog', severity: 'warn' })
     return null
   }
 }

@@ -33,6 +33,14 @@ const isChatRoute = (path: string) => {
   return normalized === '/chat' || normalized.startsWith('/chat/')
 }
 
+/** イベント詳細ページ（メイン）ではフッターを控えめ表示 */
+const isEventPageRoute = (path: string) => {
+  const normalized = path.replace(/\/$/, '') || '/'
+  return /^\/c\/[^/]+\/e\/[^/]+$/.test(normalized)
+}
+
+const isFooterCompact = computed(() => isEventPageRoute(route.path))
+
 watch(
   () => route.path,
   (path, oldPath) => {
@@ -192,7 +200,7 @@ const handleChatHeaderClick = (): void => {
       <UserProfile />
     </template>
     <template #footer>
-      <Footer />
+      <Footer :compact="isFooterCompact" />
     </template>
   </Component>
   <v-snackbar v-model="isNotificationShown" :color="notification.color" class="pre-line" location="top">

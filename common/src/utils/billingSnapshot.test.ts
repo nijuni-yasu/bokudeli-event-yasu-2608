@@ -106,4 +106,9 @@ describe('assertRecapturableYearMonth', () => {
   it('不正形式は拒否', () => {
     expect(() => assertRecapturableYearMonth('202606', '2026-06')).toThrow(BillingSnapshotPeriodError)
   })
+
+  it('月の範囲外は拒否', () => {
+    expect(() => assertRecapturableYearMonth('2026-00', '2026-06')).toThrow(BillingSnapshotPeriodError)
+    expect(() => assertRecapturableYearMonth('2025-13', '2026-06')).toThrow(BillingSnapshotPeriodError)
+  })
 })

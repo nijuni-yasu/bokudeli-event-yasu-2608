@@ -32,6 +32,7 @@ const monthlyLimitPerUser = ref(0)
 const subsidySettingsHistory = ref<EnterpriseSubsidySettingsEntryType[]>([])
 const logoFile = ref<File | null>(null)
 const logoPreviewUrl = ref('')
+const logoInput = ref<HTMLInputElement | null>(null)
 
 const baseDomain = import.meta.env.VITE_ENTERPRISE_BASE_DOMAIN ?? 'shokujii.com'
 
@@ -49,9 +50,15 @@ const loadSettings = async () => {
   loading.value = true
   try {
     enterpriseId.value = await getEnterpriseIdFromToken()
-    if (enterpriseId.value == null) return
+    if (enterpriseId.value == null) {
+      notification.show(t('admin.settings.load_failed'), 'error')
+      return
+    }
     const doc = await loadEnterpriseDocument(enterpriseId.value)
-    if (doc == null) return
+    if (doc == null) {
+      notification.show(t('admin.settings.load_failed'), 'error')
+      return
+    }
     companyName.value = doc.company_name
     companyLogoUrl.value = doc.company_logo_url
     logoPreviewUrl.value = doc.company_logo_url
@@ -76,8 +83,16 @@ const loadSettings = async () => {
 
 onMounted(loadSettings)
 
+/** ObjectURL のときだけ解放する（サーバー由来の URL は解放対象外） */
+const releaseLogoPreview = () => {
+  if (logoPreviewUrl.value.startsWith('blob:')) {
+    URL.revokeObjectURL(logoPreviewUrl.value)
+  }
+}
+
 const handleLogoSelect = (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!(event.target instanceof HTMLInputElement)) return
+  const file = event.target.files?.[0]
   if (file == null) return
   if (file.size > 2 * 1024 * 1024) {
     notification.show(t('admin.settings.logo_size_error'), 'error')
@@ -87,9 +102,12 @@ const handleLogoSelect = (event: Event) => {
     notification.show(t('admin.settings.logo_type_error'), 'error')
     return
   }
+  releaseLogoPreview()
   logoFile.value = file
   logoPreviewUrl.value = URL.createObjectURL(file)
 }
+
+onBeforeUnmount(releaseLogoPreview)
 
 const saveSettings = async () => {
   if (enterpriseId.value == null) return
@@ -154,7 +172,7 @@ const saveSettings = async () => {
                       <div class="text-body-2 mb-2">{{ $t('admin.settings.logo') }}</div>
                       <p class="text-caption text-medium-emphasis mb-2">{{ $t('admin.settings.logo_hint') }}</p>
                       <v-img
-                        v-if="logoPreviewUrl"
+                        v-if="logoPreviewUrl !== ''"
                         :src="logoPreviewUrl"
                         :alt="$t('admin.settings.logo')"
                         max-width="280"
@@ -162,7 +180,7 @@ const saveSettings = async () => {
                         contain
                         class="mb-3 admin-settings-logo-preview"
                       />
-                      <v-btn variant="outlined" @click="($refs.logoInput as HTMLInputElement)?.click()">
+                      <v-btn variant="outlined" @click="logoInput?.click()">
                         {{ $t('admin.settings.logo_select') }}
                       </v-btn>
                       <input

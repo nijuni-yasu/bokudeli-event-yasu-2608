@@ -46,7 +46,6 @@ export default {
       settings: '全社設定',
       members: 'アカウント管理',
       communities: 'コミュニティ管理',
-      discount: '割引設定',
       audit_logs: '監査ログ',
     },
     common: {
@@ -215,7 +214,6 @@ export default {
       col_actions: '操作',
       empty: 'メンバーが登録されていません',
       empty_filtered: '条件に一致するメンバーがいません',
-      role_change: 'ロール変更',
       role_change_title: 'ロール変更',
       role_change_message: '{name} さんのロールを {role} に変更しますか？',
       edit: '編集',
@@ -233,9 +231,11 @@ export default {
       disable_title: 'アカウント停止',
       disable_message: '{name} さんのアカウントを停止しますか？',
       disable_success: 'アカウントを停止しました',
+      disable_failed: 'アカウントの停止に失敗しました',
       enable_title: 'アカウント復活',
       enable_message: '{name} さんのアカウントを復活しますか？',
       enable_success: 'アカウントを復活しました',
+      enable_failed: 'アカウントの復活に失敗しました',
       role_success: 'ロールを変更しました',
       role_failed: 'ロールの変更に失敗しました',
       load_failed: 'メンバー一覧の取得に失敗しました',
@@ -244,6 +244,7 @@ export default {
       import_format:
         'CSV形式: email, display_name（氏名）, department, role（role は admin または member。省略時 member）',
       import_failed: '一括作成に失敗しました',
+      import_invalid_role: 'ロールが不正です',
     },
     communities: {
       title: 'コミュニティ管理',
@@ -980,7 +981,6 @@ export default {
     access_denied: '閲覧権限がありません',
     department_label: '部署: {department}',
     tab_profile: 'プロフィール',
-    tab_usage: '利用状況',
     tab_friends: 'ともだち',
     tab_events: 'イベント',
     tab_communities: 'コミュニティ',

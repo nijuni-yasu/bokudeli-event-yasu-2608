@@ -326,7 +326,7 @@ GCS lifecycle だけでは「tier ごとに本数を固定」しにくいため�
 |:--|:--|
 | **legacy** | `functions/legacy/src/backup.js` の `scheduled_firestore_export` は **やめる**（ソース削除 + デプロイ） |
 | **新規実装** | **`functions/default`** に v2 `onSchedule` で実装（日次 / 週次 / 月次 + 保持削除） |
-| **切替時** | default デプロイ後、**初回のみ**旧 `backupFirestore` を `firebase functions:delete` で明示削除する（[デプロイ手順_v2.12 §C-1](../デプロイ手順/デプロイ手順_v2.12_260719.md)）。legacy 削除と新 7 関数デプロイを同一リリースで行い、日次 export が二重に走らないことを確認する |
+| **切替時** | **default デプロイの前に**、旧 `backupFirestore` を `firebase functions:delete` で明示削除する（[デプロイ手順_v2.12 §B-4](../デプロイ手順/デプロイ手順_v2.12_260818.md)）。CI は `--force` なしの `--only functions` なので、`index.ts` に無い旧関数が残っていると **デプロイ自体が abort** する（[functions の CI デプロイ](../実装メモ/functionsのCIデプロイ.md)）。削除から新 7 関数デプロイまでの間は日次 export が止まるため、同一リリース内で完了させ、二重に走らないことも確認する |
 | **既存 export データ** | legacy が出力したバケット直下のフォルダは、新 prefix（`daily/` 等）と混在する。`backupRetentionCleanup` が **legacy 直下**（`daily/` / `weekly/` / `monthly/` 以外）で `overall_export_metadata` あり prefix を削除する |
 | **初回クリーンアップ** | **必ず** `BACKUP_RETENTION_DRY_RUN=true` で 1 回実行し、GCS Console で削除対象 prefix（特に legacy 直下）を確認してから dry-run を OFF にする |
 

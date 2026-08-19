@@ -111,7 +111,8 @@ export async function assertActiveEnterpriseMember(
   if (auth?.uid == null) {
     throw new HttpsError('unauthenticated', '認証が必要です')
   }
-  const tokenEnterpriseId = auth.token.enterprise_id as string | undefined
+  const rawTokenEnterpriseId = auth.token.enterprise_id
+  const tokenEnterpriseId = typeof rawTokenEnterpriseId === 'string' ? rawTokenEnterpriseId : undefined
   if (tokenEnterpriseId !== enterpriseId) {
     throw new HttpsError('permission-denied', 'この企業イベントに注文する権限がありません')
   }
@@ -163,7 +164,7 @@ export async function syncEnterpriseSubsidyOrdersBeforeConfirm(params: {
         await clearOrderPayEnterpriseSubsidyAmount(communityId, eventId, userId, orders[i].id, transaction)
       } else {
         orders[i].pay_enterprise_subsidy_amount = expected
-        saveOrder(communityId, eventId, userId, orders[i], transaction)
+        await saveOrder(communityId, eventId, userId, orders[i], transaction)
       }
     }
   }
@@ -427,7 +428,7 @@ export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
   for (const order of orders) {
     order.status = 'ordered'
     order.ordered_at = orderedAt
-    saveOrder(communityId, eventId, userId, order, transaction)
+    await saveOrder(communityId, eventId, userId, order, transaction)
   }
   return { enterpriseId, subsidyTotal: sync.subsidyTotal, recalculated: false }
 }
