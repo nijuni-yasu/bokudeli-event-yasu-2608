@@ -93,6 +93,60 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 | [ ] | RC-81 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `user/components/Footer.vue:60` `compact` / 非 `compact` でリンク一覧を全文複製し、下部 5 リンクが完全重複<br>リンク定義の配列化 + `v-for` で解消できるが、既存踏襲の未 i18n 文言の扱いと合わせた判断が必要 |
 | [ ] | RC-82 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | S | `user/layouts/default.vue:37` 新規 `isEventPageRoute` がイベント詳細パスを正規表現で直書き（同 PR で enterprise 側は `getChatPath()` に置換済みで非対称）<br>`route.name` 判定 / `router/utils` に判定関数追加の 2 案に分かれるため未着手 |
 | [ ] | RC-83 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
+| [ ] | RC-84 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | `members/import.vue:124` `showResults([...clientErrors, ...apiResults])` が row 順未ソートで、不正ロール行が CSV の順序に関わらず API 結果より常に先に表示される<br>`.sort((a, b) => a.row - b.row)` を追加するだけで解消 |
+
+---
+
+## 評価セッション（2026-08-19・shokujii-code-review / Copilot）
+
+- **評価日時**: 2026-08-19 JST
+- **評価者**: Copilot（PR #2286 コードレビュー依頼）
+- **ブランチ名**: `doc/v2.12-deploy`
+- **PR**: [#2286](https://github.com/nijuniinc/bokudeli-event-new/pull/2286)
+- **レビュー範囲**: PR #2286 の Files changed（52 ファイル、全コミット）
+- **Outdated 除外件数**: 該当なし
+- **既存 review doc との重複除外**: RC-1〜RC-83 と同一の指摘は再掲していない
+- **自動修正**: なし（RC-84 のみ新規追加）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | 評価 | ステータス | 要約 |
+|:----:|:---|:---|:---|:---|
+| [ ] | RC-84 | 🟡 修正提案 | 未着手 | `members/import.vue:124` `showResults` に渡す配列が row 順未ソート |
+
+---
+
+**識別子**: RC-84（GitHub id: なし）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `enterprise/src/pages/admin/members/import.vue:124`（`panelRef.value?.showResults(...)` の行）
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    panelRef.value?.showResults([...clientErrors, ...apiResults])
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 修正提案 [🔧微修正/S]: `[...clientErrors, ...apiResults]` はクライアント検証エラー（不正ロール行）を常に先頭にまとめたあと API 結果を並べるため、結果テーブルの表示順序が元の CSV 行番号と一致しません。たとえば 10 行の CSV で行 3・7 が不正ロールだった場合、画面は「行3 error → 行7 error → 行1 result → 行2 result → ...」のように並びます。`CsvImportPanel` の `showResults` は渡された配列をそのまま表示するため、呼び出し側で `.sort((a, b) => a.row - b.row)` を追加するだけで解消できます。
+
+**コメント要約**: `members/import.vue:124` `showResults([...clientErrors, ...apiResults])` が row 順未ソートで、不正ロール行が CSV の順序に関わらず API 結果より常に先に表示される。`.sort((a, b) => a.row - b.row)` を追加するだけで解消。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-75 の対応（クライアント側 role 検証）で `clientErrors` と `apiResults` を分けて構築するようになったが、合算時にソートが入っていない。`CsvImportPanel` は受け取った配列を順序通り表示するため、混在行がある CSV では表示順が元の行番号と乖離する。修正は 1 行（`.sort()`）で局所的に済み、方針判断が不要なため 🟡。
 
 ---
 
