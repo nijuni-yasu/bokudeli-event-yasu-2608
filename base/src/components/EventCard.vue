@@ -7,7 +7,17 @@ import { useDisplay } from 'vuetify'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import { convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
 
-const props = defineProps<{ event: BokudeliEvent; members?: BokudeliEventMember[] }>()
+const props = withDefaults(
+  defineProps<{
+    event: BokudeliEvent
+    members?: BokudeliEventMember[]
+    /** false のとき参加者アバター一覧を非表示（user トップの開催予定/過去向け） */
+    showMemberAvatars?: boolean
+  }>(),
+  {
+    showMemberAvatars: true,
+  },
+)
 const eventStore = useAppEventStore(props.event)
 
 const display = useDisplay()
@@ -68,7 +78,11 @@ const avatarSize = computed(() => {
       {{ $t('event_card.participants', [(members ?? []).length, event.event_max_people]) }}
     </v-card-text> -->
     <!-- Mutual members -->
-    <v-card-text class="position-relative px-3 pb-2 avatar-scroll-container" style="min-height: 50px">
+    <v-card-text
+      v-if="showMemberAvatars"
+      class="position-relative px-3 pb-2 avatar-scroll-container"
+      style="min-height: 50px"
+    >
       <div class="v-avatar-group">
         <UserAvatar
           v-for="member in (members ?? []).slice(0, 15)"
