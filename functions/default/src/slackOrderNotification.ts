@@ -72,10 +72,12 @@ const sendOrderedMessage = async (params: {
   // エンプラコミュニティのイベント・プロフィールは EVENT_HOST では 404 になるため、テナントの host を解決する
   const [eventUrl, userUrl] = await Promise.all([getEventUrlForEvent(event), getUserUrlForCommunity(event, userId)])
   if (eventUrl == null || userUrl == null) {
-    logger.error('Skipped Slack order notification because event host is unresolved', {
+    logger.error('Skipped Slack order notification because URL could not be resolved', {
       communityId,
       eventId,
       enterpriseId: event.enterprise_id,
+      eventUrlResolved: eventUrl != null,
+      userUrlResolved: userUrl != null,
     })
     return
   }

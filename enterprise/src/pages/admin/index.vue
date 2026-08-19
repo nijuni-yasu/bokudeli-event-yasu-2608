@@ -23,6 +23,7 @@ let loadSeq = 0
 const loadDashboard = async () => {
   if (enterpriseId.value == null) return
   if (periodError.value != null) {
+    loadSeq++
     monthlyRows.value = []
     memberRows.value = []
     return

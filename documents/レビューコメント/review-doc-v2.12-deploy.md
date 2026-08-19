@@ -81,7 +81,7 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 | [x] | RC-69 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | `settings.vue:91` 生成した Blob URL を `revokeObjectURL` していない<br>選び直し時とアンマウント時に解放（`blob:` 判定でサーバー URL は除外） |
 | [ ] | RC-70 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | `settings.vue:104` 固定パスのロゴを Callable より先にアップロードしており、`updateEnterpriseSettings` 失敗時に「保存に失敗」と出ながらロゴ画像だけ差し替わる<br>初回は Storage に孤児データが残る。パス設計（固定 + `updated_at` バスター）に関わるため方針確認が必要 |
 | [x] | RC-71 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `settings.vue:165` テンプレート内 `$refs` + `as` キャストと、空文字を truthy 判定している `v-if`<br>`ref()` バインドと `!== ''` 比較に変更 |
-| [ ] | RC-72 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `adminDashboardCsv.ts:10` CSV 列見出しが日本語リテラルで `ja.ts` を通っておらず、`'表示名'` が画面の `'氏名'` と不一致<br>画面とダウンロードで列名が変わる |
+| [x] | RC-72 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `adminDashboardCsv.ts:10` CSV 列見出しが日本語リテラルで `ja.ts` を通っておらず、`'表示名'` が画面の `'氏名'` と不一致<br>画面とダウンロードで列名が変わる |
 | [ ] | RC-73 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | `adminDashboardPeriod.ts:2` `DEFAULT_TIME_ZONE` をアプリ層で新規参照し、luxon による月シフト・当月算出を call site で組み立てている（4 箇所）<br>`common` 側に閉じた util を追加して呼ぶ方針に反する |
 | [ ] | RC-74 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | `enterpriseTenantCache.ts:72` `cached_at` を持つのに読み出し側で有効期限判定に使っておらず、テナント再割り当て後も古い `tenant_id` が bootstrap に使われる<br>照合は fail-closed なので不正アクセスにはならないが、`cached_at` の意図が未実装 |
 | [x] | RC-75 | 3805184137 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:27` 不正な role を `member` に黙って置換し、Functions の行単位拒否が効かなくなる退行<br>空欄のみ `member` 既定化。非空の不正値はクライアントで行エラーにし API へ送らない |
@@ -92,8 +92,9 @@ v2.12 リリースに向けた `v2.11.0..HEAD` 全差分のセルフレビュー
 | [x] | RC-80 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `members/import.vue:82` `apiResults` の `status: string` が `CsvImportPanel` の `ResultRow`（`'success' \| 'error'`）に不適合で `vue-tsc` が TS2345。PR verify の `build:types` が落ちる<br>RC-75 の対応で導入。`status: 'success' \| 'error'` に修正 |
 | [ ] | RC-81 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `user/components/Footer.vue:60` `compact` / 非 `compact` でリンク一覧を全文複製し、下部 5 リンクが完全重複<br>リンク定義の配列化 + `v-for` で解消できるが、既存踏襲の未 i18n 文言の扱いと合わせた判断が必要 |
 | [ ] | RC-82 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | S | `user/layouts/default.vue:37` 新規 `isEventPageRoute` がイベント詳細パスを正規表現で直書き（同 PR で enterprise 側は `getChatPath()` に置換済みで非対称）<br>`route.name` 判定 / `router/utils` に判定関数追加の 2 案に分かれるため未着手 |
-| [ ] | RC-83 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
+| [x] | RC-83 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
 | [ ] | RC-84 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | `members/import.vue:124` `showResults([...clientErrors, ...apiResults])` が row 順未ソートで、不正ロール行が CSV の順序に関わらず API 結果より常に先に表示される<br>`.sort((a, b) => a.row - b.row)` を追加するだけで解消 |
+| [x] | RC-85 | 4968123749 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | `slackOrderNotification.ts:75` `eventUrl` / `userUrl` のどちらか失敗時もログが「event host」固定で原因が誤解されやすい<br>包括的な文言 + `eventUrlResolved` / `userUrlResolved` をログに追加 |
 
 ---
 
@@ -612,7 +613,7 @@ is not assignable to parameter of type 'ResultRow[]'.
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-83 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
+| [x] | RC-83 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `invoices/index.vue:23` 不正期間へ切り替えた後でも、先行リクエストの古い請求行が遅れて描画されうる<br>invalid 遷移時にも in-flight 応答を失効させる必要がある |
 
 ---
 
@@ -643,7 +644,7 @@ invalid 遷移時にも in-flight 応答を失効させる必要がある。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -654,5 +655,30 @@ invalid 遷移時にも in-flight 応答を失効させる必要がある。
 **想定工数**: S
 
 **判断理由**: 現在の実装は「不正期間では前回行を消す」改善自体は入っているが、先行リクエストの完了タイミング次第で別期間の請求行が再描画される race を残している。表示データの整合性に影響するものの、必ず発生するわけではなくサーバー不整合も伴わないため、優先度は 🟡 に留めた。`loadSeq` の失効または period snapshot 比較で局所修正できる。
+
+**対応内容**: 不正期間へ遷移した時点で `loadSeq++` し in-flight 応答を失効。`invoices/index.vue` に加え `admin/index.vue` も同型修正。
+
+---
+
+## 評価セッション（2026-08-19 12:30・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-19 12:30 JST
+- **ブランチ名**: doc/v2.12-deploy
+- **PR**: #2286
+- **REVIEW_REQUEST_SINCE**: 2026-08-19T03:22:46Z
+- **partial**: true（Codex usage limits のみ。インライン指摘 0 件）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼コメント 1 件、Codex limits 1 件）
+- **新規 RC**: RC-85（Codex suppressed nit 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|
+| [x] | RC-85 | 4968123749 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | Slack 注文通知の URL 解決失敗ログを包括化 |
+
+### 自動修正
+
+- RC-85: `functions/default/src/slackOrderNotification.ts` — ログ文言を「URL could not be resolved」に変更し、`eventUrlResolved` / `userUrlResolved` を context に追加
 
 ---

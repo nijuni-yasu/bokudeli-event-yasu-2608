@@ -4,21 +4,35 @@ import type { DashboardMemberRow, DashboardMonthlyRow } from '@shokujii/common/a
 import { priceString } from '@shokujii/base/schemes/converter'
 import { formatDashboardMembersPeriodLabel, formatDashboardTimestamp } from '@/utils/adminDashboardPeriod'
 
+type DashboardCsvTranslate = (key: string) => string
+
+const MONTHLY_CSV_HEADER_KEYS = [
+  'admin.dashboard.col_year_month',
+  'admin.dashboard.col_session_count',
+  'admin.dashboard.col_unique_users',
+  'admin.dashboard.col_total_amount',
+  'admin.dashboard.col_enterprise_subsidy',
+  'admin.dashboard.col_user_paid',
+  'admin.dashboard.col_enterprise_billing',
+  'admin.dashboard.col_active_accounts',
+  'admin.dashboard.col_platform_fee',
+  'admin.dashboard.col_total_billing',
+] as const
+
+const MEMBER_CSV_HEADER_KEYS = [
+  'admin.dashboard.col_display_name',
+  'admin.dashboard.col_email',
+  'admin.dashboard.col_department',
+  'admin.dashboard.col_session_count',
+  'admin.dashboard.col_total_amount',
+  'admin.dashboard.col_enterprise_subsidy',
+  'admin.dashboard.col_user_paid',
+] as const
+
 const formatAmount = (amount: number) => priceString(amount)
 
-export function buildMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[]): string {
-  const headers = [
-    '年月',
-    '利用回数',
-    '利用人数',
-    '注文合計額（税込）',
-    '企業負担額（補助）',
-    '自己負担額',
-    '企業請求見込額（食事）',
-    '有効アカウント数',
-    'プラットフォーム利用料',
-    '合計請求見込額',
-  ]
+export function buildMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[], t: DashboardCsvTranslate): string {
+  const headers = MONTHLY_CSV_HEADER_KEYS.map((key) => t(key))
   const data = rows.map((row) => [
     row.year_month,
     String(row.session_count),
@@ -34,16 +48,8 @@ export function buildMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[]): 
   return buildCsvContent(headers, data)
 }
 
-export function buildMemberDashboardCsv(rows: readonly DashboardMemberRow[]): string {
-  const headers = [
-    '表示名',
-    'メールアドレス',
-    '部署',
-    '利用回数',
-    '注文合計額（税込）',
-    '企業負担額（補助）',
-    '自己負担額',
-  ]
+export function buildMemberDashboardCsv(rows: readonly DashboardMemberRow[], t: DashboardCsvTranslate): string {
+  const headers = MEMBER_CSV_HEADER_KEYS.map((key) => t(key))
   const data = rows.map((row) => [
     row.display_name,
     row.email,
@@ -56,17 +62,18 @@ export function buildMemberDashboardCsv(rows: readonly DashboardMemberRow[]): st
   return buildCsvContent(headers, data)
 }
 
-export function downloadMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[]): void {
-  downloadCsv(`dashboard_monthly_${formatDashboardTimestamp()}.csv`, buildMonthlyDashboardCsv(rows))
+export function downloadMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[], t: DashboardCsvTranslate): void {
+  downloadCsv(`dashboard_monthly_${formatDashboardTimestamp()}.csv`, buildMonthlyDashboardCsv(rows, t))
 }
 
 export function downloadMemberDashboardCsv(
   rows: readonly DashboardMemberRow[],
   startYearMonth: string,
   endYearMonth: string,
+  t: DashboardCsvTranslate,
 ): void {
   downloadCsv(
     `dashboard_members_${formatDashboardMembersPeriodLabel(startYearMonth, endYearMonth)}_${formatDashboardTimestamp()}.csv`,
-    buildMemberDashboardCsv(rows),
+    buildMemberDashboardCsv(rows, t),
   )
 }
