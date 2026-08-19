@@ -66,9 +66,13 @@ export class EventBulkCancelPipeline {
     this.updated_at = EpochMillisSchema.default(nowMillis()).parse(src.updated_at)
   }
 
-  /** 後処理（メール送信まで）が完了していないか（true なら resume 対象） */
+  /** 後処理（メール送信・Stripe 返金など）が完了していないか（true なら resume 対象） */
   get isPostProcessingIncomplete(): boolean {
-    return this.shop_mail_sent_at == null || this.participant_mails_sent_at == null
+    return (
+      this.shop_mail_sent_at == null ||
+      this.participant_mails_sent_at == null ||
+      this.stripe_refunds_done_at == null
+    )
   }
 
   isValidForDatabase(): boolean {

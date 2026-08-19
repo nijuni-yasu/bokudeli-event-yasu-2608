@@ -79,6 +79,7 @@ export async function applyBulkEventCancelInTransaction(
     }
   }
 
+  // 先払いは 1 件でも stripe_id 欠落なら中止しない（旧 every 実装と同趣旨。全件欠落のみでなく部分欠落も検出する）
   if (eventPayment === 'user_advance' && ordered.length > 0 && ordered.some((o) => o.stripe_id == null)) {
     throw new Error('先払い注文に決済情報（stripe_id）が紐づいていません')
   }

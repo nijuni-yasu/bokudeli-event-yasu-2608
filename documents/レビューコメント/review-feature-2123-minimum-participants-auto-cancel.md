@@ -37,6 +37,11 @@
 | [x] | RC-31 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | ⚡ 性能 | 🔧 微修正 | S | resume 候補クエリが全期間スキャン + pipeline を逐次 await<br>判定日時 7 日の lookback 窓 + `Promise.all` 化 |
 | [x] | RC-32 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | 判定 Transaction が write 後に read で自動中止パスが必ず実行時エラー<br>read を前段に集約し preloaded 引き渡し + 同一インスタンスで更新 |
 | [x] | RC-33 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | pipeline store が withConverter なし生 ref・`as` キャスト・common 外スキーマ・`Date.now()`<br>common に `EventBulkCancelPipeline` Zod スキーマ + Converter を新設 |
+| [ ] | RC-34 | 5341053508 | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | canceled パスで applyBulk 後に members 同期する順序<br>`updateEvent` は Object.assign + merge で event_canceled を保持（コメント済み） |
+| [ ] | RC-35 | 5341053508 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | `cancelEventBulkCore` が Transaction 外 `recalcEventMembers` で judgment 経路と非対称 |
+| [ ] | RC-36 | 5341053508 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ 性能 | 📐 リファクタ | M | `removeEventFromFriendHistory` が参加者 n 人で O(n²) write |
+| [x] | RC-37 | 5341053508 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 先払い `some(stripe_id==null)` の意図をコメントで明示 |
+| [x] | RC-38 | 3812300951 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済 | 🔧 微修正 | S | `isPostProcessingIncomplete` に `stripe_refunds_done_at` を含める |
 
 ---
 
@@ -967,5 +972,205 @@ common に `EventBulkCancelPipeline` Zod スキーマ + Converter を新設。
 **想定工数**: M
 
 **判断理由**: AGENTS.md「xxxRef は必ず withConverter 付き」「`as` 禁止」「スキーマは common に Zod で定義」は厳守ルール。EventStripe のパターンに倣い `EventBulkCancelPipeline`（DbSchema: TimestampSchema / AppSchema: EpochMillisSchema）を新設、store を Converter + 全フィールド書き戻しに変更（手順 3a 自動修正）。`isPostProcessingIncomplete` はクラスの getter に移動。
+
+---
+
+## 評価セッション（2026-08-19 19:54 JST・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-19 19:54 JST
+- **ブランチ名**: feature/2123-minimum-participants-auto-cancel
+- **PR**: #2231
+- **REVIEW_REQUEST_SINCE**: 2026-08-19T10:45:39Z
+- **partial**: true（Codex usage limits / connect のみ。Copilot substantive あり）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（依頼定型文 id:5341026303、Codex limits id:5341027791、Codex connect id:5341054419、参加者テンプレ id:5341053508 RC-6/RC-11 重複）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-34 | 5341053508 | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | canceled パスで applyBulk 後に members 同期する順序<br>`updateEvent` は Object.assign + merge で event_canceled を保持（コメント済み） |
+| [ ] | RC-35 | 5341053508 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | `cancelEventBulkCore` が Transaction 外 `recalcEventMembers` で judgment 経路と非対称 |
+| [ ] | RC-36 | 5341053508 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ 性能 | 📐 リファクタ | M | `removeEventFromFriendHistory` が参加者 n 人で O(n²) write |
+| [x] | RC-37 | 5341053508 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 先払い `some(stripe_id==null)` の意図をコメントで明示 |
+| [x] | RC-38 | 3812300951 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済 | 🔧 微修正 | S | `isPostProcessingIncomplete` に `stripe_refunds_done_at` を含める |
+
+**識別子**: RC-34（GitHub id: 5341053508・Copilot トップレベル RC-2）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/minimumParticipantsJudgment.ts:74`
+
+**該当コード（レビュー時点の diff）**:
+
+```typescript
+    const canceledOrders = await applyBulkEventCancelInTransaction({ ... })
+    await syncEventMembersFromOrderedInTransaction(tEvent, ordered, transaction)
+    await tEvent.updateEvent({ minimum_participants: evaluatedMp }, 'system', transaction)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 RC-2: `minimumParticipantsJudgment.ts:59-68` — canceled パスでのメンバー同期タイミング。`applyBulkEventCancelInTransaction` 内で既に `tEvent.updateEvent`（注文キャンセル・event_canceled 化）が呼ばれています。その後に `syncEventMembersFromOrderedInTransaction` → `tEvent.updateEvent({ minimum_participants })` の順で実行されますが、コード末尾のコメント（「同一インスタンスを更新済みのため event_canceled を保ったまま確定できる」）は `updateEvent` の実装が差分マージであることを前提としています。`updateEvent` の実装を確認し、`event_status` が上書きされないことをテストで保証するか、コメントに明記してください。
+
+**コメント要約**: applyBulk 後の members 同期順序と updateEvent の部分更新前提。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: `ShokujiiEvent.updateEvent` は `Object.assign(this, data)` + Firestore `merge: true` で部分更新。75–76 行目のコメントが同一インスタンス前提を明記済み。event_status 上書きリスクは実装どおり発生しない。
+
+---
+
+**識別子**: RC-35（GitHub id: 5341053508・Copilot トップレベル RC-3）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/cancelEventBulkCore.ts:80`
+
+**該当コード（レビュー時点の diff）**:
+
+```typescript
+  await recalcEventMembers(eventBefore)
+  const canceledOrders = await getFirestore().runTransaction(async (transaction) => {
+    return applyBulkEventCancelInTransaction({ ... })
+  })
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 RC-3: `cancelEventBulkCore.ts:80` — Transaction 外 `recalcEventMembers` と `runMinimumParticipantsJudgmentTransaction` 経路の非対称（前回継続）。`runMinimumParticipantsJudgmentTransaction` では `syncEventMembersFromOrderedInTransaction`（Transaction 内）でメンバーを同期する一方、`cancelEventBulkCore` 経路では `recalcEventMembers`（Transaction 外）で同期しています。`applyBulkEventCancelInTransaction` 自体はメンバー同期をしないため、`cancelEventBulkCore` 経路では Transaction 後に members フィールドが中止前の状態で残るリスクがあります。設計意図をコメントで明示するか、Transaction 内で `syncEventMembersFromOrderedInTransaction` を呼ぶよう統一することを検討してください。
+
+**コメント要約**: cancelEventBulkCore と judgment 経路の members 同期タイミング非対称。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 後処理の `applyOrderCanceledSideEffects` で members は最終的に再集約されるが、Transaction 直後〜後処理までの窗口と経路差は設計上の確認事項。統一または意図コメントが望ましい。
+
+---
+
+**識別子**: RC-36（GitHub id: 5341053508・Copilot トップレベル RC-4）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/finishBulkEventCancelPostProcessing.ts:139`
+
+**該当コード（レビュー時点の diff）**:
+
+```typescript
+  for (const anchorUserId of participantUserIds) {
+    const counterparts = participantUserIds.filter((id) => id !== anchorUserId)
+    await removeEventFromFriendHistory({ ... })
+  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 RC-4: `finishBulkEventCancelPostProcessing.ts:139-149` — `removeEventFromFriendHistory` が O(n²)（前回継続）。n 人参加の場合 n × (n-1) 回の Firestore write が発生します。`removeEventFromFriendHistory` のシグネチャ上、anchor 1 人・counterparts n-1 人の組み合わせが必要なのか、1 度の呼び出しで全ペアを処理できないか実装を確認してください。
+
+**コメント要約**: 友人履歴削除ループが O(n²) write。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: ⚡ 性能
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 大規模イベントで write コスト増。API 制約の確認と batch 化検討は別タスクとして妥当。
+
+---
+
+**識別子**: RC-37（GitHub id: 5341053508・Copilot トップレベル RC-5）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/applyBulkEventCancelInTransaction.ts:82`
+
+**該当コード（レビュー時点の diff）**:
+
+```typescript
+  if (eventPayment === 'user_advance' && ordered.length > 0 && ordered.some((o) => o.stripe_id == null)) {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 RC-5: `applyBulkEventCancelInTransaction.ts:82` — `ordered.some` の意図明示。`some`（1件でも null なら throw）は「先払い注文は全件 stripe_id 必須」という仕様を実装しており正しいですが、旧実装（`every`）と挙動が異なります。意図の違いをインラインコメントで一言添えると保守時の混乱を防げます。
+
+**コメント要約**: `some` による部分欠落検出の意図をコメント化。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 妥当な保守性指摘。インラインコメントを追加（手順 4a 自動修正）。
+
+---
+
+**識別子**: RC-38（GitHub id: 3812300951）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `common/src/schemas/EventBulkCancelPipeline.ts:72`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  get isPostProcessingIncomplete(): boolean {
++    return this.shop_mail_sent_at == null || this.participant_mails_sent_at == null
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] pipeline の再開判定がメール送信フラグのみになっており、Stripe 返金が失敗して `stripe_refunds_done_at` が未確定のままでも `isPostProcessingIncomplete === false` になり得ます。これだと `finishBulkEventCancelPostProcessing` のコメント（失敗が残る場合は再開時に再試行）と矛盾し、返金が自動再開されません。`stripe_refunds_done_at` も未完了判定に含めてください。
+
+**コメント要約**: 返金失敗時も resume 対象にするため `stripe_refunds_done_at` を未完了判定へ。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 決済
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-19 の finish 側ゲートと矛盾する実バグ。getter に `stripe_refunds_done_at == null` を追加（手順 4a 自動修正）。
 
 ---
