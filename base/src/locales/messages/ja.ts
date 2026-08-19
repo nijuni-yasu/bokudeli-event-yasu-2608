@@ -579,7 +579,7 @@ export default {
            以下手順で友人知人を食事会に招待して盛り上げていきましょう。<br />
            <br />
            ① まずは、<b>「主催者」</b>や<b>「運営メンバー」</b>で早速注文💨<br />
-           ② 公開設定の場合、どなたかが注文すると <a href="https://shokujii.jp/" target="_blank">shokujiiのトップページ</a> にも表示されます👀<br />
+           ② 公開設定のイベントは <a href="https://shokujii.jp/" target="_blank">shokujiiのトップページ</a> にも表示されています👀 どなたかが<b>初めて</b>注文すると、コミュニティメンバーへ<b>新着通知メール</b>も届きます📧<br />
            ③ <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a>
            などで告知しよう📢 <br />
            <br />
