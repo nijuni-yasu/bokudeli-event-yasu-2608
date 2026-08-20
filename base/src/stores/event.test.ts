@@ -5,7 +5,12 @@ import type { BokudeliEvent } from '@shokujii/base/stores/event.js'
 const getDocMock = vi.hoisted(() => vi.fn())
 const getDocsMock = vi.hoisted(() => vi.fn())
 const onSnapshotMock = vi.hoisted(() => vi.fn())
-const useUserStoreMock = vi.hoisted(() => vi.fn((_userId: string) => ({ user: { user_name: 'Test User' } })))
+const useUserStoreMock = vi.hoisted(() =>
+  vi.fn((userId: string) => {
+    void userId
+    return { user: { user_name: 'Test User' } }
+  }),
+)
 const mockEventRef = vi.hoisted(() => ({
   path: 'communities/community-a/events/event-a',
   parent: { parent: { id: 'community-a' } },
