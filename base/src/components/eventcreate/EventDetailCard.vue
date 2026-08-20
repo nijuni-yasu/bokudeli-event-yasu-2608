@@ -70,6 +70,11 @@ const { t: $t } = useI18n()
 const OFF_AMOUNT_MIN = 100
 const OFF_AMOUNT_STEP = 100
 
+/** PF 新規イベント設定 UI のデフォルトしきい値 */
+const DEFAULT_MEMBERS_VISIBLE_MIN_COUNT = 3
+
+type MembersVisibleMode = 'always' | 'threshold'
+
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
 const communityStore = useAppCommunityStore(event.value.community_account)
@@ -142,6 +147,28 @@ const offAmountValidator = (v: number | string | undefined) => {
   if (num % OFF_AMOUNT_STEP !== 0) return $t('discount_settings.off_amount_step_100')
   return true
 }
+
+const membersVisibleMode = computed<MembersVisibleMode>({
+  get: () => (event.value.members_visible_min_count == null ? 'always' : 'threshold'),
+  set: (mode: MembersVisibleMode) => {
+    if (mode === 'always') {
+      event.value.members_visible_min_count = undefined
+      return
+    }
+    if (event.value.members_visible_min_count == null) {
+      event.value.members_visible_min_count = DEFAULT_MEMBERS_VISIBLE_MIN_COUNT
+    }
+  },
+})
+
+const membersVisibleThreshold = computed({
+  get: () => event.value.members_visible_min_count ?? DEFAULT_MEMBERS_VISIBLE_MIN_COUNT,
+  set: (value: number) => {
+    event.value.members_visible_min_count = value
+  },
+})
+
+const showPfMembersVisibleSettings = computed(() => !paymentUiStrategy.value.isEnterpriseMode)
 
 watch(
   () => event.value.event_payment,
@@ -658,6 +685,36 @@ const tinymceInit = computed(() => ({
         <span v-else><div v-html="$t('event_detail.private_desc')" /></span>
       </div>
     </v-card-text>
+
+    <template v-if="showPfMembersVisibleSettings">
+      <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
+        <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleOutline" />
+        {{ $t('event_detail.members_visible') }}
+      </v-card-title>
+      <v-card-text>
+        <v-radio-group v-model="membersVisibleMode" hide-details class="ma-1 ma-md-3">
+          <v-radio value="always" :label="$t('event_detail.members_visible_always')" />
+          <v-radio value="threshold" :label="$t('event_detail.members_visible_threshold')" />
+        </v-radio-group>
+        <v-row v-if="membersVisibleMode === 'threshold'" class="ma-1 ma-md-3 mt-2">
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field
+              v-model.number="membersVisibleThreshold"
+              type="number"
+              outlined
+              dense
+              min="1"
+              step="1"
+              :label="$t('event_detail.members_visible_threshold_count_label')"
+              :rules="[requiredValidator, positiveIntegerValidator]"
+            />
+          </v-col>
+        </v-row>
+        <div v-if="membersVisibleMode === 'threshold'" class="ma-1 ma-md-3 mt-2 text-subtitle-2">
+          {{ $t('event_detail.members_visible_threshold_hint') }}
+        </div>
+      </v-card-text>
+    </template>
 
     <!-- 支払い設定 -->
     <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">

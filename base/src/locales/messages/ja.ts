@@ -458,6 +458,11 @@ export default {
     ・お支払い方法は銀行振込です。お支払い期限はイベント開催日の翌月末日です。<br />
     ・支払い設定は予約申請後、変更できないためご注意ください。`,
     error_max_people: 'すでに{0}人の予約が入っています',
+    members_visible: '参加者表示',
+    members_visible_always: '常に参加者を表示する',
+    members_visible_threshold: '一定人数に達してから表示する',
+    members_visible_threshold_count_label: '表示開始人数',
+    members_visible_threshold_hint: '※設定人数に達するまで、イベントページの参加者一覧は表示されません。',
   },
   shop_notice: {
     info_title: '店舗情報',

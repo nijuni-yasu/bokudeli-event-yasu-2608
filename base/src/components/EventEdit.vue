@@ -166,6 +166,9 @@ watch(
       event_name: eventName,
       event_desc: eventDesc,
       ...(draftPayment != null ? { event_payment: draftPayment } : {}),
+      ...(!eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id).isEnterpriseMode
+        ? { members_visible_min_count: 3 }
+        : {}),
     })
 
     // コミュニティの郵便番号と住所をPostcodeJP APIから取得して、イベントの郵便番号と住所にコピー

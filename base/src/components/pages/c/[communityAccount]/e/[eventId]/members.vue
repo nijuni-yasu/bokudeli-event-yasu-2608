@@ -7,6 +7,7 @@ import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
+import { shouldShowPfEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
 
 const props = defineProps<{
   communityAccount: string
@@ -40,10 +41,28 @@ const members = computed(() =>
       b.orders.reduce((max, order) => Math.max(max, order.updated_at), 0),
   ),
 )
+
+const shouldShowParticipantsPage = computed(() => {
+  const currentEvent = event.value
+  if (currentEvent == null || eventStore.members == null) {
+    return null
+  }
+  return shouldShowPfEventParticipantsSection(currentEvent, members.value.length)
+})
+
+watch(
+  shouldShowParticipantsPage,
+  (visible) => {
+    if (visible === false) {
+      router.push('/404')
+    }
+  },
+  { immediate: true },
+)
 </script>
 <template>
   <section>
-    <div v-if="event != null && isShowMember" class="justify-center">
+    <div v-if="event != null && isShowMember && shouldShowParticipantsPage" class="justify-center">
       <v-btn
         class="ma-1"
         color="primary"

@@ -134,6 +134,7 @@ export const EventDbSchema = z.object({
   sent_new_event_mail_at: TimestampSchema.optional(),
   sent_popular_event_mail_at: TimestampSchema.optional(),
   community_bill_settings: optionalDeleteField(CommunityBillSettingsDbSchema),
+  members_visible_min_count: optionalDeleteField(z.number().int().positive()),
   enterprise_id: EnterpriseIdDbSchema,
   canceled_at: TimestampSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
@@ -208,6 +209,7 @@ const EventAppSchema = z.object({
   sent_new_event_mail_at: EpochMillisSchema.optional(),
   sent_popular_event_mail_at: EpochMillisSchema.optional(),
   community_bill_settings: CommunityBillSettingsAppSchema.optional(),
+  members_visible_min_count: z.number().int().positive().optional(),
   enterprise_id: z.string().nullable().optional(),
   canceled_at: EpochMillisSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
@@ -271,6 +273,7 @@ export class Event {
   subdomain_tags!: string[]
 
   community_bill_settings?: CommunityBillSettingsType
+  members_visible_min_count?: number
   enterprise_id?: string | null
 
   created_at: number

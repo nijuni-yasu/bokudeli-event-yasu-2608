@@ -42,6 +42,7 @@ import MinimumParticipantsDialog from '@shokujii/base/components/MinimumParticip
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
 import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
 import { useDisplay } from 'vuetify'
+import { shouldShowPfEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
 
 const router = useRouter()
 const display = useDisplay()
@@ -154,10 +155,12 @@ const isShowMember = computed(() =>
   props.community.is_show_member !== undefined ? props.community.is_show_member : true,
 )
 
+const shouldShowParticipantsSection = computed(() =>
+  shouldShowPfEventParticipantsSection(props.event, props.event.members.length),
+)
+
 const shareButtonSize = computed(() => (display.xs.value ? 'small' : 'large'))
 const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
-
-const hasParticipants = computed(() => members.value.length > 0)
 </script>
 
 <template>
@@ -373,7 +376,7 @@ const hasParticipants = computed(() => members.value.length > 0)
           <tiny-m-c-e-viewer :content="event.event_desc" class="event-content" />
         </v-card-text>
 
-        <div v-if="hasParticipants" class="mb-6">
+        <div v-if="shouldShowParticipantsSection" class="mb-6">
           <v-card-text class="mt-6 pb-3">
             <div class="d-flex align-center flex-wrap ga-2">
               <span class="event-details-card__section-title font-weight-black">
@@ -418,7 +421,7 @@ const hasParticipants = computed(() => members.value.length > 0)
             :is-show-member="isShowMember"
           />
         </div>
-        <v-card-text class="px-5" :class="{ 'mt-6': !hasParticipants }">
+        <v-card-text class="px-5" :class="{ 'mt-6': !shouldShowParticipantsSection }">
           <v-row align="center" no-gutters class="flex-nowrap">
             <v-col cols="auto" class="d-flex justify-start flex-shrink-0">
               <router-link :to="getCommunityPath(event.community_account)">

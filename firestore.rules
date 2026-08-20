@@ -10,6 +10,20 @@ service cloud.firestore {
         function docEnterpriseId(data) {
             return data.get('enterprise_id', null);
         }
+        // PF イベントの members_visible_min_count（#2289）。enterprise では変更不可
+        function eventMembersVisibleMinCountValid() {
+            let newHas = 'members_visible_min_count' in request.resource.data;
+            let oldHas = resource != null && 'members_visible_min_count' in resource.data;
+            let newVal = newHas ? request.resource.data.members_visible_min_count : 0;
+            let oldVal = oldHas ? resource.data.members_visible_min_count : 0;
+            let unchanged = newHas == oldHas && (!newHas || newVal == oldVal);
+            let enterpriseOnWrite = resource == null
+                ? docEnterpriseId(request.resource.data) != null
+                : docEnterpriseId(resource.data) != null
+                    || docEnterpriseId(request.resource.data) != null;
+            let validPfValue = !newHas || (newVal is int && newVal >= 1);
+            return unchanged || (!enterpriseOnWrite && validPfValue);
+        }
         // エンタープライズ: 認証ユーザーの claims とドキュメントの enterprise_id が一致
         function tokenTenantId() {
             let firebaseClaims = request.auth.token.get('firebase', null);
@@ -247,13 +261,16 @@ service cloud.firestore {
                             || isSameEnterprise(resource.data);
                 // コミュマネ or サポートアカウントはイベントの作成・更新ができる
                 allow create, update: if isSupport() && eventMinimumParticipantsWriteValid()
+                                    && eventMembersVisibleMinCountValid()
                 allow create, update: if isManager() && get(/databases/$(database)/documents/communities/$(community)).data.is_approved
                                     && eventMinimumParticipantsWriteValid()
+                                    && eventMembersVisibleMinCountValid()
                 // コミュマネは下書きイベントの削除ができる
                 allow delete: if isManager() && get(/databases/$(database)/documents/communities/$(community)/events/$(event)).data.event_status.value == 'in_draft'
                 // 予約承認・予約却下などイベントステータスを店舗が変更できる
                 allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
                             && minimumParticipantsMapsEqual()
+                            && eventMembersVisibleMinCountValid()
                 match /system/{docId} {
                     allow read, write: if false;
                 }

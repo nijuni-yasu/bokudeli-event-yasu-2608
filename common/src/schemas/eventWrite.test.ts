@@ -45,6 +45,22 @@ describe('G1-4 pf write strict', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it('PfEventWriteAppSchema が members_visible_min_count 正の整数を受理', () => {
+    const result = PfEventWriteAppSchema.safeParse({
+      ...minimalPfEventFields,
+      members_visible_min_count: 3,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('PfEventWriteAppSchema が members_visible_min_count 0 を reject', () => {
+    const result = PfEventWriteAppSchema.safeParse({
+      ...minimalPfEventFields,
+      members_visible_min_count: 0,
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('G1-5 write toFirestore golden', () => {
