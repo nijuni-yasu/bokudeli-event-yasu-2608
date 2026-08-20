@@ -11,7 +11,7 @@ const props = withDefaults(
   defineProps<{
     event: BokudeliEvent
     members?: BokudeliEventMember[]
-    /** false のとき参加者アバター一覧を非表示（user トップの開催予定/過去向け） */
+    /** false のとき参加者アバター一覧を非表示 */
     showMemberAvatars?: boolean
   }>(),
   {
