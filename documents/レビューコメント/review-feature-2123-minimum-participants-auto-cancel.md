@@ -45,6 +45,13 @@
 | [ ] | RC-39 | 3828183031 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | pipeline の read→set 丸ごと書き戻しが並列 resume で競合<br>Transaction または原子的 update が必要（RC-28 と関連） |
 | [x] | RC-40 | 3830028169 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 💾 データ | 🔧 微修正 | S | `isPostProcessingIncomplete` が副作用・友人履歴未完了を見ていない<br>participant 全員の side_effects と friend_history を resume 判定に含める |
 | [ ] | RC-41 | 3830033339 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ 性能, 💾 データ | 📐 リファクタ | L | 大量注文を単一 Transaction で更新すると 500 write 上限超過<br>分割・再開可能な一括中止パイプラインが必要 |
+| [x] | RC-42 | なし | 👌 修正不要 | — | 📌 スコープ内 | 🔐 セキュリティ | 👀 確認のみ | — | `canceled_by` が PF 未認証 read 可能な `member_orders` に追加される<br>既存の `user_id` / Event `created_by` と同等の公開 uid で追加露出なし |
+| [x] | RC-43 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `orderCancelSource.test.ts` の import が Prettier 未整形で PR verify の format:check が落ちる |
+| [x] | RC-44 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🧪 テスト | 🔧 微修正 | S | `cancel_source='user'` かつイベント中止済みのケースのテストが無い |
+| [ ] | RC-45 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | UI 文言の i18n キーを返す関数を `common` に置いている<br>`base` 専用ロジックのため `base/src/utils` が適切 |
+| [x] | RC-46 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `orderCanceledLabelI18nKey` の `default` で網羅性チェックが効かず、`cancel_source` 追加時にサイレントで「キャンセル済み」表示になる |
+| [x] | RC-47 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメント | 📄 ドキュメントのみ | S | 全キャンセル時カードラベルの混在ルール（`canceled_event` 優先）が仕様書に未記載 |
+| [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `BulkCancelInitiator` と `CancelEventBulkInitiator` の二重定義 |
 
 ---
 
@@ -1359,5 +1366,288 @@ Transaction または `arrayUnion` 等の原子的更新へ寄せるべき（RC-
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | — | — | — | — | — | — | — | — | — | 新規 RC なし（継続: RC-21 / RC-36 / RC-39 / RC-41） |
+
+---
+
+## 評価セッション（2026-08-22 01:20・shokujii-code-review）
+
+- **評価日時**: 2026-08-22 01:20 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **レビュー範囲**: 直近 4 コミット（`186fec8b` 〜 `35f6b746`。`cancel_source` / `canceled_by` の追加と注文履歴ラベル表示）
+- **新規 RC**: 7（RC-42 〜 RC-48）
+- **手順 3a/3b 自動修正**: 5 件（RC-43 / RC-44 / RC-46 / RC-47 / RC-48）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-42 | なし | 👌 修正不要 | — | 📌 スコープ内 | 🔐 セキュリティ | 👀 確認のみ | — | `canceled_by` が PF 未認証 read 可能な `member_orders` に追加される<br>既存の `user_id` / Event `created_by` と同等の公開 uid で追加露出なし |
+| [x] | RC-43 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `orderCancelSource.test.ts` の import が Prettier 未整形で PR verify の format:check が落ちる |
+| [x] | RC-44 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🧪 テスト | 🔧 微修正 | S | `cancel_source='user'` かつイベント中止済みのケースのテストが無い |
+| [ ] | RC-45 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | UI 文言の i18n キーを返す関数を `common` に置いている<br>`base` 専用ロジックのため `base/src/utils` が適切 |
+| [x] | RC-46 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `orderCanceledLabelI18nKey` の `default` で網羅性チェックが効かず、`cancel_source` 追加時にサイレントで「キャンセル済み」表示になる |
+| [x] | RC-47 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメント | 📄 ドキュメントのみ | S | 全キャンセル時カードラベルの混在ルール（`canceled_event` 優先）が仕様書に未記載 |
+| [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `BulkCancelInitiator` と `CancelEventBulkInitiator` の二重定義 |
+
+---
+
+**識別子**: RC-42（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/EventMemberOrder.ts:90`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+   canceled_at: TimestampSchema.optional(),
++  cancel_source: z.enum(EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES).optional(),
++  canceled_by: z.string().nonempty().optional(),
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要** [👀確認のみ/—]: `firestore.rules` の collectionGroup `member_orders` には「PF（`enterprise_id == null`）は doc 全体が未認証 read 可。機微情報を `member_orders` に追加しないこと（#2282）」というコメントがあり、今回追加した `canceled_by`（主催者 uid / サポート uid / `'system'`）もこの公開範囲に入る → 露出する uid は既に公開されている `member_orders.user_id`・`Event.created_by` と同種であり、追加の情報漏洩にはならない。
+
+**コメント要約**: `canceled_by` が PF 未認証 read 対象に含まれるが、露出する uid は既存公開分と同等。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔐 セキュリティ
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: `canceled_by` の値域は `'system'`・主催者 uid・本人 uid。主催者 uid は `Event.created_by`（公開 read）、本人 uid は `member_orders.user_id`（同一ドキュメント）で既に取得可能なため、#2282 の公開範囲見直し以上の追加対応は不要。
+
+---
+
+**識別子**: RC-43（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/utils/orderCancelSource.test.ts:1`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++import {
++  cancelSourceFromBulkInitiator,
++  orderCanceledLabelI18nKey,
++} from './orderCancelSource.js'
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: import が Prettier の整形結果と異なり、`npx prettier --check` が warn を出す（printWidth 内に収まるため 1 行になるべき）→ PR verify の `format:check` が失敗するため 1 行にまとめる。
+
+**コメント要約**: テストファイルの import が未整形で CI の format:check が落ちる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `prettier --check` で再現を確認。手順 3a で 1 行 import に修正し、再チェックで All matched files use Prettier code style を確認。
+
+---
+
+**識別子**: RC-44（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/utils/orderCancelSource.test.ts:18`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++describe('orderCanceledLabelI18nKey', () => {
++  it('user → canceled', () => {
++    expect(orderCanceledLabelI18nKey('user', false)).toBe('user_event_card.canceled')
++  })
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 「参加者が自分でキャンセルした後にイベントが中止された」ケース（`cancel_source='user'` + `eventCanceled=true`）のテストが無い。仕様上 `cancel_source` は推定より優先されるべき分岐であり、推定ロジックを触ったときに退行を検知できない → `orderCanceledLabelI18nKey('user', true)` のケースを追加する。
+
+**コメント要約**: `cancel_source` が推定より優先されることを保証するテストが不足。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🧪 テスト
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 微修正で修正方針が一意のため手順 3b で自動修正。テストケースを追加し 8 件パスを確認。
+
+---
+
+**識別子**: RC-45（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/utils/orderCancelSource.ts:17`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++/** 注文キャンセル理由からユーザー向け i18n キーを返す */
++export function orderCanceledLabelI18nKey(
++  cancelSource: EventMemberOrderCancelSourceType | undefined,
++  eventCanceled: boolean,
++): 'user_event_card.canceled' | 'user_event_card.canceled_event' | 'user_event_card.canceled_reject' {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/S]: `common` に UI 文言の i18n キー（`user_event_card.*`）を持つ関数を新設している。`common` は `functions` からも参照される UI 非依存レイヤであり、他の `common/src/utils` にも i18n キーを返す前例が無い → 表示層専用の `orderCanceledLabelI18nKey` は `base/src/utils/` に移し、`cancelSourceFromBulkInitiator`（functions が使う）のみ `common` に残す構成が望ましい。
+
+**コメント要約**: UI 文言キーのマッピングが `common` にあり、レイヤ責務が UI 側に染み出している。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当だが、種別が 📐 リファクタ（ファイル移動 + テスト移動 + import 変更）で auto-fix-policy の自動修正条件（🔧 微修正 / 📄 ドキュメントのみ）に該当しない。`base` 側でテストを持てるかも含め方針判断が必要なため、ユーザー判断待ちとする。
+
+---
+
+**識別子**: RC-46（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/utils/orderCancelSource.ts:26`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    case 'organizer_reject':
++      return 'user_event_card.canceled_reject'
++    default:
++      return 'user_event_card.canceled'
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `switch` の `default` により `EventMemberOrderCancelSourceType` の網羅性チェックが効かない。`EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES` に値を追加しても型エラーにならず、新しいキャンセル種別がサイレントに「キャンセル済み」と表示される（同ファイルの `cancelSourceFromBulkInitiator` は網羅 switch で書かれており不統一）→ `case 'user'` を明示して `default` を削除する。
+
+**コメント要約**: `default` 分岐で網羅性チェックが無効化され、enum 追加時に誤ラベル表示となる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 現時点で表示が誤るわけではないため 🟡 とし、📌 + S + 🔧 微修正で方針が一意のため手順 3b で自動修正。`case 'user'` を明示して `default` を削除し、`tsc -b` と vitest の通過を確認。
+
+---
+
+**識別子**: RC-47（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `documents/07_リファクタリング/09_EventMemberOrderに伴うキャンセル機能.md:151`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++**表示箇所**: 注文履歴カード右下（全キャンセル時）、キャンセルダイアログ内のグレーアウト行。**注文行ごと**に分岐（同一イベント内で `user` と `event_*` が混在しうる）。
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄ドキュメントのみ/S]: 正本ドキュメントは「注文行ごとに分岐」までしか定義していないが、実装（`UserEventCard.vue` の `allCanceledLabelKey`）はカード右下の 1 ラベルに丸める際「`canceled_event` があれば優先、それ以外は `canceled`」という独自ルールを持つ → 混在時の優先順位を正本に明記する。
+
+**コメント要約**: カード右下ラベルの混在時優先順位が実装のみに存在し、仕様書に未記載。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📄 ドキュメント
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 📄 ドキュメントのみで方針が一意のため手順 3b で自動修正。正本に「カード右下（全キャンセル時）のラベル決定」表を追記した。
+
+---
+
+**識別子**: RC-48（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/cancelEventBulkCore.ts:14`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+ export type CancelEventBulkInitiator = 'minimum_participants' | 'organizer_manual' | 'support'
+```
+
+```diff
++/** 一括中止コアの initiator（functions の CancelEventBulkInitiator と同一） */
++export const BULK_CANCEL_INITIATOR_VALUES = ['minimum_participants', 'organizer_manual', 'support'] as const
++export type BulkCancelInitiator = (typeof BULK_CANCEL_INITIATOR_VALUES)[number]
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: initiator の値集合が `common/src/utils/orderCancelSource.ts` と `functions/default/src/cancelEventBulkCore.ts` に二重定義されており、コメントで「同一」と書いて整合を人手に委ねている → `CancelEventBulkInitiator` を `BulkCancelInitiator` のエイリアスにして単一の正本に統一する。
+
+**コメント要約**: initiator 型が common と functions で二重定義され、整合がコメント頼りになっている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 📌 + S + 🔧 微修正で方針が一意のため手順 3b で自動修正。`CancelEventBulkInitiator` を common の `BulkCancelInitiator` エイリアスに変更し、common 側コメントも「正本」表記に更新。`tsc -b`（common / functions）で型通過を確認。
 
 ---

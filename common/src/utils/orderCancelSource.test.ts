@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  cancelSourceFromBulkInitiator,
-  orderCanceledLabelI18nKey,
-} from './orderCancelSource.js'
+import { cancelSourceFromBulkInitiator, orderCanceledLabelI18nKey } from './orderCancelSource.js'
 
 describe('cancelSourceFromBulkInitiator', () => {
   it('minimum_participants → event_minimum_participants', () => {
@@ -18,6 +15,10 @@ describe('cancelSourceFromBulkInitiator', () => {
 describe('orderCanceledLabelI18nKey', () => {
   it('user → canceled', () => {
     expect(orderCanceledLabelI18nKey('user', false)).toBe('user_event_card.canceled')
+  })
+
+  it('user はイベント中止後も canceled（cancel_source を推定より優先）', () => {
+    expect(orderCanceledLabelI18nKey('user', true)).toBe('user_event_card.canceled')
   })
 
   it('event_* → canceled_event', () => {

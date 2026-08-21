@@ -1,6 +1,6 @@
 import type { EventMemberOrderCancelSourceType } from '../schemas/EventMemberOrder.js'
 
-/** 一括中止コアの initiator（functions の CancelEventBulkInitiator と同一） */
+/** 一括中止コアの initiator（functions の CancelEventBulkInitiator の正本） */
 export const BULK_CANCEL_INITIATOR_VALUES = ['minimum_participants', 'organizer_manual', 'support'] as const
 export type BulkCancelInitiator = (typeof BULK_CANCEL_INITIATOR_VALUES)[number]
 
@@ -27,7 +27,7 @@ export function orderCanceledLabelI18nKey(
       return 'user_event_card.canceled_event'
     case 'organizer_reject':
       return 'user_event_card.canceled_reject'
-    default:
+    case 'user':
       return 'user_event_card.canceled'
   }
 }

@@ -6,12 +6,12 @@ import { getEventBulkCancelPipeline } from './stores/eventBulkCancelPipeline.js'
 import { recalcEventMembers } from './utils/recalcEventMembers.js'
 import { applyBulkEventCancelInTransaction } from './applyBulkEventCancelInTransaction.js'
 import { finishBulkEventCancelPostProcessing } from './finishBulkEventCancelPostProcessing.js'
-import { cancelSourceFromBulkInitiator } from '@shokujii/common/utils/orderCancelSource.js'
+import { cancelSourceFromBulkInitiator, type BulkCancelInitiator } from '@shokujii/common/utils/orderCancelSource.js'
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('cancelEventBulkCore')
 
-export type CancelEventBulkInitiator = 'minimum_participants' | 'organizer_manual' | 'support'
+export type CancelEventBulkInitiator = BulkCancelInitiator
 
 export type CancelEventBulkCoreParams = {
   community_id: string
