@@ -514,6 +514,8 @@ export default {
     event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
+    canceled_event: 'イベント中止（返金済み）',
+    canceled_reject: '参加取消（返金済み）',
     processing: '決済処理中',
     cancel_dialog: {
       title: 'キャンセル',
