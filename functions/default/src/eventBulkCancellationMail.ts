@@ -13,8 +13,8 @@ const logger = createModuleLogger('eventBulkCancellationMail')
 /** 店舗向け — cancelEvent と同一テンプレ */
 const EVENT_CANCELLATION_TEMPLATE_ID = 'd-9c498e754b91498b9ce0f2e83c219728'
 
-/** 参加者向け返金通知（SendGrid 上でテンプレ作成後に差し替え） */
-export const EVENT_BULK_CANCELLATION_PARTICIPANT_TEMPLATE_ID = 'd-9c498e754b91498b9ce0f2e83c219728'
+/** 参加者向け返金通知 — documents/sendgridテンプレ/02_event_bulk_cancellation_participant.md */
+export const EVENT_BULK_CANCELLATION_PARTICIPANT_TEMPLATE_ID = 'd-819d30069d304bb69235c4e207b7bd1c'
 
 export type SendEventBulkCancellationMailsResult = {
   /** 店舗メールの送信が確定したか（店舗・宛先なしで送る必要が無かった場合も true）。失敗時 false（再開時に再送する） */
