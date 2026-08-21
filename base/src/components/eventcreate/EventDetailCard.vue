@@ -240,6 +240,9 @@ const minimumParticipantsBelowCount = computed(() => {
   return Math.max(0, count - 1)
 })
 
+const minimumParticipantsCountItems = [1, 2, 3, 4, 5]
+const minimumParticipantsDaysItems = [1, 2, 3, 4, 5]
+
 const minimumParticipantsRangeValidator =
   (min: number, max: number, messageKey: 'validation_count' | 'validation_days') => (v: number) => {
     if (!Number.isInteger(v) || v < min || v > max) {
@@ -583,38 +586,52 @@ const tinymceInit = computed(() => ({
         hide-details
         class="mb-2"
       />
+      <div
+        class="text-body-2 text-medium-emphasis px-1"
+        :class="minimumParticipantsEnabled ? 'mb-0' : 'mb-3'"
+      >
+        <p class="mb-0">
+          {{ $t('event_detail.minimum_participants.field_help') }}
+        </p>
+      </div>
+      <p
+        v-if="minimumParticipantsEnabled"
+        class="text-body-2 text-medium-emphasis minimum-participants-enabled-help px-1"
+      >
+        {{ $t('event_detail.minimum_participants.field_help_when_enabled') }}
+      </p>
       <template v-if="minimumParticipantsEnabled && event.minimum_participants != null">
-        <v-row>
-          <v-col cols="4" sm="3">
-            <v-text-field
-              v-model.number="minimumParticipantsCount"
-              type="number"
-              min="1"
-              max="5"
-              outlined
-              dense
-              :label="$t('event_detail.minimum_participants.count_label')"
-              :hint="$t('event_detail.minimum_participants.count_hint')"
-              :rules="minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_count')] : []"
-              :readonly="!minimumParticipantsEditable"
-            />
-          </v-col>
-          <v-col cols="4" sm="3">
-            <v-text-field
-              v-model.number="minimumParticipantsDaysBefore"
-              type="number"
-              min="1"
-              max="5"
-              outlined
-              dense
-              :label="$t('event_detail.minimum_participants.days_label')"
-              :hint="$t('event_detail.minimum_participants.days_hint')"
-              :rules="minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_days')] : []"
-              :readonly="!minimumParticipantsEditable"
-            />
-          </v-col>
-        </v-row>
-        <p class="text-body-2 text-medium-emphasis px-1">
+        <div class="minimum-participants-selects">
+          <v-row>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="minimumParticipantsCount"
+                :items="minimumParticipantsCountItems"
+                outlined
+                dense
+                :label="$t('event_detail.minimum_participants.count_label')"
+                :rules="minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_count')] : []"
+                :readonly="!minimumParticipantsEditable"
+                :disabled="!minimumParticipantsEditable"
+                hide-details="auto"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="minimumParticipantsDaysBefore"
+                :items="minimumParticipantsDaysItems"
+                outlined
+                dense
+                :label="$t('event_detail.minimum_participants.days_label')"
+                :rules="minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_days')] : []"
+                :readonly="!minimumParticipantsEditable"
+                :disabled="!minimumParticipantsEditable"
+                hide-details="auto"
+              />
+            </v-col>
+          </v-row>
+        </div>
+        <v-alert type="info" variant="tonal" density="comfortable" class="mt-3">
           {{
             $t('event_detail.minimum_participants.organizer_summary', {
               count: event.minimum_participants.count,
@@ -622,7 +639,7 @@ const tinymceInit = computed(() => ({
               below: minimumParticipantsBelowCount,
             })
           }}
-        </p>
+        </v-alert>
       </template>
       <p v-if="!minimumParticipantsEditable && minimumParticipantsEnabled" class="text-caption text-medium-emphasis">
         {{ $t('event_detail.minimum_participants.readonly_note') }}
@@ -876,5 +893,15 @@ const tinymceInit = computed(() => ({
 .event-desc-editor--error :deep(.tox-tinymce) {
   border-color: rgb(var(--v-theme-error)) !important;
   border-width: 1px !important;
+}
+
+/* v-row の負マージンで説明文との間隔が潰れないよう padding で確保 */
+.minimum-participants-enabled-help {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.minimum-participants-selects {
+  padding-top: 28px;
 }
 </style>

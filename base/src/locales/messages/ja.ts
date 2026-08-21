@@ -427,10 +427,10 @@ export default {
     minimum_participants: {
       section_title: '最小催行人数',
       toggle_label: '最小催行人数を設定する',
-      count_label: '最小催行人数（名）',
-      days_label: '判断タイミング（注文期限の何日前）',
-      count_hint: '1〜5名。人数が最小催行人数未満の場合、自動でイベントを中止します。',
-      days_hint: '1〜5日前から選択できます。',
+      count_label: '最小催行人数',
+      days_label: '判断日（注文締切の何日前）',
+      field_help: '人数が最小催行人数未満の場合、自動でイベントを中止します。',
+      field_help_when_enabled: '最小催行人数は1〜5名、判断タイミングは注文期限の1〜5日前から選べます。',
       organizer_summary:
         '注文期限の {days} 日前の時点で、参加者が {count} 人未満ならイベントを自動中止します（{below} 人以下のとき中止）。',
       readonly_note: '注文受付開始後は変更できません（設定内容は表示のみ）。',
