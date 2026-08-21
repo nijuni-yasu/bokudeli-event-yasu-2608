@@ -586,10 +586,7 @@ const tinymceInit = computed(() => ({
         hide-details
         class="mb-2"
       />
-      <div
-        class="text-body-2 text-medium-emphasis px-1"
-        :class="minimumParticipantsEnabled ? 'mb-0' : 'mb-3'"
-      >
+      <div class="text-body-2 text-medium-emphasis px-1" :class="minimumParticipantsEnabled ? 'mb-0' : 'mb-3'">
         <p class="mb-0">
           {{ $t('event_detail.minimum_participants.field_help') }}
         </p>
@@ -610,7 +607,9 @@ const tinymceInit = computed(() => ({
                 outlined
                 dense
                 :label="$t('event_detail.minimum_participants.count_label')"
-                :rules="minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_count')] : []"
+                :rules="
+                  minimumParticipantsEditable ? [minimumParticipantsRangeValidator(1, 5, 'validation_count')] : []
+                "
                 :readonly="!minimumParticipantsEditable"
                 :disabled="!minimumParticipantsEditable"
                 hide-details="auto"
