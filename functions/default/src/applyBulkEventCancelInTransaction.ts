@@ -1,5 +1,6 @@
 import type { Transaction } from 'firebase-admin/firestore'
 import type { EventMemberOrder, EventMemberOrderCancelSourceType } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { getEventInCommunity, type ShokujiiEvent } from './stores/event.js'
 import { getOrders, saveOrder } from './stores/memberOrder.js'
 import { createEventBulkCancelPipelineInTransaction } from './stores/eventBulkCancelPipeline.js'
@@ -81,9 +82,10 @@ export async function applyBulkEventCancelInTransaction(
     }
   }
 
-  // 先払いは 1 件でも stripe_id 欠落なら中止しない（旧 every 実装と同趣旨。全件欠落のみでなく部分欠落も検出する）
-  if (eventPayment === 'user_advance' && ordered.length > 0 && ordered.some((o) => o.stripe_id == null)) {
-    throw new Error('先払い注文に決済情報（stripe_id）が紐づいていません')
+  // Stripe 返金が必要な注文（user_advance / enterprise_subsidy 自己負担等）で stripe_id 欠落なら中止しない
+  const ordersRequiringStripeRefund = ordered.filter((o) => o.menu_price - getMemberOrderDiscountAmount(o) > 0)
+  if (ordersRequiringStripeRefund.length > 0 && ordersRequiringStripeRefund.some((o) => o.stripe_id == null)) {
+    throw new Error('Stripe 返金が必要な注文に決済情報（stripe_id）が紐づいていません')
   }
 
   if (eventPayment === 'enterprise_subsidy' && enterpriseId != null && eventMonth != null) {

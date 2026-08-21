@@ -52,6 +52,9 @@
 | [x] | RC-46 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `orderCanceledLabelI18nKey` の `default` で網羅性チェックが効かず、`cancel_source` 追加時にサイレントで「キャンセル済み」表示になる |
 | [x] | RC-47 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメント | 📄 ドキュメントのみ | S | 全キャンセル時カードラベルの混在ルール（`canceled_event` 優先）が仕様書に未記載 |
 | [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `BulkCancelInitiator` と `CancelEventBulkInitiator` の二重定義 |
+| [x] | RC-49 | 3832127253 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 💾 データ | 🔧 微修正 | S | 返金リトライ時に既存 `stripes.refunds` を見ず累計超過で例外<br>同一 order_ids 記録済みなら skip |
+| [x] | RC-50 | 3832139569 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 🔧 微修正 | S | `stripe_id` 検証が `user_advance` のみ<br>自己負担あり注文全般で ID 欠落を中止前に拒否 |
+| [ ] | RC-51 | 3832139575 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 💾 データ | 📋 仕様追加 | M | 参加者メールで宛先未解決ユーザーを無言除外し完了扱い<br>対象数と有効宛先数の不一致を記録・再処理可能に |
 
 ---
 
@@ -1649,5 +1652,112 @@ Transaction または `arrayUnion` 等の原子的更新へ寄せるべき（RC-
 **想定工数**: S
 
 **判断理由**: 📌 + S + 🔧 微修正で方針が一意のため手順 3b で自動修正。`CancelEventBulkInitiator` を common の `BulkCancelInitiator` エイリアスに変更し、common 側コメントも「正本」表記に更新。`tsc -b`（common / functions）で型通過を確認。
+
+---
+
+## 評価セッション（2026-08-22 02:04・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-08-22 02:04 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **REVIEW_REQUEST_SINCE**: 2026-08-21T16:52:40Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 id:5372771373、Codex connect id:5372848928）
+- **重複指摘スキップ件数**: 1（Copilot トップレベル id:5372847493 — RC-49 インラインと同一）
+- **新規 RC**: 3（RC-49 〜 RC-51）
+- **手順 4a 自動修正**: 2 件（RC-49 / RC-50）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-49 | 3832127253 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 💾 データ | 🔧 微修正 | S | 返金リトライ時に既存 `stripes.refunds` を見ず累計超過で例外<br>同一 order_ids 記録済みなら skip |
+| [x] | RC-50 | 3832139569 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 🔧 微修正 | S | `stripe_id` 検証が `user_advance` のみ<br>自己負担あり注文全般で ID 欠落を中止前に拒否 |
+| [ ] | RC-51 | 3832139575 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 💾 データ | 📋 仕様追加 | M | 参加者メールで宛先未解決ユーザーを無言除外し完了扱い<br>対象数と有効宛先数の不一致を記録・再処理可能に |
+
+---
+
+**識別子**: RC-49（GitHub id: 3832127253）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/refundMemberOrdersStripe.ts:82`
+
+**レビュワーのコメント（原文）**:
+
+[must] `refundMemberOrdersStripe` が同一 `stripe_id` + 同一 `order_ids` のリトライで、既に返金済みでも `existingRefundTotalPre + refundAmount > pay_amount` に引っかかって例外になり得ます。事前に `stripes.refunds` に同一 `order_ids`（+ amount） の返金記録がある場合は skip してください。
+
+**コメント要約**: 返金済みリトライで Stripe API 前に累計超過例外となり `stripe_refunds_done_at` が未確定のまま。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 決済, 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。手順 4a で同一 order_ids + amount の記録済み判定を追加し skip。
+
+---
+
+**識別子**: RC-50（GitHub id: 3832139569）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/applyBulkEventCancelInTransaction.ts:86`
+
+**レビュワーのコメント（原文）**:
+
+P1 自己負担のある注文でも決済 ID を必須にする — `enterprise_subsidy` でも自己負担額が正の注文は Stripe 決済されるが、`stripe_id` 欠落時に未返金のまま `stripe_refunds_done_at` が確定する。
+
+**コメント要約**: 返金必要な注文の `stripe_id` 欠落を `user_advance` 以外で検出できていない。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 決済, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。手順 4a で `menu_price - getMemberOrderDiscountAmount(o) > 0` の注文に `stripe_id` 必須チェックを追加（`user_advance` 限定を置換）。
+
+---
+
+**識別子**: RC-51（GitHub id: 3832139575）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/eventBulkCancellationMail.ts:92`
+
+**レビュワーのコメント（原文）**:
+
+P2 宛先を解決できない参加者を送信済みにしない — 有効宛先のみ送信成功で参加者メール工程全体が完了扱いとなり、除外参加者に永久に通知が届かない。
+
+**コメント要約**: 宛先未解決ユーザーと送信済みフラグの不整合。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX, 💾 データ
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘妥当だが pipeline への未送信ユーザー記録等が必要で 📋 仕様追加 M。自動修正対象外。
 
 ---

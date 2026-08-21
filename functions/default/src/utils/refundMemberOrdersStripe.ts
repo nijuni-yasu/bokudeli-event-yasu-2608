@@ -74,6 +74,24 @@ export async function refundMemberOrdersStripe(params: {
         })
         continue
       }
+
+      const sortedOrderIds = groupOrders.map((o) => o.id).sort()
+      const alreadyRefunded = stripeDocPre.refunds.some((r) => {
+        if (r.amount !== refundAmount || r.order_ids.length !== sortedOrderIds.length) {
+          return false
+        }
+        const recordedIds = [...r.order_ids].sort()
+        return recordedIds.every((id, i) => id === sortedOrderIds[i])
+      })
+      if (alreadyRefunded) {
+        logger.info('Skip Stripe refund (already recorded for order_ids)', {
+          stripeId,
+          orderIds: sortedOrderIds,
+          refundAmount,
+        })
+        continue
+      }
+
       const existingRefundTotalPre = stripeDocPre.refunds.reduce((sum, r) => sum + r.amount, 0)
       if (existingRefundTotalPre + refundAmount > stripeDocPre.pay_amount) {
         throw new Error(
@@ -89,7 +107,6 @@ export async function refundMemberOrdersStripe(params: {
         throw new Error('返金期限を超過しています。運営にお問い合わせください')
       }
 
-      const sortedOrderIds = groupOrders.map((o) => o.id).sort()
       const orderIdsHash = createHash('sha256').update(sortedOrderIds.join('_')).digest('hex')
       const idempotencyKey = `refund_${stripeId}_${orderIdsHash}`
 
