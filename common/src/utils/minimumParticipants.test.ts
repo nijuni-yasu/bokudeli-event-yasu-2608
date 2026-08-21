@@ -60,6 +60,13 @@ describe('applyMinimumParticipantsForEventSave', () => {
     }
     expect(() => applyMinimumParticipantsForEventSave(event, Date.now())).not.toThrow()
   })
+
+  it('未評価時は judgment_evaluated_at キーを含めない', () => {
+    const event = baseEvent()
+    applyMinimumParticipantsForEventSave(event)
+    expect(event.minimum_participants).not.toHaveProperty('judgment_evaluated_at')
+    expect(Object.keys(event.minimum_participants ?? {})).not.toContain('judgment_evaluated_at')
+  })
 })
 
 describe('createDefaultMinimumParticipants', () => {

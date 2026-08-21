@@ -84,8 +84,8 @@ export function applyMinimumParticipantsForEventSave(
     enabled: true,
     count: mp.count,
     judgment_days_before: mp.judgment_days_before,
-    judgment_evaluated_at: mp.judgment_evaluated_at,
     judgment_datetime,
+    ...(mp.judgment_evaluated_at != null ? { judgment_evaluated_at: mp.judgment_evaluated_at } : {}),
   }
 }
 
