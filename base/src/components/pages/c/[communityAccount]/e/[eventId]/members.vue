@@ -44,17 +44,17 @@ const members = computed(() =>
 
 const shouldShowParticipantsPage = computed(() => {
   const currentEvent = event.value
-  if (currentEvent == null || eventStore.members == null) {
+  if (currentEvent == null) {
     return null
   }
-  return shouldShowPfEventParticipantsSection(currentEvent, members.value.length)
+  return shouldShowPfEventParticipantsSection(currentEvent, currentEvent.members.length)
 })
 
 watch(
   shouldShowParticipantsPage,
   (visible) => {
     if (visible === false) {
-      router.push('/404')
+      router.replace('/404')
     }
   },
   { immediate: true },
