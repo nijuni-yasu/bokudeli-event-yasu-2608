@@ -1234,3 +1234,22 @@ Transaction または `arrayUnion` 等の原子的更新へ寄せるべき（RC-
 **判断理由**: 指摘は妥当。現状は side_effects ループ内でも毎回 pipeline 全体を save しており、Scheduled 重複や Callable との並列で lost update が起きうる。ただしメールは送信成功後のみフラグ確定（RC-26）など緩和あり。RC-28 と合わせて排他設計（Transaction / フィールド単位 update）を検討する工数 M のリファクタ。自動修正対象外。
 
 ---
+
+## 評価セッション（2026-08-21 17:58・review-comments-evaluate）
+
+- **評価日時**: 2026-08-21 17:58 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **REVIEW_REQUEST_SINCE**: 2026-08-21T08:51:25Z
+- **partial**: true（Codex は connect 案内のみ。Copilot substantive あり）
+- **新規 RC なし**
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 id:5367720693、Codex connect id:5367738190）
+- **重複指摘スキップ件数**: 2（Copilot トップレベル id:5367736171 — RC-6/11・RC-21 と同一論点）
+- **手順 4a 自動修正**: なし
+
+### RC 一覧（サマリ）
+
+（本セッションで新規 RC 採番なし。Copilot 指摘 2 件は既存 RC-6/11・RC-21 と重複のためスキップ）
+
+---
