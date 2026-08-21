@@ -61,6 +61,7 @@ export async function runMinimumParticipantsJudgmentTransaction(params: {
       event_id,
       cancel_reason: MINIMUM_PARTICIPANTS_CANCEL_REASON,
       canceled_by: 'system',
+      cancel_source: 'event_minimum_participants',
       nowMillis,
       transaction,
       preloadedEvent: tEvent,

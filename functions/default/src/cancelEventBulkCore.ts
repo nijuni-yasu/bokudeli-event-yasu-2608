@@ -6,6 +6,7 @@ import { getEventBulkCancelPipeline } from './stores/eventBulkCancelPipeline.js'
 import { recalcEventMembers } from './utils/recalcEventMembers.js'
 import { applyBulkEventCancelInTransaction } from './applyBulkEventCancelInTransaction.js'
 import { finishBulkEventCancelPostProcessing } from './finishBulkEventCancelPostProcessing.js'
+import { cancelSourceFromBulkInitiator } from '@shokujii/common/utils/orderCancelSource.js'
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('cancelEventBulkCore')
@@ -85,6 +86,7 @@ export async function cancelEventBulkCore(params: CancelEventBulkCoreParams): Pr
       event_id,
       cancel_reason,
       canceled_by,
+      cancel_source: cancelSourceFromBulkInitiator(initiator),
       nowMillis,
       transaction,
     })

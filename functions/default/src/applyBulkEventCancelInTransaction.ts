@@ -1,5 +1,5 @@
 import type { Transaction } from 'firebase-admin/firestore'
-import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import type { EventMemberOrder, EventMemberOrderCancelSourceType } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { getEventInCommunity, type ShokujiiEvent } from './stores/event.js'
 import { getOrders, saveOrder } from './stores/memberOrder.js'
 import { createEventBulkCancelPipelineInTransaction } from './stores/eventBulkCancelPipeline.js'
@@ -42,6 +42,7 @@ export type ApplyBulkEventCancelInTransactionParams = {
   event_id: string
   cancel_reason: string
   canceled_by: string
+  cancel_source: EventMemberOrderCancelSourceType
   nowMillis: number
   transaction: Transaction
   /**
@@ -57,7 +58,8 @@ export type ApplyBulkEventCancelInTransactionParams = {
 export async function applyBulkEventCancelInTransaction(
   params: ApplyBulkEventCancelInTransactionParams,
 ): Promise<EventMemberOrder[] | null> {
-  const { community_id, event_id, cancel_reason, canceled_by, nowMillis, transaction, preloadedEvent } = params
+  const { community_id, event_id, cancel_reason, canceled_by, cancel_source, nowMillis, transaction, preloadedEvent } =
+    params
 
   const tEvent = preloadedEvent ?? (await getEventInCommunity(community_id, event_id, transaction))
   if (tEvent == null) {
@@ -96,6 +98,8 @@ export async function applyBulkEventCancelInTransaction(
   for (const order of ordered) {
     order.status = 'canceled'
     order.canceled_at = nowMillis
+    order.cancel_source = cancel_source
+    order.canceled_by = canceled_by
     await saveOrder(community_id, event_id, order.user_id, order, transaction)
   }
 

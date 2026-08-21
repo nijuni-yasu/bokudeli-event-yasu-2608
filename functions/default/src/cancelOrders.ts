@@ -111,6 +111,8 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
       for (const order of fetchedOrders) {
         order.status = 'canceled'
         order.canceled_at = nowMillis
+        order.cancel_source = 'user'
+        order.canceled_by = uid
         await saveOrder(community_id, event_id, uid, order, transaction)
       }
 
