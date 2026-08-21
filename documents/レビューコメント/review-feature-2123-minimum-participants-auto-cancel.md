@@ -42,6 +42,7 @@
 | [ ] | RC-36 | 5341053508 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ 性能 | 📐 リファクタ | M | `removeEventFromFriendHistory` が参加者 n 人で O(n²) write |
 | [x] | RC-37 | 5341053508 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 先払い `some(stripe_id==null)` の意図をコメントで明示 |
 | [x] | RC-38 | 3812300951 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済 | 🔧 微修正 | S | `isPostProcessingIncomplete` に `stripe_refunds_done_at` を含める |
+| [ ] | RC-39 | 3828183031 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | pipeline の read→set 丸ごと書き戻しが並列 resume で競合<br>Transaction または原子的 update が必要（RC-28 と関連） |
 
 ---
 
@@ -1172,5 +1173,64 @@ common に `EventBulkCancelPipeline` Zod スキーマ + Converter を新設。
 **想定工数**: S
 
 **判断理由**: RC-19 の finish 側ゲートと矛盾する実バグ。getter に `stripe_refunds_done_at == null` を追加（手順 4a 自動修正）。
+
+---
+
+## 評価セッション（2026-08-21 16:22・review-comments-evaluate・auto・partial）
+
+- **評価日時**: 2026-08-21 16:22 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **REVIEW_REQUEST_SINCE**: 2026-08-21T07:12:55Z
+- **partial**: true（Codex は connect 案内のみ。Copilot substantive あり）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 id:5366438816、Codex connect id:5366475852）
+- **重複指摘スキップ件数**: 1（Copilot トップレベル id:5366474371 — RC-6/11・RC-21・RC-36 と同一論点）
+- **手順 4a 自動修正**: なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-39 | 3828183031 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | pipeline の read→set 丸ごと書き戻しが並列 resume で競合<br>Transaction または原子的 update が必要（RC-28 と関連） |
+
+**識別子**: RC-39（GitHub id: 3828183031）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/finishBulkEventCancelPostProcessing.ts:78`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+…（diff 先頭省略）
++  const pipeline = await getEventBulkCancelPipeline(community_id, event_id)
++  if (pipeline == null) {
++    // 一括中止トランザクション（applyBulkEventCancelInTransaction）が必ず作成するため、
++    // 無い場合は本機能以外の経路で中止されたイベント。後処理してはいけない
++    throw new Error('一括中止パイプラインが見つかりません')
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+[imo] `finishBulkEventCancelPostProcessing` が pipeline を一度 read して以降、各ステップ完了ごとに `set` で丸ごと書き戻しています。Scheduled が重複起動した場合や手動再開が並列で走った場合、古い pipeline を上書きしてチェックポイントが巻き戻る/二重送信の余地があります（特にメール送信フラグや `side_effects_user_ids`）。排他が必要なら、pipeline 更新は Transaction で read→更新、もしくは `update` + `arrayUnion` 等の競合に強い更新に寄せるのが安全です。
+
+**コメント要約**: 各ステップ後の pipeline 全件 `set` が並列実行で古い状態を上書きしうる。
+Transaction または `arrayUnion` 等の原子的更新へ寄せるべき（RC-28 のレース論点と関連）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。現状は side_effects ループ内でも毎回 pipeline 全体を save しており、Scheduled 重複や Callable との並列で lost update が起きうる。ただしメールは送信成功後のみフラグ確定（RC-26）など緩和あり。RC-28 と合わせて排他設計（Transaction / フィールド単位 update）を検討する工数 M のリファクタ。自動修正対象外。
 
 ---
