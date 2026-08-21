@@ -71,8 +71,7 @@ export class EventBulkCancelPipeline {
     const sideEffectsIncomplete = this.participant_user_ids.some(
       (userId) => !this.side_effects_user_ids.includes(userId),
     )
-    const friendHistoryIncomplete =
-      this.participant_user_ids.length > 0 && this.friend_history_removed_at == null
+    const friendHistoryIncomplete = this.participant_user_ids.length > 0 && this.friend_history_removed_at == null
     return (
       this.shop_mail_sent_at == null ||
       this.participant_mails_sent_at == null ||
