@@ -307,7 +307,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     const getMemberUserStore = (memberId: string): UserStore => {
       let store = _memberUserStores.get(memberId)
       if (store == null) {
-        store = useUserStore(memberId) as UserStore
+        store = useUserStore(memberId)
         _memberUserStores.set(memberId, store)
       }
       return store

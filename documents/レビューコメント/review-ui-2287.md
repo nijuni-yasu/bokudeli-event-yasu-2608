@@ -7,7 +7,10 @@
 | [x] | RC-1 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Copilot PR 概要サマリ<br>具体指摘なし。変更内容の要約のみ |
 | [x] | RC-2 | 3819011254 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | PF/enterprise 共通文言に変更<br>新着メール・shokujii トップ限定表現を削除 |
 | [ ] | RC-3 | 3819011256 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 📐 リファクタ | M | computed 内 useUserStore は副作用<br>旧実装より遅延化は改善。明示 init は別 PR が妥当 |
-| [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | target=_blank に rel 不足（suppressed）<br>少人数案内モーダル内の外部リンクへ rel を付与 |
+| [ ] | RC-4 | なし | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 🔒 セキュリティ | 🔧 微修正 | S | target=_blank に rel 不足（suppressed）<br>本 PR 変更行以外の既存リンク。別途対応可 |
+| [x] | RC-5 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Copilot 2 回目 PR 概要<br>具体指摘 1 件（RC-6）。Suppressed 1 件（RC-7） |
+| [x] | RC-6 | 3828081959 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 少人数案内モーダル内 target=_blank に rel 付与 |
+| [x] | RC-7 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useUserStore 戻り値の as UserStore キャスト削除 |
 
 ---
 
@@ -202,5 +205,126 @@ PF（user）トップのイベントカードから参加者アバター一覧�
 **判断理由**: セキュリティ上妥当な指摘。少人数案内モーダル文言は本 PR で更新しており、同一ブロック内の `target="_blank"` 付き外部リンクに `rel` を付与して解消するのが最小対応。
 
 **対応内容（2026-08-21）**: `event_few_members_notice_modal.desc` 内の `target="_blank"` 付き外部リンクすべてに `rel="noopener noreferrer"` を追加。
+
+---
+
+## 評価セッション（2026-08-21 16:06 JST・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-21 16:06 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・pr review wake）
+- **ブランチ名**: ui/2287
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2290
+- **REVIEW_REQUEST_SINCE**: 2026-08-21T06:59:59Z
+- **partial**: true（Codex は問題なしのみ。Copilot は 1 インライン + Suppressed 1 件）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼 id:5366317012、Copilot エラー id:5366317699、Codex 問題なし id:5366346443）
+- **手順 4a 自動修正**: RC-6（🚨 1件）、RC-7（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-5 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | Copilot 2 回目 PR 概要<br>具体指摘 1 件（RC-6）。Suppressed 1 件（RC-7） |
+| [x] | RC-6 | 3828081959 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 少人数案内モーダル内 target=_blank に rel 付与 |
+| [x] | RC-7 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useUserStore 戻り値の as UserStore キャスト削除 |
+
+---
+
+**識別子**: RC-5（GitHub id: なし・Copilot review body 2 回目）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: PR 全体（Pull request overview）
+
+**レビュワーのコメント（原文）**:
+
+## Pull request overview
+
+Copilot reviewed 9 out of 9 changed files in this pull request and generated 1 comment.
+
+**コメント要約**: 変更 9 ファイルをレビュー。インライン指摘 1 件、Suppressed 3 件（うち 2 件は初回評価済み RC-3/RC-4 と同趣旨）。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**判断理由**: 概要サマリのみ。具体指摘は RC-6（インライン）・RC-7（Suppressed）として個別 RC 化。
+
+---
+
+**識別子**: RC-6（GitHub id: 3828081959）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/locales/messages/ja.ts:584`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++           ② <a href="..." target="_blank">SNS投稿</a> / ... / <a href="..." target="_blank">レター機能</a>
+            などで告知しよう📢 <br />
+-           <br />
+-           詳しくは <a href="..." target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください。`,
++           ③ 詳しくは <a href="..." target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考に進めてください！`,
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `target="_blank"` の外部リンクに `rel="noopener noreferrer"` が付いておらず、reverse tabnabbing のリスクがあります（i18n の `v-html` でも同様）。このブロック内の `target="_blank"` 付きリンクに `rel` を付与してください。
+
+**コメント要約**: RC-2 対応後の `event_few_members_notice_modal.desc` 内、本 PR で変更した行の `target="_blank"` リンクすべてに `rel="noopener noreferrer"` が必要。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: Copilot [must] かつ diff 上の変更行。プロジェクト内他 i18n リンクと同様に rel 付与で対応。手順 4a で 7 リンクすべてに付与済み。
+
+---
+
+**識別子**: RC-7（GitHub id: なし・Copilot review Suppressed comments 2 回目）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/event.ts:312`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+       if (store == null) {
+-        store = useUserStore(memberId) as UserStore
++        store = useUserStore(memberId)
+         _memberUserStores.set(memberId, store)
+```
+
+**レビュワーのコメント（原文）**:
+
+`useUserStore()` の戻り値は `UserStore` として型推論できるため、`as UserStore` のキャストは不要です（型安全性の観点でも避けたいです）。キャストを削除してそのまま代入する形にしてください。
+
+**コメント要約**: `getMemberUserStore` 内の `as UserStore` キャストは不要。削除を提案。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 本 PR で追加した行への指摘。方針が一意で S + 🔧。手順 4a でキャスト削除済み。
 
 ---
