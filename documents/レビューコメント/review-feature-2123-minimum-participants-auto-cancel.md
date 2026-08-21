@@ -1340,3 +1340,24 @@ Transaction または `arrayUnion` 等の原子的更新へ寄せるべき（RC-
 **判断理由**: 指摘は妥当だが、Transaction 分割・再開設計は RC-19 以降のパイプライン拡張に波及する大規模リファクタ。Phase 1 では event_max_people 無上限の既存制約もあり、別途設計判断が必要。自動修正対象外。
 
 ---
+
+## 評価セッション（2026-08-21 24:08・review-comments-evaluate・auto・partial）
+
+- **評価日時**: 2026-08-21 24:08 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **REVIEW_REQUEST_SINCE**: 2026-08-21T14:59:57Z
+- **partial**: true（Codex は connect 案内のみ。Copilot substantive 1 件）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 id:5371579871、Codex connect id:5371590892）
+- **重複指摘スキップ件数**: 1（Copilot トップレベル id:5371589598 — RC-21・RC-36 継続、RC-38/40 解消確認、UI 文言 cd74914 は問題なし）
+- **新規 RC**: 0
+- **手順 4a 自動修正**: なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| — | — | — | — | — | — | — | — | — | 新規 RC なし（継続: RC-21 / RC-36 / RC-39 / RC-41） |
+
+---

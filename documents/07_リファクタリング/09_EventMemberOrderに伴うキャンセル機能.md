@@ -64,7 +64,7 @@
 | order の状態 | groupBy 後の表示 | 操作 |
 |:--|:--|:--|
 | `status: 'ordered'` | 通常表示（残数としてカウント） | チェックボックスで選択可能 |
-| `status: 'canceled'` | グレーアウトで表示（キャンセル済みラベル付き） | チェック不可。残数に含まない |
+| `status: 'canceled'` | グレーアウトで表示（**`cancel_source` に応じたラベル**。§「キャンセルメタデータ」参照） | チェック不可。残数に含まない |
 | 全 order が `canceled` | - | キャンセルボタン自体を非表示（`isShowCancelButton` で制御） |
 
 ### キャンセルボタンの表示条件
@@ -98,6 +98,77 @@ const isShowInvoiceButton = computed(
     orders.some((o) => o.status === 'ordered'),
 )
 ```
+
+
+## EventMemberOrder キャンセルメタデータ（正本）
+
+`status === 'canceled'` の注文について、**参加者自身の操作かイベント都合か**をユーザー向け表示・将来の集計で区別する。  
+内部 `status` に新 enum を足さない（`status !== 'canceled'` の集計・返金ロジックを維持）。Event 側の `event_canceled` + `cancel_reason` 設計（`08_イベントキャンセル_参加者あり_返金.md` §0.3）と同思想。
+
+### スキーマ（`common/src/schemas/EventMemberOrder.ts`）
+
+```typescript
+export const EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES = [
+  'user',                         // 参加者自身（cancelOrders）
+  'event_minimum_participants',   // 最小催行不足によるイベント一括中止
+  'event_organizer',              // 主催者・サポートによるイベント一括中止（Phase B / サポート経路）
+  'organizer_reject',             // 主催者による個別参加拒否（将来）
+] as const
+
+// member_orders（status === 'canceled' のときのみ意味を持つ）
+cancel_source?: EventMemberOrderCancelSourceType  // 新規キャンセル時は必須。既存データは undefined 可
+canceled_by?: string   // uid | 'system'
+// canceled_at は既存のまま
+```
+
+- **`cancel_source`**: ユーザー向け表示・集計用の区分（一括中止コアの `initiator` に相当）
+- **`canceled_by`**: 実行主体（Event トップレベルの `canceled_by` と同型）
+- **注文に `cancel_reason`（自由文）は持たない** — 詳細文は Event の `event_status.cancel_reason` を参照（混同防止）
+
+### 各フローでのセット値
+
+| 処理 | `cancel_source` | `canceled_by` |
+|:--|:--|:--|
+| `cancelOrders`（参加者自身） | `user` | 認証 uid |
+| 一括中止コア（`initiator: 'minimum_participants'`） | `event_minimum_participants` | `'system'` |
+| 一括中止コア（`initiator: 'organizer_manual'`） | `event_organizer` | 主催者 uid |
+| 一括中止コア（`initiator: 'support'`） | `event_organizer` | サポート担当 uid |
+| 将来: 主催者個別拒否 Callable | `organizer_reject` | 主催者 uid |
+
+- クライアントから `cancel_source` / `canceled_by` を受け取らない（改ざん防止。**Admin SDK のみ**がセット）
+- 一括中止時のマッピング詳細: `08_イベントキャンセル_参加者あり_返金.md` §5.4.1
+
+### ユーザー向け表示ラベル（`UserEventCard` / i18n）
+
+| `cancel_source` | i18n キー（案） | 表示文言 |
+|:--|:--|:--|
+| `user` | `user_event_card.canceled` | **キャンセル済み** |
+| `undefined`（後述） | 上記または下表に従い推定 | — |
+| `event_minimum_participants` | `user_event_card.canceled_event` | **イベント中止（返金済み）** |
+| `event_organizer` | `user_event_card.canceled_event` | **イベント中止（返金済み）** |
+| `organizer_reject` | `user_event_card.canceled_reject` | **参加取消（返金済み）** |
+
+**表示箇所**: 注文履歴カード右下（全キャンセル時）、キャンセルダイアログ内のグレーアウト行。**注文行ごと**に分岐（同一イベント内で `user` と `event_*` が混在しうる）。
+
+**`event_*` 系の補足**: `event.event_status.cancel_reason` があればツールチップや補足文で表示してよい（例: `最小催行人数に達しなかったため自動中止`）。
+
+**`undefined`（既存データ・バックフィル未実施）の推定**:
+
+| 条件 | 表示 |
+|:--|:--|
+| `cancel_source` あり | 上表 |
+| `undefined` かつ `event.event_status.value === 'event_canceled'` | **イベント中止（返金済み）** |
+| それ以外 | **キャンセル済み** |
+
+**返金表記**: `user_advance` 等 Stripe 返金があるケースを主眼とする。`community_bill` / `user_on_day` では「返金済み」を省略する i18n 分岐を実装時に検討してよい。
+
+### 既存データ・バックフィル
+
+| データ | 方針 |
+|:--|:--|
+| 本番未リリース前 | バックフィル不要（実装と同時デプロイ） |
+| sandbox / 既存 `canceled` | **必須バックフィルはしない**。UI は上記「`undefined` の推定」で表示 |
+| 任意バッチ | `event_canceled` かつ `ordered→canceled` の注文に `event_minimum_participants` を付与（`bokudeli-event-batch`） |
 
 
 ## API
@@ -154,12 +225,16 @@ type CancelOrdersResponse = {
    - **検算（user_advance かつ Stripe 返金を行う前）**: 対象 orders の `menu_price` 合計が、紐づく `stripes` の `pay_amount`・既存 `refunds` 合計と矛盾しないことを確認する（詳細は既存の「返金累計 + 今回 ≦ pay_amount」および、checkout 時点の内訳と整合するかの観点で検算）
    - event.event_deadline_datetime > 現在時刻（期限前であること）
 
-5. 各 order の status を 'canceled' に変更、canceled_at を設定
+5. 各 order をキャンセル終端状態に更新:
+   - `status = 'canceled'`
+   - `canceled_at = now`
+   - `cancel_source = 'user'`
+   - `canceled_by = uid`（認証ユーザー）
 
 6. members/{userId} ドキュメントは削除しない（履歴として残す）
 
 7. DB 更新を実行（Firestore トランザクション内）:
-   - 全対象 order ドキュメントの status を 'canceled' に一括更新
+   - 全対象 order ドキュメントを上記 step 5 のとおり一括更新
    - ※ Event.members 配列の更新は Firestore トリガー（createEventMembers）が
      order の書き込みを検知して自動実行するため、ここでは行わない
 
@@ -275,8 +350,8 @@ const totalRefundAmount = stripeDoc.refunds.reduce((sum, r) => sum + r.amount, 0
 
 ## スコープ外（別イシュー）
 
-- 主催者/管理者からのキャンセル（管理画面からの操作）
-- イベント中止に伴う一括キャンセル・返金
+- 主催者/管理者からの **個別** キャンセル（管理画面からの操作）— §「将来: 主催者による個別参加拒否」
+- イベント中止に伴う一括キャンセル・返金の **処理本体** — `08_イベントキャンセル_参加者あり_返金.md`（本書の `cancel_source` は一括中止時にもセットされる）
 
 
 ## キャンセル例
@@ -358,13 +433,29 @@ Stripe 一部返金: ¥2,000（500 × 2 + 1000）
 全 order が canceled → Event.members 配列は Firestore トリガーが自動更新（ユーザーが除外される）
 
 
+## 将来: 主催者による個別参加拒否（スタブ）
+
+| 項目 | 内容 |
+|:--|:--|
+| スコープ | 別 Issue（本書 §スコープ外。主催者/管理者からの操作） |
+| イベント状態 | `event_canceled` に**しない**（イベントは開催継続） |
+| 注文 | 対象ユーザーの `ordered` のみ `canceled` + `cancel_source: 'organizer_reject'` + `canceled_by: 主催者 uid` |
+| Callable | Admin SDK のみ（`cancelOrders` とは別 API 想定） |
+| UI（参加者） | **参加取消（返金済み）**（`user_event_card.canceled_reject`） |
+| UI（主催者） | 参加者一覧に状態表示（詳細は別 Issue で設計） |
+
+
 ## 変更が必要なファイル
 
 | ファイル | 変更内容 |
 |:--|:--|
+| `common/src/schemas/EventMemberOrder.ts` | `EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES`・`cancel_source` / `canceled_by` フィールド追加 |
 | `common/src/apis/stripe.ts` | `CancelOrdersRequest` / `CancelOrdersResponse`（`refund_errors`・`user_message` 含む）。旧 `StripeRefundsRequest` は削除タイミングで廃止 |
+| `functions/default/src/cancelOrders.ts` | `cancel_source='user'`, `canceled_by=uid` をセット |
+| `functions/default/src/applyBulkEventCancelInTransaction.ts` 等 | 一括中止時 `initiator` → `cancel_source` マッピング（`08` §5.4.1 参照） |
 | `functions/default/src/stripeRefunds.ts` | `cancelOrders` に全面改修。`order_ids` で指定された orders を一括キャンセル、`stripe_id` でグルーピングして返金、stripes の refunds 配列更新、event_payment による分岐、返金バリデーション |
 | `functions/default/src/stores/memberOrder.ts` | `getOrdersByIds` を使用。パス `members/{userId}/member_orders/{orderId}` |
 | `base/src/apis/stripe.ts` | `stripeRefunds` → `cancelOrders` にリネーム、型変更 |
-| `base/src/components/UserEventCard.vue` | キャンセルモーダルをメニュー選択 UI に変更（orders を `menu_id` で groupBy 表示 + チェックボックス + 個数選択 → 選定された `order_ids` を送信）。`totalPrice` を `status !== 'canceled'` の orders の `menu_price` 合計で算出。領収書ボタンは `user_advance` かつ `orders.some(o => o.status === 'ordered')` のときのみ表示（全キャンセル時は非表示）。領収書金額は `pay_amount` のまま |
+| `base/src/locales/messages/ja.ts` | `user_event_card.canceled_event` / `canceled_reject` 等 |
+| `base/src/components/UserEventCard.vue` | キャンセルモーダルをメニュー選択 UI に変更（orders を `menu_id` で groupBy 表示 + チェックボックス + 個数選択 → 選定された `order_ids` を送信）。`totalPrice` を `status !== 'canceled'` の orders の `menu_price` 合計で算出。領収書ボタンは `user_advance` かつ `orders.some(o => o.status === 'ordered')` のときのみ表示（全キャンセル時は非表示）。領収書金額は `pay_amount` のまま。**`cancel_source` 別ラベル表示** |
 | `user/src/pages/u/[userId].vue` | `cancel()` 関数を `cancelOrders` API 1本に変更。支払方式別の分岐ロジックを削除 |
