@@ -33,7 +33,7 @@ const popularEventListStore = useEventListStore(
     where('enterprise_id', '==', null),
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
-    where('event_num_members', '>=', 1),
+    where('event_num_members', '>=', 0),
     where('event_deadline_datetime', '>', now),
     orderBy('event_num_members', 'desc'),
   ],
@@ -47,7 +47,7 @@ const popularEvents = computed(
         if (s.event == null) {
           return []
         }
-        return { event: s.event, members: s.members ?? [] }
+        return { event: s.event }
       })
       .slice(0, numOfPopularColumns) ?? [],
 )
@@ -57,7 +57,7 @@ const upcomingEventListStore = useEventListStore(
     where('enterprise_id', '==', null),
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
-    where('event_num_members', '>=', 1),
+    where('event_num_members', '>=', 0),
     where('event_end_datetime', '>', now),
     orderBy('event_start_datetime', 'asc'),
   ],
@@ -70,7 +70,7 @@ const upcomingEvents =
       if (s.event == null) {
         return []
       }
-      return { event: s.event, members: s.members ?? [] }
+      return { event: s.event }
     }),
   ) ?? []
 
@@ -79,7 +79,7 @@ const pastEventListStore = useEventListStore(
     where('enterprise_id', '==', null),
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
-    where('event_num_members', '>=', 1),
+    where('event_num_members', '>=', 0),
     where('event_end_datetime', '<=', now),
     orderBy('event_start_datetime', 'desc'),
   ],
@@ -92,7 +92,7 @@ const pastEvents =
       if (s.event == null) {
         return []
       }
-      return { event: s.event, members: s.members ?? [] }
+      return { event: s.event }
     }),
   ) ?? []
 
@@ -119,7 +119,7 @@ const next = () => {
           </v-col>
           <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
           <v-col
-            v-for="{ event, members } in popularEvents"
+            v-for="{ event } in popularEvents"
             :key="`popular_${event.event_id}`"
             md="4"
             sm="6"
@@ -127,7 +127,7 @@ const next = () => {
             class="content top-page-event-col"
           >
             <router-link :to="getEventPath(event.community_account, event.event_id)">
-              <EventCard class="event-card" :event="event" :members="members" />
+              <EventCard class="event-card" :event="event" :show-member-avatars="false" />
             </router-link>
           </v-col>
         </template>
@@ -139,7 +139,7 @@ const next = () => {
         </v-col>
         <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
         <v-col
-          v-for="{ event, members } in upcomingEvents"
+          v-for="{ event } in upcomingEvents"
           :key="event.event_id"
           md="3"
           sm="6"
@@ -147,7 +147,7 @@ const next = () => {
           class="content top-page-event-col"
         >
           <router-link :to="getEventPath(event.community_account, event.event_id)">
-            <EventCard class="event-card" :event="event" :members="members" />
+            <EventCard class="event-card" :event="event" :show-member-avatars="false" />
           </router-link>
         </v-col>
       </v-row>
@@ -171,7 +171,7 @@ const next = () => {
           </v-col>
           <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
           <v-col
-            v-for="{ event, members } in pastEvents"
+            v-for="{ event } in pastEvents"
             :key="event.event_id"
             md="3"
             sm="6"
@@ -179,7 +179,7 @@ const next = () => {
             class="content top-page-event-col"
           >
             <router-link :to="getEventPath(event.community_account, event.event_id)">
-              <EventCard class="event-card" :event="event" :members="members" />
+              <EventCard class="event-card" :event="event" :show-member-avatars="false" />
             </router-link>
           </v-col>
         </template>

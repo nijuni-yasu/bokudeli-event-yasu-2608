@@ -242,7 +242,8 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     const event = ref<BokudeliEvent | null>(target instanceof BokudeliEvent ? target : null)
     const _coverImageCacheBuster = ref(0)
     const _orders = ref<EventMemberOrder[] | null>(null)
-    const _members = ref<{ user_id: string; store: UserStore }[] | null>(null)
+    const _memberIds = ref<string[] | null>(null)
+    const _memberUserStores = new Map<string, UserStore>()
     const _menus = ref<EventMenu[] | null>(null)
     const _eventRef = ref<DocumentReference<BokudeliEvent> | null>(null)
 
@@ -303,27 +304,38 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
       return _orders.value?.filter((order) => order.status === 'ordered') ?? null
     })
 
-    const members = computed<BokudeliEventMember[] | null>(
-      () =>
-        _members.value?.flatMap((member) => {
-          const target =
-            _orders.value?.filter((order) => order.user_id === member.user_id) ?? ([] as EventMemberOrder[])
-          const orders = new Proxy(target, {
-            get: (target, prop, receiver) => {
-              subscribeOrders()
-              return Reflect.get(target, prop, receiver)
-            },
-          })
-          const m: BokudeliEventMember =
-            member.store.user == null
-              ? // User をローディングする間にダミーの写真を表示するためにダミーユーザーを作成するが、
-                // この一時代入は良くないので、明示的にローディング中であることを判断できる仕組みが必要
-                new BokudeliEventMember(member.user_id, { user_name: '' })
-              : new BokudeliEventMember(member.user_id, member.store.user)
-          m.orders = orders
-          return m
-        }) ?? null,
-    )
+    const getMemberUserStore = (memberId: string): UserStore => {
+      let store = _memberUserStores.get(memberId)
+      if (store == null) {
+        store = useUserStore(memberId)
+        _memberUserStores.set(memberId, store)
+      }
+      return store
+    }
+
+    const members = computed<BokudeliEventMember[] | null>(() => {
+      if (_memberIds.value == null) {
+        return null
+      }
+      return _memberIds.value.flatMap((memberId) => {
+        const memberStore = getMemberUserStore(memberId)
+        const target = _orders.value?.filter((order) => order.user_id === memberId) ?? ([] as EventMemberOrder[])
+        const orders = new Proxy(target, {
+          get: (target, prop, receiver) => {
+            subscribeOrders()
+            return Reflect.get(target, prop, receiver)
+          },
+        })
+        const m: BokudeliEventMember =
+          memberStore.user == null
+            ? // User をローディングする間にダミーの写真を表示するためにダミーユーザーを作成するが、
+              // この一時代入は良くないので、明示的にローディング中であることを判断できる仕組みが必要
+              new BokudeliEventMember(memberId, { user_name: '' })
+            : new BokudeliEventMember(memberId, memberStore.user)
+        m.orders = orders
+        return m
+      })
+    })
 
     const coverImageUrl = computed<string | undefined>(() => {
       const communityId = event.value?.community_id
@@ -402,11 +414,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
           (doc) => {
             try {
               event.value = doc.data() ?? null
-              _members.value =
-                event.value?.members?.map((memberId) => ({
-                  user_id: memberId,
-                  store: useUserStore(memberId) as UserStore,
-                })) ?? []
+              _memberIds.value = event.value?.members ?? []
             } catch (err) {
               console.error(err)
               reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
