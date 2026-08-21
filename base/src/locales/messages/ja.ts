@@ -85,6 +85,8 @@ export default {
     shop: '👩‍🍳 食事の提供',
     payment: '💰 支払い方法',
     deadline: '⏳ 注文期限',
+    minimum_participants: '🧑‍🧑‍🧒‍🧒 最小催行人数',
+    minimum_participants_count: '{count}名',
     cancel: '🔙 キャンセル',
     cancel_until_deadline: '注文期限までキャンセル可',
     sns_hash_tag: '#️⃣ ハッシュタグ',
