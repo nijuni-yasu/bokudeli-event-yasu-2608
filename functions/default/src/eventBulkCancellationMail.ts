@@ -84,14 +84,6 @@ export async function sendEventBulkCancellationMails(params: {
     return { shopMailSent, participantMailsSent }
   }
 
-  if (EVENT_BULK_CANCELLATION_PARTICIPANT_TEMPLATE_ID === EVENT_CANCELLATION_TEMPLATE_ID) {
-    // 送信済みにせず false のまま返し、テンプレ差し替え後の再開で送信できるようにする
-    logger.error('Participant cancellation mail skipped: template ID is still the shop template placeholder', {
-      eventId,
-    })
-    return { shopMailSent, participantMailsSent }
-  }
-
   try {
     const memberEmails = (
       await Promise.all(
