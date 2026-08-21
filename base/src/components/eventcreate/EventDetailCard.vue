@@ -8,6 +8,7 @@ import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useValidators } from '@shokujii/base/composable/validators'
 import {
   mdiAccountCreditCardOutline,
+  mdiAccountMultipleCheckOutline,
   mdiAccountMultipleOutline,
   mdiCalendarBlankOutline,
   mdiImagePlusOutline,
@@ -574,7 +575,7 @@ const tinymceInit = computed(() => ({
     </v-card-text>
 
     <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
-      <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleOutline" />
+      <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleCheckOutline" />
       {{ $t('event_detail.minimum_participants.section_title') }}
     </v-card-title>
     <v-card-text class="mt-1 mt-md-3">
@@ -591,12 +592,6 @@ const tinymceInit = computed(() => ({
           {{ $t('event_detail.minimum_participants.field_help') }}
         </p>
       </div>
-      <p
-        v-if="minimumParticipantsEnabled"
-        class="text-body-2 text-medium-emphasis minimum-participants-enabled-help px-1"
-      >
-        {{ $t('event_detail.minimum_participants.field_help_when_enabled') }}
-      </p>
       <template v-if="minimumParticipantsEnabled && event.minimum_participants != null">
         <div class="minimum-participants-selects">
           <v-row>
@@ -631,13 +626,16 @@ const tinymceInit = computed(() => ({
           </v-row>
         </div>
         <v-alert type="info" variant="tonal" density="comfortable" class="mt-3">
-          {{
-            $t('event_detail.minimum_participants.organizer_summary', {
-              count: event.minimum_participants.count,
-              days: event.minimum_participants.judgment_days_before,
-              below: minimumParticipantsBelowCount,
-            })
-          }}
+          <span
+            class="minimum-participants-organizer-summary"
+            v-html="
+              $t('event_detail.minimum_participants.organizer_summary', {
+                count: event.minimum_participants.count,
+                days: event.minimum_participants.judgment_days_before,
+                below: minimumParticipantsBelowCount,
+              })
+            "
+          />
         </v-alert>
       </template>
       <p v-if="!minimumParticipantsEditable && minimumParticipantsEnabled" class="text-caption text-medium-emphasis">
@@ -895,12 +893,12 @@ const tinymceInit = computed(() => ({
 }
 
 /* v-row の負マージンで説明文との間隔が潰れないよう padding で確保 */
-.minimum-participants-enabled-help {
-  margin-top: 16px;
-  margin-bottom: 8px;
-}
-
 .minimum-participants-selects {
   padding-top: 28px;
+}
+
+.minimum-participants-organizer-summary {
+  font-size: 14px;
+  line-height: 1.5;
 }
 </style>

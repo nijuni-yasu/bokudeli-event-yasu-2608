@@ -431,14 +431,13 @@ export default {
       toggle_label: '最小催行人数を設定する',
       count_label: '最小催行人数',
       days_label: '判断日（注文締切の何日前）',
-      field_help: '人数が最小催行人数未満の場合、自動でイベントを中止します。',
-      field_help_when_enabled: '最小催行人数は1〜5名、判断タイミングは注文期限の1〜5日前から選べます。',
+      field_help: '参加者が最小催行人数に達しない場合、自動でイベントを中止します。',
       organizer_summary:
-        '注文期限の {days} 日前の時点で、参加者が {count} 人未満ならイベントを自動中止します（{below} 人以下のとき中止）。',
+        '注文期限の {days} 日前の時点で、参加者が {below} 人以下の場合、自動で中止します。<br>{count} 人以上の場合、イベントは予定通り開催されます。<br>{below} 人以下の場合、事前決済された方には全額返金され、メールにて通知が届きます。<br>判定はその日時1回のみ行います。判定日以降に参加者が減っても、自動では中止されません。',
       readonly_note: '注文受付開始後は変更できません（設定内容は表示のみ）。',
       public_title: '最小催行人数について',
       public_body:
-        'このイベントは、注文期限の {days} 日前（{judgment}）の時点で参加者が {count} 名未満の場合、自動的に中止されます。',
+        '注文期限の {days} 日前（{judgment}）の時点で、参加者が {below} 人以下の場合、自動で中止します。<br>{count} 人以上の場合、イベントは予定通り開催されます。<br>{below} 人以下の場合、事前決済された方には全額返金され、メールにて通知が届きます。<br>判定はその日時1回のみ行います。判定日以降に参加者が減っても、自動では中止されません。',
       public_model_a_note: '判定はその日時1回のみ行います。判定日以降に参加者が減っても、自動では中止されません。',
       validation_count: '1〜5の整数で入力してください',
       validation_days: '1〜5の整数で入力してください',
@@ -477,6 +476,9 @@ export default {
     event_date_hint: '※開催日時の変更は「開催概要」画面で設定してください。',
     deadline_date: '注文期限',
     deadline_date_hint: '※注文期限まで、イベント参加者は個別に「注文」と「キャンセル」を行うことができます。',
+    minimum_participants_judgment_date: '最小催行人数の判断日',
+    minimum_participants_judgment_date_hint:
+      '※注文期限の {days} 日前の時点で、参加者が {below} 人以下の場合、イベントを自動で中止します。',
     pick_up_time: '商品の受取日時',
     pick_up_time_hint: '※商品は「イベント開始時刻30分前 〜 イベント開始時刻」の間でお受け取りください。',
     notice_title: '店舗への連絡事項',
