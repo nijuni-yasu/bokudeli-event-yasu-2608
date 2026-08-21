@@ -69,9 +69,7 @@ export class EventBulkCancelPipeline {
   /** 後処理（メール送信・Stripe 返金など）が完了していないか（true なら resume 対象） */
   get isPostProcessingIncomplete(): boolean {
     return (
-      this.shop_mail_sent_at == null ||
-      this.participant_mails_sent_at == null ||
-      this.stripe_refunds_done_at == null
+      this.shop_mail_sent_at == null || this.participant_mails_sent_at == null || this.stripe_refunds_done_at == null
     )
   }
 
