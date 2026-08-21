@@ -33,7 +33,8 @@ vi.mock('firebase-admin/firestore', () => ({
 import { runMinimumParticipantsJudgmentTransaction } from './minimumParticipantsJudgment.js'
 
 function makeEvent(overrides: Record<string, unknown> = {}) {
-  return {
+  const { calculatedEventStatus: calculatedEventStatusOverride, ...rest } = overrides
+  const event = {
     community_id: 'comm1',
     id: 'evt1',
     is_deleted: false,
@@ -47,8 +48,13 @@ function makeEvent(overrides: Record<string, unknown> = {}) {
     },
     updateEvent: vi.fn().mockResolvedValue(undefined),
     updateMembersFieldOnly: vi.fn().mockResolvedValue(undefined),
-    ...overrides,
+    ...rest,
   }
+  Object.defineProperty(event, 'calculatedEventStatus', {
+    get: () => calculatedEventStatusOverride ?? 'accepting_order',
+    configurable: true,
+  })
+  return event
 }
 
 beforeEach(() => {
@@ -78,6 +84,50 @@ describe('runMinimumParticipantsJudgmentTransaction', () => {
     expect(event.updateEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         minimum_participants: expect.objectContaining({ judgment_evaluated_at: 1000 }),
+      }),
+      'system',
+      expect.anything(),
+    )
+  })
+
+  it('calculatedEventStatus が order_closed なら中止せず judgment_evaluated_at のみ確定する', async () => {
+    const event = makeEvent({ calculatedEventStatus: 'order_closed' })
+    getEventInCommunityMock.mockResolvedValue(event)
+    getOrdersMock.mockResolvedValue([{ id: 'o1', user_id: 'u1', status: 'ordered' }])
+
+    const result = await runMinimumParticipantsJudgmentTransaction({
+      community_id: 'comm1',
+      event_id: 'evt1',
+      nowMillis: 1000,
+    })
+
+    expect(result.kind).toBe('skipped')
+    expect(applyBulkMock).not.toHaveBeenCalled()
+    expect(getOrdersMock).not.toHaveBeenCalled()
+    expect(event.updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        minimum_participants: expect.objectContaining({ judgment_evaluated_at: 1000 }),
+      }),
+      'system',
+      expect.anything(),
+    )
+  })
+
+  it('calculatedEventStatus が finished なら中止せず judgment_evaluated_at のみ確定する', async () => {
+    const event = makeEvent({ calculatedEventStatus: 'finished' })
+    getEventInCommunityMock.mockResolvedValue(event)
+
+    const result = await runMinimumParticipantsJudgmentTransaction({
+      community_id: 'comm1',
+      event_id: 'evt1',
+      nowMillis: 2000,
+    })
+
+    expect(result.kind).toBe('skipped')
+    expect(applyBulkMock).not.toHaveBeenCalled()
+    expect(event.updateEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        minimum_participants: expect.objectContaining({ judgment_evaluated_at: 2000 }),
       }),
       'system',
       expect.anything(),

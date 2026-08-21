@@ -36,6 +36,29 @@ export function createDefaultMinimumParticipants(eventDeadlineDatetimeMillis: nu
   }
 }
 
+/**
+ * イベントコピー時に minimum_participants を引き継ぐ。
+ * count / judgment_days_before のみ元イベントから引き継ぎ、judgment_datetime はコピー先の注文期限から再計算する。
+ * judgment_evaluated_at は引き継がない（未評価として扱う）。
+ */
+export function buildMinimumParticipantsForEventCopy(
+  src: MinimumParticipantsType | undefined,
+  newEventDeadlineDatetimeMillis: number,
+): MinimumParticipantsType | undefined {
+  if (src?.enabled !== true) {
+    return undefined
+  }
+  return {
+    enabled: true,
+    count: src.count,
+    judgment_days_before: src.judgment_days_before,
+    judgment_datetime: computeMinimumParticipantsJudgmentDatetime(
+      newEventDeadlineDatetimeMillis,
+      src.judgment_days_before,
+    ),
+  }
+}
+
 export class MinimumParticipantsSaveError extends Error {
   constructor(message: string) {
     super(message)

@@ -7,6 +7,7 @@ import { CancelOrdersRequest, CancelOrdersResponse } from '@shokujii/common/apis
 import { getOrdersByIds, saveOrder } from './stores/memberOrder.js'
 import { getEventInCommunity } from './stores/event.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import {
   getEventEnterpriseId,
   revertEnterpriseSubsidyUsageOnCancel,
@@ -90,11 +91,14 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
         }
       }
 
-      // 先払いは決済に stripe_id が紐づくのが正常。全件欠落のままキャンセル成功にすると未返金が隠れる（RC-35）。community_bill 等は未決済扱いがあり得る。
-      if (eventPayment === 'user_advance' && fetchedOrders.every((o) => o.stripe_id == null)) {
+      // Stripe 返金が必要な注文（user_advance / enterprise_subsidy 自己負担等）で stripe_id 欠落ならキャンセルしない
+      const ordersRequiringStripeRefund = fetchedOrders.filter(
+        (o) => o.menu_price - getMemberOrderDiscountAmount(o) > 0,
+      )
+      if (ordersRequiringStripeRefund.length > 0 && ordersRequiringStripeRefund.some((o) => o.stripe_id == null)) {
         throw new HttpsError(
           'failed-precondition',
-          '先払い注文に決済情報（stripe_id）が紐づいていません。サポートへお問い合わせください。',
+          '決済情報（stripe_id）が紐づいていない注文があるためキャンセルできません。サポートへお問い合わせください。',
         )
       }
 

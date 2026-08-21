@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DateTime } from 'luxon'
 import {
   applyMinimumParticipantsForEventSave,
+  buildMinimumParticipantsForEventCopy,
   computeMinimumParticipantsJudgmentDatetime,
   createDefaultMinimumParticipants,
   MinimumParticipantsSaveError,
@@ -76,5 +77,40 @@ describe('createDefaultMinimumParticipants', () => {
     expect(mp.count).toBe(3)
     expect(mp.judgment_days_before).toBe(1)
     expect(mp.enabled).toBe(true)
+  })
+})
+
+describe('buildMinimumParticipantsForEventCopy', () => {
+  it('enabled なら count / judgment_days_before を引き継ぎ judgment_datetime を再計算する', () => {
+    const srcDeadline = DateTime.fromObject(
+      { year: 2026, month: 3, day: 20, hour: 18, minute: 0 },
+      { zone: 'Asia/Tokyo' },
+    ).toMillis()
+    const newDeadline = DateTime.fromObject(
+      { year: 2026, month: 4, day: 10, hour: 18, minute: 0 },
+      { zone: 'Asia/Tokyo' },
+    ).toMillis()
+    const src = {
+      enabled: true as const,
+      count: 4,
+      judgment_days_before: 2,
+      judgment_datetime: computeMinimumParticipantsJudgmentDatetime(srcDeadline, 2),
+      judgment_evaluated_at: Date.now() - 86400000,
+    }
+
+    const copied = buildMinimumParticipantsForEventCopy(src, newDeadline)
+
+    expect(copied).toEqual({
+      enabled: true,
+      count: 4,
+      judgment_days_before: 2,
+      judgment_datetime: computeMinimumParticipantsJudgmentDatetime(newDeadline, 2),
+    })
+    expect(copied).not.toHaveProperty('judgment_evaluated_at')
+  })
+
+  it('minimum_participants が無い、または enabled でない場合は undefined', () => {
+    const deadline = DateTime.now().plus({ days: 10 }).toMillis()
+    expect(buildMinimumParticipantsForEventCopy(undefined, deadline)).toBeUndefined()
   })
 })

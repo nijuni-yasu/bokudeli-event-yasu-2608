@@ -55,6 +55,14 @@
 | [x] | RC-49 | 3832127253 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 💾 データ | 🔧 微修正 | S | 返金リトライ時に既存 `stripes.refunds` を見ず累計超過で例外<br>同一 order_ids 記録済みなら skip |
 | [x] | RC-50 | 3832139569 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 🔧 微修正 | S | `stripe_id` 検証が `user_advance` のみ<br>自己負担あり注文全般で ID 欠落を中止前に拒否 |
 | [ ] | RC-51 | 3832139575 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 💾 データ | 📋 仕様追加 | M | 参加者メールで宛先未解決ユーザーを無言除外し完了扱い<br>対象数と有効宛先数の不一致を記録・再処理可能に |
+| [x] | RC-52 | 3832236636 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 🔧 微修正 | S | `cancelOrders` の stripe_id 検証が全件欠落のみ<br>自己負担あり注文で部分欠落を拒否 |
+| [ ] | RC-53 | 3828207181 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 🔒 セキュリティ | 🔧 微修正 | S | partner で最小催行 UI が編集可能に見える<br>Rules と不整合 |
+| [ ] | RC-54 | 3828207205 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💰 決済, 🐛 実害 | 📋 仕様追加 | M | `processing` 注文が一括中止後も決済成立し得る |
+| [ ] | RC-55 | 3828207214 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 中止メール URL がエンプラ向けでない |
+| [x] | RC-56 | 3828899586 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📋 仕様追加 | M | イベントコピーで最小催行設定が落ちる<br>`buildMinimumParticipantsForEventCopy` で引き継ぎ |
+| [x] | RC-57 | 3828899593 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 📋 仕様追加 | M | 注文期限後のキャッチアップ誤中止<br>`calculatedEventStatus !== accepting_order` で拒否し evaluated_at 確定 |
+| [ ] | RC-58 | 3691031574 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | 副作用失敗でも side_effects 完了扱い |
+| [ ] | RC-59 | 3691031581 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | 友人履歴部分失敗でも完了マーカー確定 |
 
 ---
 
@@ -1759,5 +1767,148 @@ P2 宛先を解決できない参加者を送信済みにしない — 有効宛
 **想定工数**: M
 
 **判断理由**: 指摘妥当だが pipeline への未送信ユーザー記録等が必要で 📋 仕様追加 M。自動修正対象外。
+
+---
+
+## 評価セッション（2026-08-22 02:15・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-08-22 02:15 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **REVIEW_REQUEST_SINCE**: 2026-08-21T17:07:04Z
+- **partial**: true（Codex connect 後 no_issues のみ。新規インライン指摘なし）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼定型文 id:5372920716、Codex connect id:5372932381、Codex no_issues id:5372968824）
+- **新規 RC**: なし
+- **手順 4a 自動修正**: 0 件
+
+### RC 一覧（サマリ）
+
+（本セッションで新規 RC なし）
+
+**Copilot サマリ**（id:5372931031）: 最新コミット `871cb5b` に 🚨 新規指摘なし。RC-49/50 修正は妥当。RC-51 は未着手のまま継続。
+
+---
+
+## 評価セッション（2026-08-22 02:34・review-comments-evaluate・manual）
+
+- **評価日時**: 2026-08-22 02:34 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **重複指摘スキップ件数**: 11（既存 RC と同一論点の GitHub id: 3690587620→RC-11、3690587624/3690582496→RC-21、3691031547→RC-38/40、3691031558→RC-26、3691031566→RC-17 拡張、3691031577→RC-49、3691031587→RC-29、3828207198→RC-28、3830270283→RC-36、3831358076→RC-39、3828899567→RC-15 派生）
+- **評価時点で解消済みスキップ**: 1（3828899583 `judgment_evaluated_at: undefined` 明示保存 — `500e9c2d7` 相当の条件付き spread で解消）
+- **新規 RC**: 8（RC-52 〜 RC-59）
+- **手順 4a 自動修正**: 1 件（RC-52）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-52 | 3832236636 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 🔧 微修正 | S | `cancelOrders` の stripe_id 検証が全件欠落のみ<br>自己負担あり注文で部分欠落を拒否 |
+| [ ] | RC-53 | 3828207181 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX, 🔒 セキュリティ | 🔧 微修正 | S | partner で最小催行 UI が編集可能に見える<br>Rules と不整合 |
+| [ ] | RC-54 | 3828207205 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💰 決済, 🐛 実害 | 📋 仕様追加 | M | `processing` 注文が一括中止後も決済成立し得る |
+| [ ] | RC-55 | 3828207214 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 中止メール URL がエンプラ向けでない |
+| [x] | RC-56 | 3828899586 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 📋 仕様追加 | M | イベントコピーで最小催行設定が落ちる<br>`buildMinimumParticipantsForEventCopy` で引き継ぎ |
+| [x] | RC-57 | 3828899593 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 📋 仕様追加 | M | 注文期限後のキャッチアップ誤中止<br>`calculatedEventStatus !== accepting_order` で拒否し evaluated_at 確定 |
+| [ ] | RC-58 | 3691031574 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | 副作用失敗でも side_effects 完了扱い |
+| [ ] | RC-59 | 3691031581 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | 友人履歴部分失敗でも完了マーカー確定 |
+
+---
+
+**識別子**: RC-52（GitHub id: 3832236636）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/cancelOrders.ts:116`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -113,6 +111,8 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
+       for (const order of fetchedOrders) {
+         order.status = 'canceled'
+         order.canceled_at = nowMillis
++        order.cancel_source = 'user'
++        order.canceled_by = uid
+         await saveOrder(community_id, event_id, uid, order, transaction)
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `user_advance` の `stripe_id` 欠落チェックが「全件欠落」のみになっており、1件でも欠落があるケースを通してしまいます。この状態だと返金対象の注文が `refundMemberOrdersStripe` 側で黙ってスキップされ、返金漏れが起きてもキャンセルが成功扱いになり得ます。`user_advance` では 1 件でも `stripe_id` が欠落していたらキャンセル自体を拒否するチェックにしてください。
+
+**コメント要約**: Callable 個別キャンセルで部分 `stripe_id` 欠落を許容し返金漏れが起き得る。一括中止（RC-50）と同様に自己負担あり注文は拒否すべき。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 決済, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。手順 4a で `applyBulkEventCancelInTransaction` と同様に `menu_price - getMemberOrderDiscountAmount(o) > 0` の注文で `stripe_id` 必須チェックに置換。
+
+---
+
+**識別子**: RC-57（GitHub id: 3828899593）
+
+**レビュワー**: Cursor Bugbot
+
+**指摘箇所**: `functions/default/src/minimumParticipantsJudgment.ts:40`
+
+**レビュワーのコメント（原文）**:
+
+キャッチアップクエリは過去の未評価イベントを下限なしで取得しますが、Transaction 内では永続化された raw status が `accepting_order` かしか確認していません。期限後も raw status はそのままで `calculatedEventStatus` だけが `order_closed` / `finished` になるため、Scheduler 停止や継続的な評価失敗から復旧した時点が注文期限後や開催後でも、人数不足ならイベントを中止して参加者へ返金してしまいます。`cancelEventBulkCore` の事前条件と同様に、Transaction 内で現在時刻と注文期限・開催時刻を確認して期限後の自動中止を拒否してください。
+
+**コメント要約**: raw `accepting_order` のみ見て注文期限後もキャッチアップ中止し得る。`calculatedEventStatus` で注文受付中のみ判定すべき。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 決済, 🐛 実害
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘妥当。`calculatedEventStatus !== 'accepting_order'` のとき中止せず `judgment_evaluated_at` を確定してキャッチアップ再試行を止める（`cancelEventBulkCore` と整合）。
+
+---
+
+**識別子**: RC-56（GitHub id: 3828899586）
+
+**レビュワー**: Cursor Bugbot
+
+**指摘箇所**: `functions/default/src/eventCopy.ts:62-107`
+
+**レビュワーのコメント（原文）**:
+
+`minimum_participants` を Event の保存フィールドに追加していますが、`eventCopy.ts` のコピー対象は明示列挙で、このフィールドが含まれていません。そのため最小催行設定済みイベントを単発・繰り返しコピーすると、コピー先だけ設定が無効になり、主催者が気付かないまま自動中止判定なしで公開できます。`count` と `judgment_days_before` を引き継ぎ、コピー先の新しい注文期限から `judgment_datetime` を再計算し、`judgment_evaluated_at` は引き継がないようにしてください。
+
+**コメント要約**: イベントコピーの明示列挙に `minimum_participants` が無く設定が落ちる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘妥当。common に `buildMinimumParticipantsForEventCopy` を追加し `copyEventCore`（単発・繰り返し共通）で引き継ぎ。`judgment_evaluated_at` は含めない。
 
 ---

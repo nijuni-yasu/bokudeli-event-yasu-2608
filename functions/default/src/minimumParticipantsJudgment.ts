@@ -41,6 +41,17 @@ export async function runMinimumParticipantsJudgmentTransaction(params: {
       return { kind: 'skipped' }
     }
 
+    // raw status が accepting_order のままでも、期限後は calculatedEventStatus が order_closed / finished 等になる。
+    // cancelEventBulkCore と同様、Phase 1 では注文受付中（calculated accepting_order）のみ自動判定する。
+    if (tEvent.calculatedEventStatus !== 'accepting_order') {
+      const expiredMp = {
+        ...mp,
+        judgment_evaluated_at: nowMillis,
+      }
+      await tEvent.updateEvent({ minimum_participants: expiredMp }, 'system', transaction)
+      return { kind: 'skipped' }
+    }
+
     const ordered = await getOrders(community_id, event_id, 'ordered', transaction)
     const uniqueCount = countUniqueOrderedUserIds(ordered)
 

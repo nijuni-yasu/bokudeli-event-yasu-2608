@@ -3,6 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import type { EventCopyRequest, EventCopyResponse } from '@shokujii/common/apis/eventCopy.js'
 import type { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { formatCopyEventDateSuffix, isInShopTime } from '@shokujii/common/utils/datetime.js'
+import { buildMinimumParticipantsForEventCopy } from '@shokujii/common/utils/minimumParticipants.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { getConfigGlobal } from './stores/config.js'
 import { getCommunity } from './stores/community.js'
@@ -59,6 +60,7 @@ export const copyEventCore = async (
     srcEvent.event_payment,
     srcEvent.community_bill_settings,
   )
+  const newDeadlineDatetime = startTime + srcEvent.event_deadline_datetime - srcEvent.event_start_datetime
   const newEvent = new ShokujiiEvent(null, {
     // スプレッド構文を使うとコピーすべきでないフィールドが混ざってしまうので、
     // 必要なフィールドを明示的に指定する
@@ -98,7 +100,8 @@ export const copyEventCore = async (
     },
     event_start_datetime: startTime,
     event_end_datetime: startTime + srcEvent.event_end_datetime - srcEvent.event_start_datetime,
-    event_deadline_datetime: startTime + srcEvent.event_deadline_datetime - srcEvent.event_start_datetime,
+    event_deadline_datetime: newDeadlineDatetime,
+    minimum_participants: buildMinimumParticipantsForEventCopy(srcEvent.minimum_participants, newDeadlineDatetime),
     members: [],
     created_at: now,
     updated_at: now,
