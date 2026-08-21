@@ -68,8 +68,17 @@ export class EventBulkCancelPipeline {
 
   /** 後処理（メール送信・Stripe 返金など）が完了していないか（true なら resume 対象） */
   get isPostProcessingIncomplete(): boolean {
+    const sideEffectsIncomplete = this.participant_user_ids.some(
+      (userId) => !this.side_effects_user_ids.includes(userId),
+    )
+    const friendHistoryIncomplete =
+      this.participant_user_ids.length > 0 && this.friend_history_removed_at == null
     return (
-      this.shop_mail_sent_at == null || this.participant_mails_sent_at == null || this.stripe_refunds_done_at == null
+      this.shop_mail_sent_at == null ||
+      this.participant_mails_sent_at == null ||
+      this.stripe_refunds_done_at == null ||
+      sideEffectsIncomplete ||
+      friendHistoryIncomplete
     )
   }
 

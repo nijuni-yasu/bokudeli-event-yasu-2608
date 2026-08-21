@@ -43,6 +43,8 @@
 | [x] | RC-37 | 5341053508 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 先払い `some(stripe_id==null)` の意図をコメントで明示 |
 | [x] | RC-38 | 3812300951 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済 | 🔧 微修正 | S | `isPostProcessingIncomplete` に `stripe_refunds_done_at` を含める |
 | [ ] | RC-39 | 3828183031 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | pipeline の read→set 丸ごと書き戻しが並列 resume で競合<br>Transaction または原子的 update が必要（RC-28 と関連） |
+| [x] | RC-40 | 3830028169 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 💾 データ | 🔧 微修正 | S | `isPostProcessingIncomplete` が副作用・友人履歴未完了を見ていない<br>participant 全員の side_effects と friend_history を resume 判定に含める |
+| [ ] | RC-41 | 3830033339 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ 性能, 💾 データ | 📐 リファクタ | L | 大量注文を単一 Transaction で更新すると 500 write 上限超過<br>分割・再開可能な一括中止パイプラインが必要 |
 
 ---
 
@@ -1251,5 +1253,90 @@ Transaction または `arrayUnion` 等の原子的更新へ寄せるべき（RC-
 ### RC 一覧（サマリ）
 
 （本セッションで新規 RC 採番なし。Copilot 指摘 2 件は既存 RC-6/11・RC-21 と重複のためスキップ）
+
+---
+
+## 評価セッション（2026-08-21 21:11・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-08-21 21:11 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **REVIEW_REQUEST_SINCE**: 2026-08-21T12:00:19Z
+- **partial**: false（Copilot substantive 2 件 + Codex substantive 1 件）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼定型文 id:5369540352、Copilot エラー id:5369541149、Codex connect id:5369615405）
+- **重複指摘スキップ件数**: 4（Copilot トップレベル id:5369614328 — RC-6/11・RC-38・RC-21・RC-36 と同一論点）
+- **手順 4a 自動修正**: RC-40（`EventBulkCancelPipeline.isPostProcessingIncomplete` 拡張 + テスト追加）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-40 | 3830028169 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害, 💾 データ | 🔧 微修正 | S | `isPostProcessingIncomplete` が副作用・友人履歴未完了を見ていない<br>participant 全員の side_effects と friend_history を resume 判定に含める |
+| [ ] | RC-41 | 3830033339 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | ⚡ 性能, 💾 データ | 📐 リファクタ | L | 大量注文を単一 Transaction で更新すると 500 write 上限超過<br>分割・再開可能な一括中止パイプラインが必要 |
+
+**識別子**: RC-40（GitHub id: 3830028169）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `common/src/schemas/EventBulkCancelPipeline.ts:74`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+  get isPostProcessingIncomplete(): boolean {
+    return (
+      this.shop_mail_sent_at == null || this.participant_mails_sent_at == null || this.stripe_refunds_done_at == null
+    )
+  }
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] pipeline の resume 判定が shop/participant メールと Stripe 返金の3項目だけになっており、`side_effects_user_ids` や `friend_history_removed_at` が未完了でも `isPostProcessingIncomplete=false` になり得ます。これだと後処理の一部失敗（例: applyOrderCanceledSideEffects の一時失敗）を次回ポーリングで再開できず、データ整合が崩れたまま確定してしまいます。`participant_user_ids` を基準に副作用・友達履歴の未完了も resume 対象に含めてください。
+
+**コメント要約**: resume 判定に side_effects 未完了・友人履歴未削除が含まれておらず、部分失敗後に再開されない。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害, 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。`finishBulkEventCancelPostProcessing` は side_effects / friend_history 失敗時にログのみで続行するため、getter に未完了判定を含めないと Scheduled が resume しない。手順 4a で getter を拡張し Vitest を追加。
+
+---
+
+**識別子**: RC-41（GitHub id: 3830033339）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/applyBulkEventCancelInTransaction.ts:99`
+
+**レビュワーのコメント（原文）**:
+
+**P2** 大量注文を単一トランザクションで更新しない — 注文数量ごとに `member_orders` ドキュメントが作成され、`event_max_people` にも上限がないため、注文ドキュメント数と Event・pipeline・企業利用枠の更新を合わせて Firestore の 500 write 上限を超えるイベントでは、このトランザクションが毎回失敗します。その場合はイベントの中止も評価済みマーカーの保存も行われず、Scheduler が同じ失敗を繰り返すため、注文数を制限するか、処理対象を分割して再開可能な一括中止パイプラインにしてください。
+
+**コメント要約**: 大規模イベントで Transaction write 500 上限を超え、中止・評価済みマーカー保存が永続的に失敗しうる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: ⚡ 性能, 💾 データ
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: L
+
+**判断理由**: 指摘は妥当だが、Transaction 分割・再開設計は RC-19 以降のパイプライン拡張に波及する大規模リファクタ。Phase 1 では event_max_people 無上限の既存制約もあり、別途設計判断が必要。自動修正対象外。
 
 ---
