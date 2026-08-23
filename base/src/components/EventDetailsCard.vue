@@ -145,6 +145,8 @@ const isShowMember = computed(() =>
 
 const shareButtonSize = computed(() => (display.xs.value ? 'small' : 'large'))
 const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
+
+const hasParticipants = computed(() => members.value.length > 0)
 </script>
 
 <template>
@@ -348,7 +350,7 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
           <tiny-m-c-e-viewer :content="event.event_desc" class="event-content" />
         </v-card-text>
 
-        <div class="mb-6">
+        <div v-if="hasParticipants" class="mb-6">
           <v-card-text class="mt-6 pb-3">
             <div class="d-flex align-center flex-wrap ga-2">
               <span class="event-details-card__section-title font-weight-black">
@@ -357,10 +359,7 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
                   {{ members.length }} / {{ event.event_max_people }}
                 </span>
               </span>
-              <div
-                v-if="showOpenChatButton || members.length > 0"
-                class="d-flex align-center flex-wrap ga-3 event-participant-actions"
-              >
+              <div class="d-flex align-center flex-wrap ga-3 event-participant-actions">
                 <VBtn
                   v-if="showOpenChatButton"
                   variant="outlined"
@@ -373,33 +372,30 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
                 >
                   {{ $t('event_details.open_group_chat') }}
                 </VBtn>
-                <template v-if="members.length > 0">
-                  <VBtn
-                    v-if="isShowMember === true"
-                    variant="outlined"
-                    rounded="pill"
-                    size="small"
-                    :prepend-icon="mdiAccountGroup"
-                    :to="{ path: `${event.event_id}/members` }"
-                  >
-                    {{ $t('event_details.participants_profile') }}
-                  </VBtn>
-                  <div v-else-if="isShowMember === false" class="text-subtitle-2 text-right text-medium-emphasis">
-                    {{ $t('event_details.participants_profile_hidden') }}
-                  </div>
-                </template>
+                <VBtn
+                  v-if="isShowMember === true"
+                  variant="outlined"
+                  rounded="pill"
+                  size="small"
+                  :prepend-icon="mdiAccountGroup"
+                  :to="{ path: `${event.event_id}/members` }"
+                >
+                  {{ $t('event_details.participants_profile') }}
+                </VBtn>
+                <div v-else-if="isShowMember === false" class="text-subtitle-2 text-right text-medium-emphasis">
+                  {{ $t('event_details.participants_profile_hidden') }}
+                </div>
               </div>
             </div>
           </v-card-text>
           <v-divider class="custom-divider mt-0 mb-2" />
           <event-member-list
-            v-if="members.length > 0"
             :members="members"
             :event-max-people="event.event_max_people"
             :is-show-member="isShowMember"
           />
         </div>
-        <v-card-text class="px-5">
+        <v-card-text class="px-5" :class="{ 'mt-6': !hasParticipants }">
           <v-row align="center" no-gutters class="flex-nowrap">
             <v-col cols="auto" class="d-flex justify-start flex-shrink-0">
               <router-link :to="getCommunityPath(event.community_account)">
@@ -507,8 +503,12 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
 }
 
 .event-details-card__section-title-count {
-  font-size: inherit;
+  font-size: 1.125rem; /* 18px: 「参加者」見出しより一段小さくする */
   font-weight: inherit;
+
+  @media (min-width: 600px) {
+    font-size: 1.25rem; /* 20px */
+  }
 }
 
 /* text-h4 は付けない（Vuetify の font-size が !important で競合するため）。ここで xs / sm を定義 */

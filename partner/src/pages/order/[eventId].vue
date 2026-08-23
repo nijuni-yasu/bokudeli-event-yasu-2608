@@ -24,6 +24,7 @@ import {
   convertToDatetimeWeekdayShort,
   convertToTimeString,
 } from '@shokujii/common/utils/datetime.js'
+import { computeMinimumParticipantsJudgmentDatetime } from '@shokujii/common/utils/minimumParticipants.js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -115,6 +116,43 @@ const sortedConfirmedOrders = computed(() => {
   return o == null ? [] : sortEventMemberOrdersForPartnerDetail(o)
 })
 
+const minimumParticipants = computed(() => eventStore.event?.minimum_participants ?? null)
+
+const minimumParticipantsJudgmentDateTime = computed(() => {
+  const mp = minimumParticipants.value
+  const eventData = eventStore.event
+  if (mp == null || eventData == null) {
+    return ''
+  }
+  const judgmentDatetime =
+    mp.judgment_datetime ??
+    computeMinimumParticipantsJudgmentDatetime(eventData.event_deadline_datetime, mp.judgment_days_before)
+  return convertToDatetimeWeekdayShort(judgmentDatetime)
+})
+
+const minimumParticipantsBelowCount = computed(() => {
+  const mp = minimumParticipants.value
+  if (mp == null) {
+    return 0
+  }
+  return Math.max(0, mp.count - 1)
+})
+
+const eventMapsSearchUrl = computed(() => {
+  const currentEvent = eventStore.event
+  if (currentEvent == null) {
+    return undefined
+  }
+  const query = [currentEvent.fullAddress, currentEvent.event_place ?? '']
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' ')
+  if (query === '') {
+    return undefined
+  }
+  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
+})
+
 // [お名前]を印刷 ボタンの実装
 const downloadNamesPrint = async () => {
   isLoading.value = true
@@ -143,6 +181,12 @@ const downloadNamesPrint = async () => {
             <p>{{ $t('order_detail.event_name', [eventStore.event.event_name]) }}</p>
             <p v-linkify>{{ $t('order_detail.event_url', [eventUrl]) }}</p>
             <p>
+              {{ $t('order_detail.event_address', [eventStore.event.fullAddress]) }}
+              <a v-if="eventMapsSearchUrl != null" :href="eventMapsSearchUrl" target="_blank" rel="noopener noreferrer">
+                <v-icon :icon="mdiMapMarkerRadius" />
+              </a>
+            </p>
+            <p>
               {{
                 $t(
                   'order_detail.event_date',
@@ -165,16 +209,21 @@ const downloadNamesPrint = async () => {
                 )
               }}
             </p>
-            <p>
-              {{ $t('order_detail.event_address', [eventStore.event.fullAddress]) }}
-              <a
-                :href="`https://www.google.co.jp/maps/search/${eventStore.event.fullAddress} ${eventStore.event.event_place}`"
-                target="_blank"
-              >
-                <v-icon :icon="mdiMapMarkerRadius" />
-              </a>
-            </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
+            <template v-if="minimumParticipants?.enabled">
+              <p>{{ $t('order_detail.minimum_participants_count', [minimumParticipants.count]) }}</p>
+              <p>
+                {{ $t('order_detail.minimum_participants_judgment_date', [minimumParticipantsJudgmentDateTime]) }}
+              </p>
+              <p class="text-caption text-medium-emphasis">
+                {{
+                  $t('order_detail.minimum_participants_note', [
+                    minimumParticipants.judgment_days_before,
+                    minimumParticipantsBelowCount,
+                  ])
+                }}
+              </p>
+            </template>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
             <template v-if="isOwner == null">
               <v-progress-circular indeterminate color="primary" size="24" />
