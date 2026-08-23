@@ -20,6 +20,15 @@ function toHalfWidthAsciiChar(code: number): string | null {
   return null
 }
 
+/** Unicode コードポイント数（ユーザー知覚文字数。サロゲートペアは 1 文字） */
+export function tagCodePointLength(s: string): number {
+  let n = 0
+  for (const _ of s) {
+    n++
+  }
+  return n
+}
+
 export function normalizeTag(raw: string): string {
   const s = raw.trim()
   let out = ''

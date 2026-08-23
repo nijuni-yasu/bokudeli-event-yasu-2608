@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { createModuleLogger } from './utils/logger.js'
 import { getUser, setUserTags } from './stores/user.js'
-import { normalizeTag, normalizeTagList } from '@shokujii/common/utils/normalizeTag.js'
+import { normalizeTag, normalizeTagList, tagCodePointLength } from '@shokujii/common/utils/normalizeTag.js'
 import type { UpdateUserTagsRequest, AddTagToMyProfileRequest } from '@shokujii/common/apis/userTags.js'
 
 const logger = createModuleLogger('userTags')
@@ -24,7 +24,7 @@ export const updateUserTags = onCall<UpdateUserTagsRequest, Promise<{ success: b
       throw new HttpsError('invalid-argument', `タグは最大${MAX_TAGS}個までです`)
     }
     for (const t of normalized) {
-      if (t.length > MAX_TAG_LEN) {
+      if (tagCodePointLength(t) > MAX_TAG_LEN) {
         throw new HttpsError('invalid-argument', `各タグは最大${MAX_TAG_LEN}文字までです`)
       }
     }
@@ -53,7 +53,7 @@ export const addTagToMyProfile = onCall<AddTagToMyProfileRequest, Promise<{ succ
     if (tag.length === 0) {
       throw new HttpsError('invalid-argument', 'タグが空です')
     }
-    if (tag.length > MAX_TAG_LEN) {
+    if (tagCodePointLength(tag) > MAX_TAG_LEN) {
       throw new HttpsError('invalid-argument', `タグは最大${MAX_TAG_LEN}文字までです`)
     }
 

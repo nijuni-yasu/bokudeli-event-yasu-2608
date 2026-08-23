@@ -34,6 +34,7 @@
 | [x] | RC-28 | 4943743482 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagInput マスタタグ選択判定を正規化で比較 |
 | [x] | RC-29 | 4943804721 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 04_プロフィールタグ lowercase 記載を実装に整合 |
 | [x] | RC-30 | 4943804721 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | normalizeTag をコードポイント走査に変更 |
+| [x] | RC-31 | 3801862833 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | タグ長判定をコードポイント数に統一 |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 
@@ -1123,5 +1124,59 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 **想定工数**: S
 
 **判断理由**: 絵文字タグの正規化破損リスク。手順 4a で `for...of` に変更。
+
+---
+
+## 評価セッション（2026-08-18 16:23・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-18 16:23 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・partial: いいえ）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-18T07:13:40Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（依頼定型文 1、Codex 接続案内 1、Copilot 指摘なしサマリ 1）
+- **partial 評価**: いいえ
+- **手順 4a 自動修正**: RC-31（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-31 | 3801862833 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | タグ長を `string.length` ではなくコードポイント数で判定<br>→ `tagCodePointLength` を common に追加 |
+
+---
+
+**識別子**: RC-31（GitHub id: 3801862833）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/userTags.ts:27`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      if (t.length > MAX_TAG_LEN) {
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  タグ長をUnicode文字数で判定する**
+
+フリータグに絵文字などBMP外の文字が含まれる場合、JavaScriptの `string.length` はUTF-16コードユニット数を返すため、たとえば11個の絵文字が22文字扱いとなり、仕様上の20文字以内でもCallableが拒否します。同じ判定が `addTagToMyProfile` と `TagInput.vue` にもあるため、コードポイント数またはユーザー知覚文字数で一貫して判定してください。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-30 で正規化はコードポイント単位にしたが、長さ判定が UTF-16 単位のまま。手順 4a で `tagCodePointLength` を common に追加し userTags / TagInput で使用。
 
 ---

@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { mdiPencilOutline, mdiTagOutline } from '@mdi/js'
 import { TAG_GENRES } from '@shokujii/common/constants/tags.js'
-import { normalizeTag } from '@shokujii/common/utils/normalizeTag.js'
+import { normalizeTag, tagCodePointLength } from '@shokujii/common/utils/normalizeTag.js'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
 
 const props = withDefaults(
@@ -43,7 +43,7 @@ watch(freeInput, (v) => {
 const tryAddTag = (raw: string) => {
   const t = normalizeTag(raw)
   if (t.length === 0) return
-  if (t.length > 20) {
+  if (tagCodePointLength(t) > 20) {
     showError($t('user_tags.tag_max_length'))
     return
   }
