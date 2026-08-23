@@ -138,6 +138,21 @@ const minimumParticipantsBelowCount = computed(() => {
   return Math.max(0, mp.count - 1)
 })
 
+const eventMapsSearchUrl = computed(() => {
+  const currentEvent = eventStore.event
+  if (currentEvent == null) {
+    return undefined
+  }
+  const query = [currentEvent.fullAddress, currentEvent.event_place ?? '']
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' ')
+  if (query === '') {
+    return undefined
+  }
+  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
+})
+
 // [お名前]を印刷 ボタンの実装
 const downloadNamesPrint = async () => {
   isLoading.value = true
@@ -167,10 +182,7 @@ const downloadNamesPrint = async () => {
             <p v-linkify>{{ $t('order_detail.event_url', [eventUrl]) }}</p>
             <p>
               {{ $t('order_detail.event_address', [eventStore.event.fullAddress]) }}
-              <a
-                :href="`https://www.google.co.jp/maps/search/${eventStore.event.fullAddress} ${eventStore.event.event_place}`"
-                target="_blank"
-              >
+              <a v-if="eventMapsSearchUrl != null" :href="eventMapsSearchUrl" target="_blank" rel="noopener noreferrer">
                 <v-icon :icon="mdiMapMarkerRadius" />
               </a>
             </p>
