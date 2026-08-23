@@ -55,9 +55,12 @@ const props = withDefaults(
     enterpriseSubsidyBudgetLoader?: CartEnterpriseSubsidyBudgetLoader
     /** 注文確定後の注文履歴 URL（各 app の cart shell から注入） */
     resolveOrdersPath: ResolveOrdersPathFn
+    /** エンプラ等: SNS・ハッシュタグ行を非表示 */
+    hideShareSns?: boolean
   }>(),
   {
     enterpriseSubsidyBudgetLoader: pfCartEnterpriseSubsidyBudgetLoader,
+    hideShareSns: false,
   },
 )
 
@@ -621,6 +624,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                   <a
                     :href="`https://www.google.co.jp/maps/search/${cartItem.event.fullAddress} ${cartItem.event.event_place}`"
                     target="_blank"
+                    rel="noopener noreferrer"
                   >
                     <v-icon size="small" :icon="mdiMapMarkerRadius" />
                   </a>
@@ -628,7 +632,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                 <div>
                   <div v-if="cartItem.event.event_place_url && cartItem.event.event_place">
                     {{ cartItem.event.event_place }}
-                    <a :href="cartItem.event.event_place_url" target="_blank">
+                    <a :href="cartItem.event.event_place_url" target="_blank" rel="noopener noreferrer">
                       <v-icon size="small" :icon="mdiOpenInNew" />
                     </a>
                   </div>
@@ -680,7 +684,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                 <span class="custom-table-value-with-action">
                   {{
                     $t('event_details.minimum_participants_count', {
-                      count: cartItem.event.minimum_participants.count,
+                      count: cartItem.event.minimum_participants!.count,
                     })
                   }}
                   <v-btn
@@ -691,7 +695,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                     density="compact"
                     variant="text"
                     :aria-label="$t('event_detail.minimum_participants.public_title')"
-                    @click="openMinimumParticipantsDialog(cartItem.event.minimum_participants)"
+                    @click="openMinimumParticipantsDialog(cartItem.event.minimum_participants!)"
                   >
                   </v-btn>
                 </span>
@@ -717,7 +721,9 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
             </tr>
             <tr
               v-if="
-                typeof cartItem.event.event_sns_hash_tag === 'string' && cartItem.event.event_sns_hash_tag.trim() !== ''
+                !hideShareSns &&
+                typeof cartItem.event.event_sns_hash_tag === 'string' &&
+                cartItem.event.event_sns_hash_tag.trim() !== ''
               "
             >
               <td class="text-small">{{ $t('event_details.sns_hash_tag') }}</td>
@@ -725,6 +731,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                 <a
                   :href="`https://twitter.com/search?q=%23${cartItem.event.event_sns_hash_tag}&f=live`"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="text-decoration-none"
                 >
                   #{{ cartItem.event.event_sns_hash_tag }}

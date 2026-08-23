@@ -249,6 +249,7 @@ const hasParticipants = computed(() => members.value.length > 0)
                   <a
                     :href="`https://www.google.co.jp/maps/search/${event.fullAddress} ${event.event_place}`"
                     target="_blank"
+                    rel="noopener noreferrer"
                   >
                     <v-icon size="small" :icon="mdiMapMarkerRadius" />
                   </a>
@@ -256,7 +257,7 @@ const hasParticipants = computed(() => members.value.length > 0)
                 <div>
                   <div v-if="event.event_place_url && event.event_place">
                     {{ event.event_place }}
-                    <a :href="event.event_place_url" target="_blank">
+                    <a :href="event.event_place_url" target="_blank" rel="noopener noreferrer">
                       <v-icon size="small" :icon="mdiOpenInNew" />
                     </a>
                   </div>
@@ -300,7 +301,7 @@ const hasParticipants = computed(() => members.value.length > 0)
                 <span class="custom-table-value-with-action">
                   {{
                     $t('event_details.minimum_participants_count', {
-                      count: event.minimum_participants.count,
+                      count: event.minimum_participants!.count,
                     })
                   }}
                   <v-btn
@@ -347,6 +348,7 @@ const hasParticipants = computed(() => members.value.length > 0)
                 <a
                   :href="`https://twitter.com/search?q=%23${event.event_sns_hash_tag}&f=live`"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="text-decoration-none"
                 >
                   #{{ event.event_sns_hash_tag }}

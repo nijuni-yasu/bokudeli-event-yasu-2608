@@ -358,7 +358,7 @@ const submitCancel = () => {
             </v-btn>
           </v-col>
         </template>
-        <v-col v-else-if="isShowProcessing" cols="12" class="text-end">
+        <v-col v-else-if="isShowProcessing" cols="12" class="text-end text-no-wrap">
           {{ $t('user_event_card.processing') }}
         </v-col>
         <v-col v-else-if="isAllCanceled" cols="12" class="text-end text-no-wrap">

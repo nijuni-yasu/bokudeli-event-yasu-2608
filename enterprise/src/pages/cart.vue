@@ -8,5 +8,6 @@ import { getOrdersPathAfterOrder } from '@/router/utils'
   <Cart
     :enterprise-subsidy-budget-loader="enterpriseCartSubsidyBudgetLoader"
     :resolve-orders-path="getOrdersPathAfterOrder"
+    hide-share-sns
   />
 </template>
