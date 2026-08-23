@@ -210,7 +210,7 @@ const downloadNamesPrint = async () => {
               }}
             </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
-            <template v-if="minimumParticipants != null">
+            <template v-if="minimumParticipants?.enabled">
               <p>{{ $t('order_detail.minimum_participants_count', [minimumParticipants.count]) }}</p>
               <p>
                 {{ $t('order_detail.minimum_participants_judgment_date', [minimumParticipantsJudgmentDateTime]) }}
