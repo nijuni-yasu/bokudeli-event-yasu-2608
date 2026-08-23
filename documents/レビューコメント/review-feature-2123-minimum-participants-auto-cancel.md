@@ -63,6 +63,8 @@
 | [x] | RC-57 | 3828899593 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 決済, 🐛 実害 | 📋 仕様追加 | M | 注文期限後のキャッチアップ誤中止<br>`calculatedEventStatus !== accepting_order` で拒否し evaluated_at 確定 |
 | [ ] | RC-58 | 3691031574 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | 副作用失敗でも side_effects 完了扱い |
 | [ ] | RC-59 | 3691031581 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ, 🐛 実害 | 📋 仕様追加 | M | 友人履歴部分失敗でも完了マーカー確定 |
+| [ ] | RC-60 | 3837743284 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | 返金完了前に「返金済み」表示<br>`user_on_day` 等にも同一ラベル |
+| [x] | RC-61 | 3837743290 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 🔧 微修正 | S | `user_on_day` で stripe_id 必須化の誤り<br>`orderRequiresStripeIdForCancelRefund` で event_payment 考慮 |
 
 ---
 
@@ -1910,5 +1912,108 @@ P2 宛先を解決できない参加者を送信済みにしない — 有効宛
 **想定工数**: M
 
 **判断理由**: 指摘妥当。common に `buildMinimumParticipantsForEventCopy` を追加し `copyEventCore`（単発・繰り返し共通）で引き継ぎ。`judgment_evaluated_at` は含めない。
+
+---
+
+## 評価セッション（2026-08-23 14:05 JST・review-comments-evaluate）
+
+- **評価日時**: 2026-08-23 14:05 JST
+- **ブランチ名**: `feature/2123-minimum-participants-auto-cancel`
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2231
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **重複指摘スキップ件数**: 0
+- **新規 RC**: 2（RC-60 〜 RC-61）
+- **手順 4a 自動修正**: 1 件（RC-61）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-60 | 3837743284 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | 返金完了前に「返金済み」表示<br>`user_on_day` 等にも同一ラベル |
+| [x] | RC-61 | 3837743290 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭, 🐛 実害 | 🔧 微修正 | S | `user_on_day` で stripe_id 必須化の誤り<br>`orderRequiresStripeIdForCancelRefund` で event_payment 考慮 |
+
+---
+
+**識別子**: RC-60（GitHub id: 3837743284）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/locales/messages/ja.ts:517`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -493,6 +514,8 @@ export default {
+     event_payment: '【支払い方法】{0}',
+     cancel_order: '参加注文をキャンセルする',
+     canceled: 'キャンセル済み',
++    canceled_event: 'イベント中止（返金済み）',
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  返金完了前に「返金済み」と表示しない**
+
+自動中止の Transaction が注文を `canceled` にした直後からこのラベルが表示されますが、Stripe 返金は後処理で実行され、失敗時には `stripe_refunds_done_at` 未設定のまま再試行されます。そのため返金エラーや処理遅延中でも参加者には「返金済み」と断定表示され、さらに `user_on_day` など返金自体がない注文にも同じ表示が出ます。返金状態を注文単位で確認できるようにするか、少なくとも完了を断定しない「返金処理中／返金対象の場合は返金予定」等の文言にしてください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: イベント中止ラベルが返金後処理完了前から「返金済み」と表示される。`user_on_day` 等 Stripe 返金なしの決済にも同ラベルが付く。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘妥当。`documents/07_リファクタリング/09_EventMemberOrderに伴うキャンセル機能.md` § 返金表記でも `user_on_day` / `community_bill` の i18n 分岐は検討可とある。返金完了前の断定表示は UX 上問題。pipeline / `event_payment` 連動の文言設計が必要で自動修正対象外。
+
+---
+
+**識別子**: RC-61（GitHub id: 3837743290）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/applyBulkEventCancelInTransaction.ts:85-88`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  // Stripe 返金が必要な注文（user_advance / enterprise_subsidy 自己負担等）で stripe_id 欠落なら中止しない
++  const ordersRequiringStripeRefund = ordered.filter((o) => o.menu_price - getMemberOrderDiscountAmount(o) > 0)
++  if (ordersRequiringStripeRefund.length > 0 && ordersRequiringStripeRefund.some((o) => o.stripe_id == null)) {
++    throw new Error('Stripe 返金が必要な注文に決済情報（stripe_id）が紐づいていません')
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P1 Badge](https://img.shields.io/badge/P1-orange?style=flat)</sub></sub>  当日払い注文に Stripe ID を要求しない**
+
+`menu_price - discount > 0` は Stripe 返金が必要であることを意味しません。`user_on_day` の注文は店舗で支払うため価格が正でも `stripe_id` がないのが正常ですが、この条件では最小催行人数未達時の一括中止が毎回例外になり、イベントが中止されません。同じ判定が `cancelOrders.ts:95-98` にもあるため、既存の当日払いイベントでは参加者自身のキャンセルも拒否されます。`event_payment` と決済方式を考慮し、実際にオンライン決済された注文だけを Stripe ID 必須にしてください。
+
+Useful? React with 👍 / 👎.
+
+**コメント要約**: RC-50/52 の selfPay 判定が `user_on_day` を誤って Stripe 必須にし、一括中止・個別キャンセルが失敗する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。手順 4a で common に `orderRequiresStripeIdForCancelRefund` を追加し、`user_on_day` / `community_bill` を除外。`applyBulkEventCancelInTransaction` と `cancelOrders` で共用。
 
 ---

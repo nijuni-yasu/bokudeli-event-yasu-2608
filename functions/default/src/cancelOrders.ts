@@ -7,7 +7,7 @@ import { CancelOrdersRequest, CancelOrdersResponse } from '@shokujii/common/apis
 import { getOrdersByIds, saveOrder } from './stores/memberOrder.js'
 import { getEventInCommunity } from './stores/event.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
-import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import { orderRequiresStripeIdForCancelRefund } from '@shokujii/common/utils/orderStripeRefundRequirement.js'
 import {
   getEventEnterpriseId,
   revertEnterpriseSubsidyUsageOnCancel,
@@ -92,8 +92,8 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
       }
 
       // Stripe 返金が必要な注文（user_advance / enterprise_subsidy 自己負担等）で stripe_id 欠落ならキャンセルしない
-      const ordersRequiringStripeRefund = fetchedOrders.filter(
-        (o) => o.menu_price - getMemberOrderDiscountAmount(o) > 0,
+      const ordersRequiringStripeRefund = fetchedOrders.filter((o) =>
+        orderRequiresStripeIdForCancelRefund(o, eventPayment),
       )
       if (ordersRequiringStripeRefund.length > 0 && ordersRequiringStripeRefund.some((o) => o.stripe_id == null)) {
         throw new HttpsError(

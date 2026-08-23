@@ -1,6 +1,6 @@
 import type { Transaction } from 'firebase-admin/firestore'
 import type { EventMemberOrder, EventMemberOrderCancelSourceType } from '@shokujii/common/schemas/EventMemberOrder.js'
-import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import { orderRequiresStripeIdForCancelRefund } from '@shokujii/common/utils/orderStripeRefundRequirement.js'
 import { getEventInCommunity, type ShokujiiEvent } from './stores/event.js'
 import { getOrders, saveOrder } from './stores/memberOrder.js'
 import { createEventBulkCancelPipelineInTransaction } from './stores/eventBulkCancelPipeline.js'
@@ -83,7 +83,7 @@ export async function applyBulkEventCancelInTransaction(
   }
 
   // Stripe 返金が必要な注文（user_advance / enterprise_subsidy 自己負担等）で stripe_id 欠落なら中止しない
-  const ordersRequiringStripeRefund = ordered.filter((o) => o.menu_price - getMemberOrderDiscountAmount(o) > 0)
+  const ordersRequiringStripeRefund = ordered.filter((o) => orderRequiresStripeIdForCancelRefund(o, eventPayment))
   if (ordersRequiringStripeRefund.length > 0 && ordersRequiringStripeRefund.some((o) => o.stripe_id == null)) {
     throw new Error('Stripe 返金が必要な注文に決済情報（stripe_id）が紐づいていません')
   }
