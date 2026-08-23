@@ -225,15 +225,23 @@ const hasParticipants = computed(() => members.value.length > 0)
                 {{ $t('event_details.date') }}
               </td>
               <td>
-                {{ convertToDatetimeWeekdayShort(event.event_start_datetime) }}
-                〜
-                {{ convertToTimeString(event.event_end_datetime) }}
-                <a @click="openCalendarAddDialog">
-                  <button><v-icon :icon="mdiCalendarPlus" /></button>
-                </a>
+                <span class="custom-table-value-with-action">
+                  {{ convertToDatetimeWeekdayShort(event.event_start_datetime) }}
+                  〜
+                  {{ convertToTimeString(event.event_end_datetime) }}
+                  <v-btn
+                    :icon="mdiCalendarPlus"
+                    size="small"
+                    density="compact"
+                    variant="text"
+                    color="primary"
+                    class="pa-0 custom-table-inline-btn"
+                    @click="openCalendarAddDialog"
+                  />
+                </span>
               </td>
             </tr>
-            <tr>
+            <tr class="custom-table-row-place">
               <td>{{ $t('event_details.place') }}</td>
               <td>
                 <div>
@@ -242,7 +250,7 @@ const hasParticipants = computed(() => members.value.length > 0)
                     :href="`https://www.google.co.jp/maps/search/${event.fullAddress} ${event.event_place}`"
                     target="_blank"
                   >
-                    <v-icon :icon="mdiMapMarkerRadius" />
+                    <v-icon size="small" :icon="mdiMapMarkerRadius" />
                   </a>
                 </div>
                 <div>
@@ -277,7 +285,7 @@ const hasParticipants = computed(() => members.value.length > 0)
                 <EventDiscountChip
                   v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
                   :settings="event.community_bill_settings"
-                  size="x-small"
+                  size="small"
                   class="ml-1"
                 />
               </td>
@@ -289,16 +297,17 @@ const hasParticipants = computed(() => members.value.length > 0)
             <tr v-if="event.minimum_participants?.enabled">
               <td>{{ $t('event_details.minimum_participants') }}</td>
               <td>
-                {{
-                  $t('event_details.minimum_participants_count', {
-                    count: event.minimum_participants.count,
-                  })
-                }}
-                <span>
+                <span class="custom-table-value-with-action">
+                  {{
+                    $t('event_details.minimum_participants_count', {
+                      count: event.minimum_participants.count,
+                    })
+                  }}
                   <v-btn
                     :icon="mdiHelpCircleOutline"
-                    class="pa-0"
+                    class="pa-0 custom-table-inline-btn"
                     color="primary"
+                    size="small"
                     density="compact"
                     variant="text"
                     :aria-label="$t('event_detail.minimum_participants.public_title')"
@@ -311,12 +320,13 @@ const hasParticipants = computed(() => members.value.length > 0)
             <tr>
               <td>{{ $t('event_details.cancel') }}</td>
               <td>
-                {{ $t('event_details.cancel_until_deadline') }}
-                <span>
+                <span class="custom-table-value-with-action">
+                  {{ $t('event_details.cancel_until_deadline') }}
                   <v-btn
                     :icon="mdiHelpCircleOutline"
-                    class="pa-0"
+                    class="pa-0 custom-table-inline-btn"
                     color="primary"
+                    size="small"
                     density="compact"
                     variant="text"
                     @click="isOpenCancelpolicyDialog = true"
@@ -325,11 +335,17 @@ const hasParticipants = computed(() => members.value.length > 0)
                 </span>
               </td>
             </tr>
-            <tr v-if="!hideShareSns">
+            <tr
+              v-if="
+                !hideShareSns &&
+                typeof event.event_sns_hash_tag === 'string' &&
+                event.event_sns_hash_tag.trim() !== ''
+              "
+            >
               <td class="text-small">
                 {{ $t('event_details.sns_hash_tag') }}
               </td>
-              <td v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''">
+              <td>
                 <a
                   :href="`https://twitter.com/search?q=%23${event.event_sns_hash_tag}&f=live`"
                   target="_blank"
@@ -338,7 +354,6 @@ const hasParticipants = computed(() => members.value.length > 0)
                   #{{ event.event_sns_hash_tag }}
                 </a>
               </td>
-              <td v-else>ー</td>
             </tr>
           </tbody>
         </v-table>
@@ -563,10 +578,25 @@ iframe {
   width: 90%;
   font-size: 15px;
 }
-.custom-table td {
+.custom-table :deep(td) {
   padding: 6px !important;
   border: 0px none !important;
-  // vertical-align: top;
+  vertical-align: middle;
+}
+
+.custom-table-row-place :deep(td) {
+  vertical-align: top;
+}
+
+.custom-table-value-with-action {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.custom-table-inline-btn {
+  flex-shrink: 0;
 }
 .text-small {
   font-size: 14px !important;

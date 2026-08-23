@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { getAuth } from 'firebase/auth'
 import { getCommunityPath, getEventPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
+import { priceString } from '@shokujii/base/schemes/converter'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore, buildEventStoreOptions, type EventStoreOptions } from '@shokujii/base/stores/event'
@@ -17,7 +17,7 @@ import {
   resolveEnterpriseSubsidySettingsForMonth,
 } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import type { EnterpriseSubsidySettingsType } from '@shokujii/common/schemas/EnterpriseSubsidySettings.js'
-import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import { formatYearMonth, convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
 import {
   sortEventMemberOrdersForEnterpriseSubsidyReplay,
   sortOrderIdsForEnterpriseSubsidyReplay,
@@ -25,6 +25,8 @@ import {
 import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
+import MinimumParticipantsDialog from '@shokujii/base/components/MinimumParticipantsDialog.vue'
+import type { MinimumParticipantsType } from '@shokujii/common/schemas/Event.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
@@ -34,6 +36,8 @@ import {
   mdiFoodForkDrink,
   mdiPlusCircleOutline,
   mdiMinusCircleOutline,
+  mdiMapMarkerRadius,
+  mdiOpenInNew,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
@@ -551,6 +555,13 @@ const isMenuUpdating = (menuId: string) => {
 }
 
 const isOpenCancelpolicyDialog = ref(false)
+const isOpenMinimumParticipantsDialog = ref(false)
+const selectedMinimumParticipants = ref<MinimumParticipantsType | null>(null)
+
+const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsType) => {
+  selectedMinimumParticipants.value = minimumParticipants
+  isOpenMinimumParticipantsDialog.value = true
+}
 </script>
 
 <template>
@@ -573,72 +584,165 @@ const isOpenCancelpolicyDialog = ref(false)
             />
           </v-col>
         </v-row>
-        <v-card-text class="card-text-style">
-          {{ $t('cart.community_name') }}
-          <router-link :to="getCommunityPath(cartItem.event.community_account)">
-            {{ cartItem.event.community_name }}
-          </router-link>
-        </v-card-text>
-        <v-card-text class="card-text-style">
-          {{ $t('cart.event_name') }}
-          <router-link :to="getEventPath(cartItem.event.community_account, cartItem.event.event_id)">
-            {{ cartItem.event.event_name }}
-          </router-link>
-        </v-card-text>
-        <v-card-text class="card-text-style">
-          {{ $t('cart.place') }} {{ cartItem.event.fullAddress }} {{ cartItem.event.event_place }}
-        </v-card-text>
-        <v-card-text class="card-text-style">
-          {{ $t('cart.date') }}{{ dateWithDayOfWeekString(cartItem.event.event_start_datetime) }}〜{{
-            dateOnlyTimeString(cartItem.event.event_end_datetime)
-          }}
-        </v-card-text>
-        <v-card-text class="card-text-style">
-          {{ $t('cart.deadline') }}{{ dateWithDayOfWeekString(cartItem.event.event_deadline_datetime) }}
-        </v-card-text>
-        <v-card-text class="card-text-style">
-          <div class="d-flex align-center flex-wrap">
-            <span> {{ $t('cart.payment') }}{{ $t(getEventPaymentI18nKey(cartItem.event)) }} </span>
-            <EventDiscountChip
-              v-if="cartItem.event.event_payment === 'community_bill' && cartItem.event.community_bill_settings != null"
-              :settings="cartItem.event.community_bill_settings"
-              size="x-small"
-              class="ml-1"
-            />
-          </div>
-        </v-card-text>
-        <v-card-text
-          v-if="cartItem.event.event_payment === 'community_bill' && cartItem.event.community_bill_settings != null"
-          class="card-text-style pt-0"
-        >
-          <v-alert variant="tonal" color="discount" class="mb-0 cart-community-bill-banner">
-            <template v-if="cartItem.event.community_bill_settings.type === 'free'">
-              {{ $t('discount_settings.banner_free') }}
-            </template>
-            <template v-else-if="cartItem.event.community_bill_settings.type === 'discount'">
-              {{ $t('discount_settings.banner_discount', [cartItem.event.community_bill_settings.off_amount]) }}
-            </template>
-          </v-alert>
-        </v-card-text>
-        <v-card-text class="d-flex align-center card-text-style">
-          <div class="d-flex flex-column align-center">
-            {{ $t('cart.cancel') }}
-          </div>
-          <div class="event-content d-flex flex-column align-center">
-            {{ $t('cart.cancel_until_deadline') }}
-          </div>
-          <div class="d-flex flex-column align-center">
-            <v-btn
-              :icon="mdiHelpCircleOutline"
-              color="primary"
-              density="compact"
-              variant="text"
-              @click="isOpenCancelpolicyDialog = true"
+        <v-table class="custom-table mx-5 my-3" density="compact">
+          <tbody>
+            <tr>
+              <td>{{ $t('event_details.organizer') }}</td>
+              <td>
+                <router-link
+                  :to="getCommunityPath(cartItem.event.community_account)"
+                  class="text-decoration-none"
+                >
+                  {{ cartItem.event.community_name }}
+                </router-link>
+              </td>
+            </tr>
+            <tr>
+              <td>{{ $t('event_details.event_name') }}</td>
+              <td>
+                <router-link
+                  :to="getEventPath(cartItem.event.community_account, cartItem.event.event_id)"
+                  class="text-decoration-none"
+                >
+                  {{ cartItem.event.event_name }}
+                </router-link>
+              </td>
+            </tr>
+            <tr>
+              <td>{{ $t('event_details.date') }}</td>
+              <td>
+                {{ convertToDatetimeWeekdayShort(cartItem.event.event_start_datetime) }}
+                〜
+                {{ convertToTimeString(cartItem.event.event_end_datetime) }}
+              </td>
+            </tr>
+            <tr class="custom-table-row-place">
+              <td>{{ $t('event_details.place') }}</td>
+              <td>
+                <div>
+                  {{ cartItem.event.fullAddress }}
+                  <a
+                    :href="`https://www.google.co.jp/maps/search/${cartItem.event.fullAddress} ${cartItem.event.event_place}`"
+                    target="_blank"
+                  >
+                    <v-icon size="small" :icon="mdiMapMarkerRadius" />
+                  </a>
+                </div>
+                <div>
+                  <div v-if="cartItem.event.event_place_url && cartItem.event.event_place">
+                    {{ cartItem.event.event_place }}
+                    <a :href="cartItem.event.event_place_url" target="_blank">
+                      <v-icon size="small" :icon="mdiOpenInNew" />
+                    </a>
+                  </div>
+                  <div v-else-if="cartItem.event.event_place">
+                    {{ cartItem.event.event_place }}
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>{{ $t('event_details.shop') }}</td>
+              <td>{{ cartItem.event.shop_name }}</td>
+            </tr>
+            <tr>
+              <td>{{ $t('event_details.payment') }}</td>
+              <td>
+                {{ $t(getEventPaymentI18nKey(cartItem.event)) }}
+                <EventDiscountChip
+                  v-if="
+                    cartItem.event.event_payment === 'community_bill' &&
+                    cartItem.event.community_bill_settings != null
+                  "
+                  :settings="cartItem.event.community_bill_settings"
+                  size="small"
+                  class="ml-1"
+                />
+              </td>
+            </tr>
+            <tr
+              v-if="
+                cartItem.event.event_payment === 'community_bill' &&
+                cartItem.event.community_bill_settings != null
+              "
             >
-            </v-btn>
-          </div>
-        </v-card-text>
-        <v-card-text class="card-text-style"> {{ $t('cart.shop') }}{{ cartItem.event.shop_name }} </v-card-text>
+              <td colspan="2" class="pt-0">
+                <v-alert variant="tonal" color="discount" class="mb-0 cart-community-bill-banner">
+                  <template v-if="cartItem.event.community_bill_settings.type === 'free'">
+                    {{ $t('discount_settings.banner_free') }}
+                  </template>
+                  <template v-else-if="cartItem.event.community_bill_settings.type === 'discount'">
+                    {{
+                      $t('discount_settings.banner_discount', [cartItem.event.community_bill_settings.off_amount])
+                    }}
+                  </template>
+                </v-alert>
+              </td>
+            </tr>
+            <tr>
+              <td>{{ $t('event_details.deadline') }}</td>
+              <td>{{ convertToDatetimeWeekdayShort(cartItem.event.event_deadline_datetime) }}</td>
+            </tr>
+            <tr v-if="cartItem.event.minimum_participants?.enabled">
+              <td>{{ $t('event_details.minimum_participants') }}</td>
+              <td>
+                <span class="custom-table-value-with-action">
+                  {{
+                    $t('event_details.minimum_participants_count', {
+                      count: cartItem.event.minimum_participants.count,
+                    })
+                  }}
+                  <v-btn
+                    :icon="mdiHelpCircleOutline"
+                    class="pa-0 custom-table-inline-btn"
+                    color="primary"
+                    size="small"
+                    density="compact"
+                    variant="text"
+                    :aria-label="$t('event_detail.minimum_participants.public_title')"
+                    @click="openMinimumParticipantsDialog(cartItem.event.minimum_participants)"
+                  >
+                  </v-btn>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>{{ $t('event_details.cancel') }}</td>
+              <td>
+                <span class="custom-table-value-with-action">
+                  {{ $t('event_details.cancel_until_deadline') }}
+                  <v-btn
+                    :icon="mdiHelpCircleOutline"
+                    class="pa-0 custom-table-inline-btn"
+                    color="primary"
+                    size="small"
+                    density="compact"
+                    variant="text"
+                    @click="isOpenCancelpolicyDialog = true"
+                  >
+                  </v-btn>
+                </span>
+              </td>
+            </tr>
+            <tr
+              v-if="
+                typeof cartItem.event.event_sns_hash_tag === 'string' &&
+                cartItem.event.event_sns_hash_tag.trim() !== ''
+              "
+            >
+              <td class="text-small">{{ $t('event_details.sns_hash_tag') }}</td>
+              <td>
+                <a
+                  :href="`https://twitter.com/search?q=%23${cartItem.event.event_sns_hash_tag}&f=live`"
+                  target="_blank"
+                  class="text-decoration-none"
+                >
+                  #{{ cartItem.event.event_sns_hash_tag }}
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
         <v-card-text class="card-text-style">
           {{ $t('cart.order_contents') }}
         </v-card-text>
@@ -823,6 +927,11 @@ const isOpenCancelpolicyDialog = ref(false)
     </v-col>
   </v-row>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
+  <MinimumParticipantsDialog
+    v-if="selectedMinimumParticipants != null"
+    v-model="isOpenMinimumParticipantsDialog"
+    :minimum-participants="selectedMinimumParticipants"
+  />
 
   <ConfirmDialog
     v-model="openConfirmOrder"
@@ -870,6 +979,43 @@ const isOpenCancelpolicyDialog = ref(false)
   padding-bottom: 14px !important;
 }
 
+.custom-table td:first-child {
+  width: 18%;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+.custom-table {
+  border-collapse: collapse;
+  width: 90%;
+  font-size: 15px;
+}
+
+.custom-table :deep(td) {
+  padding: 6px !important;
+  border: 0 none !important;
+  vertical-align: middle;
+}
+
+.custom-table-row-place :deep(td) {
+  vertical-align: top;
+}
+
+.custom-table-value-with-action {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.custom-table-inline-btn {
+  flex-shrink: 0;
+}
+
+.text-small {
+  font-size: 14px !important;
+}
+
 .x-post-section {
   background-color: #fafcfe;
   border-radius: 8px;
@@ -894,6 +1040,11 @@ const isOpenCancelpolicyDialog = ref(false)
   .card-text-style {
     font-size: 12px !important;
     padding-bottom: 12px !important;
+  }
+
+  .custom-table td:first-child,
+  .custom-table {
+    font-size: 12px;
   }
 
   .cart-community-bill-banner :deep(.v-alert__content),
