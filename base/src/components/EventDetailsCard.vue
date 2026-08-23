@@ -503,8 +503,12 @@ const hasParticipants = computed(() => members.value.length > 0)
 }
 
 .event-details-card__section-title-count {
-  font-size: inherit;
+  font-size: 1.125rem; /* 18px: 「参加者」見出しより一段小さくする */
   font-weight: inherit;
+
+  @media (min-width: 600px) {
+    font-size: 1.25rem; /* 20px */
+  }
 }
 
 /* text-h4 は付けない（Vuetify の font-size が !important で競合するため）。ここで xs / sm を定義 */
