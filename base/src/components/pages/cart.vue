@@ -589,10 +589,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
             <tr>
               <td>{{ $t('event_details.organizer') }}</td>
               <td>
-                <router-link
-                  :to="getCommunityPath(cartItem.event.community_account)"
-                  class="text-decoration-none"
-                >
+                <router-link :to="getCommunityPath(cartItem.event.community_account)" class="text-decoration-none">
                   {{ cartItem.event.community_name }}
                 </router-link>
               </td>
@@ -651,8 +648,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                 {{ $t(getEventPaymentI18nKey(cartItem.event)) }}
                 <EventDiscountChip
                   v-if="
-                    cartItem.event.event_payment === 'community_bill' &&
-                    cartItem.event.community_bill_settings != null
+                    cartItem.event.event_payment === 'community_bill' && cartItem.event.community_bill_settings != null
                   "
                   :settings="cartItem.event.community_bill_settings"
                   size="small"
@@ -661,10 +657,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
               </td>
             </tr>
             <tr
-              v-if="
-                cartItem.event.event_payment === 'community_bill' &&
-                cartItem.event.community_bill_settings != null
-              "
+              v-if="cartItem.event.event_payment === 'community_bill' && cartItem.event.community_bill_settings != null"
             >
               <td colspan="2" class="pt-0">
                 <v-alert variant="tonal" color="discount" class="mb-0 cart-community-bill-banner">
@@ -672,9 +665,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                     {{ $t('discount_settings.banner_free') }}
                   </template>
                   <template v-else-if="cartItem.event.community_bill_settings.type === 'discount'">
-                    {{
-                      $t('discount_settings.banner_discount', [cartItem.event.community_bill_settings.off_amount])
-                    }}
+                    {{ $t('discount_settings.banner_discount', [cartItem.event.community_bill_settings.off_amount]) }}
                   </template>
                 </v-alert>
               </td>
@@ -726,8 +717,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
             </tr>
             <tr
               v-if="
-                typeof cartItem.event.event_sns_hash_tag === 'string' &&
-                cartItem.event.event_sns_hash_tag.trim() !== ''
+                typeof cartItem.event.event_sns_hash_tag === 'string' && cartItem.event.event_sns_hash_tag.trim() !== ''
               "
             >
               <td class="text-small">{{ $t('event_details.sns_hash_tag') }}</td>

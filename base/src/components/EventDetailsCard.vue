@@ -337,9 +337,7 @@ const hasParticipants = computed(() => members.value.length > 0)
             </tr>
             <tr
               v-if="
-                !hideShareSns &&
-                typeof event.event_sns_hash_tag === 'string' &&
-                event.event_sns_hash_tag.trim() !== ''
+                !hideShareSns && typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''
               "
             >
               <td class="text-small">
