@@ -18,6 +18,7 @@ import {
 } from '@shokujii/common/utils/eventMemberOrderSort.js'
 import {
   adjustEnterpriseMemberMonthlyUsage,
+  adjustEnterpriseMemberMonthlyUsageBulk,
   getEnterpriseMember,
   getEnterpriseMemberInTransaction,
   getEnterpriseById,
@@ -450,6 +451,28 @@ export function sumEnterpriseSubsidyAmounts(orders: EventMemberOrder[]): number 
 
 export function sumEnterpriseUserPaidAmounts(orders: EventMemberOrder[]): number {
   return orders.reduce((sum, order) => sum + computeOrderSelfPayUnitAmount(order), 0)
+}
+
+/**
+ * cancelEventBulkCore: 複数ユーザーの enterprise_subsidy usage を一括減算。
+ * Firestore Transaction は write 後の read を拒否するため、ユーザーごとに revert を繰り返さず
+ * 全メンバーの read を先に済ませてから write する。
+ */
+export async function revertEnterpriseSubsidyUsageOnCancelBulk(params: {
+  enterpriseId: string
+  eventMonth: string
+  ordersByUser: Map<string, EventMemberOrder[]>
+  transaction: Transaction
+}): Promise<void> {
+  const { enterpriseId, eventMonth, ordersByUser, transaction } = params
+  const adjustments = [...ordersByUser].map(([userId, orders]) => ({
+    userId,
+    eventMonth,
+    subsidyDelta: -sumEnterpriseSubsidyAmounts(orders),
+    orderCountDelta: -orders.length,
+    userPaidDelta: -sumEnterpriseUserPaidAmounts(orders),
+  }))
+  await adjustEnterpriseMemberMonthlyUsageBulk(enterpriseId, adjustments, transaction)
 }
 
 /** cancelOrders: enterprise_subsidy の usage を減算 */

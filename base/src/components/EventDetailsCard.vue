@@ -36,6 +36,7 @@ import LineIcon from '@shokujii/base/icons/line'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
 import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
+import MinimumParticipantsDialog from '@shokujii/base/components/MinimumParticipantsDialog.vue'
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
 import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
 import { useDisplay } from 'vuetify'
@@ -93,6 +94,7 @@ const isOpenConfirmDialog = ref(false)
 const isOpenCalendarAddDialog = ref(false)
 const isShowQrCode = ref(false)
 const isOpenCancelpolicyDialog = ref(false)
+const isOpenMinimumParticipantsDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
 const currentUserStore = useCurrentUserStore()
@@ -282,6 +284,28 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
               <td>{{ $t('event_details.deadline') }}</td>
               <td>{{ convertToDatetimeWeekdayShort(event.event_deadline_datetime) }}</td>
             </tr>
+            <tr v-if="event.minimum_participants?.enabled">
+              <td>{{ $t('event_details.minimum_participants') }}</td>
+              <td>
+                {{
+                  $t('event_details.minimum_participants_count', {
+                    count: event.minimum_participants.count,
+                  })
+                }}
+                <span>
+                  <v-btn
+                    :icon="mdiHelpCircleOutline"
+                    class="pa-0"
+                    color="primary"
+                    density="compact"
+                    variant="text"
+                    :aria-label="$t('event_detail.minimum_participants.public_title')"
+                    @click="isOpenMinimumParticipantsDialog = true"
+                  >
+                  </v-btn>
+                </span>
+              </td>
+            </tr>
             <tr>
               <td>{{ $t('event_details.cancel') }}</td>
               <td>
@@ -436,6 +460,11 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
     </v-row>
   </v-card>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
+  <minimum-participants-dialog
+    v-if="event.minimum_participants?.enabled"
+    v-model="isOpenMinimumParticipantsDialog"
+    :minimum-participants="event.minimum_participants"
+  />
   <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="false" :ok-click="login">
     {{ $t('event_details.contact_community_after_login') }}
   </confirm-dialog>

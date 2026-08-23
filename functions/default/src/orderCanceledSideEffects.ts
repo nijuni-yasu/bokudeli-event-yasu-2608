@@ -12,8 +12,13 @@ const logger = createModuleLogger('orderCanceledSideEffects')
  * 注文キャンセル後に event.members を ordered から再集約し、友達グラフから当該イベントの履歴を取り除く。
  * cancelOrders から呼び出す（member_orders 単位の onDocumentWritten では N 回発火するため廃止）。
  */
-export async function applyOrderCanceledSideEffects(params: { event: ShokujiiEvent; userId: string }): Promise<void> {
-  const { event, userId } = params
+export async function applyOrderCanceledSideEffects(params: {
+  event: ShokujiiEvent
+  userId: string
+  /** 一括中止では参加者全員分を別途 remove する */
+  skipFriendHistoryRemoval?: boolean
+}): Promise<void> {
+  const { event, userId, skipFriendHistoryRemoval = false } = params
   const { community_id: communityId, id: eventId } = event
 
   let recalcSucceeded = false
@@ -51,23 +56,25 @@ export async function applyOrderCanceledSideEffects(params: { event: ShokujiiEve
   }
 
   // 友達グラフから当該イベントの履歴を取り除く（当該ユーザー×イベントで ordered が 0 件のときのみ。部分キャンセルは RC-45）
-  try {
-    const remainingOrdered = (await getOrders(communityId, eventId, 'ordered')).filter((o) => o.user_id === userId)
-    if (remainingOrdered.length === 0) {
-      const memberIds = await getMemberIds(communityId, eventId)
-      await removeEventFromFriendHistory({
-        event_id: eventId,
-        anchor_user_id: userId,
-        counterpart_user_ids: memberIds.filter((id) => id !== userId),
+  if (!skipFriendHistoryRemoval) {
+    try {
+      const remainingOrdered = (await getOrders(communityId, eventId, 'ordered')).filter((o) => o.user_id === userId)
+      if (remainingOrdered.length === 0) {
+        const memberIds = await getMemberIds(communityId, eventId)
+        await removeEventFromFriendHistory({
+          event_id: eventId,
+          anchor_user_id: userId,
+          counterpart_user_ids: memberIds.filter((id) => id !== userId),
+        })
+      }
+    } catch (error) {
+      logger.error('removeEventFromFriendHistory failed', {
+        error,
+        communityId,
+        eventId,
+        userId,
       })
     }
-  } catch (error) {
-    logger.error('removeEventFromFriendHistory failed', {
-      error,
-      communityId,
-      eventId,
-      userId,
-    })
   }
 
   // キャンセルしたユーザーのマイページ用カウント（ordered_food_count / participated_event_count）を再集計する

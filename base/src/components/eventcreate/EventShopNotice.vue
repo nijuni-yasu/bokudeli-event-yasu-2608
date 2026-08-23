@@ -4,8 +4,16 @@ import { useI18n } from 'vue-i18n'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useValidators } from '@shokujii/base/composable/validators.js'
-import { mdiStorefrontOutline, mdiEmailOutline, mdiCalendar, mdiHandExtendedOutline, mdiTimerSand } from '@mdi/js'
+import {
+  mdiStorefrontOutline,
+  mdiEmailOutline,
+  mdiCalendar,
+  mdiHandExtendedOutline,
+  mdiTimerSand,
+  mdiAccountCheckOutline,
+} from '@mdi/js'
 import { convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
+import { computeMinimumParticipantsJudgmentDatetime } from '@shokujii/common/utils/minimumParticipants.js'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 
 const emit = defineEmits<{
@@ -27,6 +35,27 @@ const pickUpStartDateTime = computed(
   () => `${convertToDuration(event.value.event_start_datetime - 30 * 60 * 1000, event.value.event_start_datetime)}`,
 )
 const eventDeadlineDateTime = computed(() => `${convertToDatetimeWeekdayShort(event.value.event_deadline_datetime)}`)
+
+const minimumParticipants = computed(() => event.value.minimum_participants ?? null)
+
+const minimumParticipantsJudgmentDateTime = computed(() => {
+  const mp = minimumParticipants.value
+  if (mp == null) {
+    return ''
+  }
+  const judgmentDatetime =
+    mp.judgment_datetime ??
+    computeMinimumParticipantsJudgmentDatetime(event.value.event_deadline_datetime, mp.judgment_days_before)
+  return convertToDatetimeWeekdayShort(judgmentDatetime)
+})
+
+const minimumParticipantsBelowCount = computed(() => {
+  const mp = minimumParticipants.value
+  if (mp == null) {
+    return 0
+  }
+  return Math.max(0, mp.count - 1)
+})
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
 const shop_address = computed(() => (shop.value !== null ? shop.value.fullAddress : ''))
@@ -137,6 +166,23 @@ defineExpose({
               :readonly="true"
               variant="solo-filled"
               :hint="$t('shop_notice.deadline_date_hint')"
+            />
+          </v-col>
+        </v-row>
+        <v-row v-if="minimumParticipants != null" class="justify-center">
+          <v-col cols="12">
+            <v-text-field
+              :model-value="minimumParticipantsJudgmentDateTime"
+              :label="$t('shop_notice.minimum_participants_judgment_date')"
+              :prepend-inner-icon="mdiAccountCheckOutline"
+              :readonly="true"
+              variant="solo-filled"
+              :hint="
+                $t('shop_notice.minimum_participants_judgment_date_hint', {
+                  days: minimumParticipants.judgment_days_before,
+                  below: minimumParticipantsBelowCount,
+                })
+              "
             />
           </v-col>
         </v-row>

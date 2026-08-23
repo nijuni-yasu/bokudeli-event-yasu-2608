@@ -13,6 +13,7 @@ import { sendUnorderedRemindMailToManagers } from './remindUnorderedMail.js'
 import { sendRejectOrderMailToShop } from './rejectOrderMail.js'
 import { sendLetter } from './letter.js'
 import { sendInvoiceMailToOrganizers } from './eventBillInvoice.js'
+import { processMinimumParticipantsChecks } from './minimumParticipants.js'
 
 const ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
 const ORDER_DEADLINE_MAIL_DELAY_MILLIS = 5 * 60 * 1000
@@ -23,7 +24,7 @@ export const pollingTask = onSchedule(
     region: 'asia-northeast1',
     timeoutSeconds: 540, // 9 minutes
     memory: '1GiB',
-    secrets: ['SENDGRID_API_KEY', 'PDF_SERVICES_CLIENT_ID', 'PDF_SERVICES_CLIENT_SECRET'],
+    secrets: ['SENDGRID_API_KEY', 'PDF_SERVICES_CLIENT_ID', 'PDF_SERVICES_CLIENT_SECRET', 'STRIPE_API_KEY'],
   },
   async (context) => {
     const now = DateTime.fromISO(context.scheduleTime).toMillis()
@@ -65,6 +66,8 @@ export const pollingTask = onSchedule(
     // コミュニティ管理者向け・未注文リマインド（accepting_order ログの updated_at 起点、48 時間おき・最大 30 日まで）
     // イベント取得を 1 回にし、ウィンドウ判定は remindUnorderedMail 内でループ
     promiseFunctions.push(sendUnorderedRemindMailToManagers(end, start, end))
+
+    promiseFunctions.push(processMinimumParticipantsChecks(start, end))
 
     await Promise.all(promiseFunctions)
   },

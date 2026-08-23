@@ -38,6 +38,10 @@ import { getCommunityPath, getManageCommunityAlbumPath } from '@/router/utils'
 import { fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/utils/fetchLocation'
 import { updateEventDeadlineFromShop } from '@shokujii/common/utils/eventShopDeadline.js'
 import {
+  applyMinimumParticipantsForEventSave,
+  MinimumParticipantsSaveError,
+} from '@shokujii/common/utils/minimumParticipants.js'
+import {
   getDeliverablePartnerShopsSorted,
   isPartnerShopIdDeliverableAt,
 } from '@shokujii/common/utils/partnerShopDeliverable.js'
@@ -614,6 +618,9 @@ const createEventDraft = async (): Promise<BokudeliEvent | null> => {
   event.value.community_id = communityId
   event.value.created_by = handleUserId
   event.value.updated_by = handleUserId
+  if (!persistMinimumParticipantsOnSave()) {
+    return null
+  }
   const newEvent = await createNewEvent(toRaw(event.value), coverImage.value, {
     draftPreparer: eventDraftPreparerFromEnterpriseId(communityStore.community?.enterprise_id),
   })
@@ -627,6 +634,22 @@ const createEventDraft = async (): Promise<BokudeliEvent | null> => {
   }
   hasFirestoreDraft.value = true
   return newEvent
+}
+
+const persistMinimumParticipantsOnSave = (): boolean => {
+  if (event.value == null) {
+    return false
+  }
+  try {
+    applyMinimumParticipantsForEventSave(event.value)
+    return true
+  } catch (error) {
+    if (error instanceof MinimumParticipantsSaveError) {
+      showAlertDialog(error.message)
+      return false
+    }
+    throw error
+  }
 }
 
 const updateEventDraft = async (): Promise<BokudeliEvent | null> => {
@@ -651,6 +674,10 @@ const updateEventDraft = async (): Promise<BokudeliEvent | null> => {
   // 既存編集は props.eventId、新規ウィザードの仮保存済みは event.value.event_id を store キーにする
   const persistId = props.eventId ?? (hasFirestoreDraft.value ? event.value.event_id : null)
   if (persistId == null || persistId === '') {
+    return null
+  }
+
+  if (!persistMinimumParticipantsOnSave()) {
     return null
   }
 

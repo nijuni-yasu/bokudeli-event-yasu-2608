@@ -7,6 +7,14 @@ const nowMillis = () => DateTime.now().toMillis()
 export const EVENT_MEMBER_ORDER_STATUS_VALUES = ['in_cart', 'processing', 'ordered', 'canceled'] as const
 export type EventMemberOrderStatusType = (typeof EVENT_MEMBER_ORDER_STATUS_VALUES)[number]
 
+export const EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES = [
+  'user',
+  'event_minimum_participants',
+  'event_organizer',
+  'organizer_reject',
+] as const
+export type EventMemberOrderCancelSourceType = (typeof EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES)[number]
+
 // ── EventMember ──
 
 const EventMemberDbSchema = z.object({
@@ -78,6 +86,8 @@ const EventMemberOrderDbSchema = z.object({
   stripe_id: z.string().nonempty().optional(),
   ordered_at: TimestampSchema.optional(),
   canceled_at: TimestampSchema.optional(),
+  cancel_source: z.enum(EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES).optional(),
+  canceled_by: z.string().nonempty().optional(),
   // processing 状態のときだけ存在する一時フィールド。ordered 確定時 / async_payment_failed で in_cart に戻す際に
   // クラス側で undefined を代入し、optionalDeleteField の transform で FieldValue.delete() に変換して Firestore から削除する。
   processing_at: optionalDeleteField(TimestampSchema),
@@ -103,6 +113,8 @@ const EventMemberOrderAppSchema = z.object({
   carted_at: EpochMillisSchema.optional(),
   ordered_at: EpochMillisSchema.optional(),
   canceled_at: EpochMillisSchema.optional(),
+  cancel_source: z.enum(EVENT_MEMBER_ORDER_CANCEL_SOURCE_VALUES).optional(),
+  canceled_by: z.string().nonempty().optional(),
   processing_at: EpochMillisSchema.optional(),
   processing_payment_intent: z.string().nonempty().optional(),
   failed_async_payment_intent: z.string().nonempty().optional(),
@@ -136,6 +148,8 @@ export class EventMemberOrder {
   stripe_id?: string
   ordered_at?: number
   canceled_at?: number
+  cancel_source?: EventMemberOrderCancelSourceType
+  canceled_by?: string
   processing_at?: number
   processing_payment_intent?: string
   failed_async_payment_intent?: string

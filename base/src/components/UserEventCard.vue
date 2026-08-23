@@ -4,6 +4,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { orderCanceledLabelI18nKey } from '@shokujii/common/utils/orderCancelSource.js'
 import { computeOrderLineNet } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 import { convertToDate, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
@@ -81,6 +82,26 @@ const isShowCancelButton = computed(
 )
 
 const isAllCanceled = computed(() => props.orders.length > 0 && props.orders.every((o) => o.status === 'canceled'))
+
+const eventCanceled = computed(() => props.event.event_status.value === 'event_canceled')
+
+const orderCanceledLabelKey = (order: EventMemberOrder) =>
+  orderCanceledLabelI18nKey(order.cancel_source, eventCanceled.value)
+
+const allCanceledLabelKey = computed(() => {
+  if (props.orders.length === 0) {
+    return 'user_event_card.canceled'
+  }
+  const keys = props.orders.map((o) => orderCanceledLabelKey(o))
+  const unique = new Set(keys)
+  if (unique.size === 1) {
+    return keys[0]!
+  }
+  if (keys.some((k) => k === 'user_event_card.canceled_event')) {
+    return 'user_event_card.canceled_event'
+  }
+  return 'user_event_card.canceled'
+})
 
 const isShowProcessing = computed(() => props.orders.some((o) => o.status === 'processing'))
 
@@ -169,6 +190,7 @@ type CancelDialogCanceledRow = {
   menu_name: string
   orderDateMillis: number | null
   menu_price: number
+  canceledLabelKey: ReturnType<typeof orderCanceledLabelI18nKey>
 }
 
 const cancelOrderedRows = ref<CancelDialogOrderedRow[]>([])
@@ -199,6 +221,7 @@ const initCancelDialogRows = () => {
       menu_name: o.menu_name,
       orderDateMillis: ts > 0 ? ts : null,
       menu_price: o.menu_price,
+      canceledLabelKey: orderCanceledLabelKey(o),
     }
   })
 }
@@ -336,7 +359,7 @@ const submitCancel = () => {
         <v-col v-else-if="isShowProcessing" class="d-flex justify-end">
           {{ $t('user_event_card.processing') }}
         </v-col>
-        <v-col v-else-if="isAllCanceled" class="d-flex justify-end">{{ $t('user_event_card.canceled') }} </v-col>
+        <v-col v-else-if="isAllCanceled" class="d-flex justify-end">{{ $t(allCanceledLabelKey) }} </v-col>
       </v-row>
       <v-row v-if="isOwner && isShowInvoiceButton">
         <v-col class="d-flex justify-end pa-1 flex-wrap ga-1">
@@ -460,11 +483,11 @@ const submitCancel = () => {
                   {{ $n(row.menu_price, 'currency') }}
                 </span>
                 <span class="cancel-dialog-table__col-pay text-end text-sm-end">
-                  {{ $t('user_event_card.canceled') }}
+                  {{ $t(row.canceledLabelKey) }}
                 </span>
               </template>
               <span v-else class="cancel-dialog-table__col-pay text-end text-sm-end">
-                {{ $t('user_event_card.canceled') }}
+                {{ $t(row.canceledLabelKey) }}
               </span>
             </div>
           </div>
