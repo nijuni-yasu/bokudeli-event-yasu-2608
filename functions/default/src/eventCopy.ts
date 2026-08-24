@@ -91,10 +91,9 @@ export const copyEventCore = async (
     event_place: srcEvent.event_place,
     event_place_url: srcEvent.event_place_url,
     subdomain_tags: srcEvent.subdomain_tags,
-    ...(srcEvent.enterprise_id == null || srcEvent.enterprise_id === '') &&
-    srcEvent.members_visible_min_count != null
+    ...((srcEvent.enterprise_id == null || srcEvent.enterprise_id === '') && srcEvent.members_visible_min_count != null
       ? { members_visible_min_count: srcEvent.members_visible_min_count }
-      : {},
+      : {}),
 
     // 更新するもの
     event_name: `${srcEvent.event_name} ${formatCopyEventDateSuffix(startTime)}`, // TODO: multilang
