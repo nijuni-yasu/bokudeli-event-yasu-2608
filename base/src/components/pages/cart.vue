@@ -28,6 +28,7 @@ import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue
 import MinimumParticipantsDialog from '@shokujii/base/components/MinimumParticipantsDialog.vue'
 import type { MinimumParticipantsType } from '@shokujii/common/schemas/Event.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { buildEventMapsSearchUrl } from '@shokujii/base/utils/eventMapsSearchUrl.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import {
@@ -244,16 +245,8 @@ const getEventPaymentI18nKey = (event: BokudeliEvent) => {
   return `payment.${event.event_payment}`
 }
 
-const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
-  const query = [event.fullAddress, event.event_place ?? '']
-    .map((part) => part.trim())
-    .filter((part) => part !== '')
-    .join(' ')
-  if (query === '') {
-    return undefined
-  }
-  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
-}
+const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined =>
+  buildEventMapsSearchUrl(event.fullAddress, event.event_place)
 
 /** 福利厚生割引イベントのカート表示 */
 const hasCartEnterpriseSubsidy = (event: BokudeliEvent): boolean => event.event_payment === 'enterprise_subsidy'
@@ -642,13 +635,13 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                   </a>
                 </div>
                 <div>
-                  <div v-if="cartItem.event.event_place_url && cartItem.event.event_place">
+                  <div v-if="cartItem.event.event_place !== '' && cartItem.event.event_place_url !== ''">
                     {{ cartItem.event.event_place }}
                     <a :href="cartItem.event.event_place_url" target="_blank" rel="noopener noreferrer">
                       <v-icon size="small" :icon="mdiOpenInNew" />
                     </a>
                   </div>
-                  <div v-else-if="cartItem.event.event_place">
+                  <div v-else-if="cartItem.event.event_place !== ''">
                     {{ cartItem.event.event_place }}
                   </div>
                 </div>
@@ -1051,7 +1044,10 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
     padding-bottom: 12px !important;
   }
 
-  .custom-table td:first-child,
+  .custom-table td:first-child {
+    font-size: 12px;
+  }
+
   .custom-table {
     font-size: 12px;
     width: 100%;

@@ -20,6 +20,10 @@
 | [x] | RC-14 | 3843475662 | 🟡 修正提案 | ✅ 対応済み | 📤 スコープ外 | 📄 ドキュメント | 📄 ドキュメントのみ | S | SEO タスク 85 行目が Rich Results Test 未実施と矛盾<br>GSC 未完了のみ残す表現に修正 |
 | [x] | RC-15 | 3843475667 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | カート概要テーブルがモバイルで横はみ出し<br>`mx-2` + モバイル `width: 100%` |
 | [x] | RC-16 | 3843475674 | 🟡 修正提案 | ✅ 対応済み | 📤 スコープ外 | 📄 ドキュメント | 📄 ドキュメントのみ | S | SEO-04/06 を未実施なのに完了扱い<br>ブラウザ・`/c/xxx` 未確認のため [ ] に戻す |
+| [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📐 設計 | 🔧 微修正 | S | `eventMapsSearchUrl` が 3 ファイルで重複<br>`base/src/utils/eventMapsSearchUrl.ts` に集約 + テスト追加 |
+| [ ] | RC-18 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📐 設計 | 📐 リファクタ | M | イベント概要テーブルの markup / CSS を cart へ全文コピー<br>共通パネル化の検討（工数 M のため自動修正対象外） |
+| [x] | RC-19 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | cart で文字列に truthy チェック（`event_place_url &&`）<br>`!== ''` に変更 |
+| [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | モバイル media query で `td:first-child` にも `width: 100%`<br>セレクタを分離しラベル列の幅指定を復帰 |
 
 ---
 
@@ -642,5 +646,177 @@ This issue also appears in the following locations of the same file:
 **想定工数**: S
 
 **判断理由**: SEO-04 / SEO-06 を `[ ]` に戻し、SEO-05（Rich Results Test）のみ完了のまま維持。
+
+---
+
+## 評価セッション（2026-08-24 22:05・shokujii-code-review）
+
+- **評価日時**: 2026-08-24 22:05 JST
+- **ブランチ名**: fix/2297
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2298
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-17 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📐 設計 | 🔧 微修正 | S | `eventMapsSearchUrl` が 3 ファイルで重複<br>`base/src/utils/eventMapsSearchUrl.ts` に集約 + テスト追加 |
+| [ ] | RC-18 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📐 設計 | 📐 リファクタ | M | イベント概要テーブルの markup / CSS を cart へ全文コピー<br>共通パネル化の検討（工数 M のため自動修正対象外） |
+| [x] | RC-19 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | cart で文字列に truthy チェック（`event_place_url &&`）<br>`!== ''` に変更 |
+| [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | モバイル media query で `td:first-child` にも `width: 100%`<br>セレクタを分離しラベル列の幅指定を復帰 |
+
+---
+
+**識別子**: RC-17（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventDetailsCard.vue:81`
+
+**該当コード**（修正前）:
+
+```ts
+const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
+  const query = [event.fullAddress, event.event_place ?? '']
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' ')
+  if (query === '') {
+    return undefined
+  }
+  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
+}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-7 / RC-12 の対応で同一の Google マップ URL 生成関数が `base/src/components/pages/cart.vue`・`base/src/components/EventDetailsCard.vue`・`partner/src/pages/order/[eventId].vue` の 3 箇所に複製されている。今後 URL 形式やエンコード方針を変えるときに再び全箇所を直す必要があり、`encodeURIComponent` 漏れ（元の不具合）が再発しやすい → `base/src/utils/` の共通 util に切り出し、3 箇所から呼ぶ。純粋関数なのでテスト方針に沿って vitest も追加する。
+
+**コメント要約**: Maps 検索 URL 生成が 3 ファイルで重複。共通 util 化とテスト追加が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📐 設計
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `base/src/utils/eventMapsSearchUrl.ts`（`buildEventMapsSearchUrl`）に集約し、EventDetailsCard は `computed`、cart はイベント単位の薄いラッパー、partner は既存 `computed` から呼ぶ形に統一。`base/src/utils/eventMapsSearchUrl.test.ts` を追加（エンコード・空要素除去・両方空で `undefined`）。`event_place` は AppSchema で `string`（既定 `''`）のため、重複時に付いていた `?? ''` は削除。
+
+---
+
+**識別子**: RC-18（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventDetailsCard.vue:247`
+
+**該当コード**（cart 側に複製されたテーブル）:
+
+```vue
+<tr class="custom-table-row-place">
+  <td>{{ $t('event_details.place') }}</td>
+  ...
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/M]: カート概要をイベントページに揃える対応で、主催者 / イベント名 / 開催日時 / 開催場所 / 食事の提供 / 支払い方法 / 注文期限 / 最小催行人数 / キャンセル / ハッシュタグの行構成（約 100 行の markup）と `.custom-table*` の CSS 約 30 行が `EventDetailsCard.vue` から `pages/cart.vue` へほぼ全文コピーされている。表示仕様を変えるたびに 2 箇所を同時修正する必要があり、片方だけ直る事故が起きやすい → イベント概要テーブルを `base/src/components/event/` 配下の共通パネル（例: `EventSummaryTable.vue`）に切り出し、`hideShareSns` 等の差分を props で渡す。
+
+**コメント要約**: イベント概要テーブルの markup と CSS が EventDetailsCard と cart で二重管理になっている。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📐 設計
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 共通パネル化は EventDetailsCard 側の行構成（カレンダー追加ボタン・SNS 共有等）との差分整理が必要で工数 M、修正方針も一意ではないため自動修正対象外。今回は共通 util 化（RC-17）と CSS 不具合（RC-20）のみ対応し、パネル化は別対応とする。
+
+---
+
+**識別子**: RC-19（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/pages/cart.vue:638`
+
+**該当コード**（修正前）:
+
+```vue
+<div v-if="cartItem.event.event_place_url && cartItem.event.event_place">
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 新規追加した会場行の `v-if` が文字列に truthy チェックを使っている。プロジェクト規約では文字列の判定に falsy チェックを使わず `!= null` / `!== ''` を用いる（`event_place` / `event_place_url` は AppSchema で既定 `''` の `string`）→ `!== ''` の明示比較にする。
+
+**コメント要約**: 文字列に truthy チェックを使用。規約どおり `!== ''` にする。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `event_place !== '' && event_place_url !== ''` / `v-else-if="event_place !== ''"` に変更（判定結果は変わらず、規約に準拠）。EventDetailsCard 側の同一表現は本 PR の差分外のため今回は変更しない。
+
+---
+
+**識別子**: RC-20（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/pages/cart.vue:1047`
+
+**該当コード**（修正前）:
+
+```css
+.custom-table td:first-child,
+.custom-table {
+  font-size: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-15（モバイル横はみ出し）対応の media query でラベル列セレクタとテーブルセレクタをグルーピングしているため、`width: 100%` がテーブルだけでなく `td:first-child` にも適用される。1 列目が `white-space: nowrap` で最大幅を要求するため、959px 以下では値列が min-content まで潰れて住所等が細く折り返される恐れがある（デスクトップの `width: 18%` 指定と矛盾） → セレクタを分離し、`width: 100%` はテーブルのみに適用する。
+
+**コメント要約**: モバイル media query の grouping ミスでラベル列に `width: 100%` が当たる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `.custom-table td:first-child` は `font-size` のみ、`.custom-table` に `width` / `max-width` / `box-sizing` を残す形へ分離。RC-15 の意図（テーブル幅 100%）は維持。
 
 ---

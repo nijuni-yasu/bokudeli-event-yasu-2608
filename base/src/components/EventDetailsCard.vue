@@ -15,6 +15,7 @@ import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
+import { buildEventMapsSearchUrl } from '@shokujii/base/utils/eventMapsSearchUrl'
 import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
 import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 import VueQrious from 'vue-qrious'
@@ -88,16 +89,7 @@ const eventUrl = computed(() => {
   return getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, props.event.community_account, props.event.event_id)
 })
 
-const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
-  const query = [event.fullAddress, event.event_place ?? '']
-    .map((part) => part.trim())
-    .filter((part) => part !== '')
-    .join(' ')
-  if (query === '') {
-    return undefined
-  }
-  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
-}
+const eventMapsSearchUrl = computed(() => buildEventMapsSearchUrl(props.event.fullAddress, props.event.event_place))
 
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
@@ -268,12 +260,7 @@ const hasParticipants = computed(() => members.value.length > 0)
               <td>
                 <div>
                   {{ event.fullAddress }}
-                  <a
-                    v-if="eventMapsSearchUrl(event)"
-                    :href="eventMapsSearchUrl(event)"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a v-if="eventMapsSearchUrl" :href="eventMapsSearchUrl" target="_blank" rel="noopener noreferrer">
                     <v-icon size="small" :icon="mdiMapMarkerRadius" />
                   </a>
                 </div>
