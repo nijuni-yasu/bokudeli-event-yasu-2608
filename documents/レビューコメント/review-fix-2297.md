@@ -9,6 +9,8 @@
 | [x] | RC-3 | 3838784125 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | cart.vue の外部リンクに rel 未設定<br>Maps / 会場 URL / X リンクすべてに付与 |
 | [x] | RC-4 | 3838793513 | 👌 修正不要 | — | — | — | 👀 確認のみ | — | RC-3 と同一指摘（Codex）<br>rel 付与で解消済み |
 | [x] | RC-5 | 3838793512 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書, 👤 UX | 📋 仕様追加 | S | エンプラカートでハッシュタグ行が表示される<br>`hideShareSns` prop を Cart に追加し enterprise から有効化 |
+| [ ] | RC-6 | 3843056636 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | 公開イベント guard が Firestore 失敗を無条件許可<br>SPA 内遷移時の削除済みイベントで永久ローディング |
+| [x] | RC-7 | 3843056638 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | Google Maps 検索 URL 未エンコード<br>`encodeURIComponent` で partner 同様に修正 |
 
 ---
 
@@ -207,5 +209,96 @@ This issue also appears in the following locations of the same file:
 **想定工数**: S
 
 **判断理由**: `documents/08_エンタープライズ/10_仕様/04_詳細_イベント管理.md` §2.3.1 でエンプラ UI はハッシュタグ非表示。EventDetailsCard と同様の prop を Cart に追加し `enterprise/src/pages/cart.vue` から `hide-share-sns` を渡した。
+
+---
+
+## 評価セッション（2026-08-24 20:36・review-comments-evaluate）
+
+- **評価日時**: 2026-08-24 20:36 JST
+- **ブランチ名**: fix/2297
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2298
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼コメント 5394603557、Codex 接続案内 5394604742、Copilot 新規指摘なしサマリ）
+- **手順 4a 自動修正**: RC-7（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-6 | 3843056636 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | 公開イベント guard が Firestore 失敗を無条件許可<br>SPA 内遷移時の削除済みイベントで永久ローディング |
+| [x] | RC-7 | 3843056638 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | Google Maps 検索 URL 未エンコード<br>`encodeURIComponent` で partner 同様に修正 |
+
+---
+
+**識別子**: RC-6（GitHub id: 3843056636）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `user/src/router/eventRouteGuard.ts:16`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  if (isPublicEventDetailPath(path)) {
++    return undefined
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  公開イベントの読み込み失敗を無条件に許可しないでください**
+
+公開イベントへの SPA 内遷移では `ogpRequest` の存在確認を経由しないため、一覧表示後にイベントが削除された場合や Firestore の購読が失敗した場合までここで遷移を許可すると、`user/src/pages/c/[communityAccount]/e/[eventId]/index.vue` の `event == null` が解消されず、404 やエラー表示ではなくローディング表示が永久に続きます。サーバー確認済みと判定できる初回ロードだけを例外にするか、未解決時はエラーへ分岐してください。チェックした範囲は `user` の公開イベント guard と `functions/default/src/ogpRequest.ts` の完全一致パス処理です。
+
+**コメント要約**: #2301 の Googlebot 対策で公開パスの Firestore 失敗を許可したが、SPA 内遷移では ogpRequest を経由しないため削除済みイベント等で永久ローディングになり得る。<br>初回ロード（サーバー確認済み）のみ例外とする等の分岐が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。#2301 は初回 HTML 取得（Googlebot）向けだが、SPA 内遷移との切り分けは仕様判断が必要。初回ロード判定（document referrer / navigation type 等）の設計を決めてから実装すべき。自動修正対象外。
+
+---
+
+**識別子**: RC-7（GitHub id: 3843056638）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/pages/cart.vue:625`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++                    :href="`https://www.google.co.jp/maps/search/${cartItem.event.fullAddress} ${cartItem.event.event_place}`"
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Google Maps の検索文字列を URL エンコードしてください**
+
+住所または会場名に ASCII の `#` や `?` が含まれるイベントでは、この新規リンクの後半がフラグメントやクエリとして解釈され、Google Maps に正しい検索文字列が渡りません。`partner/src/pages/order/[eventId].vue` の `eventMapsSearchUrl` と同様に、空文字を除いて組み立てた検索文字列全体を `encodeURIComponent` してから URL に埋め込んでください。
+
+**コメント要約**: Maps 検索 URL に `#` / `?` 等が含まれると URL が壊れる。<br>partner と同様に `encodeURIComponent` でクエリをエンコードする。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 妥当なバグ修正。`eventMapsSearchUrl` ヘルパーを cart.vue に追加し partner と同パターンで修正済み。
 
 ---

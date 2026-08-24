@@ -244,6 +244,17 @@ const getEventPaymentI18nKey = (event: BokudeliEvent) => {
   return `payment.${event.event_payment}`
 }
 
+const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
+  const query = [event.fullAddress, event.event_place ?? '']
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' ')
+  if (query === '') {
+    return undefined
+  }
+  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
+}
+
 /** 福利厚生割引イベントのカート表示 */
 const hasCartEnterpriseSubsidy = (event: BokudeliEvent): boolean => event.event_payment === 'enterprise_subsidy'
 
@@ -622,7 +633,8 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
                 <div>
                   {{ cartItem.event.fullAddress }}
                   <a
-                    :href="`https://www.google.co.jp/maps/search/${cartItem.event.fullAddress} ${cartItem.event.event_place}`"
+                    v-if="eventMapsSearchUrl(cartItem.event)"
+                    :href="eventMapsSearchUrl(cartItem.event)"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
