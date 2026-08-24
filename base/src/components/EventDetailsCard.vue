@@ -88,6 +88,17 @@ const eventUrl = computed(() => {
   return getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, props.event.community_account, props.event.event_id)
 })
 
+const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
+  const query = [event.fullAddress, event.event_place ?? '']
+    .map((part) => part.trim())
+    .filter((part) => part !== '')
+    .join(' ')
+  if (query === '') {
+    return undefined
+  }
+  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
+}
+
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
 const eventStore = useAppEventStore(props.event)

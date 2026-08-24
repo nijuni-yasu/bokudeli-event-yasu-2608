@@ -82,7 +82,7 @@ Shokujii（shokujii.jp）の検索エンジン最適化に関する調査結果�
 - [x] P3-3 公開ページ Vue 側 h1（EventDetailsCard / コミュニティヒーロー）
 - [x] P3-S1〜3 構造化データ拡張（WebSite / BreadcrumbList / Event enrich）
 - [x] P2-4-V sandbox 構造化データ検証（Event 有効 1 件）
-- [ ] Phase 2 デプロイ後の本番検証（**P2-4-V 本番**、検証チェックリスト）— 2026-08-24 curl 検証で A 系ほぼ ✅、GSC / Rich Results Test は未
+- [ ] Phase 2 デプロイ後の本番検証（**P2-4-V 本番**、検証チェックリスト）— 2026-08-24: curl / Rich Results Test / Schema.org Validator ✅。**未**: GSC ライブテスト・インデックス検証
 
 ### Search Console（ベースライン）
 

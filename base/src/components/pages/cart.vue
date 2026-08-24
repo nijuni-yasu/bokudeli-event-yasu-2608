@@ -598,7 +598,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
             />
           </v-col>
         </v-row>
-        <v-table class="custom-table mx-5 my-3" density="compact">
+        <v-table class="custom-table mx-2 mx-sm-5 my-3" density="compact">
           <tbody>
             <tr>
               <td>{{ $t('event_details.organizer') }}</td>
@@ -1054,6 +1054,9 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
   .custom-table td:first-child,
   .custom-table {
     font-size: 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .cart-community-bill-banner :deep(.v-alert__content),
