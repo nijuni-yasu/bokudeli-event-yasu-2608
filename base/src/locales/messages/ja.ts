@@ -461,6 +461,7 @@ export default {
     error_max_people: 'すでに{0}人の予約が入っています',
     error_members_visible_threshold_exceeds_max_people: '表示開始人数は定員以下に設定してください',
     members_page_hidden_until_threshold: '参加者一覧は設定人数に達するまで表示されません',
+    members_page_hidden_no_participants: '参加者がいないため、参加者一覧は表示されません',
     members_visible: '参加者表示',
     members_visible_always: '常に参加者を表示する',
     members_visible_threshold: '一定人数に達してから表示する',

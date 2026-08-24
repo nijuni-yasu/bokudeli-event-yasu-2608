@@ -7,13 +7,18 @@ export type EventParticipantsVisibilitySource = {
 export const DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT = 3
 
 /**
- * PF イベント詳細の参加者セクション表示可否。
- * enterprise イベントは常に true（本機能は enterprise 非対象）。
+ * イベント詳細の参加者セクション表示可否。
+ * 参加者 0 人のときは PF / enterprise とも非表示。
+ * PF: `members_visible_min_count` 未設定は 1 人以上で表示、設定時は閾値以上で表示。
+ * enterprise: しきい値設定はなく、1 人以上で表示（#2289）。
  */
 export function shouldShowPfEventParticipantsSection(
   event: EventParticipantsVisibilitySource,
   memberCount: number,
 ): boolean {
+  if (memberCount <= 0) {
+    return false
+  }
   if (event.enterprise_id != null && event.enterprise_id !== '') {
     return true
   }

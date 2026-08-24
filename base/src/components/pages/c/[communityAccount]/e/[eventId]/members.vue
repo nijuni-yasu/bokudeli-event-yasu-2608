@@ -58,7 +58,12 @@ watch(
   shouldShowParticipantsPage,
   (visible) => {
     if (visible === false) {
-      notification.show($t('event_detail.members_page_hidden_until_threshold'), 'info')
+      const currentEvent = event.value
+      const message =
+        currentEvent != null && currentEvent.members.length === 0
+          ? $t('event_detail.members_page_hidden_no_participants')
+          : $t('event_detail.members_page_hidden_until_threshold')
+      notification.show(message, 'info')
       router.replace(getEventPath(props.communityAccount, props.eventId))
     }
   },
