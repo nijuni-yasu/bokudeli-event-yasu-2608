@@ -359,7 +359,7 @@ Phase 1・2 デプロイ後、Search Console のデータを見て判断する�
 | 工数 | タスク |
 |------|--------|
 | [S] | [ ] **P3-1** Search Console でカバレッジ・クロールエラーを確認<br>Phase 2 デプロイ後: 未登録 68 → 目標 50% 削減。修正の確認（Validate fix）を実施 |
-| [S] | [ ] **P3-2** Core Web Vitals を PageSpeed Insights で計測（LCP / INP / CLS） |
+| [S] | [x] **P3-2** Core Web Vitals を PageSpeed Insights で計測（LCP / INP / CLS）<br>2026-08-24 計測完了（下記記録）。CWV 不合格。改善は #2302 に分離 |
 | [S] | [x] **P3-3** 公開ページの `<h1>` 整備（イベント名・コミュニティ名を h1 に）<br>サーバー注入（P3-4）+ Vue クライアント側 DOM（EventDetailsCard / コミュニティ index）を実装 |
 | [M] | [x] **P3-4** プリレンダリング強化の要否判断・実装<br>`ogpRequest.ts` で `#app` 内にイベント概要 HTML を注入（`SEO_BODY` マーカー） |
 | [S] | [ ] **P3-5** AI 検索対応（GEO）— 親タスク（`/ai-seo`） |
@@ -368,6 +368,51 @@ Phase 1・2 デプロイ後、Search Console のデータを見て判断する�
 | [S] | [ ] **P3-5-3** AI クローラー robots 方針の文書化<br>GPTBot / ClaudeBot / PerplexityBot 等を Allow 継続するか方針決定（現状 `User-agent: *` Allow） |
 | [S] | [ ] **P3-5-4** `llms.txt` 導入要否の判断<br>必須ではない。エージェント可読性向上の選択肢として `/ai-seo` 参照 |
 | [S] | [ ] **P3-6** Phase 4 着手判断<br>P3-1 のインデックス改善率 + P3-5-1 の AI 可視性を見て pSEO の優先度を決定 |
+
+#### P3-2 Core Web Vitals 計測記録（2026-08-24）
+
+**⚠️ 計測値はオリジン集計値であり、URL 固有の値ではない**
+
+PSI で公開イベント詳細を計測したが、個別 URL の CrUX データが存在せず、オリジン全体の集計値にフォールバックしていた。
+
+> There is insufficient real-user data for this URL. Falling back to aggregate data for all user experiences on this origin (`https://shokujii.jp`) instead.
+
+複数 URL（`/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL`、`/c/millennium/e/4Ddz1BvrxNIy4z3rEVEQ`）で数値が完全一致したのはこのため。**「代表 URL の実測値」と誤読しないこと。**
+
+| 項目 | 値 |
+| ---- | -- |
+| スコープ | `https://shokujii.jp` オリジン集計 |
+| 収集期間 | 2026-07-25 〜 2026-08-21（28 日ローリング） |
+| フォームファクタ | デスクトップ |
+| CWV 総合 | **不合格** |
+
+| 指標 | p75 | Good | 要改善 | Poor | 判定 |
+| ---- | --- | ---- | ------ | ---- | ---- |
+| LCP | 2.9s | 68% | 16% | 17% | 要改善 |
+| INP | N/A | — | — | — | データ不足 |
+| CLS | **0.38** | 24% | 20% | **55%** | **Poor** |
+| FCP | 2.1s | 69% | 17% | 14% | 要改善 |
+| TTFB | 0.3s | 91% | 6% | 3% | 良好 |
+
+**解釈**
+
+- **CLS は構造的問題**: 過半数（55%）が Poor。特定イベント固有ではなく、SPA の loader → スピナー → 本 UI 差し替えという構造そのものが原因
+- **LCP は裾の問題**: 68% が Good。p75 を押し上げているのは 17% の裾（重い画像・低速回線）
+- **TTFB 91% Good**: `ogpRequest` のサーバー応答は問題なし。クライアント側が原因
+- カバー JPEG は 71〜80KB で原寸でも小さく、画像サイズ単体が主因ではない
+- Storage 画像が `cache-control: private, max-age=0` で配信されており、ブラウザキャッシュが無効（→ #2303）
+
+**派生 Issue**
+
+| Issue | 内容 |
+| ----- | ---- |
+| [#2302](https://github.com/nijuniinc/bokudeli-event-new/issues/2302) | イベント詳細ページ Core Web Vitals 改善（CLS / LCP） |
+| [#2303](https://github.com/nijuniinc/bokudeli-event-new/issues/2303) | Storage 画像に `cacheControl` を設定 |
+| [#820](https://github.com/nijuniinc/bokudeli-event-new/issues/820) / #448 / #449 / #450 | Storage 保存時の画像リサイズ（LCP 裾の対策） |
+
+**検証上の制約**
+
+個別ページの CrUX データが存在しないため、修正してもページ単位で効果検証できない。オリジン集計は 28 日ローリング窓のため、効果が見え始めるまで数日〜1 週、窓が完全に入れ替わるまで約 4 週（PSI の集計ラグ 3 日程度を含め約 1 ヶ月）。中間検証は Lighthouse ラボ値 + `web-vitals` RUM（#2302 D1）で行う。
 
 #### 構造化データ拡張（`/schema`）
 
