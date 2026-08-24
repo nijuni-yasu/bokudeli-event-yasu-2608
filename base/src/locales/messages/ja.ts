@@ -362,6 +362,7 @@ export default {
       off_amount_missing: 'おごり金額が未入力です。',
       off_amount_invalid: 'おごり金額は100円以上の値を入力してください。',
       off_amount_step: 'おごり金額は100円単位で入力してください。',
+      members_visible_threshold_exceeds_max_people: '表示開始人数は定員以下に設定してください。',
     },
   },
   event_basic_info: {
@@ -458,6 +459,8 @@ export default {
     ・お支払い方法は銀行振込です。お支払い期限はイベント開催日の翌月末日です。<br />
     ・支払い設定は予約申請後、変更できないためご注意ください。`,
     error_max_people: 'すでに{0}人の予約が入っています',
+    error_members_visible_threshold_exceeds_max_people: '表示開始人数は定員以下に設定してください',
+    members_page_hidden_until_threshold: '参加者一覧は設定人数に達するまで表示されません',
     members_visible: '参加者表示',
     members_visible_always: '常に参加者を表示する',
     members_visible_threshold: '一定人数に達してから表示する',

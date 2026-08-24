@@ -3,6 +3,9 @@ export type EventParticipantsVisibilitySource = {
   members_visible_min_count?: number
 }
 
+/** PF 新規イベントの参加者表示開始人数デフォルト（#2289） */
+export const DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT = 3
+
 /**
  * PF イベント詳細の参加者セクション表示可否。
  * enterprise イベントは常に true（本機能は enterprise 非対象）。

@@ -30,6 +30,7 @@ import {
   PF_EVENT_PAYMENT_UI_STRATEGY,
   type EventPaymentUiStrategy,
 } from '@shokujii/base/composable/eventPaymentUiStrategy.js'
+import { DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT } from '@shokujii/common/utils/eventParticipantsVisibility.js'
 import {
   createDefaultMinimumParticipants,
   computeMinimumParticipantsJudgmentDatetime,
@@ -71,7 +72,7 @@ const OFF_AMOUNT_MIN = 100
 const OFF_AMOUNT_STEP = 100
 
 /** PF 新規イベント設定 UI のデフォルトしきい値 */
-const DEFAULT_MEMBERS_VISIBLE_MIN_COUNT = 3
+const DEFAULT_MEMBERS_VISIBLE_MIN_COUNT = DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT
 
 type MembersVisibleMode = 'always' | 'threshold'
 
@@ -218,6 +219,16 @@ const { requiredValidator, positiveIntegerValidator, requiredHtmlValidator, emai
 const maxPeopleValidator = (v: number) => {
   if (v < event.value.members.length) {
     return $t('event_detail.error_max_people', [event.value.members.length])
+  }
+  return true
+}
+
+const membersVisibleThresholdValidator = (v: number) => {
+  if (membersVisibleMode.value !== 'threshold') {
+    return true
+  }
+  if (v > event.value.event_max_people) {
+    return $t('event_detail.error_members_visible_threshold_exceeds_max_people')
   }
   return true
 }
@@ -692,7 +703,7 @@ const tinymceInit = computed(() => ({
         {{ $t('event_detail.members_visible') }}
       </v-card-title>
       <v-card-text>
-        <v-radio-group v-model="membersVisibleMode" hide-details class="ma-1 ma-md-3">
+        <v-radio-group v-model="membersVisibleMode" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
           <v-radio value="always" :label="$t('event_detail.members_visible_always')" />
           <v-radio value="threshold" :label="$t('event_detail.members_visible_threshold')" />
         </v-radio-group>
@@ -705,8 +716,9 @@ const tinymceInit = computed(() => ({
               dense
               min="1"
               step="1"
+              :readonly="props.readonly"
               :label="$t('event_detail.members_visible_threshold_count_label')"
-              :rules="[requiredValidator, positiveIntegerValidator]"
+              :rules="[requiredValidator, positiveIntegerValidator, membersVisibleThresholdValidator]"
             />
           </v-col>
         </v-row>

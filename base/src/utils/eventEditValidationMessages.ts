@@ -52,6 +52,7 @@ export type EventDetailValidationFields = {
   event_max_people: number
   event_payment: string
   members: string[]
+  members_visible_min_count?: number
   bill_fullname: string
   bill_email: string
   community_bill_settings?: { type: 'free' | 'discount'; off_amount?: number }
@@ -113,6 +114,15 @@ export function collectEventDetailValidationMessages(input: CollectEventDetailVa
     messages.push(t('event_edit.step4_validation.max_people_invalid'))
   } else if (event.event_max_people < event.members.length) {
     messages.push(t('event_detail.error_max_people', [event.members.length]))
+  }
+
+  if (
+    !isEnterpriseMode &&
+    event.members_visible_min_count != null &&
+    event.event_max_people > 0 &&
+    event.members_visible_min_count > event.event_max_people
+  ) {
+    messages.push(t('event_edit.step4_validation.members_visible_threshold_exceeds_max_people'))
   }
 
   if (!isEnterpriseMode && event.event_payment === 'community_bill') {

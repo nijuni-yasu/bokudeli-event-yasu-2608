@@ -8,6 +8,8 @@ import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
 import { shouldShowPfEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   communityAccount: string
@@ -15,6 +17,8 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const communityStore = useAppCommunityStore(props.communityAccount)
 const isShowMember: boolean = await new Promise((resolve) => {
@@ -54,7 +58,8 @@ watch(
   shouldShowParticipantsPage,
   (visible) => {
     if (visible === false) {
-      router.replace('/404')
+      notification.show($t('event_detail.members_page_hidden_until_threshold'), 'info')
+      router.replace(getEventPath(props.communityAccount, props.eventId))
     }
   },
   { immediate: true },
