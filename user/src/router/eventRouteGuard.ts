@@ -8,10 +8,7 @@ export const isPublicEventDetailPath = (path: string): boolean => /^\/c\/[^/]+\/
  * 公開イベント詳細は ogpRequest がサーバー側で存在確認済みのため、
  * クライアント Firestore 失敗（Googlebot 等）で /404 + noindex にしない。
  */
-export const resolveEventLoadFailureRedirect = (
-  path: string,
-  err: unknown,
-): '/404' | '/520' | undefined => {
+export const resolveEventLoadFailureRedirect = (path: string, err: unknown): '/404' | '/520' | undefined => {
   if (err instanceof ZodError) {
     return '/520'
   }

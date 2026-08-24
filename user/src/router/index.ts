@@ -12,7 +12,7 @@ import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { getI18n } from '@shokujii/base/plugins/i18n/index.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
-import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
@@ -460,20 +460,19 @@ export const setupRouter = (router: Router) => {
     if (eventIdMatch) {
       const eventId = eventIdMatch[1]
       const eventStore = useEventStore(eventId) as EventStore
-      let event: BokudeliEvent
       try {
-        event = await eventStore.getLoadedEvent(5000)
+        const event = await eventStore.getLoadedEvent(5000)
         if (event.is_deleted) {
           return '/404'
+        }
+        if (to.path.startsWith('/manage/event/')) {
+          communityAccount = event.community_account
         }
       } catch (err) {
         const redirect = resolveEventLoadFailureRedirect(to.path, err)
         if (redirect != null) {
           return redirect
         }
-      }
-      if (to.path.startsWith('/manage/event/')) {
-        communityAccount = event.community_account
       }
     } else if (to.path.startsWith('/manage/community/')) {
       communityAccount = to.params.communityAccount as string
