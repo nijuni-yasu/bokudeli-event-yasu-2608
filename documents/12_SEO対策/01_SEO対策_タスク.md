@@ -82,7 +82,7 @@ Shokujii（shokujii.jp）の検索エンジン最適化に関する調査結果�
 - [x] P3-3 公開ページ Vue 側 h1（EventDetailsCard / コミュニティヒーロー）
 - [x] P3-S1〜3 構造化データ拡張（WebSite / BreadcrumbList / Event enrich）
 - [x] P2-4-V sandbox 構造化データ検証（Event 有効 1 件）
-- [ ] Phase 2 デプロイ後の本番検証（**P2-4-V 本番**、検証チェックリスト）
+- [ ] Phase 2 デプロイ後の本番検証（**P2-4-V 本番**、検証チェックリスト）— 2026-08-24 curl 検証で A 系ほぼ ✅、GSC / Rich Results Test は未
 
 ### Search Console（ベースライン）
 
@@ -321,9 +321,27 @@ GSC: [URL 検査](https://search.google.com/search-console/inspect?resource_id=s
 
 **残タスク（P2-4-V 本番クローズ）**
 
-- [ ] sandbox 再デプロイ後、`organizer.url` 警告が消えることを Rich Results Test で確認
-- [ ] 本番代表 URL（`/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf` 等）で Rich Results Test + Schema.org Validator
+- [x] sandbox 再デプロイ後、`organizer.url` 警告が消えることを Rich Results Test で確認
+- [x] ✅ 本番代表 URL の HTML に `organizer.url` 含む（2026-08-24 curl 確認: `https://shokujii.jp/c/flc_fes`）
+- [x] ✅ 本番公開イベント URL で Rich Results Test + Schema.org Validator（2026-08-24）
+- [x] ✅ 本番公開イベント URL で Rich Results Test — **Event 有効 1 件** + Breadcrumbs 有効 1 件（2026-08-24）
+- [x] ✅ 本番公開イベント URL で Schema.org Validator — **エラー 0・警告 0**（Event + BreadcrumbList 各 1 件）
 - [ ] Search Console に sitemap 送信（検証チェックリスト）
+
+**P2-4-V 本番検証記録（2026-08-24）**
+
+| 対象 | URL | 方法 | 結果 |
+|------|-----|------|------|
+| robots.txt | `https://shokujii.jp/robots.txt` | curl | ✅ `text/plain`、Sitemap 行あり |
+| sitemap.xml | `https://shokujii.jp/sitemap.xml` | curl | ✅ XML 200、1074 URL（代表イベント含む） |
+| イベント | `/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf` | curl | ✅ 固有 title / description / canonical、`#app` 内 h1 + 概要 HTML |
+| イベント JSON-LD | 同上 | curl | ✅ Event + BreadcrumbList `@graph`、`PostalAddress`、`OfflineEventAttendanceMode`、`organizer.url` |
+| トップ | `https://shokujii.jp/` | curl | ✅ WebSite + Organization JSON-LD |
+| 404 | `/c/flc_fes/e/nonexistent-event-id-12345` | curl | ✅ HTTP 404 |
+| noindex | partner / enterprise | curl -I | ✅ `X-Robots-Tag: noindex` |
+| Rich Results Test | `/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` | [結果](https://search.google.com/test/rich-results/result?id=a6DnOb5qkYXyGehWxq2O-g) | ✅ **Event 有効 1 件** + Breadcrumbs 有効 1 件（非重大警告あり）。上部「URL is not available」/ JS 後 noindex は sandbox 同様・インデックス可否は別途 GSC で確認 |
+| Schema.org Validator | `/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` | [validator.schema.org](https://validator.schema.org/#url=https%3A%2F%2Fshokujii.jp%2Fc%2F33_lab_future%2Fe%2Fw4Iwl5D1zKS81CX0dQqL) | ✅ **エラー 0・警告 0**（Event + BreadcrumbList 各 1 件） |
+| GSC ライブテスト | 代表イベント | Search Console | ❌ noindex 検出（JS 後）。Soft 404 から変化。**修正: #2301** |
 
 **Phase 2 完了条件**
 
@@ -503,18 +521,18 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 
 ### Phase 1〜2（技術 SEO）
 
-- [ ] `curl -s https://shokujii.jp/robots.txt` が robots 形式のテキストを返す（**P1-1 実装済み・デプロイ後確認**）
-- [ ] `curl -s https://shokujii.jp/sitemap.xml` が XML を返す（**P2-7 実装済み・デプロイ後確認**）
-- [ ] 公開イベント URL の HTML に固有 title / description / canonical が含まれる（**P2-1〜3 実装済み・デプロイ後確認**）
-- [ ] 公開イベント URL の `#app` 内に `<h1>` と概要 HTML が含まれる（**P3-4 実装済み・デプロイ後確認**）
-- [ ] Vue 描画後も公開イベント / コミュニティページに `<h1>` が 1 件（**P3-3 実装済み・デプロイ後確認**）
-- [ ] トップページ HTML に WebSite + Organization JSON-LD が含まれる（**P3-S1 実装済み・デプロイ後確認**）
-- [x] Rich Results Test（sandbox）で Event スキーマが有効 1 件（**P2-4-V**・`/schema`）。本番 URL は未
-- [ ] Schema.org Validator で JSON-LD エラーが無い（**P2-4-V 本番**）
-- [ ] GSC URL 検査ライブテストで Soft 404 が解消される（代表: `/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf`）
-- [ ] 存在しないイベント URL が 404 を返す（**P2-5 実装済み・デプロイ後確認**）
-- [ ] 限定公開イベント URL が 200 + `X-Robots-Tag: noindex` で SPA を返す（**P2-5 実装済み・デプロイ後確認**）
-- [ ] partner / enterprise に `X-Robots-Tag: noindex` が付く
+- [x] ✅ `curl -s https://shokujii.jp/robots.txt` が robots 形式のテキストを返す（2026-08-24 本番確認）
+- [x] ✅ `curl -s https://shokujii.jp/sitemap.xml` が XML を返す（2026-08-24 本番確認・1074 URL）
+- [x] ✅ 公開イベント URL の HTML に固有 title / description / canonical が含まれる（2026-08-24 本番確認）
+- [x] ✅ 公開イベント URL の `#app` 内に `<h1>` と概要 HTML が含まれる（2026-08-24 本番確認）
+- [ ] Vue 描画後も公開イベント / コミュニティページに `<h1>` が 1 件（**P3-3**・ブラウザ手動未）
+- [x] ✅ トップページ HTML に WebSite + Organization JSON-LD が含まれる（2026-08-24 本番確認）
+- [x] ✅ Rich Results Test（本番）で Event スキーマが有効 1 件（**P2-4-V**・2026-08-24）
+- [x] ✅ Schema.org Validator で JSON-LD エラーが無い（**P2-4-V 本番**・2026-08-24・Event + BreadcrumbList）
+- [ ] GSC URL 検査ライブテストで Soft 404 が解消される（代表: `/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf`）— 2026-08-24: Soft 404 → **noindex** に変化。**#2301** で router guard 修正後に再検証
+- [x] ✅ 存在しないイベント URL が 404 を返す（2026-08-24 本番確認）
+- [ ] 限定公開イベント URL が 200 + `X-Robots-Tag: noindex` で SPA を返す（**P2-5**・未確認）
+- [x] ✅ partner / enterprise に `X-Robots-Tag: noindex` が付く（2026-08-24: partner.shokujii.jp / enterprise Hosting）
 - [ ] Search Console に sitemap を送信済み
 
 ### Phase 3（GEO・`/ai-seo`）

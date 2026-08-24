@@ -36,8 +36,8 @@ import {
 } from './authEntryGuards.js'
 import { getManageCommunityListPath } from './utils'
 import { isEnterpriseUserFromClaims } from '@shokujii/base/utils/enterpriseUserClaims.js'
-import { ZodError } from 'zod'
 import { resolveDocumentTitle } from './documentTitle.js'
+import { resolveEventLoadFailureRedirect } from './eventRouteGuard.js'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -467,10 +467,10 @@ export const setupRouter = (router: Router) => {
           return '/404'
         }
       } catch (err) {
-        if (err instanceof ZodError) {
-          return '/520'
+        const redirect = resolveEventLoadFailureRedirect(to.path, err)
+        if (redirect != null) {
+          return redirect
         }
-        return '/404'
       }
       if (to.path.startsWith('/manage/event/')) {
         communityAccount = event.community_account
