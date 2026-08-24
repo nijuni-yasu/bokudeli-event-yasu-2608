@@ -8,6 +8,7 @@ import { useEventStore, type EventStore, BokudeliEvent, createNewEvent } from '@
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
+import { eventPaymentUiStrategyFromEnterpriseId } from '@shokujii/base/composable/eventPaymentUiStrategy.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiOpenInNew } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -129,6 +130,8 @@ if (route.query.id != null) {
 
 const event = ref<BokudeliEvent>(_event)
 
+const paymentUiStrategy = computed(() => eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id))
+
 const isLoading = ref(false)
 const isValid = ref(false)
 const coverImage = ref<File | null>(null)
@@ -204,6 +207,7 @@ onUnmounted(() => {
           :subdomainTags="community.subdomain_tags"
           :show-album-preview="false"
           :is-new="route.query.id == null"
+          :payment-ui-strategy="paymentUiStrategy"
         />
         <v-card-text class="text-end mt-10">
           <v-btn

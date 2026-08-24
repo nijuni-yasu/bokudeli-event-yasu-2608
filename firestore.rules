@@ -24,6 +24,14 @@ service cloud.firestore {
             let validPfValue = !newHas || (newVal is int && newVal >= 1);
             return unchanged || (!enterpriseOnWrite && validPfValue);
         }
+        // partner update: 主催者設定の members_visible_min_count は変更不可（#2289 RC-12）
+        function eventMembersVisibleMinCountUnchangedForPartner() {
+            let newHas = 'members_visible_min_count' in request.resource.data;
+            let oldHas = 'members_visible_min_count' in resource.data;
+            let newVal = newHas ? request.resource.data.members_visible_min_count : 0;
+            let oldVal = oldHas ? resource.data.members_visible_min_count : 0;
+            return newHas == oldHas && (!newHas || newVal == oldVal);
+        }
         // エンタープライズ: 認証ユーザーの claims とドキュメントの enterprise_id が一致
         function tokenTenantId() {
             let firebaseClaims = request.auth.token.get('firebase', null);
@@ -270,7 +278,7 @@ service cloud.firestore {
                 // 予約承認・予約却下などイベントステータスを店舗が変更できる
                 allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
                             && minimumParticipantsMapsEqual()
-                            && eventMembersVisibleMinCountValid()
+                            && eventMembersVisibleMinCountUnchangedForPartner()
                 match /system/{docId} {
                     allow read, write: if false;
                 }
