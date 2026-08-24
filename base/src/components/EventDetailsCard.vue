@@ -68,17 +68,6 @@ const emit = defineEmits<{
   openChat: []
 }>()
 
-const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
-  const query = [event.fullAddress, event.event_place ?? '']
-    .map((part) => part.trim())
-    .filter((part) => part !== '')
-    .join(' ')
-  if (query === '') {
-    return undefined
-  }
-  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
-}
-
 const galleryAlbums = computed(() => (props.albumImageUrls ?? []).map((i) => ({ src: i.url, title: i.caption })))
 
 const galleryDescImageSlides = computed(() => extractImageSlidesFromHtml(props.event.event_desc))
