@@ -23,38 +23,22 @@ const communityListStore = useCommunityListStore(
     orderBy('community_num_members', 'desc'),
   ],
   10,
+  { lightweight: true },
 )
 
-const communities = computed(() => {
-  return (
-    communityListStore.communityStores?.flatMap((communityStore) => {
-      if (communityStore.community == null || communityStore.members == null) {
-        return []
-      }
-      return communityStore.community
-    }) ?? []
-  )
-})
+const communities = computed(() => communityListStore.communities ?? [])
 
 const isOpenNewCommunityDialog = ref(false)
 
-watch(communities, (communities) => {
-  const isReady =
-    communityListStore.communityStores?.every(
-      (communityStore) =>
-        communityStore.community != null &&
-        communityStore.members != null &&
-        communityStore.members.length !== 0 &&
-        communityStore.members.every((member) => member?.roles != null),
-    ) ?? false
-  if (
-    isReady &&
-    communityListStore.totalCount === communityListStore.communityStores?.length &&
-    communities.length === 0
-  ) {
-    isOpenNewCommunityDialog.value = true
-  }
-})
+watch(
+  () => communityListStore.totalCount,
+  (count) => {
+    if (count === 0) {
+      isOpenNewCommunityDialog.value = true
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -91,7 +75,7 @@ watch(communities, (communities) => {
       <IncrementalLoader
         class="my-5"
         :total-count="communityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-        :loaded-count="communityListStore.communityStores?.length ?? 0"
+        :loaded-count="communities.length"
         @load="communityListStore.next()"
       />
     </v-col>
