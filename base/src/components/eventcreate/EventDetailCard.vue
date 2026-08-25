@@ -9,6 +9,7 @@ import { useValidators } from '@shokujii/base/composable/validators'
 import {
   mdiAccountCreditCardOutline,
   mdiAccountMultipleCheckOutline,
+  mdiAccountEyeOutline,
   mdiAccountMultipleOutline,
   mdiCalendarBlankOutline,
   mdiImagePlusOutline,
@@ -590,6 +591,22 @@ const tinymceInit = computed(() => ({
       </v-row>
     </v-card-text>
 
+    <!-- 公開設定 -->
+    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
+      <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
+      {{ $t('event_detail.activity') }}
+    </v-card-title>
+    <v-card-text>
+      <v-radio-group v-model="event.is_public" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
+        <v-radio :value="true" :label="$t('event_detail.public')" />
+        <v-radio :value="false" :label="$t('event_detail.private')" />
+      </v-radio-group>
+      <div class="mt-2 text-subtitle-2">
+        <span v-if="event.is_public"><div v-html="$t('event_detail.public_desc')" /></span>
+        <span v-else><div v-html="$t('event_detail.private_desc')" /></span>
+      </div>
+    </v-card-text>
+
     <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleOutline" />
       {{ $t('event_detail.event_max_people') }}
@@ -611,6 +628,39 @@ const tinymceInit = computed(() => ({
         </v-col>
       </v-row>
     </v-card-text>
+
+    <template v-if="showPfMembersVisibleSettings">
+      <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
+        <v-icon size="50" class="text--primary me-3" :icon="mdiAccountEyeOutline" />
+        {{ $t('event_detail.members_visible') }}
+      </v-card-title>
+      <v-card-text>
+        <v-radio-group v-model="membersVisibleMode" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
+          <v-radio value="always" :label="$t('event_detail.members_visible_always')" />
+          <v-radio value="threshold" :label="$t('event_detail.members_visible_threshold')" />
+        </v-radio-group>
+        <v-row v-if="membersVisibleMode === 'threshold'" class="ma-1 ma-md-3 mt-2">
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field
+              v-model.number="membersVisibleThreshold"
+              type="number"
+              outlined
+              dense
+              min="1"
+              step="1"
+              :readonly="props.readonly"
+              :label="$t('event_detail.members_visible_threshold_count_label')"
+              :rules="[requiredValidator, positiveIntegerValidator, membersVisibleThresholdValidator]"
+            />
+          </v-col>
+        </v-row>
+        <div class="text-body-2 text-medium-emphasis ma-1 ma-md-3 mt-2">
+          <p class="mb-0">
+            {{ $t('event_detail.members_visible_field_help') }}
+          </p>
+        </div>
+      </v-card-text>
+    </template>
 
     <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleCheckOutline" />
@@ -680,53 +730,6 @@ const tinymceInit = computed(() => ({
         {{ $t('event_detail.minimum_participants.readonly_note') }}
       </p>
     </v-card-text>
-
-    <!-- Activity -->
-    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
-      <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
-      {{ $t('event_detail.activity') }}
-    </v-card-title>
-    <v-card-text>
-      <v-radio-group v-model="event.is_public" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
-        <v-radio :value="true" :label="$t('event_detail.public')" />
-        <v-radio :value="false" :label="$t('event_detail.private')" />
-      </v-radio-group>
-      <div class="mt-2 text-subtitle-2">
-        <span v-if="event.is_public"><div v-html="$t('event_detail.public_desc')" /></span>
-        <span v-else><div v-html="$t('event_detail.private_desc')" /></span>
-      </div>
-    </v-card-text>
-
-    <template v-if="showPfMembersVisibleSettings">
-      <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
-        <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleOutline" />
-        {{ $t('event_detail.members_visible') }}
-      </v-card-title>
-      <v-card-text>
-        <v-radio-group v-model="membersVisibleMode" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
-          <v-radio value="always" :label="$t('event_detail.members_visible_always')" />
-          <v-radio value="threshold" :label="$t('event_detail.members_visible_threshold')" />
-        </v-radio-group>
-        <v-row v-if="membersVisibleMode === 'threshold'" class="ma-1 ma-md-3 mt-2">
-          <v-col cols="12" sm="6" md="4">
-            <v-text-field
-              v-model.number="membersVisibleThreshold"
-              type="number"
-              outlined
-              dense
-              min="1"
-              step="1"
-              :readonly="props.readonly"
-              :label="$t('event_detail.members_visible_threshold_count_label')"
-              :rules="[requiredValidator, positiveIntegerValidator, membersVisibleThresholdValidator]"
-            />
-          </v-col>
-        </v-row>
-        <div v-if="membersVisibleMode === 'threshold'" class="ma-1 ma-md-3 mt-2 text-subtitle-2">
-          {{ $t('event_detail.members_visible_threshold_hint') }}
-        </div>
-      </v-card-text>
-    </template>
 
     <!-- 支払い設定 -->
     <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">

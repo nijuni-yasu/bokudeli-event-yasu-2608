@@ -462,11 +462,12 @@ export default {
     error_members_visible_threshold_exceeds_max_people: '表示開始人数は定員以下に設定してください',
     members_page_hidden_until_threshold: '参加者一覧は設定人数に達するまで表示されません',
     members_page_hidden_no_participants: '参加者がいないため、参加者一覧は表示されません',
-    members_visible: '参加者表示',
-    members_visible_always: '常に参加者を表示する',
-    members_visible_threshold: '一定人数に達してから表示する',
-    members_visible_threshold_count_label: '表示開始人数',
-    members_visible_threshold_hint: '※設定人数に達するまで、イベントページの参加者一覧は表示されません。',
+    members_visible: '参加者一覧の表示',
+    members_visible_field_help:
+      'イベントページの参加人数や一覧を表示するかを設定できます。公開直後は参加者が少ない場合が多く、そのまま表示すると「人が集まっていない」印象を与え、新規の参加意欲を下げる場合があります。設定した人数に達するまで参加者一覧は表示されず、人数が少ないうちは非表示にし、集まり始めてから表示することで、参加しやすい雰囲気を保てます。',
+    members_visible_always: '常に参加者一覧を表示する',
+    members_visible_threshold: '指定人数に達してから、参加者一覧を表示する',
+    members_visible_threshold_count_label: '参加者を表示しはじめる人数',
   },
   shop_notice: {
     info_title: '店舗情報',
