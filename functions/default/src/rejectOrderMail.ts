@@ -64,8 +64,11 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
 
 /**
  * ショップ向け注文却下メール送信
+ *
+ * `applying_reservation` になった時刻が `deadlineMillis` 以前のイベントをすべて却下する。
+ * 1 分窓ではなく期限超過分すべてを対象にすることで、承認期限の変更時に取りこぼしが出ないようにしている。
  */
-export async function sendRejectOrderMailToShop(start: number, end: number): Promise<void[]> {
+export async function sendRejectOrderMailToShop(deadlineMillis: number): Promise<void[]> {
   const nowDateTimeMillis = Date.now()
   const [events, config] = await Promise.all([getApplyingReservationEvents(nowDateTimeMillis), getConfigGlobal()])
   const updated_by = config?.system_id
@@ -81,8 +84,7 @@ export async function sendRejectOrderMailToShop(start: number, end: number): Pro
         // applying_reservation に変更したログで一番新しいものを取得
         const updatedAt = await event.getLastUpdatedTimeByStatus('applying_reservation')
 
-        // 申請から承認期限を過ぎた applying_reservation を却下（1 分窓ではなく期限超過分すべて）
-        if (updatedAt == null || updatedAt > end) {
+        if (updatedAt == null || updatedAt > deadlineMillis) {
           return
         }
 

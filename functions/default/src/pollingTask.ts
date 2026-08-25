@@ -55,10 +55,8 @@ export const pollingTask = onSchedule(
       ...SHOP_RESERVATION_REMIND_DAY_OFFSETS.map((dayOffset) =>
         sendApplyingOrderRemindMailToShop(start - dayOffset * ONE_DAY_MILLIS, end - dayOffset * ONE_DAY_MILLIS),
       ),
-      sendRejectOrderMailToShop(
-        start - SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS * ONE_DAY_MILLIS,
-        end - SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS * ONE_DAY_MILLIS,
-      ), // 48 時間（2 日）後却下通知
+      // 申請から 48 時間（2 日）を過ぎた未回答分をすべて却下
+      sendRejectOrderMailToShop(end - SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS * ONE_DAY_MILLIS),
       sendLetter(start, end), // レター送信
       sendInvoiceMailToOrganizers(start, end),
     ]
