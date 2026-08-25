@@ -26,6 +26,9 @@
 | [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | デフォルトしきい値 3 が 2 箇所に重複 |
 | [x] | RC-21 | なし | 👌 修正不要 | — | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | キャンセルで閾値割れすると導線が消える |
 | [x] | RC-22 | なし | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | Firestore read は UI 非表示のみ（Issue スコープ） |
+| [x] | RC-23 | 3843213997 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 参加者 0 人時にセクションが表示される回帰 |
+| [x] | RC-24 | 3843241138 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules でしきい値を定員以下に制約 |
+| [x] | RC-25 | 3843241148 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | partner 既存イベント編集で参加者表示設定が編集可能 |
 
 ---
 
@@ -432,5 +435,142 @@ watch(
 **想定工数**: —
 
 **判断理由**: Issue #2289 のスコープはイベント詳細 UI。SDK 直 read 制限は要件に含まれていない。
+
+---
+
+## 評価セッション（2026-08-25 16:33 JST・review-comments-evaluate manual）
+
+- **評価日時**: 2026-08-25 16:33 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` manual）
+- **ブランチ名**: ui/2289
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2291
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 7（レビュー依頼定型 3 件、Copilot 新規指摘なしサマリ 2 件、Codex 接続案内 1 件、Codex 問題なし 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-23 | 3843213997 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 参加者 0 人時にセクションが表示される回帰<br>`eventParticipantsVisibility` で 0 人非表示を復元済み |
+| [x] | RC-24 | 3843241138 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules でしきい値を定員以下に制約<br>UI 迂回の永久非表示を防止 |
+| [x] | RC-25 | 3843241148 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | partner 既存イベント編集で参加者表示設定が編集可能<br>`readonly` を EventDetailCard に渡して解消 |
+
+**識別子**: RC-23（GitHub id: 3843213997）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/EventDetailsCard.vue:160`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -143,10 +144,12 @@ const isShowMember = computed(() =>
+   props.community.is_show_member !== undefined ? props.community.is_show_member : true,
+ )
+ 
++const shouldShowParticipantsSection = computed(() =>
++  shouldShowPfEventParticipantsSection(props.event, props.event.members.length),
++)
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] 参加者セクションの表示条件が `hasParticipants`（参加者が0人のとき非表示）から `shouldShowPfEventParticipantsSection(...)` のみに置き換わっており、enterprise イベント（本機能の対象外）や PF でしきい値未設定のイベントでも参加者0人時にセクションが表示される挙動に変わっています。従来挙動（0人ならセクション非表示）を維持しつつ、PF のしきい値ゲートだけ追加するなら `members.length > 0` を AND してください。
+
+**コメント要約**: 0 人時非表示が失われ参加者セクションが空表示になる回帰。<br>`shouldShowPfEventParticipantsSection` 内で `memberCount <= 0` を false にする対応で解消。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: コミット `1e020c6db` で `common/src/utils/eventParticipantsVisibility.ts` に `memberCount <= 0` ガードを追加済み。評価時点で既に解消。
+
+---
+
+**識別子**: RC-24（GitHub id: 3843241138）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `firestore.rules:23`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+…（diff 先頭省略）
++        function eventMembersVisibleMinCountValid() {
++            let newHas = 'members_visible_min_count' in request.resource.data;
++            …
++            let validPfValue = !newHas || (newVal is int && newVal >= 1);
++            return unchanged || (!enterpriseOnWrite && validPfValue);
++        }
+```
+
+**レビュワーのコメント（原文）**:
+
+**P1** Rulesでもしきい値を定員以下に制約する
+
+`validPfValue` は正の整数であることしか検証しないため、管理者またはサポートが旧クライアント・REST SDK等から `members_visible_min_count > event_max_people` のイベントを作成した場合や、しきい値を残したまま定員だけを下げた場合も書き込みが許可されます。UI側の検証を迂回すると、満員になっても参加者セクションが永久に表示されないイベントになるため、Rulesでも `request.resource.data.event_max_people` 以下であることを検証してください。
+
+**コメント要約**: Rules がしきい値と定員の関係を検証していない。<br>REST 等で閾値 > 定員のイベントが保存され永久非表示になり得る。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `eventMembersVisibleMinCountValid` に `newVal <= event_max_people` 条件を追加。`tests/firestore-rules` に manager 経路のテストを追加。
+
+---
+
+**識別子**: RC-25（GitHub id: 3843241148）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/eventcreate/EventDetailCard.vue`（Outdated 表示あり・指摘内容は有効）
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    <template v-if="showPfMembersVisibleSettings">
++      …
++        <v-radio-group v-model="membersVisibleMode" … :readonly="props.readonly">
+```
+
+**レビュワーのコメント（原文）**:
+
+**P2** Partner更新時は参加者表示設定を編集不可にする
+
+最終差分では店舗向けの Rules が `eventMembersVisibleMinCountUnchangedForPartner()` によりこの値の変更を禁止していますが、`partner/src/pages/events/create.vue` は既存PFイベントの編集時にもこのカードへPF戦略を渡し、フィールド固有の readonly 制御を渡していません。そのためコミュニティ管理者権限を持たない店舗ユーザーにも有効なラジオと数値入力が表示され、変更して更新するとイベント全体の `setDoc` が `permission-denied` になります。Partnerの既存イベント編集ではこの設定だけを無効化するなど、RulesとUIの編集可否を一致させてください。
+
+**コメント要約**: partner 既存イベント編集で参加者表示設定が編集可能に見える。<br>Rules では partner 変更不可のため permission-denied になる UX 不整合。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `partner/src/pages/events/create.vue` の `EventDetailCard` に `:readonly="event.event_status.value !== 'in_draft'"` を追加し、下書き以外は編集不可に統一。
 
 ---

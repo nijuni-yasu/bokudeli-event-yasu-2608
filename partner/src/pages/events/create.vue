@@ -207,6 +207,7 @@ onUnmounted(() => {
         <EventDetailCard
           v-model="event"
           v-model:coverImage="coverImage"
+          :readonly="event.event_status.value !== 'in_draft'"
           :readonlyDeadline="event.event_status.value !== 'in_draft'"
           :subdomainTags="community.subdomain_tags"
           :show-album-preview="false"

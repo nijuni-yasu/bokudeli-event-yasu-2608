@@ -18,7 +18,28 @@ function partnerAuth(partnerId: string) {
   return testEnv.authenticatedContext(partnerId)
 }
 
-describe('members_visible_min_count firestore rules (partner update)', () => {
+function managerAuth(userId: string) {
+  return testEnv.authenticatedContext(userId)
+}
+
+async function seedCommunityWithManager(): Promise<void> {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await admin
+      .firestore()
+      .collection('communities')
+      .doc('community-1')
+      .set({ community_name: 'C1', is_approved: true })
+    await admin
+      .firestore()
+      .collection('communities')
+      .doc('community-1')
+      .collection('members')
+      .doc('manager-1')
+      .set({ roles: ['manager'] })
+  })
+}
+
+describe('members_visible_min_count firestore rules', () => {
   beforeAll(async () => {
     testEnv = await initializeTestEnvironment({
       projectId: PROJECT_ID,
@@ -124,6 +145,66 @@ describe('members_visible_min_count firestore rules (partner update)', () => {
         .doc('event-1')
         .update({
           members_visible_min_count: 3,
+        }),
+    )
+  })
+
+  it('manager が members_visible_min_count を定員以下なら許可', async () => {
+    await seedCommunityWithManager()
+    const manager = managerAuth('manager-1')
+    await testEnv.withSecurityRulesDisabled(async (admin) => {
+      await admin
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-1')
+        .set({
+          event_status: { value: 'in_draft', shop_comment: '' },
+          event_max_people: 10,
+          members_visible_min_count: 3,
+        })
+    })
+
+    await assertSucceeds(
+      manager
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-1')
+        .update({
+          members_visible_min_count: 5,
+        }),
+    )
+  })
+
+  it('manager が members_visible_min_count を定員超過で拒否', async () => {
+    await seedCommunityWithManager()
+    const manager = managerAuth('manager-1')
+    await testEnv.withSecurityRulesDisabled(async (admin) => {
+      await admin
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-1')
+        .set({
+          event_status: { value: 'in_draft', shop_comment: '' },
+          event_max_people: 4,
+          members_visible_min_count: 3,
+        })
+    })
+
+    await assertFails(
+      manager
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-1')
+        .update({
+          members_visible_min_count: 10,
         }),
     )
   })

@@ -21,7 +21,11 @@ service cloud.firestore {
                 ? docEnterpriseId(request.resource.data) != null
                 : docEnterpriseId(resource.data) != null
                     || docEnterpriseId(request.resource.data) != null;
-            let validPfValue = !newHas || (newVal is int && newVal >= 1);
+            let validPfValue = !newHas || (newVal is int && newVal >= 1
+                && (!('event_max_people' in request.resource.data)
+                    || !(request.resource.data.event_max_people is int)
+                    || request.resource.data.event_max_people < 1
+                    || newVal <= request.resource.data.event_max_people));
             return unchanged || (!enterpriseOnWrite && validPfValue);
         }
         // partner update: 主催者設定の members_visible_min_count は変更不可（#2289 RC-12）
