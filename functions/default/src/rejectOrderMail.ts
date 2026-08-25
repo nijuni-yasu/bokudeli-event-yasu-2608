@@ -81,7 +81,8 @@ export async function sendRejectOrderMailToShop(start: number, end: number): Pro
         // applying_reservation に変更したログで一番新しいものを取得
         const updatedAt = await event.getLastUpdatedTimeByStatus('applying_reservation')
 
-        if (updatedAt == null || updatedAt <= start || updatedAt > end) {
+        // 申請から承認期限を過ぎた applying_reservation を却下（1 分窓ではなく期限超過分すべて）
+        if (updatedAt == null || updatedAt > end) {
           return
         }
 
