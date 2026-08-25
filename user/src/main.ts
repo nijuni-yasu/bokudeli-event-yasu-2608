@@ -37,4 +37,22 @@ Promise.all([
   }
   setupGlobalErrorHandling(app, routerMod.router, { app: 'user' })
   app.mount('#app')
+
+  const hideInitialLoader = () => {
+    const el = document.getElementById('loading-bg')
+    if (el == null) {
+      return
+    }
+    el.classList.add('is-hidden')
+    window.setTimeout(() => el.remove(), 250)
+  }
+
+  const loaderTimeout = window.setTimeout(hideInitialLoader, 15000)
+  void routerMod.router
+    .isReady()
+    .catch(() => routerMod.router.replace('/').catch(() => undefined))
+    .finally(() => {
+      window.clearTimeout(loaderTimeout)
+      hideInitialLoader()
+    })
 })

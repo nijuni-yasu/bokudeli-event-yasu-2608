@@ -8,11 +8,17 @@ html {
 }
 
 #loading-bg {
-  position: absolute;
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
   display: block;
   background: var(--initial-loader-bg, #fff);
-  block-size: 100%;
-  inline-size: 100%;
+  transition: opacity 0.2s ease;
+}
+
+#loading-bg.is-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .loading-logo {

@@ -391,12 +391,16 @@ export const setupRouter = (router: Router) => {
     if (user == null) {
       return
     }
-    const token = await user.getIdTokenResult()
-    if (isEnterpriseUserFromClaims(token.claims)) {
-      if (to.path === '/') {
-        return
+    try {
+      const token = await user.getIdTokenResult()
+      if (isEnterpriseUserFromClaims(token.claims)) {
+        if (to.path === '/') {
+          return
+        }
+        return { path: '/', query: { ...to.query, enterprise_blocked: '1' } }
       }
-      return { path: '/', query: { ...to.query, enterprise_blocked: '1' } }
+    } catch (err) {
+      console.error('Failed to resolve enterprise claims; allowing navigation:', err)
     }
   })
 

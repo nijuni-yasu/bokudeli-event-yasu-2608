@@ -68,7 +68,7 @@ export const alertProfileLinkageFailed = (providerId: string | undefined) => {
 
 /**
  * OAuth 復帰時に updateProfileFromProviders が失敗した場合の cleanup とリダイレクト先を返す。
- * cleanup 失敗時は false を返し navigation をキャンセルする。
+ * cleanup 失敗時は /login へリダイレクトする。
  * /profile では signOut せず undefined を返し、当該画面に留まる。
  */
 export async function handleProfileUpdateFailure(
@@ -76,7 +76,7 @@ export async function handleProfileUpdateFailure(
   query: LocationQuery,
   userCredential: UserCredential | null,
   error?: unknown,
-): Promise<{ path: string; query: LocationQuery } | false | undefined> {
+): Promise<{ path: string; query: LocationQuery } | undefined> {
   try {
     if (toPath !== '/profile') {
       if (toPath === '/register' && userCredential != null) {
@@ -93,7 +93,7 @@ export async function handleProfileUpdateFailure(
   } catch (err) {
     console.error(err)
     await signOutBestEffort()
-    return false
+    return { path: '/login', query }
   }
 
   const providerId = userCredential?.providerId
