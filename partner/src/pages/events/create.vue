@@ -69,6 +69,7 @@ const community = await new Promise<BokudeliCommunity>((resolve) => {
 
 const communityId = community.community_id
 const communityName = community.community_name
+const paymentUiStrategy = eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id)
 
 const numOfColumns = computed(() => {
   switch (display.name.value) {
@@ -126,15 +127,11 @@ if (route.query.id != null) {
     shop_id: shop.shop_id,
     shop_name: shop.shop_name ?? '',
     event_status: { value: 'in_draft', shop_comment: '' },
-    ...(!eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id).isEnterpriseMode
-      ? { members_visible_min_count: DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT }
-      : {}),
+    ...(!paymentUiStrategy.isEnterpriseMode ? { members_visible_min_count: DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT } : {}),
   })
 }
 
 const event = ref<BokudeliEvent>(_event)
-
-const paymentUiStrategy = computed(() => eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id))
 
 const isLoading = ref(false)
 const isValid = ref(false)
