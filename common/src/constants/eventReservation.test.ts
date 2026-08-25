@@ -14,8 +14,6 @@ describe('shop reservation approval deadline', () => {
   })
 
   it('リマインドは期限日より前のみ', () => {
-    expect(SHOP_RESERVATION_REMIND_DAY_OFFSETS.every((day) => day < SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS)).toBe(
-      true,
-    )
+    expect(SHOP_RESERVATION_REMIND_DAY_OFFSETS.every((day) => day < SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS)).toBe(true)
   })
 })
