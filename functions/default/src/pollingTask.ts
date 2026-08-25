@@ -14,6 +14,10 @@ import { sendRejectOrderMailToShop } from './rejectOrderMail.js'
 import { sendLetter } from './letter.js'
 import { sendInvoiceMailToOrganizers } from './eventBillInvoice.js'
 import { processMinimumParticipantsChecks } from './minimumParticipants.js'
+import {
+  SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS,
+  SHOP_RESERVATION_REMIND_DAY_OFFSETS,
+} from '@shokujii/common/constants/eventReservation.js'
 
 const ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
 const ORDER_DEADLINE_MAIL_DELAY_MILLIS = 5 * 60 * 1000
@@ -48,9 +52,16 @@ export const pollingTask = onSchedule(
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
-      sendApplyingOrderRemindMailToShop(start - ONE_DAY_MILLIS, end - ONE_DAY_MILLIS), // 1日後通知
-      sendApplyingOrderRemindMailToShop(start - 2 * ONE_DAY_MILLIS, end - 2 * ONE_DAY_MILLIS), // 2日後通知
-      sendRejectOrderMailToShop(start - 3 * ONE_DAY_MILLIS, end - 3 * ONE_DAY_MILLIS), // 3日後却下通知
+      ...SHOP_RESERVATION_REMIND_DAY_OFFSETS.map((dayOffset) =>
+        sendApplyingOrderRemindMailToShop(
+          start - dayOffset * ONE_DAY_MILLIS,
+          end - dayOffset * ONE_DAY_MILLIS,
+        ),
+      ),
+      sendRejectOrderMailToShop(
+        start - SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS * ONE_DAY_MILLIS,
+        end - SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS * ONE_DAY_MILLIS,
+      ), // 48 時間（2 日）後却下通知
       sendLetter(start, end), // レター送信
       sendInvoiceMailToOrganizers(start, end),
     ]

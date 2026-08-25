@@ -11,6 +11,7 @@ import {
   convertToDatetimeWeekdayShort,
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
+import { getShopReservationApprovalDeadlineMillis } from '@shokujii/common/constants/eventReservation.js'
 
 // テンプレートID
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b'
@@ -68,7 +69,7 @@ async function createTemplateDataForApplyingOrder(
   event: ShokujiiEvent,
   updatedAt: number,
 ): Promise<TemplateDataForApplyingOrder> {
-  const limitTimeMills = updatedAt + 3 * 24 * 60 * 60 * 1000
+  const limitTimeMills = getShopReservationApprovalDeadlineMillis(updatedAt)
 
   const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(event)
   const event_start_datetime = event.event_start_datetime
