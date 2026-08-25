@@ -12,6 +12,7 @@
 | [x] | RC-6 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 判定変更で `start` 引数が未使用のまま残存<br>`deadlineMillis` 1 引数に整理 |
 | [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | 期限超過分を無制限並列で却下・メール失敗時に復旧不可<br>件数上限／並列度制限を検討 |
 | [x] | RC-8 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 中核のバグ修正（判定変更）にテストなし<br>`rejectOrderMail.test.ts` を追加 |
+| [x] | RC-9 | 3851567012 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | PartnerShop を値 import している<br>`import type` に変更 |
 
 ---
 
@@ -357,5 +358,58 @@
 **想定工数**: S
 
 **判断理由**: `common` 側には定数テストがあるが、実際の却下判定は `rejectOrderMail.ts` にあり未検証だった。既存 `orderRemindMail.test.ts` のモック方式で 1 ファイル追加のみのため自動修正した。
+
+---
+
+## 評価セッション（2026-08-25 21:28・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-25 21:28 JST
+- **ブランチ名**: fix/2306
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2308
+- **REVIEW_REQUEST_SINCE**: 2026-08-25T09:25:49Z
+- **partial**: true（Codex は no_issues のみ。Copilot 再レビューで substantive 指摘あり）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（依頼コメント id:5408309172、Codex 接続案内 id:5408331652、Codex no_issues id:5408363118、RC-5/RC-7 と同一論点の重複指摘）
+- **手順 4a 自動修正**: RC-9（🚨 0 件 / 🟡 1 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-9 | 3851567012 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | PartnerShop を値 import している<br>`import type` に変更 |
+
+### RC-9
+
+**識別子**: RC-9（GitHub id: 3851567012）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/eventStatusChangeMail.ts:11`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
+```
+
+**レビュワーのコメント（原文）**:
+
+[nits] `PartnerShop` は型注釈でしか使っていないため、値 import だと不要なランタイム依存（bundle 増加・循環依存リスク）になります。`import type` に変更してください。
+
+**コメント要約**: PartnerShop は型のみ使用。値 import は不要なランタイム依存。<br>`import type` に変更すべき。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。型注釈のみの利用のため `import type` に変更済み。
 
 ---

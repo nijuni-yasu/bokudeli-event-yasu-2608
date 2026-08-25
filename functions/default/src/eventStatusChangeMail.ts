@@ -8,7 +8,7 @@ import {
   convertToDatetimeWeekdayShort,
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
-import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
+import type { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { getPartner } from './stores/partner.js'
 import { getUser } from './stores/user.js'
 import { convertReferenceToEvent, ShokujiiEvent } from './stores/event.js'
