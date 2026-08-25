@@ -153,7 +153,8 @@ watch(
     const communityName = community.community_name || ''
     const eventName = communityName ? `${communityName}のイベント` : ''
     const eventDesc = communityName ? `${communityName}のイベント` : ''
-    const draftPayment = eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id).defaultPaymentWhenDraft
+    const draftStrategy = eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id)
+    const draftPayment = draftStrategy.defaultPaymentWhenDraft
 
     // PostcodeJP 待ちで画面全体がブロックされないよう、先にイベントを生成する
     _event.value = new BokudeliEvent(community.community_id, null, {
@@ -167,9 +168,7 @@ watch(
       event_name: eventName,
       event_desc: eventDesc,
       ...(draftPayment != null ? { event_payment: draftPayment } : {}),
-      ...(!eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id).isEnterpriseMode
-        ? { members_visible_min_count: DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT }
-        : {}),
+      ...(!draftStrategy.isEnterpriseMode ? { members_visible_min_count: DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT } : {}),
     })
 
     // コミュニティの郵便番号と住所をPostcodeJP APIから取得して、イベントの郵便番号と住所にコピー

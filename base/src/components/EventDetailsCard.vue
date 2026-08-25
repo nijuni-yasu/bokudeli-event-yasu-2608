@@ -42,7 +42,7 @@ import MinimumParticipantsDialog from '@shokujii/base/components/MinimumParticip
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
 import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
 import { useDisplay } from 'vuetify'
-import { shouldShowPfEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
+import { shouldShowEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
 
 const router = useRouter()
 const display = useDisplay()
@@ -156,7 +156,7 @@ const isShowMember = computed(() =>
 )
 
 const shouldShowParticipantsSection = computed(() =>
-  shouldShowPfEventParticipantsSection(props.event, props.event.members.length),
+  shouldShowEventParticipantsSection(props.event, props.event.members.length),
 )
 
 const shareButtonSize = computed(() => (display.xs.value ? 'small' : 'large'))

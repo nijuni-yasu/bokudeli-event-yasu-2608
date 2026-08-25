@@ -72,9 +72,6 @@ const { t: $t } = useI18n()
 const OFF_AMOUNT_MIN = 100
 const OFF_AMOUNT_STEP = 100
 
-/** PF 新規イベント設定 UI のデフォルトしきい値 */
-const DEFAULT_MEMBERS_VISIBLE_MIN_COUNT = DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT
-
 type MembersVisibleMode = 'always' | 'threshold'
 
 const event = defineModel<BokudeliEvent>({ required: true })
@@ -158,13 +155,13 @@ const membersVisibleMode = computed<MembersVisibleMode>({
       return
     }
     if (event.value.members_visible_min_count == null) {
-      event.value.members_visible_min_count = DEFAULT_MEMBERS_VISIBLE_MIN_COUNT
+      event.value.members_visible_min_count = DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT
     }
   },
 })
 
 const membersVisibleThreshold = computed({
-  get: () => event.value.members_visible_min_count ?? DEFAULT_MEMBERS_VISIBLE_MIN_COUNT,
+  get: () => event.value.members_visible_min_count ?? DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT,
   set: (value: number) => {
     event.value.members_visible_min_count = value
   },

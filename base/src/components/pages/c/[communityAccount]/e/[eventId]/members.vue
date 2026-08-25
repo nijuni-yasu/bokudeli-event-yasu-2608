@@ -7,7 +7,7 @@ import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
-import { shouldShowPfEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
+import { shouldShowEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useI18n } from 'vue-i18n'
 
@@ -51,13 +51,14 @@ const shouldShowParticipantsPage = computed(() => {
   if (currentEvent == null) {
     return null
   }
-  return shouldShowPfEventParticipantsSection(currentEvent, currentEvent.members.length)
+  return shouldShowEventParticipantsSection(currentEvent, currentEvent.members.length)
 })
 
 watch(
   shouldShowParticipantsPage,
   (visible) => {
-    if (visible === false) {
+    // is_show_member が false のときは既に /404 へ遷移済みなので、ここで上書きしない
+    if (visible === false && isShowMember) {
       const currentEvent = event.value
       const message =
         currentEvent != null && currentEvent.members.length === 0
