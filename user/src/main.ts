@@ -47,7 +47,9 @@ Promise.all([
     window.setTimeout(() => el.remove(), 250)
   }
 
-  const loaderTimeout = window.setTimeout(hideInitialLoader, 15000)
+  const loaderTimeout = window.setTimeout(() => {
+    void routerMod.router.replace('/').catch(() => undefined)
+  }, 15000)
   void routerMod.router
     .isReady()
     .catch(() => routerMod.router.replace('/').catch(() => undefined))

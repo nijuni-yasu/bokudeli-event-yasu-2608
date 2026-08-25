@@ -93,6 +93,11 @@ export async function handleProfileUpdateFailure(
   } catch (err) {
     console.error(err)
     await signOutBestEffort()
+    const i18n = getI18n()
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('login.login_fail_generic'),
+    )
     return { path: '/login', query }
   }
 

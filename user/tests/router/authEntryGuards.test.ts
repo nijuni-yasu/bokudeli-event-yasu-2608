@@ -155,6 +155,8 @@ describe('authEntryGuards', () => {
 
       expect(mockSignOut).toHaveBeenCalledOnce()
       expect(result).toEqual({ path: '/login', query: {} })
+      expect(window.alert).toHaveBeenCalledOnce()
+      expect(window.alert).toHaveBeenCalledWith('login.login_fail_generic')
     })
 
     it('/profile かつ userCredential なしでは alert しない', async () => {
