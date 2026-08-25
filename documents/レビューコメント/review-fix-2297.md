@@ -914,3 +914,20 @@ const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
 **判断理由**: テーブルの `mx-2 mx-sm-5` を `px-2 px-sm-5` に変更し、959px 以下では外側マージンではなく内側 padding で余白を確保。`width: 100%` は維持。
 
 ---
+
+## 評価セッション（2026-08-25 15:26・review-comments-evaluate）
+
+- **評価日時**: 2026-08-25 15:26 JST
+- **ブランチ名**: fix/2297
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2298
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 11（レビュー依頼定型文 4、Codex 接続案内 4、Copilot 問題なし 1、Copilot エラー 1、Copilot 対応報告 1）
+- **新規 RC なし**: 未記録のインライン指摘なし。RC-21/22 はコミット `3dcc42d48` で対応済み
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| — | — | — | — | — | — | — | — | — | 本セッションで新規 RC なし |
+
+---
