@@ -8,6 +8,7 @@ import {
   convertToDatetimeWeekdayShort,
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { getPartner } from './stores/partner.js'
 import { getUser } from './stores/user.js'
 import { convertReferenceToEvent, ShokujiiEvent } from './stores/event.js'
@@ -94,6 +95,19 @@ async function getShopForEvent(event: ShokujiiEvent) {
 }
 
 /**
+ * 主催者向けイベントステータス変更メール用の店舗テンプレートデータ
+ */
+export function createShopTemplateDataForOrganizerMail(shop: PartnerShop) {
+  return {
+    ...shop,
+    // getter fullAddress はスプレッドされない。テンプレの shop_address 用に結合住所を渡す
+    shop_address: shop.fullAddress,
+    // #2204: 店舗連絡先（サブ1）。SendGrid 側は {{#if shop_email_sub1}} で表示
+    shop_email_sub1: shop.shop_email_sub1 ?? '',
+  }
+}
+
+/**
  * 主催者にイベントステータス変更メールを送信
  */
 async function sendEventStatusMailToOrganizers(
@@ -109,13 +123,7 @@ async function sendEventStatusMailToOrganizers(
 
   const dynamicTemplateData = {
     ...templateData,
-    ...(shop
-      ? {
-          ...shop,
-          // getter fullAddress はスプレッドされない。テンプレの shop_address 用に結合住所を渡す
-          shop_address: shop.fullAddress,
-        }
-      : {}),
+    ...(shop ? createShopTemplateDataForOrganizerMail(shop) : {}),
   }
 
   if (addSupport && !emails.includes(SUPPORT_MAIL)) {
