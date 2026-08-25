@@ -29,6 +29,7 @@ import MinimumParticipantsDialog from '@shokujii/base/components/MinimumParticip
 import type { MinimumParticipantsType } from '@shokujii/common/schemas/Event.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { buildEventMapsSearchUrl } from '@shokujii/base/utils/eventMapsSearchUrl.js'
+import { buildTwitterHashTagSearchUrl } from '@shokujii/base/utils/hashTag.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import {
@@ -247,6 +248,8 @@ const getEventPaymentI18nKey = (event: BokudeliEvent) => {
 
 const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined =>
   buildEventMapsSearchUrl(event.fullAddress, event.event_place)
+
+const twitterHashTagSearchUrl = (hashTag: string): string | undefined => buildTwitterHashTagSearchUrl(hashTag)
 
 /** 福利厚生割引イベントのカート表示 */
 const hasCartEnterpriseSubsidy = (event: BokudeliEvent): boolean => event.event_payment === 'enterprise_subsidy'
@@ -591,7 +594,7 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
             />
           </v-col>
         </v-row>
-        <v-table class="custom-table mx-2 mx-sm-5 my-3" density="compact">
+        <v-table class="custom-table my-3 px-2 px-sm-5" density="compact">
           <tbody>
             <tr>
               <td>{{ $t('event_details.organizer') }}</td>
@@ -734,7 +737,8 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
               <td class="text-small">{{ $t('event_details.sns_hash_tag') }}</td>
               <td>
                 <a
-                  :href="`https://twitter.com/search?q=%23${cartItem.event.event_sns_hash_tag}&f=live`"
+                  v-if="twitterHashTagSearchUrl(cartItem.event.event_sns_hash_tag)"
+                  :href="twitterHashTagSearchUrl(cartItem.event.event_sns_hash_tag)"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-decoration-none"

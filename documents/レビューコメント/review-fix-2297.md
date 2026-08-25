@@ -24,6 +24,8 @@
 | [ ] | RC-18 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📐 設計 | 📐 リファクタ | M | イベント概要テーブルの markup / CSS を cart へ全文コピー<br>共通パネル化の検討（工数 M のため自動修正対象外） |
 | [x] | RC-19 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | cart で文字列に truthy チェック（`event_place_url &&`）<br>`!== ''` に変更 |
 | [x] | RC-20 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | モバイル media query で `td:first-child` にも `width: 100%`<br>セレクタを分離しラベル列の幅指定を復帰 |
+| [x] | RC-21 | 3843821193 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | X ハッシュタグ検索 URL が未エンコード<br>`buildTwitterHashTagSearchUrl` に集約 |
+| [x] | RC-22 | 3843821190 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | モバイルで `mx-*` + `width:100%` で横はみ出し<br>`px-*` に変更し外側マージンを除去 |
 
 ---
 
@@ -818,5 +820,97 @@ const eventMapsSearchUrl = (event: BokudeliEvent): string | undefined => {
 **想定工数**: S
 
 **判断理由**: `.custom-table td:first-child` は `font-size` のみ、`.custom-table` に `width` / `max-width` / `box-sizing` を残す形へ分離。RC-15 の意図（テーブル幅 100%）は維持。
+
+---
+
+## 評価セッション（2026-08-25 15:03・review-comments-evaluate）
+
+- **評価日時**: 2026-08-25 15:03 JST
+- **ブランチ名**: fix/2297
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2298
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 8（レビュー依頼定型文 4、Codex 接続案内 3、Copilot 問題なし 1）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-21 | 3843821193 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | X ハッシュタグ検索 URL が未エンコード<br>`buildTwitterHashTagSearchUrl` に集約 |
+| [x] | RC-22 | 3843821190 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | モバイルで `mx-*` + `width:100%` で横はみ出し<br>`px-*` に変更し外側マージンを除去 |
+
+---
+
+**識別子**: RC-21（GitHub id: 3843821193）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/pages/cart.vue:737`
+
+**該当コード**:
+
+```diff
++                  :href="`https://twitter.com/search?q=%23${cartItem.event.event_sns_hash_tag}&f=live`"
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  ハッシュタグを検索URLへ埋め込む前にエンコードしてください**
+
+`event_sns_hash_tag` に `&` や空白などが含まれるイベントでは、値をそのままクエリへ連結しているため、`&` 以降が別パラメータとして解釈され、Xで意図したハッシュタグを検索できません。これは既存データに加え、`CommunitySetupForm.vue` の正規化が先頭の `#` しか除去せず、そのコミュニティ値がイベントへ引き継がれる場合にも発生するため、`#` を含む検索語全体を `encodeURIComponent` または `URLSearchParams` でエンコードしてください。
+
+**コメント要約**: ハッシュタグ検索 URL で `&` 等がクエリを壊す。検索語全体をエンコードする必要がある。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `base/src/utils/hashTag.ts` に `buildTwitterHashTagSearchUrl`（`URLSearchParams`）を追加。cart / EventDetailsCard の X リンクを util 経由に変更。`hashTag.test.ts` を追加。
+
+---
+
+**識別子**: RC-22（GitHub id: 3843821190）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/pages/cart.vue:1054`
+
+**該当コード**:
+
+```diff
++  .custom-table {
++    font-size: 12px;
++    width: 100%;
++    max-width: 100%;
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  外側マージン込みでテーブル幅を収めてください**
+
+`@media (max-width: 959px)` ではこの `width: 100%` と同時に、テンプレートの `mx-2 mx-sm-5` が左右マージンとして残るため、xs では親幅より16px、smでは40px広くなり、カートカードから横にはみ出します。前回のモバイル幅指摘後も幅を100%にしつつマージンを残した新しい差分が根拠であり、`width: auto` や `calc(...)` にするか、この幅域では外側マージンを除去してください。
+
+**コメント要約**: RC-15 修正後も `mx-*` と `width:100%` の組み合わせでモバイル横はみ出しが残る。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: テーブルの `mx-2 mx-sm-5` を `px-2 px-sm-5` に変更し、959px 以下では外側マージンではなく内側 padding で余白を確保。`width: 100%` は維持。
 
 ---

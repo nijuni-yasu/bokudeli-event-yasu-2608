@@ -16,6 +16,7 @@ import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
 import { buildEventMapsSearchUrl } from '@shokujii/base/utils/eventMapsSearchUrl'
+import { buildTwitterHashTagSearchUrl } from '@shokujii/base/utils/hashTag'
 import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
 import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 import VueQrious from 'vue-qrious'
@@ -79,6 +80,13 @@ const eventUrl = computed(() => {
 })
 
 const eventMapsSearchUrl = computed(() => buildEventMapsSearchUrl(props.event.fullAddress, props.event.event_place))
+
+const twitterHashTagSearchUrl = computed(() => {
+  if (typeof props.event.event_sns_hash_tag !== 'string') {
+    return undefined
+  }
+  return buildTwitterHashTagSearchUrl(props.event.event_sns_hash_tag)
+})
 
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
@@ -345,7 +353,8 @@ const hasParticipants = computed(() => members.value.length > 0)
               </td>
               <td>
                 <a
-                  :href="`https://twitter.com/search?q=%23${event.event_sns_hash_tag}&f=live`"
+                  v-if="twitterHashTagSearchUrl"
+                  :href="twitterHashTagSearchUrl"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-decoration-none"
