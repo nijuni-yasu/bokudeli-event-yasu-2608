@@ -52,20 +52,10 @@ const communityListStore = computed(() =>
       orderBy('community_num_members', 'desc'),
     ],
     10,
+    { lightweight: true },
   ),
 )
-const communities = computed(() => {
-  return (
-    communityListStore.value.communityStores?.flatMap((communityStore) => {
-      const community = communityStore.community
-      if (community == null || communityStore.members == null) {
-        return []
-      }
-      const isManager = community.managers?.some((managerRef) => managerRef.id === userId) ?? false
-      return isManager ? [community] : []
-    }) ?? []
-  )
-})
+const communities = computed(() => communityListStore.value.communities ?? [])
 
 onMounted(() => {
   if (route.query.refreshManaged === '1') {
@@ -301,7 +291,7 @@ const supports = [
             <IncrementalLoader
               class="my-5"
               :total-count="communityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-              :loaded-count="communityListStore.communityStores?.length ?? 0"
+              :loaded-count="communities.length"
               @load="communityListStore.next()"
             />
           </v-col>

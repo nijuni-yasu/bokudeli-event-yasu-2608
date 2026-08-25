@@ -12,6 +12,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CopyEventDialog from '@shokujii/base/components/manage/community/CopyEventDialog.vue'
 import EventCardGrid from '@shokujii/base/components/manage/shared/EventCardGrid.vue'
 import { useCopyEventFeedback } from '@shokujii/base/composable/useCopyEventFeedback.js'
+import { useAutoLoadWhenEmpty } from '@shokujii/base/composable/useAutoLoadWhenEmpty.js'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
 const router = useRouter()
@@ -43,20 +44,39 @@ const communityListStore = computed(
         orderBy('community_num_members', 'desc'),
       ],
       5,
+      { lightweight: true },
     ) as CommunityListStore,
 )
 
-const communityList = computed(() => {
-  if (communityListStore.value.communityStores == null) {
-    return null
-  }
-  if (communityListStore.value.communityStores.length !== communityListStore.value.totalCount) {
-    communityListStore.value.next()
-  }
-  return communityListStore.value.communityStores.flatMap((communityStore) => communityStore.community ?? [])
-})
+const communityList = computed(() => communityListStore.value.communities ?? [])
 
-const communityAccount = ref<string | null>(communityList.value?.[0]?.community_account ?? null)
+const isCommunityMenuOpen = ref(false)
+
+const onCommunityMenuOpenChange = (isOpen: boolean) => {
+  isCommunityMenuOpen.value = isOpen
+}
+
+useAutoLoadWhenEmpty(
+  [
+    () => isCommunityMenuOpen.value,
+    () => communityListStore.value.communities?.length ?? 0,
+    () => communityListStore.value.totalCount,
+  ],
+  {
+    shouldLoad: () => {
+      if (!isCommunityMenuOpen.value) {
+        return false
+      }
+      const store = communityListStore.value
+      const loaded = store.communities?.length ?? 0
+      const total = store.totalCount
+      return total != null && loaded < total
+    },
+    load: () => communityListStore.value.next(),
+  },
+)
+
+const communityAccount = ref<string | null>(communityList.value[0]?.community_account ?? null)
 const communityAccountForList = computed({
   get: () => [communityAccount.value],
   set: (value) => {
@@ -65,7 +85,7 @@ const communityAccountForList = computed({
 })
 
 watch(communityList, (list) => {
-  if (communityAccount.value == null && list != null && list.length > 0) {
+  if (communityAccount.value == null && list.length > 0) {
     communityAccount.value = list[0].community_account
   }
 })
@@ -121,7 +141,7 @@ const isOpenEventDialog = ref(false)
   </v-row>
   <v-row v-if="communityAccount != null">
     <v-col cols="12" class="buttons">
-      <v-menu v-if="community != null && communityList != null">
+      <v-menu v-if="community != null && communityList.length > 0" @update:model-value="onCommunityMenuOpenChange">
         <template #activator="{ props }">
           <v-btn v-bind="props">
             <span>{{ community.community_name }}</span>
