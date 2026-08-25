@@ -11,6 +11,7 @@ import { getEvent, saveEvent, ShokujiiEvent } from './stores/event.js'
 import { getPartner } from './stores/partner.js'
 import { savePartnerMenusToEventMenus } from './eventMenusSnapshot.js'
 import { createModuleLogger } from './utils/logger.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import { assertEnterpriseEventPaymentAllowed } from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('eventCopy')
@@ -91,7 +92,7 @@ export const copyEventCore = async (
     event_place: srcEvent.event_place,
     event_place_url: srcEvent.event_place_url,
     subdomain_tags: srcEvent.subdomain_tags,
-    ...((srcEvent.enterprise_id == null || srcEvent.enterprise_id === '') && srcEvent.members_visible_min_count != null
+    ...(!isEnterpriseEvent(srcEvent) && srcEvent.members_visible_min_count != null
       ? { members_visible_min_count: srcEvent.members_visible_min_count }
       : {}),
 
