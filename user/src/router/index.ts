@@ -401,7 +401,11 @@ export const setupRouter = (router: Router) => {
         return { path: '/', query: { ...to.query, enterprise_blocked: '1' } }
       }
     } catch (err) {
-      reportClientError(err, { componentInfo: 'router/enterprise-guard', severity: 'warn' })
+      reportClientError(err, {
+        componentInfo: 'router/enterprise-guard',
+        severity: 'warn',
+        route: to.fullPath,
+      })
     }
   })
 

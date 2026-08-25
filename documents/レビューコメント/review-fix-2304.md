@@ -18,6 +18,7 @@
 | [x] | RC-12 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | manage トップのクライアント側 isManager フィルタを削除している<br>クエリが managers array-contains 済みのため権限は維持される |
 | [x] | RC-13 | 3850807043 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | filters==null 時に lightweight と通常で storeId が衝突する<br>`/lightweight` サフィックスで区別 |
 | [x] | RC-14 | 3850807101 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | getIdTokenResult 失敗時に console.error のみで監視に乗らない<br>reportClientError で warn 記録を追加 |
+| [x] | RC-15 | 3850973202 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | reportClientError に route 未指定で遷移先が追えない<br>to.fullPath を context に追加 |
 
 ---
 
@@ -727,5 +728,64 @@ reportClientError で warn 記録を追加。
 **想定工数**: S
 
 **判断理由**: fail-open は RC-4 と同様白画面回避の意図的トレードオフ。ただし監視欠如は改善余地あり。reportClientError（severity: warn）追加で両立。
+
+---
+
+## 評価セッション（2026-08-25 17:36・review-comments-evaluate）
+
+- **評価日時**: 2026-08-25 17:36 JST
+- **評価者**: Cursor Agent（review-comments-evaluate・auto）
+- **ブランチ名**: fix/2304
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2307
+- **REVIEW_REQUEST_SINCE**: 2026-08-25T08:25:18Z
+- **partial**: true（Codex は問題なしのみ。Copilot トップレベル指摘は重複中心）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼 id:5407564917、Codex 接続案内 id:5407595014、Codex 問題なし id:5407649185）
+- **重複指摘（RC 採番せず）**: 5件（config→RC-3、getIdTokenResult fail-open→RC-4、setupGlobalErrorHandling→RC-5、getCommunityData enterprise スコープ→既存設計、RC-5 運用→RC-5）
+- **手順 4a 自動修正**: RC-15（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-15 | 3850973202 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | reportClientError に route 未指定で遷移先が追えない<br>to.fullPath を context に追加 |
+
+---
+
+**識別子**: RC-15（GitHub id: 3850973202）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `user/src/router/index.ts:405`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    } catch (err) {
++      reportClientError(err, { componentInfo: 'router/enterprise-guard', severity: 'warn' })
+     }
+```
+
+**レビュワーのコメント（原文）**:
+
+[imo] reportClientError の route が未指定だと、ガード実行中に location が更新されておらず「どの遷移で enterprise 判定が失敗したか」がログから追いづらくなります。to.fullPath を明示しておくと調査が楽になります。
+
+**コメント要約**:
+reportClientError に route 未指定で遷移先が追えない。
+to.fullPath を context に追加。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-14 で追加した監視ログの調査性向上。beforeEach 内では location 未更新のため route 明示が有効。
 
 ---
