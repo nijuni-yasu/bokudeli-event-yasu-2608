@@ -16,6 +16,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import { getNamesPrintPath } from '@/navigation/utils'
 import { getNamesPrintPdf } from '@shokujii/base/utils/namesPrint.js'
+import { buildEventMapsSearchUrl } from '@shokujii/base/utils/eventMapsSearchUrl.js'
 import { computed, ref, watch } from 'vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getEventUrl, getUserUrl } from '@shokujii/common/utils/urls.js'
@@ -143,14 +144,7 @@ const eventMapsSearchUrl = computed(() => {
   if (currentEvent == null) {
     return undefined
   }
-  const query = [currentEvent.fullAddress, currentEvent.event_place ?? '']
-    .map((part) => part.trim())
-    .filter((part) => part !== '')
-    .join(' ')
-  if (query === '') {
-    return undefined
-  }
-  return `https://www.google.co.jp/maps/search/${encodeURIComponent(query)}`
+  return buildEventMapsSearchUrl(currentEvent.fullAddress, currentEvent.event_place)
 })
 
 // [お名前]を印刷 ボタンの実装

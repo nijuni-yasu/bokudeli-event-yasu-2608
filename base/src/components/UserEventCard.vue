@@ -350,16 +350,20 @@ const submitCancel = () => {
     </template>
     <v-card-text>
       <v-row v-if="isOwner" justify="end">
-        <v-spacer></v-spacer>
-        <v-col v-if="isShowCancelButton" class="d-flex justify-end pa-1">
-          <v-btn variant="outlined" rounded="pill" color="secondary" size="small" @click.prevent="onOpenDialog">
-            {{ $t('user_event_card.cancel_order') }}
-          </v-btn>
-        </v-col>
-        <v-col v-else-if="isShowProcessing" class="d-flex justify-end">
+        <template v-if="isShowCancelButton">
+          <v-spacer />
+          <v-col class="d-flex justify-end pa-1">
+            <v-btn variant="outlined" rounded="pill" color="secondary" size="small" @click.prevent="onOpenDialog">
+              {{ $t('user_event_card.cancel_order') }}
+            </v-btn>
+          </v-col>
+        </template>
+        <v-col v-else-if="isShowProcessing" cols="12" class="text-end text-no-wrap">
           {{ $t('user_event_card.processing') }}
         </v-col>
-        <v-col v-else-if="isAllCanceled" class="d-flex justify-end">{{ $t(allCanceledLabelKey) }} </v-col>
+        <v-col v-else-if="isAllCanceled" cols="12" class="text-end text-no-wrap">
+          {{ $t(allCanceledLabelKey) }}
+        </v-col>
       </v-row>
       <v-row v-if="isOwner && isShowInvoiceButton">
         <v-col class="d-flex justify-end pa-1 flex-wrap ga-1">
