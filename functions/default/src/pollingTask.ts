@@ -53,10 +53,7 @@ export const pollingTask = onSchedule(
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
       ...SHOP_RESERVATION_REMIND_DAY_OFFSETS.map((dayOffset) =>
-        sendApplyingOrderRemindMailToShop(
-          start - dayOffset * ONE_DAY_MILLIS,
-          end - dayOffset * ONE_DAY_MILLIS,
-        ),
+        sendApplyingOrderRemindMailToShop(start - dayOffset * ONE_DAY_MILLIS, end - dayOffset * ONE_DAY_MILLIS),
       ),
       sendRejectOrderMailToShop(
         start - SHOP_RESERVATION_APPROVAL_DEADLINE_DAYS * ONE_DAY_MILLIS,
