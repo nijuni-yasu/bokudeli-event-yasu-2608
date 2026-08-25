@@ -29,7 +29,7 @@
 | [x] | RC-23 | 3843213997 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 参加者 0 人時にセクションが表示される回帰 |
 | [x] | RC-24 | 3843241138 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules でしきい値を定員以下に制約 |
 | [x] | RC-25 | 3843241148 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | partner 既存イベント編集で参加者表示設定が編集可能 |
-| [ ] | RC-26 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | S | セクション表示判定と表示件数のデータソースが不一致 |
+| [ ] | RC-26 | 3851025393, 3851025452 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | S | セクション表示判定と表示件数のデータソースが不一致 |
 | [x] | RC-27 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventEdit で支払い UI 戦略を二重取得 |
 | [x] | RC-28 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | common 定数をローカル別名で中継 |
 | [x] | RC-29 | なし | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 👀 確認のみ | — | validator と step4 検証で定員ガード条件が非対称 |
@@ -38,6 +38,8 @@
 | [x] | RC-32 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventCopy で enterprise 判定を独自実装 |
 | [x] | RC-33 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | partner 作成画面の computed にリアクティブ依存が無い |
 | [x] | RC-34 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules テストに enterprise 拒否・不正値ケースが無い |
+| [x] | RC-35 | 3851055981 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | partner 既存イベントで EventDetailCard 全体が readonly 化 |
+| [ ] | RC-36 | 3851055995 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | PF→enterprise 更新で members_visible_min_count が残る |
 
 ---
 
@@ -611,7 +613,7 @@ watch(
 
 ---
 
-**識別子**: RC-26（GitHub id: なし・エージェントレビュー）
+**識別子**: RC-26（GitHub id: 3851025393, 3851025452・Copilot / エージェントレビュー）
 
 **レビュワー**: Cursor Agent（shokujii-code-review）
 
@@ -937,5 +939,102 @@ const paymentUiStrategy = computed(() => eventPaymentUiStrategyFromEnterpriseId(
 **想定工数**: S
 
 **判断理由**: 6 ケース（0 / 負値 / 非整数の拒否、enterprise への追加拒否、enterprise の他フィールド更新許可、PF create 許可、enterprise create 拒否）を追加。`firebase emulators:exec --only firestore` で 10 件パスを確認。
+
+---
+
+## 評価セッション（2026-08-25 17:42 JST・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-25 17:42 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・pr review wake #2291）
+- **ブランチ名**: ui/2289
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2291
+- **REVIEW_REQUEST_SINCE**: 2026-08-25T08:33:44Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型 1 件、Codex 接続案内 1 件、Copilot PR 概要 1 件）
+- **手順 4a 自動修正**: RC-35（🚨 1 件 / 🟡 0 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-26 | 3851025393, 3851025452 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | S | Copilot も同一指摘（doc vs サブコレクション不一致） |
+| [x] | RC-29 | なし | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 👀 確認のみ | — | Copilot も validator ガード差を指摘（RC-29 と同一） |
+| [x] | RC-35 | 3851055981 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | partner 既存イベントで EventDetailCard 全体 readonly 化 |
+| [ ] | RC-36 | 3851055995 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | PF→enterprise 更新で members_visible_min_count が残る |
+
+---
+
+**識別子**: RC-35（GitHub id: 3851055981）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `partner/src/pages/events/create.vue:207`
+
+**該当コード（レビュー時点）**:
+
+```vue
+        <EventDetailCard
+          ...
+          :readonly="event.event_status.value !== 'in_draft'"
+```
+
+**レビュワーのコメント（原文）**:
+
+**P1** 参加者表示設定だけを読み取り専用にする
+
+既存コメント後の最終差分では、非下書きイベントでカード全体に `readonly` を渡しているため、従来 Partner が更新できたイベント名、カバー画像、公開設定、定員まで編集不能になります。更新ボタンと本文・ハッシュタグ編集は残るので、非下書きイベントの編集画面が不整合な状態になります。`members_visible_min_count` 専用の readonly prop を追加するなど、Rules で禁止した設定だけを無効化してください。
+
+**コメント要約**: RC-25 対応の card 全体 readonly が過剰。<br>参加者表示設定のみ readonly に限定する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `EventDetailCard` に `readonlyPfMembersVisibleSettings` を追加し、partner 既存イベント編集では PF 参加者表示設定のみ readonly。カバー・公開・定員等は従来どおり編集可能。
+
+---
+
+**識別子**: RC-36（GitHub id: 3851055995）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `firestore.rules:29`
+
+**該当コード（レビュー時点）**:
+
+```
+return unchanged || (!enterpriseOnWrite && validPfValue);
+```
+
+**レビュワーのコメント（原文）**:
+
+**P2** enterprise 化時も新フィールドを拒否する
+
+PF イベントにしきい値が設定済みの状態で、manager または support が `enterprise_id` を追加する更新では、`members_visible_min_count` が同値なので `unchanged` が true となり、`enterpriseOnWrite` を無視して許可されます。その結果、create や既存 enterprise への追加では拒否しているフィールドを PF→enterprise の更新だけで持ち込めるため、更新後の enterprise 状態も検証して拒否してください。
+
+**コメント要約**: PF→enterprise 変換時に unchanged 経由でしきい値フィールドが残る。<br>enterprise 書き込み時はフィールド存在自体を拒否する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 修正方針は明確だが 🔒 ラベルのため手順 4a 自動修正対象外。Rules 式に enterprise 側 `newHas` 拒否を追加しテストケースも要。
 
 ---

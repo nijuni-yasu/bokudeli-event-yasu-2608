@@ -57,9 +57,12 @@ const props = withDefaults(
     isNew?: boolean
     /** 支払い方式 UI（enterprise / PF）。呼び出し側から注入 */
     paymentUiStrategy?: EventPaymentUiStrategy
+    /** PF 参加者表示設定のみ読み取り専用（partner 既存イベント等） */
+    readonlyPfMembersVisibleSettings?: boolean
   }>(),
   {
     readonly: false,
+    readonlyPfMembersVisibleSettings: false,
     showAlbumPreview: true,
     isNew: false,
     paymentUiStrategy: () => PF_EVENT_PAYMENT_UI_STRATEGY,
@@ -234,6 +237,8 @@ const membersVisibleThresholdValidator = (v: number) => {
 const minimumParticipantsEditable = computed(
   () => !props.readonly && isMinimumParticipantsEditingAllowed(event.value.event_status.value),
 )
+
+const isPfMembersVisibleSettingsReadonly = computed(() => props.readonly || props.readonlyPfMembersVisibleSettings)
 
 const minimumParticipantsEnabled = computed({
   get: () => event.value.minimum_participants != null,
@@ -632,7 +637,12 @@ const tinymceInit = computed(() => ({
         {{ $t('event_detail.members_visible') }}
       </v-card-title>
       <v-card-text>
-        <v-radio-group v-model="membersVisibleMode" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
+        <v-radio-group
+          v-model="membersVisibleMode"
+          hide-details
+          class="ma-1 ma-md-3"
+          :readonly="isPfMembersVisibleSettingsReadonly"
+        >
           <v-radio value="always" :label="$t('event_detail.members_visible_always')" />
           <v-radio value="threshold" :label="$t('event_detail.members_visible_threshold')" />
         </v-radio-group>
@@ -645,7 +655,7 @@ const tinymceInit = computed(() => ({
               dense
               min="1"
               step="1"
-              :readonly="props.readonly"
+              :readonly="isPfMembersVisibleSettingsReadonly"
               :label="$t('event_detail.members_visible_threshold_count_label')"
               :rules="[requiredValidator, positiveIntegerValidator, membersVisibleThresholdValidator]"
             />
