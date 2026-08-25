@@ -110,4 +110,28 @@ describe('collectEventDetailValidationMessages', () => {
       'event_edit.step4_validation.off_amount_step',
     ])
   })
+
+  it('表示開始人数が定員を超える場合にエラーを返す', () => {
+    const messages = collectEventDetailValidationMessages({
+      event: {
+        event_name: 'タイトル',
+        event_desc: '<p>本文</p>',
+        event_max_people: 4,
+        event_payment: 'user_advance',
+        members: [],
+        members_visible_min_count: 10,
+        bill_fullname: '',
+        bill_email: '',
+      },
+      hasCoverImage: true,
+      isEnterpriseMode: false,
+      requiredValidator: alwaysValid,
+      requiredHtmlValidator: alwaysValid,
+      positiveIntegerValidator: alwaysValid,
+      emailValidator: alwaysValid,
+      t,
+    })
+
+    expect(messages).toEqual(['event_edit.step4_validation.members_visible_threshold_exceeds_max_people'])
+  })
 })

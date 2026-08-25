@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Event, convertEventToDb } from './Event.js'
+import { getDeleteFieldValue } from './firebase/index.js'
+import { minimalPfEventFields } from './partnerCompatTestDummyData.js'
 
 const minimalEventFields = {
   community_id: 'community-1',
@@ -7,6 +9,31 @@ const minimalEventFields = {
   community_account: 'test-account',
   created_by: 'user-1',
 }
+
+describe('Event members_visible_min_count', () => {
+  it('toFirestore で正の整数を保存できる', () => {
+    const event = new Event('event-1', {
+      ...minimalPfEventFields,
+      members_visible_min_count: 3,
+    })
+    const out = event.toFirestore('user-1')
+    expect(out.members_visible_min_count).toBe(3)
+  })
+
+  it('未設定時 toFirestore で deleteField になる', () => {
+    const event = new Event('event-1', minimalPfEventFields)
+    const out = event.toFirestore('user-1')
+    expect(out.members_visible_min_count).toEqual(getDeleteFieldValue())
+  })
+
+  it('Firestore から members_visible_min_count を読み取れる', () => {
+    const event = new Event('event-1', {
+      ...minimalEventFields,
+      members_visible_min_count: 5,
+    })
+    expect(event.members_visible_min_count).toBe(5)
+  })
+})
 
 describe('Event enterprise_id', () => {
   it('convertEventToDb で enterprise_id 未設定時は null を明示する', () => {

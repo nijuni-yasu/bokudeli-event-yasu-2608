@@ -7,6 +7,9 @@ import { useAppEventStore } from '@shokujii/base/composable/useAppEventStore.js'
 import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
+import { shouldShowEventParticipantsSection } from '@shokujii/common/utils/eventParticipantsVisibility.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   communityAccount: string
@@ -14,6 +17,8 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const communityStore = useAppCommunityStore(props.communityAccount)
 const isShowMember: boolean = await new Promise((resolve) => {
@@ -40,10 +45,35 @@ const members = computed(() =>
       b.orders.reduce((max, order) => Math.max(max, order.updated_at), 0),
   ),
 )
+
+const shouldShowParticipantsPage = computed(() => {
+  const currentEvent = event.value
+  if (currentEvent == null) {
+    return null
+  }
+  return shouldShowEventParticipantsSection(currentEvent, currentEvent.members.length)
+})
+
+watch(
+  shouldShowParticipantsPage,
+  (visible) => {
+    // is_show_member が false のときは既に /404 へ遷移済みなので、ここで上書きしない
+    if (visible === false && isShowMember) {
+      const currentEvent = event.value
+      const message =
+        currentEvent != null && currentEvent.members.length === 0
+          ? $t('event_detail.members_page_hidden_no_participants')
+          : $t('event_detail.members_page_hidden_until_threshold')
+      notification.show(message, 'info')
+      router.replace(getEventPath(props.communityAccount, props.eventId))
+    }
+  },
+  { immediate: true },
+)
 </script>
 <template>
   <section>
-    <div v-if="event != null && isShowMember" class="justify-center">
+    <div v-if="event != null && isShowMember && shouldShowParticipantsPage" class="justify-center">
       <v-btn
         class="ma-1"
         color="primary"

@@ -9,6 +9,7 @@ import { useValidators } from '@shokujii/base/composable/validators'
 import {
   mdiAccountCreditCardOutline,
   mdiAccountMultipleCheckOutline,
+  mdiAccountEyeOutline,
   mdiAccountMultipleOutline,
   mdiCalendarBlankOutline,
   mdiImagePlusOutline,
@@ -30,6 +31,7 @@ import {
   PF_EVENT_PAYMENT_UI_STRATEGY,
   type EventPaymentUiStrategy,
 } from '@shokujii/base/composable/eventPaymentUiStrategy.js'
+import { DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT } from '@shokujii/common/utils/eventParticipantsVisibility.js'
 import {
   createDefaultMinimumParticipants,
   computeMinimumParticipantsJudgmentDatetime,
@@ -55,9 +57,12 @@ const props = withDefaults(
     isNew?: boolean
     /** 支払い方式 UI（enterprise / PF）。呼び出し側から注入 */
     paymentUiStrategy?: EventPaymentUiStrategy
+    /** PF 参加者表示設定のみ読み取り専用（partner 既存イベント等） */
+    readonlyPfMembersVisibleSettings?: boolean
   }>(),
   {
     readonly: false,
+    readonlyPfMembersVisibleSettings: false,
     showAlbumPreview: true,
     isNew: false,
     paymentUiStrategy: () => PF_EVENT_PAYMENT_UI_STRATEGY,
@@ -69,6 +74,8 @@ const { t: $t } = useI18n()
 /** おごり金額（UI）の最小値・単位（円） */
 const OFF_AMOUNT_MIN = 100
 const OFF_AMOUNT_STEP = 100
+
+type MembersVisibleMode = 'always' | 'threshold'
 
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
@@ -143,6 +150,28 @@ const offAmountValidator = (v: number | string | undefined) => {
   return true
 }
 
+const membersVisibleMode = computed<MembersVisibleMode>({
+  get: () => (event.value.members_visible_min_count == null ? 'always' : 'threshold'),
+  set: (mode: MembersVisibleMode) => {
+    if (mode === 'always') {
+      event.value.members_visible_min_count = undefined
+      return
+    }
+    if (event.value.members_visible_min_count == null) {
+      event.value.members_visible_min_count = DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT
+    }
+  },
+})
+
+const membersVisibleThreshold = computed({
+  get: () => event.value.members_visible_min_count ?? DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT,
+  set: (value: number) => {
+    event.value.members_visible_min_count = value
+  },
+})
+
+const showPfMembersVisibleSettings = computed(() => !paymentUiStrategy.value.isEnterpriseMode)
+
 watch(
   () => event.value.event_payment,
   () => {
@@ -195,9 +224,21 @@ const maxPeopleValidator = (v: number) => {
   return true
 }
 
+const membersVisibleThresholdValidator = (v: number) => {
+  if (membersVisibleMode.value !== 'threshold') {
+    return true
+  }
+  if (v > event.value.event_max_people) {
+    return $t('event_detail.error_members_visible_threshold_exceeds_max_people')
+  }
+  return true
+}
+
 const minimumParticipantsEditable = computed(
   () => !props.readonly && isMinimumParticipantsEditingAllowed(event.value.event_status.value),
 )
+
+const isPfMembersVisibleSettingsReadonly = computed(() => props.readonly || props.readonlyPfMembersVisibleSettings)
 
 const minimumParticipantsEnabled = computed({
   get: () => event.value.minimum_participants != null,
@@ -552,6 +593,22 @@ const tinymceInit = computed(() => ({
       </v-row>
     </v-card-text>
 
+    <!-- 公開設定 -->
+    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
+      <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
+      {{ $t('event_detail.activity') }}
+    </v-card-title>
+    <v-card-text>
+      <v-radio-group v-model="event.is_public" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
+        <v-radio :value="true" :label="$t('event_detail.public')" />
+        <v-radio :value="false" :label="$t('event_detail.private')" />
+      </v-radio-group>
+      <div class="mt-2 text-subtitle-2">
+        <span v-if="event.is_public"><div v-html="$t('event_detail.public_desc')" /></span>
+        <span v-else><div v-html="$t('event_detail.private_desc')" /></span>
+      </div>
+    </v-card-text>
+
     <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleOutline" />
       {{ $t('event_detail.event_max_people') }}
@@ -573,6 +630,44 @@ const tinymceInit = computed(() => ({
         </v-col>
       </v-row>
     </v-card-text>
+
+    <template v-if="showPfMembersVisibleSettings">
+      <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
+        <v-icon size="50" class="text--primary me-3" :icon="mdiAccountEyeOutline" />
+        {{ $t('event_detail.members_visible') }}
+      </v-card-title>
+      <v-card-text>
+        <v-radio-group
+          v-model="membersVisibleMode"
+          hide-details
+          class="ma-1 ma-md-3"
+          :readonly="isPfMembersVisibleSettingsReadonly"
+        >
+          <v-radio value="always" :label="$t('event_detail.members_visible_always')" />
+          <v-radio value="threshold" :label="$t('event_detail.members_visible_threshold')" />
+        </v-radio-group>
+        <v-row v-if="membersVisibleMode === 'threshold'" class="ma-1 ma-md-3 mt-2">
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field
+              v-model.number="membersVisibleThreshold"
+              type="number"
+              outlined
+              dense
+              min="1"
+              step="1"
+              :readonly="isPfMembersVisibleSettingsReadonly"
+              :label="$t('event_detail.members_visible_threshold_count_label')"
+              :rules="[requiredValidator, positiveIntegerValidator, membersVisibleThresholdValidator]"
+            />
+          </v-col>
+        </v-row>
+        <div class="text-body-2 text-medium-emphasis ma-1 ma-md-3 mt-2">
+          <p class="mb-0">
+            {{ $t('event_detail.members_visible_field_help') }}
+          </p>
+        </div>
+      </v-card-text>
+    </template>
 
     <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountMultipleCheckOutline" />
@@ -641,22 +736,6 @@ const tinymceInit = computed(() => ({
       <p v-if="!minimumParticipantsEditable && minimumParticipantsEnabled" class="text-caption text-medium-emphasis">
         {{ $t('event_detail.minimum_participants.readonly_note') }}
       </p>
-    </v-card-text>
-
-    <!-- Activity -->
-    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
-      <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
-      {{ $t('event_detail.activity') }}
-    </v-card-title>
-    <v-card-text>
-      <v-radio-group v-model="event.is_public" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
-        <v-radio :value="true" :label="$t('event_detail.public')" />
-        <v-radio :value="false" :label="$t('event_detail.private')" />
-      </v-radio-group>
-      <div class="mt-2 text-subtitle-2">
-        <span v-if="event.is_public"><div v-html="$t('event_detail.public_desc')" /></span>
-        <span v-else><div v-html="$t('event_detail.private_desc')" /></span>
-      </div>
     </v-card-text>
 
     <!-- 支払い設定 -->

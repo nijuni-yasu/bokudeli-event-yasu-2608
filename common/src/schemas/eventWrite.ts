@@ -53,6 +53,7 @@ export const EnterpriseEventWriteDiscriminantSchema = EnterpriseEventWriteAppSch
 const PfEventWriteBaseSchema = EventWriteCoreAppSchema.extend({
   event_payment: PfEventPaymentSchema,
   enterprise_id: z.null().optional(),
+  members_visible_min_count: z.number().int().positive().optional(),
 })
 
 /** PF 書き込み分支 */

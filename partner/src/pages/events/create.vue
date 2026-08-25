@@ -8,6 +8,8 @@ import { useEventStore, type EventStore, BokudeliEvent, createNewEvent } from '@
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
+import { eventPaymentUiStrategyFromEnterpriseId } from '@shokujii/base/composable/eventPaymentUiStrategy.js'
+import { DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT } from '@shokujii/common/utils/eventParticipantsVisibility.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiOpenInNew } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -67,6 +69,7 @@ const community = await new Promise<BokudeliCommunity>((resolve) => {
 
 const communityId = community.community_id
 const communityName = community.community_name
+const paymentUiStrategy = eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id)
 
 const numOfColumns = computed(() => {
   switch (display.name.value) {
@@ -124,6 +127,7 @@ if (route.query.id != null) {
     shop_id: shop.shop_id,
     shop_name: shop.shop_name ?? '',
     event_status: { value: 'in_draft', shop_comment: '' },
+    ...(!paymentUiStrategy.isEnterpriseMode ? { members_visible_min_count: DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT } : {}),
   })
 }
 
@@ -200,10 +204,12 @@ onUnmounted(() => {
         <EventDetailCard
           v-model="event"
           v-model:coverImage="coverImage"
+          :readonly-pf-members-visible-settings="event.event_status.value !== 'in_draft'"
           :readonlyDeadline="event.event_status.value !== 'in_draft'"
           :subdomainTags="community.subdomain_tags"
           :show-album-preview="false"
           :is-new="route.query.id == null"
+          :payment-ui-strategy="paymentUiStrategy"
         />
         <v-card-text class="text-end mt-10">
           <v-btn
