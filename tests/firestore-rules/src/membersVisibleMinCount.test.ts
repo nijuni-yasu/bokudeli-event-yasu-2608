@@ -109,15 +109,9 @@ describe('members_visible_min_count firestore rules', () => {
     })
 
     await assertFails(
-      partner
-        .firestore()
-        .collection('communities')
-        .doc('community-1')
-        .collection('events')
-        .doc('event-1')
-        .update({
-          members_visible_min_count: 5,
-        }),
+      partner.firestore().collection('communities').doc('community-1').collection('events').doc('event-1').update({
+        members_visible_min_count: 5,
+      }),
     )
   })
 
@@ -137,15 +131,9 @@ describe('members_visible_min_count firestore rules', () => {
     })
 
     await assertFails(
-      partner
-        .firestore()
-        .collection('communities')
-        .doc('community-1')
-        .collection('events')
-        .doc('event-1')
-        .update({
-          members_visible_min_count: 3,
-        }),
+      partner.firestore().collection('communities').doc('community-1').collection('events').doc('event-1').update({
+        members_visible_min_count: 3,
+      }),
     )
   })
 
@@ -167,15 +155,9 @@ describe('members_visible_min_count firestore rules', () => {
     })
 
     await assertSucceeds(
-      manager
-        .firestore()
-        .collection('communities')
-        .doc('community-1')
-        .collection('events')
-        .doc('event-1')
-        .update({
-          members_visible_min_count: 5,
-        }),
+      manager.firestore().collection('communities').doc('community-1').collection('events').doc('event-1').update({
+        members_visible_min_count: 5,
+      }),
     )
   })
 
@@ -197,14 +179,124 @@ describe('members_visible_min_count firestore rules', () => {
     })
 
     await assertFails(
-      manager
+      manager.firestore().collection('communities').doc('community-1').collection('events').doc('event-1').update({
+        members_visible_min_count: 10,
+      }),
+    )
+  })
+
+  it('manager が members_visible_min_count に 0 以下・非整数を設定することを拒否', async () => {
+    await seedCommunityWithManager()
+    const manager = managerAuth('manager-1')
+    await testEnv.withSecurityRulesDisabled(async (admin) => {
+      await admin
         .firestore()
         .collection('communities')
         .doc('community-1')
         .collection('events')
         .doc('event-1')
-        .update({
-          members_visible_min_count: 10,
+        .set({
+          event_status: { value: 'in_draft', shop_comment: '' },
+          event_max_people: 10,
+          members_visible_min_count: 3,
+        })
+    })
+
+    const eventRef = manager
+      .firestore()
+      .collection('communities')
+      .doc('community-1')
+      .collection('events')
+      .doc('event-1')
+
+    await assertFails(eventRef.update({ members_visible_min_count: 0 }))
+    await assertFails(eventRef.update({ members_visible_min_count: -1 }))
+    await assertFails(eventRef.update({ members_visible_min_count: 1.5 }))
+  })
+
+  it('manager が enterprise イベントに members_visible_min_count を追加することを拒否', async () => {
+    await seedCommunityWithManager()
+    const manager = managerAuth('manager-1')
+    await testEnv.withSecurityRulesDisabled(async (admin) => {
+      await admin
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-1')
+        .set({
+          event_status: { value: 'in_draft', shop_comment: '' },
+          event_max_people: 10,
+          enterprise_id: 'ent-1',
+        })
+    })
+
+    await assertFails(
+      manager.firestore().collection('communities').doc('community-1').collection('events').doc('event-1').update({
+        members_visible_min_count: 3,
+      }),
+    )
+  })
+
+  it('manager が enterprise イベントの他フィールドを更新することは許可', async () => {
+    await seedCommunityWithManager()
+    const manager = managerAuth('manager-1')
+    await testEnv.withSecurityRulesDisabled(async (admin) => {
+      await admin
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-1')
+        .set({
+          event_status: { value: 'in_draft', shop_comment: '' },
+          event_max_people: 10,
+          enterprise_id: 'ent-1',
+        })
+    })
+
+    await assertSucceeds(
+      manager.firestore().collection('communities').doc('community-1').collection('events').doc('event-1').update({
+        event_max_people: 20,
+      }),
+    )
+  })
+
+  it('manager が PF イベントを members_visible_min_count 付きで作成できる', async () => {
+    await seedCommunityWithManager()
+    const manager = managerAuth('manager-1')
+
+    await assertSucceeds(
+      manager
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-new')
+        .set({
+          event_status: { value: 'in_draft', shop_comment: '' },
+          event_max_people: 10,
+          members_visible_min_count: 3,
+        }),
+    )
+  })
+
+  it('manager が enterprise イベントを members_visible_min_count 付きで作成することを拒否', async () => {
+    await seedCommunityWithManager()
+    const manager = managerAuth('manager-1')
+
+    await assertFails(
+      manager
+        .firestore()
+        .collection('communities')
+        .doc('community-1')
+        .collection('events')
+        .doc('event-new')
+        .set({
+          event_status: { value: 'in_draft', shop_comment: '' },
+          event_max_people: 10,
+          enterprise_id: 'ent-1',
+          members_visible_min_count: 3,
         }),
     )
   })
