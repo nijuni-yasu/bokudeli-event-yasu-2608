@@ -29,6 +29,15 @@
 | [x] | RC-23 | 3843213997 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 参加者 0 人時にセクションが表示される回帰 |
 | [x] | RC-24 | 3843241138 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules でしきい値を定員以下に制約 |
 | [x] | RC-25 | 3843241148 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | partner 既存イベント編集で参加者表示設定が編集可能 |
+| [ ] | RC-26 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | S | セクション表示判定と表示件数のデータソースが不一致 |
+| [x] | RC-27 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventEdit で支払い UI 戦略を二重取得 |
+| [x] | RC-28 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | common 定数をローカル別名で中継 |
+| [x] | RC-29 | なし | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 👀 確認のみ | — | validator と step4 検証で定員ガード条件が非対称 |
+| [x] | RC-30 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | is_show_member false 時に /404 が replace で打ち消される |
+| [x] | RC-31 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 関数名の Pf 接頭辞が実際の判定範囲と不一致 |
+| [x] | RC-32 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventCopy で enterprise 判定を独自実装 |
+| [x] | RC-33 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | partner 作成画面の computed にリアクティブ依存が無い |
+| [x] | RC-34 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules テストに enterprise 拒否・不正値ケースが無い |
 
 ---
 
@@ -572,5 +581,361 @@ watch(
 **想定工数**: S
 
 **判断理由**: `partner/src/pages/events/create.vue` の `EventDetailCard` に `:readonly="event.event_status.value !== 'in_draft'"` を追加し、下書き以外は編集不可に統一。
+
+---
+
+## 評価セッション（2026-08-25 16:50 JST・shokujii-code-review）
+
+- **評価日時**: 2026-08-25 16:50 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: ui/2289
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2291
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **背景**: RC-1〜25 対応後の差分（`origin/development...HEAD`）に対するセルフレビュー
+- **手順 3a/3b 自動修正**: RC-27, RC-28, RC-30, RC-31, RC-32, RC-33, RC-34（🚨 0 件 / 🟡 7 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-26 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | S | セクション表示判定と表示件数のデータソースが不一致 |
+| [x] | RC-27 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | EventEdit で支払い UI 戦略を二重取得 |
+| [x] | RC-28 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | common 定数をローカル別名で中継 |
+| [x] | RC-29 | なし | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 👀 確認のみ | — | validator と step4 検証で定員ガード条件が非対称 |
+| [x] | RC-30 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | is_show_member false 時に /404 が replace で打ち消される |
+| [x] | RC-31 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 関数名の Pf 接頭辞が実際の判定範囲と不一致 |
+| [x] | RC-32 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventCopy で enterprise 判定を独自実装 |
+| [x] | RC-33 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | partner 作成画面の computed にリアクティブ依存が無い |
+| [x] | RC-34 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules テストに enterprise 拒否・不正値ケースが無い |
+
+---
+
+**識別子**: RC-26（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventDetailsCard.vue:158`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+const shouldShowParticipantsSection = computed(() =>
+  shouldShowEventParticipantsSection(props.event, props.event.members.length),
+)
+// 表示側は members（members サブコレクション）を使う
+// {{ members.length }} / {{ event.event_max_people }}
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📋仕様追加/S]: セクションの表示判定はイベントドキュメントの `event.members`（配列）だが、セクション内の件数表示と一覧は `eventStore.members`（members サブコレクション）を使う。サブコレクションの購読が完了する前に判定が true になるため、`0 / 25` の空セクションが一瞬描画される（旧 `hasParticipants` はサブコレクション基準だったため発生しなかった）。→ 判定に `members.length > 0` を AND する、または件数表示を `event.members.length` 側に揃える。どちらを正本にするかは RC-3 / RC-23 の判断（doc 側 `members` を正本にする）と併せて仕様確認が必要。
+
+**コメント要約**: 表示ゲートと件数表示のデータソースが別で、読み込み中に空セクションが出る。<br>どちらを正本にするかは仕様確認が必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: S
+
+**判断理由**: 修正方針が一意でなく（doc 側 / サブコレクション側のどちらを正本にするかで挙動が変わる）、RC-3 / RC-23 の判断と整合を取る仕様確認が必要なため自動修正の対象外とした。
+
+---
+
+**識別子**: RC-27（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventEdit.vue:156`, `base/src/components/EventEdit.vue:170`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+const draftPayment = eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id).defaultPaymentWhenDraft
+...
+  ...(!eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id).isEnterpriseMode
+    ? { members_visible_min_count: DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT }
+    : {}),
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 同一 watch 内で `eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id)` を 2 回呼んでおり、片方だけ引数を変えると支払い既定値と参加者表示既定値の判定がずれる。→ ローカル定数に集約して両方から参照する。
+
+**コメント要約**: 支払い UI 戦略の二重取得。<br>ローカル定数に集約する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `draftStrategy` に集約し、`defaultPaymentWhenDraft` と `isEnterpriseMode` の両方をここから参照するよう変更。
+
+---
+
+**識別子**: RC-28（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/eventcreate/EventDetailCard.vue:75`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+/** PF 新規イベント設定 UI のデフォルトしきい値 */
+const DEFAULT_MEMBERS_VISIBLE_MIN_COUNT = DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-20 で common 定数へ一本化した直後に、同じ値をローカル別名へ再代入している。不要な変数中継であり、`grep DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT` で参照箇所が追えなくなる。→ 別名を削除し `DEFAULT_PF_MEMBERS_VISIBLE_MIN_COUNT` を直接使う。
+
+**コメント要約**: common 定数の不要な別名中継。<br>別名を削除して直接参照する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `DEFAULT_MEMBERS_VISIBLE_MIN_COUNT` を削除し、`membersVisibleMode` / `membersVisibleThreshold` から common 定数を直接参照。
+
+---
+
+**識別子**: RC-29（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/eventcreate/EventDetailCard.vue:227`, `base/src/utils/eventEditValidationMessages.ts:119`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+// EventDetailCard: 定員ガードなし
+if (v > event.value.event_max_people) {
+// eventEditValidationMessages: event_max_people > 0 のガードあり
+event.event_max_people > 0 &&
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: 同じ「しきい値 <= 定員」検証で、`collectEventDetailValidationMessages` には `event_max_people > 0` ガードがあるが `membersVisibleThresholdValidator` には無い。→ `EventAppSchema` の `event_max_people` は `positive()` + 既定値 25 のため 0 は保持されず、入力途中の空文字は `requiredValidator` が先に弾くため実害はない。
+
+**コメント要約**: 定員ガード条件が 2 実装で非対称。<br>スキーマ制約により実害がないため対応不要。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: `event_max_people` は `z.number().int().positive().default(25)` で 0 になり得ず、空入力は `requiredValidator` が先に検出するため挙動差は生じない。
+
+---
+
+**識別子**: RC-30（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/pages/c/[communityAccount]/e/[eventId]/members.vue:57`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+watch(
+  shouldShowParticipantsPage,
+  (visible) => {
+    if (visible === false) {
+      ...
+      router.replace(getEventPath(props.communityAccount, props.eventId))
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 上部の `isShowMember` 監視は `is_show_member === false` のとき `/404` へ遷移するが、その直後に本 watch が `immediate` で走り、しきい値未達なら `router.replace` でイベントページへ上書きしてしまう。参加者非公開コミュニティなのに 404 ではなくイベント詳細へ着地する。→ `isShowMember` が true のときだけ replace する。
+
+**コメント要約**: is_show_member false 時に /404 遷移が replace で打ち消される。<br>replace の条件に isShowMember を加える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `if (visible === false && isShowMember)` に変更し、`/404` 遷移を上書きしないようコメントで意図を明記。
+
+---
+
+**識別子**: RC-31（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/utils/eventParticipantsVisibility.ts:15`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+export function shouldShowPfEventParticipantsSection(
+  event: EventParticipantsVisibilitySource,
+  memberCount: number,
+): boolean {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-23 対応で 0 人非表示・enterprise 常時表示まで内包したため、関数は PF 専用ではなく全イベントの参加者セクション表示判定になった。`Pf` 接頭辞が実際の責務と食い違い、enterprise 経路で呼んで良いか読み手が判断できない。→ `shouldShowEventParticipantsSection` にリネームする。
+
+**コメント要約**: 関数名の Pf 接頭辞が実際の判定範囲と不一致。<br>PF 専用でないためリネームする。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `shouldShowEventParticipantsSection` にリネームし、`EventDetailsCard.vue` / `members.vue` / テストの参照を更新（JSDoc の PF / enterprise 挙動説明は維持）。
+
+---
+
+**識別子**: RC-32（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/eventCopy.ts:94`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+    ...((srcEvent.enterprise_id == null || srcEvent.enterprise_id === '') && srcEvent.members_visible_min_count != null
+      ? { members_visible_min_count: srcEvent.members_visible_min_count }
+      : {}),
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: enterprise 判定を `enterprise_id == null || enterprise_id === ''` とインラインで再実装している。同一セマンティクスの `isEnterpriseEvent`（`functions/default/src/utils/enterpriseMail.ts`）が既にあり、`functions/default` 内の他ファイルはそちらを使っている。判定を増やすと `''` の扱い等がファイル単位でずれる。→ `!isEnterpriseEvent(srcEvent)` に置き換える。
+
+**コメント要約**: enterprise 判定の独自実装。<br>既存の isEnterpriseEvent を使う。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `utils/enterpriseMail.js` の `isEnterpriseEvent` を import し `!isEnterpriseEvent(srcEvent)` に置換。`npm -w functions_default run build` で型検査通過を確認。
+
+---
+
+**識別子**: RC-33（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `partner/src/pages/events/create.vue:137`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+const paymentUiStrategy = computed(() => eventPaymentUiStrategyFromEnterpriseId(community.enterprise_id))
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `community` は `await` で確定済みの固定値なので、この `computed` には更新されるリアクティブ依存が無く値の中継にしかなっていない。さらに同じ呼び出しが新規イベント初期化側（129 行）にも重複している。→ 定数に集約し、初期化とテンプレート双方から参照する。
+
+**コメント要約**: リアクティブ依存の無い computed と呼び出しの重複。<br>定数に集約する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `community` 解決直後に `const paymentUiStrategy` を定義し、`members_visible_min_count` 既定値注入と `EventDetailCard` への注入の両方で参照するよう変更。
+
+---
+
+**識別子**: RC-34（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `tests/firestore-rules/src/membersVisibleMinCount.test.ts:1`
+
+**該当コード（レビュー時点）**:
+
+```typescript
+// partner 3 ケース + manager 2 ケースのみ
+// enterprise イベントでの拒否・0 / 負値 / 非整数の拒否・create 経路のテストが無い
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-2 / RC-8（🚨）の中核である「enterprise イベントでは `members_visible_min_count` を書き込めない」と、`validPfValue` の値域制約（1 以上の整数）に対するテストが無い。create 経路も未検証で、Rules の条件式を崩す変更が検知できない。→ enterprise イベントの create / update 拒否、enterprise の他フィールド更新は許可、0 / 負値 / 非整数の拒否、PF の create 許可を追加する。
+
+**コメント要約**: Rules テストに enterprise 拒否・不正値・create のケースが無い。<br>境界ケースを追加する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 6 ケース（0 / 負値 / 非整数の拒否、enterprise への追加拒否、enterprise の他フィールド更新許可、PF create 許可、enterprise create 拒否）を追加。`firebase emulators:exec --only firestore` で 10 件パスを確認。
 
 ---
