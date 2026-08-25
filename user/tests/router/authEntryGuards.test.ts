@@ -146,7 +146,7 @@ describe('authEntryGuards', () => {
       expect(window.alert).toHaveBeenCalledWith('register.register_fail_generic')
     })
 
-    it('cleanup 失敗時は signOut して false を返す', async () => {
+    it('cleanup 失敗時は signOut して /login へリダイレクトする', async () => {
       mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: true })
       mockDelete.mockRejectedValue(new Error('delete failed'))
       const userCredential = createUserCredential()
@@ -154,7 +154,9 @@ describe('authEntryGuards', () => {
       const result = await handleProfileUpdateFailure('/register', {}, userCredential, new Error('failed'))
 
       expect(mockSignOut).toHaveBeenCalledOnce()
-      expect(result).toBe(false)
+      expect(result).toEqual({ path: '/login', query: {} })
+      expect(window.alert).toHaveBeenCalledOnce()
+      expect(window.alert).toHaveBeenCalledWith('login.login_fail_generic')
     })
 
     it('/profile かつ userCredential なしでは alert しない', async () => {

@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
+import { computed } from 'vue'
+import { getCommunityIconStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { convertStoragePathToURL } from '../utils/storage'
 import { type BokudeliCommunity } from '../stores/community'
 
 const props = defineProps<{
   community: BokudeliCommunity
 }>()
-const communityStore = useAppCommunityStore(props.community)
+
+const iconUrl = computed(() => convertStoragePathToURL(getCommunityIconStoragePath(props.community.community_id)))
 </script>
 
 <template>
   <v-card class="mx-2" color="text-center" elevation="3">
     <v-row>
       <v-col class="pa-0">
-        <v-img :src="communityStore.iconImageUrl" style="border-radius: 5px 5px 5px 5px" aspect-ratio="1" cover />
+        <v-img :src="iconUrl" style="border-radius: 5px 5px 5px 5px" aspect-ratio="1" cover />
       </v-col>
     </v-row>
   </v-card>

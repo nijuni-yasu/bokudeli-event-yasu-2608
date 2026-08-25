@@ -47,6 +47,17 @@ export function setupGlobalErrorHandling(app: App, router: Router, options: Setu
     }
     if (isStaleChunkRetryExhausted(error)) {
       reportAndRedirect520(error)
+      return
+    }
+
+    console.error('Router navigation error:', error)
+    reportClientError(error, {
+      app: appName,
+      route: router.currentRoute.value.fullPath,
+      severity: 'error',
+    })
+    if (router.currentRoute.value.matched.length === 0) {
+      void router.replace('/').catch(() => undefined)
     }
   })
 

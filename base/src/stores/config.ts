@@ -13,6 +13,8 @@ import { db } from '@shokujii/base/firebase.js'
 import { ConfigGlobal } from '@shokujii/common/schemas/Config.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 
+const CONFIG_RESOLVE_TIMEOUT_MS = 10_000
+
 const configConverter: FirestoreDataConverter<ConfigGlobal> = {
   toFirestore(config: ConfigGlobal): DocumentData {
     return config.toFirestore()
@@ -47,15 +49,31 @@ export const useConfigStore = (target: ConfigGlobal | undefined = undefined) => 
 
     const getResolvedConfig = () =>
       new Promise<ConfigGlobal | undefined>((resolve) => {
+        let settled = false
+        let stop: (() => void) | undefined
+
+        const finish = (value: ConfigGlobal | undefined) => {
+          if (settled) {
+            return
+          }
+          settled = true
+          clearTimeout(timeoutId)
+          stop?.()
+          resolve(value)
+        }
+
+        const timeoutId = setTimeout(() => {
+          finish(undefined)
+        }, CONFIG_RESOLVE_TIMEOUT_MS)
+
         // immediate だと watch() が返る前にコールバックが走り、const stop 代入前に stop() を呼ぶと TDZ になる。
         // マイクロタスクに回すと代入後に stop / resolve できる。
-        const stop = watch(
+        stop = watch(
           config,
           (value) => {
             if (value !== FIRESTORE_LOADING) {
               queueMicrotask(() => {
-                stop()
-                resolve(value)
+                finish(value)
               })
             }
           },
