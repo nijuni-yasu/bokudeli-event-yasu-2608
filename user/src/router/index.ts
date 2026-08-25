@@ -14,6 +14,7 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { recordLastLoginFromCredential } from '@shokujii/base/utils/lastLoginProvider.js'
@@ -400,7 +401,7 @@ export const setupRouter = (router: Router) => {
         return { path: '/', query: { ...to.query, enterprise_blocked: '1' } }
       }
     } catch (err) {
-      console.error('Failed to resolve enterprise claims; allowing navigation:', err)
+      reportClientError(err, { componentInfo: 'router/enterprise-guard', severity: 'warn' })
     }
   })
 

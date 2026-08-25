@@ -34,7 +34,7 @@ export const buildCommunityListStoreId = (
   lightweight: boolean,
 ): string => {
   if (filters == null) {
-    return '/communityList'
+    return lightweight ? '/communityList/lightweight' : '/communityList'
   }
   const suffix = lightweight ? '/lightweight' : ''
   return `/communityList/${JSON.stringify(filters)}/${pageSize}${suffix}`

@@ -16,6 +16,8 @@
 | [x] | RC-10 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | user コミュニティ一覧の totalCount watch に immediate が無い<br>store 再利用時に作成ダイアログが開かない。immediate: true を追加済み |
 | [x] | RC-11 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | user イベント一覧のコミュニティメニューが 1 回の open で 1 ページしか追加しない<br>メニュー開放中は useAutoLoadWhenEmpty で全件読み込み |
 | [x] | RC-12 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | manage トップのクライアント側 isManager フィルタを削除している<br>クエリが managers array-contains 済みのため権限は維持される |
+| [x] | RC-13 | 3850807043 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | filters==null 時に lightweight と通常で storeId が衝突する<br>`/lightweight` サフィックスで区別 |
+| [x] | RC-14 | 3850807101 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | getIdTokenResult 失敗時に console.error のみで監視に乗らない<br>reportClientError で warn 記録を追加 |
 
 ---
 
@@ -614,3 +616,116 @@ manage トップのクライアント側 isManager フィルタを削除して�
 
 **判断理由**: 既存機能（管理者のみ表示）は Firestore クエリ側で担保されている。enterprise 側も `enterprise_id` + `managers` 条件を維持。
 
+---
+
+## 評価セッション（2026-08-25 17:18・review-comments-evaluate）
+
+- **評価日時**: 2026-08-25 17:18 JST
+- **評価者**: Cursor Agent（review-comments-evaluate・auto）
+- **ブランチ名**: fix/2304
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2307
+- **REVIEW_REQUEST_SINCE**: 2026-08-25T08:09:19Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 id:5407396851、Codex 接続案内 id:5407418865）
+- **重複指摘（RC 採番せず）**: 4件（Copilot トップレベル config→RC-3、getIdTokenResult fail-open 方針→RC-4、setupGlobalErrorHandling→RC-5、Codex アイコンキャッシュ→RC-7）
+- **手順 4a 自動修正**: RC-13 / RC-14（🟡 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-13 | 3850807043 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | filters==null 時に lightweight と通常で storeId が衝突する<br>`/lightweight` サフィックスで区別 |
+| [x] | RC-14 | 3850807101 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | getIdTokenResult 失敗時に console.error のみで監視に乗らない<br>reportClientError で warn 記録を追加 |
+
+---
+
+**識別子**: RC-13（GitHub id: 3850807043）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/stores/communityList.ts:40`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export const buildCommunityListStoreId = (
++  filters: QueryConstraint[] | null,
++  pageSize: number,
++  lightweight: boolean,
++): string => {
++  if (filters == null) {
++    return '/communityList'
++  }
++  const suffix = lightweight ? '/lightweight' : ''
++  return `/communityList/${JSON.stringify(filters)}/${pageSize}${suffix}`
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `buildCommunityListStoreId()` は引数に `lightweight` を受け取っていますが、`filters == null` の場合に storeId が常に `/communityList` になり、通常モードと lightweight モードで同一 storeId になります。呼び出し順によっては options が無視されるので、`filters == null` の場合も `/lightweight` サフィックスで区別した方が安全です。
+
+**コメント要約**:
+filters==null 時に lightweight と通常で storeId が衝突する。
+`/lightweight` サフィックスで区別。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 現行呼び出しは filters 付き lightweight のみだが、Pinia storeId 衝突は状態汚染の潜在バグ。防御的に null 時も suffix 付与で解消。
+
+---
+
+**識別子**: RC-14（GitHub id: 3850807101）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `user/src/router/index.ts:404`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    try {
++      const token = await user.getIdTokenResult()
++      if (isEnterpriseUserFromClaims(token.claims)) {
++        if (to.path === '/') {
++          return
++        }
++        return { path: '/', query: { ...to.query, enterprise_blocked: '1' } }
++      }
++    } catch (err) {
++      console.error('Failed to resolve enterprise claims; allowing navigation:', err)
+     }
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `getIdTokenResult()` 失敗時に fail-open するのは意図どおりとしても、ここで例外を握りつぶすと「enterprise claim 解決失敗」が監視に乗らず、テナント分離の一時的な崩れを検知できません。`reportClientError` 等で warn 記録だけ残すのが安全です。
+
+**コメント要約**:
+getIdTokenResult 失敗時に console.error のみで監視に乗らない。
+reportClientError で warn 記録を追加。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: fail-open は RC-4 と同様白画面回避の意図的トレードオフ。ただし監視欠如は改善余地あり。reportClientError（severity: warn）追加で両立。
+
+---
