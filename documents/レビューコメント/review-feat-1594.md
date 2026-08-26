@@ -34,8 +34,10 @@
 | [x] | RC-28 | 4943743482 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagInput マスタタグ選択判定を正規化で比較 |
 | [x] | RC-29 | 4943804721 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 04_プロフィールタグ lowercase 記載を実装に整合 |
 | [x] | RC-30 | 4943804721 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | normalizeTag をコードポイント走査に変更 |
-| [x] | RC-31 | 3801862833 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | タグ長判定をコードポイント数に統一 |
-| [ ] | RC-32 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | user_tags 追加/削除が read-then-write で競合 |
+| [x] | RC-32 | 3862492175 | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | onCall 第2型引数 Promise（既存慣習） |
+| [x] | RC-33 | 3862492226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | setUserTags JSDoc 不一致 |
+| [ ] | RC-34 | 3862492263 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | addTag Transaction 原子化 |
+| [ ] | RC-35 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | user_tags read-then-write とクライアント stale 全置換 |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 
@@ -1182,6 +1184,130 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 
 ---
 
+## 評価セッション（2026-08-26 21:05・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-26 21:05 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto・partial: はい）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-26T11:56:30Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼定型文 1、Codex no_issues 1）
+- **partial 評価**: はい（Codex は no_issues のみ。Copilot のみ substantive）
+- **新規 RC**: RC-32〜34（3件）
+- **手順 4a 自動修正**: RC-33（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-32 | 3862492175 | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | onCall 第2型引数 Promise（既存慣習） |
+| [x] | RC-33 | 3862492226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | setUserTags JSDoc 不一致 |
+| [ ] | RC-34 | 3862492263 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | addTag Transaction 原子化 |
+
+---
+
+**識別子**: RC-32（GitHub id: 3862492175）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/userTags.ts:12`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export const updateUserTags = onCall<UpdateUserTagsRequest, Promise<{ success: boolean; message: string }>>(
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] onCall の型引数に Promise を入れてしまっており、Callable の戻り値型が二重 Promise のように解釈されます（クライアント側の型とズレて混乱しやすいです）。onCall の第2型引数は resolve 後の値型（{ success, message }）にしてください。
+
+This issue also appears on line 42 of the same file.
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `functions/default` 全体で `onCall<Req, Promise<Res>>` が既存慣習（eventCopy / cancelOrders / enterprise 等）。本 PR だけ変更すると型スタイルが不整合になる。横断リファクタは別 Issue 化が妥当。
+
+---
+
+**識別子**: RC-33（GitHub id: 3862492226）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/user.ts:273`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++/**
++ * ユーザー個人情報を匿名化する。ドキュメントが存在しない場合も merge で作成する。
++ * トランザクション内で呼び出すこと。
++ */
++export const setUserTags = async (uid: string, tags: string[]): Promise<void> => {
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] JSDoc の内容が setUserTags にぶら下がってしまっていて、実際の処理（ユーザー個人情報の匿名化）とコメントが不一致です。setUserTags 用の説明に差し替え、anonymizeUserPersonalInformation 側に匿名化コメントを付け直してください。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 4a で `setUserTags` に専用 JSDoc を付与し、`anonymizeUserPersonalInformation` 側に匿名化コメントを復元。
+
+---
+
+**識別子**: RC-34（GitHub id: 3862492263）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/userTags.ts:71`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    await setUserTags(uid, [...current, tag])
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] addTagToMyProfile が「getUser で読み取り → setUserTags で更新」の read-then-write になっているため、連続タップや複数端末で同時更新が走ると更新取りこぼし（最後に書いた配列で上書き）や上限チェックのすり抜けが起きえます。users/{uid} を Transaction で read→検証→update する形にして原子性を担保してください。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当だが Transaction 化は store 設計・テスト追加が必要。本ターンのタグ表示トグル PR とは独立した改善として別対応が妥当。
+
+---
 
 ## 評価セッション（2026-08-26 21:07・shokujii-code-review）
 
@@ -1193,16 +1319,17 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 - **Outdated 除外件数**: 0
 - **レビュー非該当スキップ件数**: 0
 - **partial 評価**: いいえ
+- **新規 RC**: RC-35（1件）
 
 ### RC 一覧（サマリ）
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-32 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | `user_tags` の追加/削除が read-then-write のため同時更新で消える |
+| [ ] | RC-35 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | `user_tags` の追加/削除が read-then-write のため同時更新で消える |
 
 ---
 
-**識別子**: RC-32（GitHub id: なし・エージェントレビュー）
+**識別子**: RC-35（GitHub id: なし・エージェントレビュー）
 
 **レビュワー**: Cursor Agent（shokujii-code-review）
 
@@ -1223,7 +1350,7 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 +      throw new HttpsError('failed-precondition', `タグは最大${MAX_TAGS}個までです`)
 +    }
 +    await setUserTags(uid, [...current, tag])
-+```
+```
 
 **レビュワーのコメント（原文）**:
 
