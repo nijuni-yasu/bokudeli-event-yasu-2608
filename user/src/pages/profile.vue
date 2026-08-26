@@ -18,6 +18,7 @@ import { checkSoleManagerCommunity } from '@shokujii/base/stores/community.js'
 import { deleteUserAccount } from '@shokujii/base/apis/user.js'
 import { validateImageFile } from '@shokujii/base/utils/image'
 import { ALLOWED_IMAGE_ACCEPT_ATTR } from '@shokujii/common/constants/imageMimeTypes.js'
+import UserProfileTagsEditSection from '@shokujii/base/components/profile/UserProfileTagsEditSection.vue'
 
 const currentUserStore = useCurrentUserStore()
 const { providerData, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
@@ -362,6 +363,8 @@ const handleDeleteCompleteOkClick = async () => {
                 :disabled="isProfileLoading"
                 :rules="[requiredValidator]"
               />
+
+              <UserProfileTagsEditSection />
             </v-sheet>
             <v-row justify="center">
               <v-btn class="rounded-xl" color="primary" :loading="isProfileLoading" type="submit">{{
