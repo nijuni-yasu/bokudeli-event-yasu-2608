@@ -14,12 +14,22 @@ const tags = computed(() => currentUserStore.user?.user_tags ?? [])
 <template>
   <div class="user-profile-tags-edit-section">
     <div class="text-subtitle-2 mb-2">{{ $t('user_tags.section_title') }}</div>
-    <div class="d-flex flex-wrap align-center ga-1">
-      <TagBadge v-for="t in tags" :key="t" :tag="t" highlighted />
+    <div class="user-profile-tags-edit-section__tags d-flex flex-wrap align-center">
+      <TagBadge v-for="t in tags" :key="t" :tag="t" highlighted emphasized />
       <span v-if="tags.length === 0" class="text-body-2 text-medium-emphasis me-2">
         {{ $t('user_tags.section_empty') }}
       </span>
-      <TagAddChip />
+      <TagAddChip size="small" />
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.user-profile-tags-edit-section__tags {
+  gap: 4px;
+
+  :deep(.v-chip) {
+    margin: 0 !important;
+  }
+}
+</style>

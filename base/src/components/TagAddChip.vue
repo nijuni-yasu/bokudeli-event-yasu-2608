@@ -8,9 +8,11 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 withDefaults(
   defineProps<{
     compact?: boolean
+    size?: 'x-small' | 'small'
   }>(),
   {
     compact: false,
+    size: 'x-small',
   },
 )
 
@@ -27,7 +29,7 @@ const isLoggedIn = computed(() => currentUserStore.firebaseUser != null)
     <v-chip
       color="primary"
       variant="outlined"
-      size="x-small"
+      :size="size"
       :prepend-icon="mdiPlus"
       :class="['tag-add-chip', 'cursor-pointer', { 'tag-add-chip--compact': compact, 'ma-1': !compact }]"
       @click.stop.prevent="tagDialog = true"

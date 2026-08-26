@@ -133,22 +133,32 @@ const isMasterDisabled = (tag: string) => props.loading || (!isMasterSelected(ta
       <p v-if="isAtLimit" class="text-caption text-medium-emphasis mb-0 mt-3">{{ $t('user_tags.limit_reached') }}</p>
     </v-sheet>
 
-    <div class="text-subtitle-2 mb-2">{{ $t('user_tags.free_input_heading') }}</div>
-    <v-text-field
-      v-model="freeInput"
-      :placeholder="$t('user_tags.free_input_placeholder')"
-      :hint="isAtLimit ? $t('user_tags.limit_reached') : $t('user_tags.free_input_hint')"
-      persistent-hint
-      density="compact"
-      variant="outlined"
-      hide-details="auto"
-      class="mb-6"
-      :disabled="loading || isAtLimit"
-      :prepend-inner-icon="mdiPencilOutline"
-      @keyup.enter="tryAddTag(freeInput)"
-    />
+    <v-sheet class="tag-input__free-input rounded-lg pa-4 mb-4">
+      <div class="text-subtitle-1 font-weight-bold text-primary mb-1">{{ $t('user_tags.free_input_heading') }}</div>
+      <p class="text-body-2 text-medium-emphasis mb-3">{{ $t('user_tags.free_input_subheading') }}</p>
+      <v-text-field
+        v-model="freeInput"
+        :placeholder="$t('user_tags.free_input_placeholder')"
+        :hint="isAtLimit ? $t('user_tags.limit_reached') : $t('user_tags.free_input_hint')"
+        persistent-hint
+        variant="outlined"
+        hide-details="auto"
+        :disabled="loading || isAtLimit"
+        :prepend-inner-icon="mdiPencilOutline"
+        @keyup.enter="tryAddTag(freeInput)"
+      />
+    </v-sheet>
 
-    <div class="text-subtitle-2 mb-3">{{ $t('user_tags.master_tags_heading') }}</div>
+    <div class="tag-input__divider d-flex align-center mb-4">
+      <v-divider class="flex-grow-1" />
+      <span class="tag-input__divider-label text-caption text-medium-emphasis mx-3">{{
+        $t('user_tags.section_divider')
+      }}</span>
+      <v-divider class="flex-grow-1" />
+    </div>
+
+    <div class="text-subtitle-1 font-weight-bold mb-1">{{ $t('user_tags.master_tags_heading') }}</div>
+    <p class="text-body-2 text-medium-emphasis mb-3">{{ $t('user_tags.master_tags_subheading') }}</p>
     <v-expansion-panels variant="accordion" multiple class="tag-input__panels">
       <v-expansion-panel v-for="g in TAG_GENRES" :key="g.genre">
         <v-expansion-panel-title>
@@ -195,6 +205,21 @@ const isMasterDisabled = (tag: string) => props.loading || (!isMasterSelected(ta
 .tag-input__empty {
   border: 1px dashed rgba(var(--v-theme-primary), 0.35);
   border-radius: 8px;
+}
+
+.tag-input__free-input {
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-theme-primary), 0.2);
+}
+
+.tag-input__divider {
+  min-height: 24px;
+  width: 100%;
+}
+
+.tag-input__divider-label {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tag-input__panels {
