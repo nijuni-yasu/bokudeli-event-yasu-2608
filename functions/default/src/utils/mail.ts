@@ -1,4 +1,5 @@
 import type { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
+import { isValidEmail } from '@shokujii/common/utils/contactFormat.js'
 import { getCommunity } from '../stores/community.js'
 import { getUser, getUserPersonalInformation } from '../stores/user.js'
 import { ShokujiiEvent } from '../stores/event.js'
@@ -22,9 +23,14 @@ export function getOrganizerReplyTo(event: ShokujiiEvent): string | undefined {
   return resolveReplyToEmail(event.organizer_email)
 }
 
-/** 主催者向け承認・却下メールの Reply-To（店舗連絡先。sub1 優先） */
+/** 主催者向け承認・却下メールの Reply-To（店舗連絡先。sub1 優先・形式不正時は shop_email） */
 export function getShopReplyTo(shop: PartnerShop): string | undefined {
-  return resolveReplyToEmail(shop.shop_email_sub1) ?? resolveReplyToEmail(shop.shop_email)
+  const sub1 = resolveReplyToEmail(shop.shop_email_sub1)
+  if (sub1 !== undefined && isValidEmail(sub1)) {
+    return sub1
+  }
+  const primary = resolveReplyToEmail(shop.shop_email)
+  return primary !== undefined && isValidEmail(primary) ? primary : undefined
 }
 
 /**

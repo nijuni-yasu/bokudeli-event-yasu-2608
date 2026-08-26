@@ -16,6 +16,9 @@
 | [x] | RC-10 | 3862241886 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 空白のみ shop_email_sub1 がテンプレで truthy 表示<br>`resolveReplyToEmail` で正規化 |
 | [x] | RC-11 | 3862251127 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 自動却下メールに Reply-To 未設定<br>主催者メールを replyTo に追加 |
 | [x] | RC-12 | 5424574358 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | リマインドで replyTo 欠落時 warn なし<br>console.warn を追加 |
+| [ ] | RC-13 | 3862482320 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 承認・却下の CC 表記が実装（個別 to 送信）と不一致<br>SendGrid テンプレ doc を実装に合わせる |
+| [x] | RC-14 | 3862482331 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 不正 shop_email_sub1 が Reply-To に使われる<br>isValidEmail で sub1 検証後フォールバック |
+| [x] | RC-15 | 3862483393 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | orderRemindMail の console.warn<br>createModuleLogger に統一 |
 
 ---
 
@@ -545,5 +548,110 @@
 **想定工数**: S
 
 **判断理由**: 指摘妥当。`orderRemindMail.ts` に `console.warn` を追加（当ファイルの既存 warn スタイルに合わせる）。
+
+---
+
+## 評価セッション（2026-08-26 21:02・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-26 21:02 JST
+- **ブランチ名**: fix/2306
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2308
+- **REVIEW_REQUEST_SINCE**: 2026-08-26T11:53:49Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 1（依頼コメント id:5424884440）
+- **手順 4a 自動修正**: RC-14（🚨 1件）/ RC-15（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-13 | 3862482320 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 承認・却下の CC 表記が実装と不一致<br>doc を個別 to 送信に修正 |
+| [x] | RC-14 | 3862482331 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 不正 sub1 が Reply-To に使われる<br>isValidEmail でフォールバック |
+| [x] | RC-15 | 3862483393 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | console.warn を logger に統一 |
+
+### RC-13
+
+**識別子**: RC-13（GitHub id: 3862482320）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `documents/sendgridテンプレ/03_event_status_accepting_order.md:21`
+
+**レビュワーのコメント（原文）**:
+
+**P2** サポート宛の配信方式を実装に合わせて記載する — 表では承認・却下通知が `CC: SUPPORT_MAIL` とあるが、`eventStatusChangeMail.ts:140-152` では `SUPPORT_MAIL` を宛先配列へ追加し各宛先へ個別 `to` 送信しており `cc` は設定されない。
+
+**コメント要約**: SendGrid テンプレ doc の CC 表記が実装（サポートへ個別 to）と矛盾する。<br>doc を実装に合わせるか CC 実装に揃える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。実装は個別 to 送信が正。doc 修正方針が明確だが 📑 仕様書ラベルのため自動修正対象外。
+
+### RC-14
+
+**識別子**: RC-14（GitHub id: 3862482331）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/utils/mail.ts:26-28`
+
+**レビュワーのコメント（原文）**:
+
+**P2** 不正なサブメールでは主メールへフォールバックする — `shop_email_sub1` に非メール形式が入ると Reply-To に設定され SendGrid 拒否の恐れ。有効な場合のみ sub1 を採用し `shop_email` へフォールバックすべき。
+
+**コメント要約**: DB の sub1 が形式不正でも Reply-To に使われる。<br>メール形式検証後に shop_email へフォールバックが必要。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`getShopReplyTo` で `isValidEmail` 検証を追加しテスト拡充。
+
+### RC-15
+
+**識別子**: RC-15（GitHub id: 3862483393）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/orderRemindMail.ts:134`
+
+**レビュワーのコメント（原文）**:
+
+[imo] Functions 側のログは `createModuleLogger` へ寄せる方針のファイルが多いので、ここで追加した `console.warn` も logger 経由に揃えると運用ログの一貫性が上がります。
+
+**コメント要約**: orderRemindMail の warn を createModuleLogger に統一すべき。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`createModuleLogger('orderRemindMail')` を導入し当ファイルの warn を logger に統一。
 
 ---

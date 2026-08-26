@@ -55,4 +55,9 @@ describe('getShopReplyTo', () => {
     const shop = createTestPartnerShop({ shop_email_sub1: '   ' })
     expect(getShopReplyTo(shop)).toBe('login@example.com')
   })
+
+  it('shop_email_sub1 がメール形式でないとき shop_email にフォールバックする', () => {
+    const shop = createTestPartnerShop({ shop_email_sub1: 'not-an-email' })
+    expect(getShopReplyTo(shop)).toBe('login@example.com')
+  })
 })

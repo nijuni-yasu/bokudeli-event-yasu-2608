@@ -126,7 +126,7 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
           ])
 
           if (!shopData) {
-            logger.warn(`Shop data not found for event: ${event.id}`)
+            logger.warn('Shop data not found for event', { eventId: event.id })
             return
           }
 
@@ -134,7 +134,7 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
 
           const replyTo = getOrganizerReplyTo(event)
           if (replyTo === undefined) {
-            logger.warn(`Organizer email missing for shop reservation remind mail replyTo: ${event.id}`)
+            logger.warn('Organizer email missing for shop reservation remind mail replyTo', { eventId: event.id })
           }
 
           await sgMail.send({
@@ -147,7 +147,7 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
           })
         }
       } catch (err) {
-        logger.warn('Failed to send applying order remind mail to shop:', err)
+        logger.warn('Failed to send applying order remind mail to shop', { error: err })
       }
     })
     .filter((promise) => promise != null)
@@ -248,7 +248,7 @@ export async function sendOrderRemindMailToOrganizer(
 
         await Promise.all(emailPromises)
       } catch (err) {
-        logger.warn('Failed to send order remind mail to organizer:', err)
+        logger.warn('Failed to send order remind mail to organizer', { error: err })
       }
     })
     .filter((promise) => promise != null)
