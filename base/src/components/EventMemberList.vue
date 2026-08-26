@@ -14,11 +14,18 @@ import { orderTagsWithHighlightFirst } from '@shokujii/base/utils/tagDisplayOrde
 
 const { t: $t } = useI18n()
 
-defineProps<{
-  members: BokudeliEventMember[]
-  eventMaxPeople: number
-  isShowMember: boolean
-}>()
+withDefaults(
+  defineProps<{
+    members: BokudeliEventMember[]
+    eventMaxPeople: number
+    isShowMember: boolean
+    /** イベント詳細で参加者個別タグを表示する（デフォルト非表示） */
+    memberTagsVisible?: boolean
+  }>(),
+  {
+    memberTagsVisible: false,
+  },
+)
 
 const currentUserStore = useCurrentUserStore()
 const { showDialog: showTagImportHint, confirmHint, toggleTag: onMemberTagClick } = useProfileTagToggle()
@@ -31,7 +38,7 @@ const orderedUserTags = (member: BokudeliEventMember) =>
 
 const isCurrentUser = (member: BokudeliEventMember) => member.user_id === currentUserStore.firebaseUser?.uid
 
-const showMemberTags = (member: BokudeliEventMember) => (member.user_tags ?? []).length > 0 || isCurrentUser(member)
+const hasMemberTagRow = (member: BokudeliEventMember) => (member.user_tags ?? []).length > 0 || isCurrentUser(member)
 
 function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string; count: number }][] {
   const map: Record<string, { name: string; count: number }> = {}
@@ -73,7 +80,7 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
                 </div>
               </div>
             </router-link>
-            <div v-if="showMemberTags(member)" class="d-flex flex-wrap mt-2 w-100">
+            <div v-if="memberTagsVisible && hasMemberTagRow(member)" class="d-flex flex-wrap mt-2 w-100">
               <TagBadge
                 v-for="t in orderedUserTags(member)"
                 :key="t"
@@ -113,7 +120,7 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
       </v-row>
       <slot></slot>
     </v-card-text>
-    <TagImportHintDialog v-model="showTagImportHint" @confirm="confirmHint" />
+    <TagImportHintDialog v-if="memberTagsVisible" v-model="showTagImportHint" @confirm="confirmHint" />
   </section>
 </template>
 

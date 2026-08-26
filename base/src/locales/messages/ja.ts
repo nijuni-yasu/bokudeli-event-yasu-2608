@@ -95,6 +95,8 @@ export default {
     event_details: '開催内容',
     participants: '参加者',
     participants_profile: '参加者プロフィール',
+    show_participant_tags: 'タグを表示',
+    hide_participant_tags: 'タグを隠す',
     open_group_chat: 'グループチャット',
     participants_profile_hidden: '※参加者プロフィールは非表示です',
     tag_toggle_login_required: 'ログインが必要です',
