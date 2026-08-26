@@ -48,33 +48,34 @@ const hasSnsLinks = computed(
     :to="getUserPath(member.user_id)"
     class="event-member-card-link d-flex flex-column h-100 w-100 pa-3 text-decoration-none"
   >
-    <v-card class="d-flex flex-column h-100 w-100 pt-3 pb-0">
-      <v-card-title class="d-flex align-center flex-column pb-0">
+    <v-card class="event-member-card h-100 w-100 pt-3 pb-0">
+      <v-card-title class="event-member-card__avatar d-flex align-center flex-column pb-0">
         <UserAvatar :user="member" :size="150" />
       </v-card-title>
-      <v-card-text class="text-center py-1">
-        <span class="text-h5 text-wrap">{{ userName }}</span>
+      <v-card-text class="event-member-card__name text-center">
+        <span class="event-member-card__name-text text-h5" :title="userName">{{ userName }}</span>
       </v-card-text>
-      <v-card-text v-if="hasSnsLinks" class="sns-buttons py-0">
-        <v-row class="justify-center ma-0">
-          <v-col cols="auto" class="pa-0">
-            <a v-if="twitterUrl" :href="twitterUrl" target="_blank" rel="noopener noreferrer" @click.stop>
-              <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
-            </a>
-            <a v-if="facebookUrl" :href="facebookUrl" target="_blank" rel="noopener noreferrer" @click.stop>
-              <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
-            </a>
-            <a v-if="instagramUrl" :href="instagramUrl" target="_blank" rel="noopener noreferrer" @click.stop>
-              <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
-            </a>
-            <a v-if="websiteUrl" :href="websiteUrl" target="_blank" rel="noopener noreferrer" @click.stop>
-              <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
-            </a>
-          </v-col>
-        </v-row>
+      <v-card-text class="event-member-card__sns sns-buttons">
+        <div v-if="hasSnsLinks" class="sns-buttons__row">
+          <a v-if="twitterUrl" :href="twitterUrl" target="_blank" rel="noopener noreferrer" @click.stop>
+            <v-btn :icon="mdiAlphaXCircle" size="x-small" class="sns-buttons__btn" />
+          </a>
+          <a v-if="facebookUrl" :href="facebookUrl" target="_blank" rel="noopener noreferrer" @click.stop>
+            <v-btn :icon="mdiFacebook" size="x-small" class="sns-buttons__btn" />
+          </a>
+          <a v-if="instagramUrl" :href="instagramUrl" target="_blank" rel="noopener noreferrer" @click.stop>
+            <v-btn :icon="mdiInstagram" size="x-small" class="sns-buttons__btn" />
+          </a>
+          <a v-if="websiteUrl" :href="websiteUrl" target="_blank" rel="noopener noreferrer" @click.stop>
+            <v-btn :icon="mdiWeb" size="x-small" class="sns-buttons__btn" />
+          </a>
+        </div>
       </v-card-text>
-      <v-card-text v-if="showMemberTags" class="member-tags px-4 py-0">
-        <div class="d-flex flex-wrap w-100" @click.stop.prevent>
+      <v-card-text class="event-member-card__description description-wrapper">
+        <div v-if="userDescription" class="description">{{ userDescription }}</div>
+      </v-card-text>
+      <v-card-text class="event-member-card__tags member-tags px-4 py-2">
+        <div v-if="showMemberTags" class="d-flex flex-wrap w-100" @click.stop.prevent>
           <TagBadge
             v-for="t in orderedUserTags"
             :key="t"
@@ -87,9 +88,6 @@ const hasSnsLinks = computed(
           <TagAddChip v-if="isCurrentUser" compact />
         </div>
       </v-card-text>
-      <v-card-text v-if="userDescription" class="description-wrapper flex-grow-1 mt-auto">
-        <div class="description">{{ userDescription }}</div>
-      </v-card-text>
     </v-card>
   </router-link>
 </template>
@@ -101,18 +99,80 @@ const hasSnsLinks = computed(
   color: inherit;
 }
 
+.event-member-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-member-card__avatar,
+.event-member-card__name,
+.event-member-card__sns,
+.event-member-card__description,
+.event-member-card__tags {
+  flex-shrink: 0;
+}
+
+$event-member-card-inline-padding: 16px;
+$event-member-card-zone-gap: 8px;
+
+.event-member-card__name {
+  box-sizing: border-box;
+  height: calc(2rem + #{$event-member-card-zone-gap * 2});
+  min-height: calc(2rem + #{$event-member-card-zone-gap * 2});
+  padding: $event-member-card-zone-gap $event-member-card-inline-padding !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-member-card__name-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  /* autoprefixer: ignore next - line-clamp に必須 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
 .sns-buttons {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
   min-height: 48px;
+  padding: $event-member-card-zone-gap $event-member-card-inline-padding !important;
+}
+
+.sns-buttons__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sns-buttons__btn {
+  margin: 0 !important;
 }
 
 .description-wrapper {
-  min-height: 0;
+  height: calc(1.7em * 3);
+  min-height: calc(1.7em * 3);
+  padding: $event-member-card-zone-gap $event-member-card-inline-padding !important;
   overflow: hidden;
+}
+
+.member-tags {
+  // compact TagBadge: 20px + margin-bottom 4px → 2行分で開始位置を同行揃え
+  min-height: 48px;
 }
 
 .description {
   font-size: 12px;
   line-height: 1.7;
+  text-align: start;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
