@@ -1,4 +1,5 @@
 import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent, getOrganizerReplyTo } from './utils/mail.js'
+import { createModuleLogger } from './utils/logger.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getPartnerOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
@@ -12,6 +13,8 @@ import {
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
 import { getShopReservationApprovalDeadlineMillis } from '@shokujii/common/constants/eventReservation.js'
+
+const logger = createModuleLogger('orderRemindMail')
 
 // テンプレートID
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b'
@@ -123,7 +126,7 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
           ])
 
           if (!shopData) {
-            console.warn(`Shop data not found for event: ${event.id}`)
+            logger.warn(`Shop data not found for event: ${event.id}`)
             return
           }
 
@@ -131,7 +134,7 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
 
           const replyTo = getOrganizerReplyTo(event)
           if (replyTo === undefined) {
-            console.warn(`Organizer email missing for shop reservation remind mail replyTo: ${event.id}`)
+            logger.warn(`Organizer email missing for shop reservation remind mail replyTo: ${event.id}`)
           }
 
           await sgMail.send({
@@ -144,7 +147,7 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
           })
         }
       } catch (err) {
-        console.warn('Failed to send applying order remind mail to shop:', err)
+        logger.warn('Failed to send applying order remind mail to shop:', err)
       }
     })
     .filter((promise) => promise != null)
@@ -245,7 +248,7 @@ export async function sendOrderRemindMailToOrganizer(
 
         await Promise.all(emailPromises)
       } catch (err) {
-        console.warn('Failed to send order remind mail to organizer:', err)
+        logger.warn('Failed to send order remind mail to organizer:', err)
       }
     })
     .filter((promise) => promise != null)
