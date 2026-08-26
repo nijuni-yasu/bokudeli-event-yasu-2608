@@ -1,4 +1,5 @@
 import { DEFAULT_FROM, SUPPORT_MAIL, getOrganizerReplyTo } from './utils/mail.js'
+import { createModuleLogger } from './utils/logger.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getPartnerOrderUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
@@ -11,6 +12,8 @@ import {
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
 import { HttpsError } from 'firebase-functions/https'
+
+const logger = createModuleLogger('rejectOrderMail')
 
 // テンプレートID
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
@@ -98,7 +101,7 @@ export async function sendRejectOrderMailToShop(deadlineMillis: number): Promise
         ])
 
         if (!shopData) {
-          console.warn(`Shop data not found for event: ${event.id}`)
+          logger.warn('Shop data not found for event', { eventId: event.id })
           return
         }
 
@@ -113,7 +116,7 @@ export async function sendRejectOrderMailToShop(deadlineMillis: number): Promise
           ...(replyTo ? { replyTo } : {}),
         })
       } catch (err) {
-        console.warn('Failed to send reject order mail to shop:', err)
+        logger.warn('Failed to send reject order mail to shop', { error: err })
       }
     })()
 

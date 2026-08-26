@@ -20,7 +20,8 @@ export function resolveReplyToEmail(email: string | undefined): string | undefin
 
 /** 店舗向け予約申請メールの Reply-To（主催者連絡先） */
 export function getOrganizerReplyTo(event: ShokujiiEvent): string | undefined {
-  return resolveReplyToEmail(event.organizer_email)
+  const email = resolveReplyToEmail(event.organizer_email)
+  return email !== undefined && isValidEmail(email) ? email : undefined
 }
 
 /** 主催者向け承認・却下メールの Reply-To（店舗連絡先。sub1 優先・形式不正時は shop_email） */

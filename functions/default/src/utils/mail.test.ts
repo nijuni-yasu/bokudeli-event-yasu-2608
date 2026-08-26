@@ -38,6 +38,11 @@ describe('getOrganizerReplyTo', () => {
     const event = { organizer_email: 'org@example.com' } as ShokujiiEvent
     expect(getOrganizerReplyTo(event)).toBe('org@example.com')
   })
+
+  it('メール形式でない organizer_email は undefined', () => {
+    const event = { organizer_email: 'not-an-email' } as ShokujiiEvent
+    expect(getOrganizerReplyTo(event)).toBeUndefined()
+  })
 })
 
 describe('getShopReplyTo', () => {

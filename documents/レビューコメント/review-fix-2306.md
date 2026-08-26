@@ -19,8 +19,8 @@
 | [ ] | RC-13 | 3862482320 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 承認・却下の CC 表記が実装（個別 to 送信）と不一致<br>SendGrid テンプレ doc を実装に合わせる |
 | [x] | RC-14 | 3862482331 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 不正 shop_email_sub1 が Reply-To に使われる<br>isValidEmail で sub1 検証後フォールバック |
 | [x] | RC-15 | 3862483393 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | orderRemindMail の console.warn<br>createModuleLogger に統一 |
-| [ ] | RC-16 | GitHub id: なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | rejectOrderMail に console.warn が残存<br>createModuleLogger に統一 |
-| [ ] | RC-17 | GitHub id: なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | rejectOrderMail で replyTo 欠落時 warn なし<br>logger.warn 追加で他関数と一致させる |
+| [x] | RC-16 | 3862678893 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | getOrganizerReplyTo に形式検証なし<br>isValidEmail で不正値は undefined |
+| [x] | RC-17 | 3862678963 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | rejectOrderMail の console.warn<br>createModuleLogger に統一 |
 
 ---
 
@@ -658,82 +658,70 @@
 
 ---
 
-## 評価セッション（2026-08-26 21:26・shokujii-code-review）
+## 評価セッション（2026-08-26 21:33・review-comments-evaluate auto）
 
-- **評価日時**: 2026-08-26 21:26 JST
+- **評価日時**: 2026-08-26 21:33 JST
 - **ブランチ名**: fix/2306
 - **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2308
+- **REVIEW_REQUEST_SINCE**: 2026-08-26T12:21:26Z
+- **partial**: false
 - **Outdated 除外件数**: 0
-- **レビュー非該当スキップ件数**: 0
+- **レビュー非該当スキップ件数**: 2（依頼コメント id:5425194776、Codex 接続案内 id:5425313970）
+- **持ち越し言及**: Copilot トップレベル id:5425297571 の rejectOrderMail logger 指摘は RC-17 と同一
+- **手順 4a 自動修正**: RC-16（🚨 1件）/ RC-17（🟡 1件）
 
 ### RC 一覧（サマリ）
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-16 | GitHub id: なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | rejectOrderMail に console.warn が残存<br>createModuleLogger に統一 |
-| [ ] | RC-17 | GitHub id: なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | rejectOrderMail で replyTo 欠落時 warn なし<br>logger.warn 追加で他関数と一致させる |
+| [x] | RC-16 | 3862678893 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | organizer Reply-To に形式検証なし<br>isValidEmail 追加 |
+| [x] | RC-17 | 3862678963 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | rejectOrderMail の console.warn<br>logger 統一 |
 
 ### RC-16
 
-**識別子**: RC-16（GitHub id: なし・エージェントレビュー）
+**識別子**: RC-16（GitHub id: 3862678893 / 3862683942）
 
-**レビュワー**: Cursor Agent（shokujii-code-review）
+**レビュワー**: Copilot / Codex
 
-**指摘箇所**: `functions/default/src/rejectOrderMail.ts:101, 116`
-
-**該当コード**:
-```typescript
-console.warn(`Shop data not found for event: ${event.id}`)
-// ...
-console.warn('Failed to send reject order mail to shop:', err)
-```
+**指摘箇所**: `functions/default/src/utils/mail.ts:22-24`
 
 **レビュワーのコメント（原文）**:
 
-🟡 **修正提案 [📐リファクタ/S]**
+[must] `getOrganizerReplyTo` が trim のみでメール形式を検証していないため、不正な `organizer_email` で SendGrid 送信失敗の可能性。`getShopReplyTo` と同様に `isValidEmail` を通すべき。
 
-`rejectOrderMail.ts` には `console.warn` が2箇所残っています（L101: `Shop data not found`、L116: `Failed to send reject order mail to shop`）。同 PR の RC-15 で `orderRemindMail.ts` の `console.warn` を `createModuleLogger` に統一しましたが、`rejectOrderMail.ts` は未対応です。`createModuleLogger('rejectOrderMail')` を導入して揃えることを推奨します。
+**コメント要約**: 主催者 Reply-To も形式検証が必要。<br>不正値は undefined にして replyTo を省略。
 
-**評価**: 🟡 修正提案
+**評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
-**ラベル**: 📏 規約
+**ラベル**: 🐛 実害
 
 **変更種別**: 🔧 微修正
 
 **想定工数**: S
 
-**判断理由**: RC-15 で同 PR のリマインドメールは修正済みだが、自動却下メールで同様の問題が残っている。同一 PR 内の統一方針と整合性がない。
-
----
+**判断理由**: 指摘妥当。RC-14 と同パターンで `getOrganizerReplyTo` に `isValidEmail` を追加。
 
 ### RC-17
 
-**識別子**: RC-17（GitHub id: なし・エージェントレビュー）
+**識別子**: RC-17（GitHub id: 3862678963）
 
-**レビュワー**: Cursor Agent（shokujii-code-review）
+**レビュワー**: Copilot
 
-**指摘箇所**: `functions/default/src/rejectOrderMail.ts:102-103`
-
-**該当コード**:
-```typescript
-const replyTo = getOrganizerReplyTo(event)
-
-await sgMail.send({
-```
+**指摘箇所**: `functions/default/src/rejectOrderMail.ts:101, 116`
 
 **レビュワーのコメント（原文）**:
 
-🟡 **修正提案 [🔧微修正/S]**
+[nits] `rejectOrderMail.ts` の `console.warn` を `createModuleLogger` 経由に（RC-15 と同様）。
 
-`eventStatusChangeMail.ts:193-195` と `orderRemindMail.ts:132-134` では `getOrganizerReplyTo` が `undefined` を返した場合に `logger.warn` を呼んでいますが、`rejectOrderMail.ts` では未設定でも warn が出ません。`logger` 自体も import されていないため、このファイルでは通知なしにサイレントスキップになります。他のメール送信関数と一貫させるため、`undefined` 時の warn 追加を推奨します。
+**コメント要約**: rejectOrderMail の warn を logger 化すべき。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -743,6 +731,6 @@ await sgMail.send({
 
 **想定工数**: S
 
-**判断理由**: `eventStatusChangeMail.ts` と `orderRemindMail.ts` では同条件で warn を出すよう実装されており、`rejectOrderMail.ts` のみ欠落している。RC-16 と合わせて logger 導入時に対応できる。
+**判断理由**: 指摘妥当。`createModuleLogger('rejectOrderMail')` を導入。
 
 ---
