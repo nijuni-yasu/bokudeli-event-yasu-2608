@@ -35,6 +35,7 @@
 | [x] | RC-29 | 4943804721 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 04_プロフィールタグ lowercase 記載を実装に整合 |
 | [x] | RC-30 | 4943804721 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | normalizeTag をコードポイント走査に変更 |
 | [x] | RC-31 | 3801862833 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | タグ長判定をコードポイント数に統一 |
+| [ ] | RC-32 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | user_tags 追加/削除が read-then-write で競合 |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 
@@ -1178,5 +1179,70 @@ RC-3 は Rules のセキュリティ指摘を本 PR から外しているのに�
 **想定工数**: S
 
 **判断理由**: RC-30 で正規化はコードポイント単位にしたが、長さ判定が UTF-16 単位のまま。手順 4a で `tagCodePointLength` を common に追加し userTags / TagInput で使用。
+
+---
+
+
+## 評価セッション（2026-08-26 21:07・shokujii-code-review）
+
+- **評価日時**: 2026-08-26 21:07 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-26T12:02:38Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **partial 評価**: いいえ
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-32 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | `user_tags` の追加/削除が read-then-write のため同時更新で消える |
+
+---
+
+**識別子**: RC-32（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/userTags.ts:60`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    const existing = await getUser(uid, false)
++    if (existing == null) {
++      throw new HttpsError('not-found', 'ユーザーが見つかりません')
++    }
++    const current = normalizeTagList([...(existing.user_tags ?? [])])
++    if (current.includes(tag)) {
++      return { success: true, message: '既に設定済みです' }
++    }
++    if (current.length >= MAX_TAGS) {
++      throw new HttpsError('failed-precondition', `タグは最大${MAX_TAGS}個までです`)
++    }
++    await setUserTags(uid, [...current, tag])
++```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧 微修正/M]: `functions/default/src/userTags.ts:60-71`
+
+`addTagToMyProfile` が `getUser()` で現在値を読んでから `setUserTags()` で配列全体を書き戻しており、同時実行時に last-write-wins でタグを失います。クライアント側の削除も `base/src/apis/userTags.ts` で stale な `currentUserTags` をそのまま `updateUserTags(current.filter(...))` に流しているため、別画面・別端末の直前更新を巻き戻せます。→ 追加・削除ともサーバー側で Transaction か原子的更新に寄せ、クライアントの stale 配列全置換をやめてください。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: `addTagToMyProfile` は `getUser()` → `setUserTags()` の read-then-write で実装されており、同じユーザーからタグ追加が並行すると最後に書いた配列だけが残る。さらに削除系もクライアントが保持している `currentUserTags` の全置換で送るため、別タブや別端末で直前に追加されたタグを古い配列で消し戻せる。
 
 ---
