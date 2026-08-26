@@ -11,6 +11,7 @@ import {
 import { DateTime } from 'luxon'
 import { User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
+import { normalizeTagList } from '@shokujii/common/utils/normalizeTag.js'
 import { Result, ok, err } from '@shokujii/common/utils/result.js'
 import { createModuleLogger } from '../utils/logger.js'
 
@@ -269,6 +270,31 @@ export const updateUserProfileCounts = async (
  */
 export const setUserTags = async (uid: string, tags: string[]): Promise<void> => {
   await getUserRef(uid).update({ user_tags: tags })
+}
+
+export type AddUserTagStatus = 'added' | 'alreadyExists' | 'limitExceeded' | 'userNotFound'
+
+/**
+ * ユーザーの `user_tags` にタグを 1 件追加する。
+ * 読み取りから更新までを Transaction で実行し、同時更新時の取りこぼしを防ぐ。
+ */
+export const addUserTag = async (uid: string, tag: string, maxTags: number): Promise<AddUserTagStatus> => {
+  const db = getFirestore()
+  return db.runTransaction(async (transaction) => {
+    const user = await getUser(uid, false, transaction)
+    if (user == null) {
+      return 'userNotFound'
+    }
+    const currentTags = normalizeTagList([...(user.user_tags ?? [])])
+    if (currentTags.includes(tag)) {
+      return 'alreadyExists'
+    }
+    if (currentTags.length >= maxTags) {
+      return 'limitExceeded'
+    }
+    transaction.update(getUserRef(uid), { user_tags: [...currentTags, tag] })
+    return 'added'
+  })
 }
 
 /**
