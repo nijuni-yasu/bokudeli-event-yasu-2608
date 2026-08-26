@@ -3,8 +3,10 @@ import type { ShokujiiEvent } from './stores/event.js'
 
 const sgMailSendMock = vi.fn()
 const getAcceptingOrderEventsByTimeMock = vi.fn()
+const getApplyingReservationEventsMock = vi.fn()
 const getCommunityEmailsForEventMock = vi.fn()
 const getUserMock = vi.fn()
+const getEventPartnerShopMock = vi.fn()
 
 vi.mock('./utils/sendgrid.js', () => ({
   send: (...args: unknown[]) => sgMailSendMock(...args),
@@ -12,12 +14,18 @@ vi.mock('./utils/sendgrid.js', () => ({
 
 vi.mock('./stores/event.js', () => ({
   getAcceptingOrderEventsByTime: (...args: unknown[]) => getAcceptingOrderEventsByTimeMock(...args),
+  getApplyingReservationEvents: (...args: unknown[]) => getApplyingReservationEventsMock(...args),
 }))
 
-vi.mock('./utils/mail.js', () => ({
-  DEFAULT_FROM: 'test@example.com',
-  getCommunityEmailsForEvent: (...args: unknown[]) => getCommunityEmailsForEventMock(...args),
-}))
+vi.mock('./utils/mail.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./utils/mail.js')>()
+  return {
+    ...original,
+    DEFAULT_FROM: 'test@example.com',
+    SUPPORT_MAIL: 'support@example.com',
+    getCommunityEmailsForEvent: (...args: unknown[]) => getCommunityEmailsForEventMock(...args),
+  }
+})
 
 vi.mock('./stores/user.js', () => ({
   getUser: (...args: unknown[]) => getUserMock(...args),
@@ -31,18 +39,14 @@ vi.mock('./utils/urls.js', () => ({
 }))
 
 vi.mock('./stores/partner.js', () => ({
-  getEventPartnerShop: vi.fn().mockResolvedValue({
-    shop_email: 'shop@example.com',
-    fullAddress: 'shop address',
-    shop_phone: '000',
-  }),
+  getEventPartnerShop: (...args: unknown[]) => getEventPartnerShopMock(...args),
 }))
 
 vi.mock('./utils/order.js', () => ({
   createOrdersForOrderDeadline: vi.fn().mockResolvedValue([1, 1000, []]),
 }))
 
-import { sendOrderRemindMailToOrganizer } from './orderRemindMail.js'
+import { sendApplyingOrderRemindMailToShop, sendOrderRemindMailToOrganizer } from './orderRemindMail.js'
 
 function createMockEvent(overrides: Partial<ShokujiiEvent> = {}): ShokujiiEvent {
   return {
@@ -76,6 +80,12 @@ beforeEach(() => {
   sgMailSendMock.mockResolvedValue(undefined)
   getCommunityEmailsForEventMock.mockResolvedValue(['organizer@example.com'])
   getUserMock.mockResolvedValue({ user_name: 'Member' })
+  getEventPartnerShopMock.mockResolvedValue({
+    shop_email: 'shop@example.com',
+    fullAddress: 'shop address',
+    shop_phone: '000',
+    getEmails: () => ['shop@example.com'],
+  })
 })
 
 describe('sendOrderRemindMailToOrganizer', () => {
@@ -106,5 +116,24 @@ describe('sendOrderRemindMailToOrganizer', () => {
 
     expect(getUserMock).toHaveBeenCalledWith('user1', false)
     expect(sgMailSendMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('sendApplyingOrderRemindMailToShop', () => {
+  it('主催者メールを replyTo に設定して送信する', async () => {
+    const updatedAt = 1_000
+    getApplyingReservationEventsMock.mockResolvedValue([
+      createMockEvent({
+        getLastUpdatedTimeByStatus: vi.fn().mockResolvedValue(updatedAt),
+      }),
+    ])
+
+    await sendApplyingOrderRemindMailToShop(updatedAt - 1, updatedAt + 1)
+
+    expect(sgMailSendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyTo: 'org@example.com',
+      }),
+    )
   })
 })

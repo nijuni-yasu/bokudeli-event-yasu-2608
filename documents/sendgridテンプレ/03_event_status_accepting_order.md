@@ -27,7 +27,7 @@
 | :-- | :-- | :-- |
 | `shop_email_sub1` | 店舗メールアドレス（サブ1）。未設定時はコードから `''` | `shop-contact@example.com` |
 
-**Reply-To には設定しない**（表示のみ）。
+**Reply-To** は Functions 側で `shop_email_sub1 ?? shop_email` を設定する（#2321）。テンプレ本文の表示は従来どおり。
 
 既存変数（`shop_name`, `shop_email`, `shop_phone`, `shop_address` 等）は従来どおり `createShopTemplateDataForOrganizerMail` 経由で渡る。
 

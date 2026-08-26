@@ -1,4 +1,4 @@
-import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent, getOrganizerReplyTo } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getPartnerOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
@@ -129,12 +129,15 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
 
           dynamicTemplateData.is_reminder = true
 
+          const replyTo = getOrganizerReplyTo(event)
+
           await sgMail.send({
             to: shopData.getEmails(),
             from: DEFAULT_FROM,
             cc: SUPPORT_MAIL,
             templateId: APPLYING_ORDER_TEMPLATE_ID,
             dynamicTemplateData,
+            ...(replyTo ? { replyTo } : {}),
           })
         }
       } catch (err) {

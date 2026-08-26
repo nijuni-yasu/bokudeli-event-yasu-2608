@@ -1,5 +1,12 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
-import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
+import {
+  DEFAULT_FROM,
+  DEFAULT_TO,
+  SUPPORT_MAIL,
+  getCommunityEmailsForEvent,
+  getOrganizerReplyTo,
+  getShopReplyTo,
+} from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrlForEvent, getPartnerOrderUrl } from './utils/urls.js'
 import { isEnterpriseEvent } from './utils/enterpriseMail.js'
@@ -114,6 +121,7 @@ async function sendEventStatusMailToOrganizers(
   templateId: string,
   addSupport: boolean,
   event: ShokujiiEvent,
+  replyToFromShop = false,
 ): Promise<void> {
   const [templateData, shop, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(event),
@@ -126,6 +134,8 @@ async function sendEventStatusMailToOrganizers(
     ...(shop ? createShopTemplateDataForOrganizerMail(shop) : {}),
   }
 
+  const replyTo = replyToFromShop && shop ? getShopReplyTo(shop) : undefined
+
   if (addSupport && !emails.includes(SUPPORT_MAIL)) {
     emails.push(SUPPORT_MAIL)
   }
@@ -137,6 +147,7 @@ async function sendEventStatusMailToOrganizers(
         from: DEFAULT_FROM,
         templateId,
         dynamicTemplateData,
+        ...(replyTo ? { replyTo } : {}),
       })
     }),
   )
@@ -178,12 +189,18 @@ async function sendApplyingOrderMailToShop(event: ShokujiiEvent): Promise<void> 
     return
   }
 
+  const replyTo = getOrganizerReplyTo(event)
+  if (replyTo === undefined) {
+    logger.warn('Organizer email missing for shop reservation mail replyTo', { eventId: event.id })
+  }
+
   await sgMail.send({
     to: shopEmails,
     from: DEFAULT_FROM,
     cc: SUPPORT_MAIL,
     templateId: APPLYING_ORDER_TEMPLATE_ID,
     dynamicTemplateData,
+    ...(replyTo ? { replyTo } : {}),
   })
 }
 
@@ -235,13 +252,13 @@ export const onEventChanged = onDocumentWritten(
       {
         fromStatus: 'applying_reservation',
         toStatus: 'in_draft',
-        callFunction: (event: ShokujiiEvent) => sendEventStatusMailToOrganizers(EVENT_STATUS_IN_DRAFT_ID, true, event),
+        callFunction: (event: ShokujiiEvent) => sendEventStatusMailToOrganizers(EVENT_STATUS_IN_DRAFT_ID, true, event, true),
       },
       {
         fromStatus: 'applying_reservation',
         toStatus: 'accepting_order',
         callFunction: (event: ShokujiiEvent) =>
-          sendEventStatusMailToOrganizers(EVENT_STATUS_ACCEPTING_ORDER_ID, true, event),
+          sendEventStatusMailToOrganizers(EVENT_STATUS_ACCEPTING_ORDER_ID, true, event, true),
       },
     ]
 
