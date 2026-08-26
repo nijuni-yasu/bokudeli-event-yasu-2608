@@ -252,7 +252,8 @@ export const onEventChanged = onDocumentWritten(
       {
         fromStatus: 'applying_reservation',
         toStatus: 'in_draft',
-        callFunction: (event: ShokujiiEvent) => sendEventStatusMailToOrganizers(EVENT_STATUS_IN_DRAFT_ID, true, event, true),
+        callFunction: (event: ShokujiiEvent) =>
+          sendEventStatusMailToOrganizers(EVENT_STATUS_IN_DRAFT_ID, true, event, true),
       },
       {
         fromStatus: 'applying_reservation',
