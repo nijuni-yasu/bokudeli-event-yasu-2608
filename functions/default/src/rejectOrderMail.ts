@@ -1,4 +1,5 @@
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getOrganizerReplyTo } from './utils/mail.js'
+import { createModuleLogger } from './utils/logger.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getPartnerOrderUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
@@ -11,6 +12,8 @@ import {
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
 import { HttpsError } from 'firebase-functions/https'
+
+const logger = createModuleLogger('rejectOrderMail')
 
 // テンプレートID
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
@@ -64,8 +67,11 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
 
 /**
  * ショップ向け注文却下メール送信
+ *
+ * `applying_reservation` になった時刻が `deadlineMillis` 以前のイベントをすべて却下する。
+ * 1 分窓ではなく期限超過分すべてを対象にすることで、承認期限の変更時に取りこぼしが出ないようにしている。
  */
-export async function sendRejectOrderMailToShop(start: number, end: number): Promise<void[]> {
+export async function sendRejectOrderMailToShop(deadlineMillis: number): Promise<void[]> {
   const nowDateTimeMillis = Date.now()
   const [events, config] = await Promise.all([getApplyingReservationEvents(nowDateTimeMillis), getConfigGlobal()])
   const updated_by = config?.system_id
@@ -81,7 +87,7 @@ export async function sendRejectOrderMailToShop(start: number, end: number): Pro
         // applying_reservation に変更したログで一番新しいものを取得
         const updatedAt = await event.getLastUpdatedTimeByStatus('applying_reservation')
 
-        if (updatedAt == null || updatedAt <= start || updatedAt > end) {
+        if (updatedAt == null || updatedAt > deadlineMillis) {
           return
         }
 
@@ -95,9 +101,11 @@ export async function sendRejectOrderMailToShop(start: number, end: number): Pro
         ])
 
         if (!shopData) {
-          console.warn(`Shop data not found for event: ${event.id}`)
+          logger.warn('Shop data not found for event', { eventId: event.id })
           return
         }
+
+        const replyTo = getOrganizerReplyTo(event)
 
         await sgMail.send({
           to: shopData.getEmails(),
@@ -105,9 +113,10 @@ export async function sendRejectOrderMailToShop(start: number, end: number): Pro
           cc: SUPPORT_MAIL,
           templateId: REJECT_ORDER_TEMPLATE_ID,
           dynamicTemplateData,
+          ...(replyTo ? { replyTo } : {}),
         })
       } catch (err) {
-        console.warn('Failed to send reject order mail to shop:', err)
+        logger.warn('Failed to send reject order mail to shop', { error: err })
       }
     })()
 

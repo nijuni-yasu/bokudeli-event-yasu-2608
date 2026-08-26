@@ -1,4 +1,5 @@
-import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent, getOrganizerReplyTo } from './utils/mail.js'
+import { createModuleLogger } from './utils/logger.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getPartnerOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
@@ -11,6 +12,9 @@ import {
   convertToDatetimeWeekdayShort,
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
+import { getShopReservationApprovalDeadlineMillis } from '@shokujii/common/constants/eventReservation.js'
+
+const logger = createModuleLogger('orderRemindMail')
 
 // テンプレートID
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b'
@@ -68,7 +72,7 @@ async function createTemplateDataForApplyingOrder(
   event: ShokujiiEvent,
   updatedAt: number,
 ): Promise<TemplateDataForApplyingOrder> {
-  const limitTimeMills = updatedAt + 3 * 24 * 60 * 60 * 1000
+  const limitTimeMills = getShopReservationApprovalDeadlineMillis(updatedAt)
 
   const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(event)
   const event_start_datetime = event.event_start_datetime
@@ -122,11 +126,16 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
           ])
 
           if (!shopData) {
-            console.warn(`Shop data not found for event: ${event.id}`)
+            logger.warn('Shop data not found for event', { eventId: event.id })
             return
           }
 
           dynamicTemplateData.is_reminder = true
+
+          const replyTo = getOrganizerReplyTo(event)
+          if (replyTo === undefined) {
+            logger.warn('Organizer email missing for shop reservation remind mail replyTo', { eventId: event.id })
+          }
 
           await sgMail.send({
             to: shopData.getEmails(),
@@ -134,10 +143,11 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
             cc: SUPPORT_MAIL,
             templateId: APPLYING_ORDER_TEMPLATE_ID,
             dynamicTemplateData,
+            ...(replyTo ? { replyTo } : {}),
           })
         }
       } catch (err) {
-        console.warn('Failed to send applying order remind mail to shop:', err)
+        logger.warn('Failed to send applying order remind mail to shop', { error: err })
       }
     })
     .filter((promise) => promise != null)
@@ -238,7 +248,7 @@ export async function sendOrderRemindMailToOrganizer(
 
         await Promise.all(emailPromises)
       } catch (err) {
-        console.warn('Failed to send order remind mail to organizer:', err)
+        logger.warn('Failed to send order remind mail to organizer', { error: err })
       }
     })
     .filter((promise) => promise != null)

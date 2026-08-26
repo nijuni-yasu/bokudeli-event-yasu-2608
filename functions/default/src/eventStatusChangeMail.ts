@@ -1,5 +1,13 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
-import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
+import {
+  DEFAULT_FROM,
+  DEFAULT_TO,
+  SUPPORT_MAIL,
+  getCommunityEmailsForEvent,
+  getOrganizerReplyTo,
+  getShopReplyTo,
+  resolveReplyToEmail,
+} from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrlForEvent, getPartnerOrderUrl } from './utils/urls.js'
 import { isEnterpriseEvent } from './utils/enterpriseMail.js'
@@ -8,6 +16,7 @@ import {
   convertToDatetimeWeekdayShort,
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
+import type { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { getPartner } from './stores/partner.js'
 import { getUser } from './stores/user.js'
 import { convertReferenceToEvent, ShokujiiEvent } from './stores/event.js'
@@ -94,12 +103,26 @@ async function getShopForEvent(event: ShokujiiEvent) {
 }
 
 /**
+ * 主催者向けイベントステータス変更メール用の店舗テンプレートデータ
+ */
+export function createShopTemplateDataForOrganizerMail(shop: PartnerShop) {
+  return {
+    ...shop,
+    // getter fullAddress はスプレッドされない。テンプレの shop_address 用に結合住所を渡す
+    shop_address: shop.fullAddress,
+    // #2204: 店舗連絡先（サブ1）。SendGrid 側は {{#if shop_email_sub1}} で表示
+    shop_email_sub1: resolveReplyToEmail(shop.shop_email_sub1) ?? '',
+  }
+}
+
+/**
  * 主催者にイベントステータス変更メールを送信
  */
 async function sendEventStatusMailToOrganizers(
   templateId: string,
   addSupport: boolean,
   event: ShokujiiEvent,
+  replyToFromShop = false,
 ): Promise<void> {
   const [templateData, shop, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(event),
@@ -109,14 +132,10 @@ async function sendEventStatusMailToOrganizers(
 
   const dynamicTemplateData = {
     ...templateData,
-    ...(shop
-      ? {
-          ...shop,
-          // getter fullAddress はスプレッドされない。テンプレの shop_address 用に結合住所を渡す
-          shop_address: shop.fullAddress,
-        }
-      : {}),
+    ...(shop ? createShopTemplateDataForOrganizerMail(shop) : {}),
   }
+
+  const replyTo = replyToFromShop && shop ? getShopReplyTo(shop) : undefined
 
   if (addSupport && !emails.includes(SUPPORT_MAIL)) {
     emails.push(SUPPORT_MAIL)
@@ -129,6 +148,7 @@ async function sendEventStatusMailToOrganizers(
         from: DEFAULT_FROM,
         templateId,
         dynamicTemplateData,
+        ...(replyTo ? { replyTo } : {}),
       })
     }),
   )
@@ -170,12 +190,18 @@ async function sendApplyingOrderMailToShop(event: ShokujiiEvent): Promise<void> 
     return
   }
 
+  const replyTo = getOrganizerReplyTo(event)
+  if (replyTo === undefined) {
+    logger.warn('Organizer email missing for shop reservation mail replyTo', { eventId: event.id })
+  }
+
   await sgMail.send({
     to: shopEmails,
     from: DEFAULT_FROM,
     cc: SUPPORT_MAIL,
     templateId: APPLYING_ORDER_TEMPLATE_ID,
     dynamicTemplateData,
+    ...(replyTo ? { replyTo } : {}),
   })
 }
 
@@ -227,13 +253,14 @@ export const onEventChanged = onDocumentWritten(
       {
         fromStatus: 'applying_reservation',
         toStatus: 'in_draft',
-        callFunction: (event: ShokujiiEvent) => sendEventStatusMailToOrganizers(EVENT_STATUS_IN_DRAFT_ID, true, event),
+        callFunction: (event: ShokujiiEvent) =>
+          sendEventStatusMailToOrganizers(EVENT_STATUS_IN_DRAFT_ID, true, event, true),
       },
       {
         fromStatus: 'applying_reservation',
         toStatus: 'accepting_order',
         callFunction: (event: ShokujiiEvent) =>
-          sendEventStatusMailToOrganizers(EVENT_STATUS_ACCEPTING_ORDER_ID, true, event),
+          sendEventStatusMailToOrganizers(EVENT_STATUS_ACCEPTING_ORDER_ID, true, event, true),
       },
     ]
 

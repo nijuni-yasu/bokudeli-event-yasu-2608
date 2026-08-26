@@ -1,3 +1,5 @@
+import type { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
+import { isValidEmail } from '@shokujii/common/utils/contactFormat.js'
 import { getCommunity } from '../stores/community.js'
 import { getUser, getUserPersonalInformation } from '../stores/user.js'
 import { ShokujiiEvent } from '../stores/event.js'
@@ -7,6 +9,30 @@ export const DEFAULT_FROM = '食事でつながる「shokujii」<shokujii@nijuni
 export const DEFAULT_TO = 'support+to@nijuni.jp'
 export const SUPPORT_MAIL = 'shokujiiサポート<support+cc@nijuni.jp>'
 export const SUPPORT_MAIL_ADDRESS = 'support@nijuni.jp'
+
+/**
+ * Reply-To 用に trim 済みメールアドレスを返す。空なら undefined。
+ */
+export function resolveReplyToEmail(email: string | undefined): string | undefined {
+  const trimmed = email?.trim()
+  return trimmed !== undefined && trimmed !== '' ? trimmed : undefined
+}
+
+/** 店舗向け予約申請メールの Reply-To（主催者連絡先） */
+export function getOrganizerReplyTo(event: ShokujiiEvent): string | undefined {
+  const email = resolveReplyToEmail(event.organizer_email)
+  return email !== undefined && isValidEmail(email) ? email : undefined
+}
+
+/** 主催者向け承認・却下メールの Reply-To（店舗連絡先。sub1 優先・形式不正時は shop_email） */
+export function getShopReplyTo(shop: PartnerShop): string | undefined {
+  const sub1 = resolveReplyToEmail(shop.shop_email_sub1)
+  if (sub1 !== undefined && isValidEmail(sub1)) {
+    return sub1
+  }
+  const primary = resolveReplyToEmail(shop.shop_email)
+  return primary !== undefined && isValidEmail(primary) ? primary : undefined
+}
 
 /**
  * コミュニティマネージャーのメールアドレスを取得
