@@ -1,4 +1,4 @@
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getOrganizerReplyTo } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getPartnerOrderUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
@@ -102,12 +102,15 @@ export async function sendRejectOrderMailToShop(deadlineMillis: number): Promise
           return
         }
 
+        const replyTo = getOrganizerReplyTo(event)
+
         await sgMail.send({
           to: shopData.getEmails(),
           from: DEFAULT_FROM,
           cc: SUPPORT_MAIL,
           templateId: REJECT_ORDER_TEMPLATE_ID,
           dynamicTemplateData,
+          ...(replyTo ? { replyTo } : {}),
         })
       } catch (err) {
         console.warn('Failed to send reject order mail to shop:', err)

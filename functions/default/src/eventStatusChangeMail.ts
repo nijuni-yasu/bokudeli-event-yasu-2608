@@ -6,6 +6,7 @@ import {
   getCommunityEmailsForEvent,
   getOrganizerReplyTo,
   getShopReplyTo,
+  resolveReplyToEmail,
 } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrlForEvent, getPartnerOrderUrl } from './utils/urls.js'
@@ -110,7 +111,7 @@ export function createShopTemplateDataForOrganizerMail(shop: PartnerShop) {
     // getter fullAddress はスプレッドされない。テンプレの shop_address 用に結合住所を渡す
     shop_address: shop.fullAddress,
     // #2204: 店舗連絡先（サブ1）。SendGrid 側は {{#if shop_email_sub1}} で表示
-    shop_email_sub1: shop.shop_email_sub1 ?? '',
+    shop_email_sub1: resolveReplyToEmail(shop.shop_email_sub1) ?? '',
   }
 }
 

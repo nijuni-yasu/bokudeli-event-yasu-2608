@@ -130,6 +130,9 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
           dynamicTemplateData.is_reminder = true
 
           const replyTo = getOrganizerReplyTo(event)
+          if (replyTo === undefined) {
+            console.warn(`Organizer email missing for shop reservation remind mail replyTo: ${event.id}`)
+          }
 
           await sgMail.send({
             to: shopData.getEmails(),

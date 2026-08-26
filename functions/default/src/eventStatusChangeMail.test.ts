@@ -107,4 +107,10 @@ describe('createShopTemplateDataForOrganizerMail', () => {
 
     expect(createShopTemplateDataForOrganizerMail(shop).shop_email_sub1).toBe('')
   })
+
+  it('shop_email_sub1 が空白のみのとき空文字を渡す', () => {
+    const shop = createTestPartnerShop({ shop_email_sub1: '   ' })
+
+    expect(createShopTemplateDataForOrganizerMail(shop).shop_email_sub1).toBe('')
+  })
 })

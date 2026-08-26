@@ -13,6 +13,9 @@
 | [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🐛 実害 | 📐 リファクタ | M | 期限超過分を無制限並列で却下・メール失敗時に復旧不可<br>件数上限／並列度制限を検討 |
 | [x] | RC-8 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 中核のバグ修正（判定変更）にテストなし<br>`rejectOrderMail.test.ts` を追加 |
 | [x] | RC-9 | 3851567012 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | PartnerShop を値 import している<br>`import type` に変更 |
+| [x] | RC-10 | 3862241886 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 空白のみ shop_email_sub1 がテンプレで truthy 表示<br>`resolveReplyToEmail` で正規化 |
+| [x] | RC-11 | 3862251127 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 自動却下メールに Reply-To 未設定<br>主催者メールを replyTo に追加 |
+| [x] | RC-12 | 5424574358 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | リマインドで replyTo 欠落時 warn なし<br>console.warn を追加 |
 
 ---
 
@@ -411,5 +414,136 @@
 **想定工数**: S
 
 **判断理由**: 指摘妥当。型注釈のみの利用のため `import type` に変更済み。
+
+---
+
+## 評価セッション（2026-08-26 20:30 JST・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-08-26 20:30 JST
+- **ブランチ名**: fix/2306
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2308
+- **REVIEW_REQUEST_SINCE**: 2026-08-26T11:20:37Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼 id:5424542076、Codex 接続案内 id:5424576276）
+- **持ち越し言及**: Copilot トップレベル id:5424574358 の `Promise.all` 指摘は RC-7 と同一（新規 RC なし）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-10 | 3862241886 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 空白のみ shop_email_sub1 がテンプレで truthy 表示<br>`resolveReplyToEmail` で正規化 |
+| [x] | RC-11 | 3862251127 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 自動却下メールに Reply-To 未設定<br>主催者メールを replyTo に追加 |
+| [x] | RC-12 | 5424574358 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | リマインドで replyTo 欠落時 warn なし<br>console.warn を追加 |
+
+### RC-10
+
+**識別子**: RC-10（GitHub id: 3862241886）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/eventStatusChangeMail.ts:114`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    shop_email_sub1: shop.shop_email_sub1 ?? '',
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `shop_email_sub1` が空白のみ（例: `'   '`）の場合でもそのままテンプレに渡されるため、SendGrid 側の `{{#if shop_email_sub1}}` 判定が truthy になり、空行が表示される可能性があります。テンプレ表示用は trim して空なら `''` に正規化した方が安全です。
+
+**コメント要約**: 空白のみ sub1 が Handlebars で truthy になり空行表示されうる。<br>trim 後空なら `''` に正規化すべき。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`createShopTemplateDataForOrganizerMail` で `resolveReplyToEmail` を使い空白 sub1 を `''` に正規化。
+
+### RC-11
+
+**識別子**: RC-11（GitHub id: 3862251127）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/rejectOrderMail.ts:71`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+         await sgMail.send({
+           to: shopData.getEmails(),
+           from: DEFAULT_FROM,
+           cc: SUPPORT_MAIL,
+           templateId: REJECT_ORDER_TEMPLATE_ID,
+           dynamicTemplateData,
+         })
+```
+
+**レビュワーのコメント（原文）**:
+
+自動却下メールにも主催者の Reply-To を設定する。この PR では店舗向けの予約申請メールとリマインドに `getOrganizerReplyTo(event)` を設定していますが、この関数が店舗へ送る48時間経過後の自動却下通知には `replyTo` がありません。そのため、店舗が自動却下通知へ返信した場合だけ主催者ではなく既定の差出人へ届き、同じ予約申請フロー内で返信先が不整合になります。ここでも申請メールと同様に主催者メールを `replyTo` に渡してください。
+
+**コメント要約**: 店舗向け自動却下通知にも主催者 Reply-To が必要。<br>申請・リマインドと返信先を揃える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。#2321 の店舗向けメール群と整合するため `rejectOrderMail.ts` に `getOrganizerReplyTo` を追加。
+
+### RC-12
+
+**識別子**: RC-12（GitHub id: 5424574358・nits 部分）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/orderRemindMail.ts:131`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++          const replyTo = getOrganizerReplyTo(event)
++
+           await sgMail.send({
+```
+
+**レビュワーのコメント（原文）**:
+
+[nits] `getOrganizerReplyTo` が `undefined` を返す場合に警告ログを出していません。`eventStatusChangeMail.ts` の `sendApplyingOrderMailToShop`（L193-195）では同様の状況で `logger.warn` を呼んでいるため、挙動に一貫性を持たせるなら warn を追加するか、ログ不要であれば `eventStatusChangeMail.ts` 側の warn も削除して揃えてください。
+
+**コメント要約**: リマインド送信で organizer replyTo 欠落時の warn が無い。<br>申請メールとログ挙動を揃える。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘妥当。`orderRemindMail.ts` に `console.warn` を追加（当ファイルの既存 warn スタイルに合わせる）。
 
 ---

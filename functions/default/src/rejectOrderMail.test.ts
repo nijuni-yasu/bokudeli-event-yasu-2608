@@ -22,10 +22,14 @@ vi.mock('./stores/partner.js', () => ({
   getEventPartnerShop: (...args: unknown[]) => getEventPartnerShopMock(...args),
 }))
 
-vi.mock('./utils/mail.js', () => ({
-  DEFAULT_FROM: 'test@example.com',
-  SUPPORT_MAIL: 'support@example.com',
-}))
+vi.mock('./utils/mail.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./utils/mail.js')>()
+  return {
+    ...original,
+    DEFAULT_FROM: 'test@example.com',
+    SUPPORT_MAIL: 'support@example.com',
+  }
+})
 
 vi.mock('./utils/urls.js', () => ({
   getEventUrl: () => 'https://example.com/event',
@@ -52,6 +56,7 @@ function createMockEvent(applyingReservationUpdatedAt: number | null): ShokujiiE
     event_place: 'place',
     fullAddress: 'address',
     shop_name: 'shop',
+    organizer_email: 'org@example.com',
     getLastUpdatedTimeByStatus: vi.fn().mockResolvedValue(applyingReservationUpdatedAt),
     updateEvent: vi.fn().mockResolvedValue(undefined),
   } as unknown as ShokujiiEvent
@@ -76,6 +81,11 @@ describe('sendRejectOrderMailToShop', () => {
 
     expect(event.updateEvent).toHaveBeenCalledWith({ event_status: { value: 'in_draft', shop_comment: '' } }, 'system')
     expect(sgMailSendMock).toHaveBeenCalledTimes(1)
+    expect(sgMailSendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        replyTo: 'org@example.com',
+      }),
+    )
   })
 
   it('承認期限内の申請は却下しない', async () => {
