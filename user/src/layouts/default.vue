@@ -20,6 +20,7 @@ import { consumePendingToast } from '@shokujii/base/utils/pendingToast.js'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { getAuth, type User } from 'firebase/auth'
+import TagImportHintHost from '@shokujii/base/components/TagImportHintHost.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -206,6 +207,7 @@ const handleChatHeaderClick = (): void => {
   <v-snackbar v-model="isNotificationShown" :color="notification.color" class="pre-line" location="top">
     {{ notification.message }}
   </v-snackbar>
+  <TagImportHintHost />
 </template>
 
 <style lang="scss">

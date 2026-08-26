@@ -19,6 +19,11 @@ export const updateUserTags = onCall<UpdateUserTagsRequest, Promise<{ success: b
     if (!Array.isArray(raw) || !raw.every((t) => typeof t === 'string')) {
       throw new HttpsError('invalid-argument', 'tags が不正です')
     }
+    for (const t of raw) {
+      if (normalizeTag(t).length === 0) {
+        throw new HttpsError('invalid-argument', '空または空白のみのタグは指定できません')
+      }
+    }
     const normalized = normalizeTagList(raw)
     if (normalized.length > MAX_TAGS) {
       throw new HttpsError('invalid-argument', `タグは最大${MAX_TAGS}個までです`)

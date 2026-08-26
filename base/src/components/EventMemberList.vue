@@ -6,7 +6,6 @@ import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
 import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
-import TagImportHintDialog from '@shokujii/base/components/TagImportHintDialog.vue'
 import { getUserPath } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useProfileTagToggle } from '@shokujii/base/composable/useTagImportHint.js'
@@ -28,7 +27,7 @@ withDefaults(
 )
 
 const currentUserStore = useCurrentUserStore()
-const { showDialog: showTagImportHint, confirmHint, toggleTag: onMemberTagClick } = useProfileTagToggle()
+const { toggleTag: onMemberTagClick } = useProfileTagToggle()
 const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
 
 const isTagHighlighted = (tag: string) => myTags.value.has(tag)
@@ -120,7 +119,6 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
       </v-row>
       <slot></slot>
     </v-card-text>
-    <TagImportHintDialog v-if="memberTagsVisible" v-model="showTagImportHint" @confirm="confirmHint" />
   </section>
 </template>
 

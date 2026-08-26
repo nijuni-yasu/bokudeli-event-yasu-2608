@@ -7,7 +7,6 @@ import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
 import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
-import TagImportHintDialog from '@shokujii/base/components/TagImportHintDialog.vue'
 import { mdiAlphaXCircle, mdiCogOutline, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
 import { useProfileTagToggle } from '@shokujii/base/composable/useTagImportHint.js'
@@ -28,7 +27,7 @@ const props = withDefaults(
 const currentUserStore = useCurrentUserStore()
 
 const isEditable = computed(() => props.isEditable ?? false)
-const { showDialog: showTagImportHint, confirmHint, toggleTag } = useProfileTagToggle()
+const { toggleTag } = useProfileTagToggle()
 
 const onTagClick = (tag: string) => {
   if (isEditable.value) return
@@ -122,7 +121,6 @@ const isHighlighted = (tag: string) => myTags.value.has(tag)
         </v-card-actions>
       </v-card>
     </v-col>
-    <TagImportHintDialog v-model="showTagImportHint" @confirm="confirmHint" />
   </v-row>
 </template>
 

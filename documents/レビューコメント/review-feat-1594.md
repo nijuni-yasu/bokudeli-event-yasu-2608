@@ -38,6 +38,9 @@
 | [x] | RC-33 | 3862492226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | setUserTags JSDoc 不一致 |
 | [ ] | RC-34 | 3862492263 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | addTag Transaction 原子化 |
 | [ ] | RC-35 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | user_tags read-then-write とクライアント stale 全置換 |
+| [x] | RC-36 | 3863087690 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | updateUserTags 空白タグで全消し |
+| [x] | RC-37 | 3863087764 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagImportHintDialog 多重マウント |
+| [ ] | RC-38 | 3863090915 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | M | 退会済みユーザーへのタグ再書き込み競合 |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 
@@ -1371,5 +1374,139 @@ This issue also appears on line 42 of the same file.
 **想定工数**: M
 
 **判断理由**: `addTagToMyProfile` は `getUser()` → `setUserTags()` の read-then-write で実装されており、同じユーザーからタグ追加が並行すると最後に書いた配列だけが残る。さらに削除系もクライアントが保持している `currentUserTags` の全置換で送るため、別タブや別端末で直前に追加されたタグを古い配列で消し戻せる。
+
+---
+
+## 評価セッション（2026-08-26 22:17・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-26 22:17 JST
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-26T13:10:06Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 1、Copilot overview 1）
+- **partial 評価**: いいえ
+- **新規 RC**: RC-36〜38（3件）
+- **手順 4a 自動修正**: RC-36・RC-37（🚨 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-36 | 3863087690 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | `tags: ['']` が全消し成功<br>normalize 前に空白タグを invalid-argument |
+| [x] | RC-37 | 3863087764 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | singleton なのに Dialog 多重マウント<br>TagImportHintHost を layout に集約 |
+| [ ] | RC-38 | 3863090915 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | M | 退会処理と並行でタグ再書き込み<br>is_deleted を Transaction で拒否 |
+
+---
+
+**識別子**: RC-36（GitHub id: 3863087690）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/userTags.ts:23`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    const normalized = normalizeTagList(raw)
++    if (normalized.length > MAX_TAGS) {
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `updateUserTags` は `normalizeTagList` が空文字（空白のみ含む）を除去するため、`tags: ['']` のような入力がエラーにならず「タグ全消し」として成功してしまいます。`addTagToMyProfile` や Firestore Rules の方針（空文字は拒否）と不整合なので、空/空白のみタグが含まれる場合は `invalid-argument` で弾いた方が安全です。
+
+**コメント要約**: `normalizeTagList` 前に空白のみタグを除去するため `tags: ['']` が意図せず全消しになる。Rules / addTag と整合させ invalid-argument で拒否すべき。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 空白のみ要素は normalize 前に `invalid-argument` で拒否するのが妥当。手順 4a で `normalizeTag(t).length === 0` チェックを追加。
+
+---
+
+**識別子**: RC-37（GitHub id: 3863087764）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/composable/useTagImportHint.ts:15`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const showDialog = ref(false)
++let pendingExecute: (() => Promise<void>) | null = null
++
++watch(showDialog, (visible, wasVisible) => {
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `showDialog` / `pendingExecute` がモジュールスコープの singleton なのに、`TagImportHintDialog` が複数コンポーネント（例: UserBioPanel / EventMemberList / members ページ）で描画されているため、`showDialog.value = true` の瞬間に複数のダイアログが同時に開く可能性があります。ダイアログの描画場所を1箇所に集約（ページ or レイアウトに1つだけ置く）し、他の場所ではダイアログをマウントしない構成にしてください。
+
+**コメント要約**: composable が singleton なのに Dialog を複数マウントしており同時表示の恐れ。layout 等 1 箇所に集約すべき。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `TagImportHintHost` を user / enterprise layout に 1 つだけ配置し、各コンポーネントから Dialog マウントを削除。
+
+---
+
+**識別子**: RC-38（GitHub id: 3863090915）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/userTags.ts:36`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    const existing = await getUser(uid, false)
++    if (existing == null) {
++      throw new HttpsError('not-found', 'ユーザーが見つかりません')
++    }
++    await setUserTags(uid, normalized)
+```
+
+**レビュワーのコメント（原文）**:
+
+**P1** 退会済みユーザーへのタグ再書き込みを拒否する
+
+複数タブなどでタグ保存が `deleteUserAccount` と並行すると、この存在確認後に削除側のトランザクションが `is_deleted: true` と `user_tags: []` を保存し、その後の `setUserTags` がタグを再び公開 `users/{uid}` ドキュメントへ書き戻せます。既存の匿名化対応後もプロフィールタグが残る競合であり、`addTagToMyProfile` にも同路経があるため、`is_deleted` の確認とタグ書き込みを削除処理と競合する同一トランザクション内で行い、退会済みなら拒否してください。
+
+**コメント要約**: 退会トランザクションとタグ更新が競合し、匿名化後にタグが復活し得る。is_deleted 確認と書き込みを Transaction 化して拒否すべき（RC-35 と関連）。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ, 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: 妥当な指摘。deleteUserAccount との競合は Transaction + is_deleted ガードが必要。RC-34/35 と合わせて Functions 側の原子化タスクとして未着手（セキュリティ影響範囲の確認が必要なため auto-fix 対象外）。
 
 ---
