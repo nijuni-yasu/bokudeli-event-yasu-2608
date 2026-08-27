@@ -20,6 +20,9 @@ export function useTagImportHint() {
       await execute()
       return
     }
+    if (showDialog.value) {
+      return
+    }
     pendingExecute = execute
     showDialog.value = true
   }

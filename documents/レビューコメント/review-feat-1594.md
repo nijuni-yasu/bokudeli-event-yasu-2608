@@ -36,11 +36,14 @@
 | [x] | RC-30 | 4943804721 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | normalizeTag をコードポイント走査に変更 |
 | [x] | RC-32 | 3862492175 | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | onCall 第2型引数 Promise（既存慣習） |
 | [x] | RC-33 | 3862492226 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | setUserTags JSDoc 不一致 |
-| [ ] | RC-34 | 3862492263 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | addTag Transaction 原子化 |
+| [x] | RC-34 | 3862492263 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | addTag Transaction 原子化 |
 | [ ] | RC-35 | なし・エージェントレビュー | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | user_tags read-then-write とクライアント stale 全置換 |
 | [x] | RC-36 | 3863087690 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | updateUserTags 空白タグで全消し |
 | [x] | RC-37 | 3863087764 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagImportHintDialog 多重マウント |
 | [ ] | RC-38 | 3863090915 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | M | 退会済みユーザーへのタグ再書き込み競合 |
+| [x] | RC-39 | 3868288823 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 初回ヒント表示中の pendingExecute 上書き |
+| [ ] | RC-40 | 5433627247 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | toggleTag 削除がクライアント read-then-write |
+| [ ] | RC-41 | 3868301684 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | タグ更新で未保存プロフィール入力が消える |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 
@@ -1298,7 +1301,7 @@ This issue also appears on line 42 of the same file.
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -1308,7 +1311,7 @@ This issue also appears on line 42 of the same file.
 
 **想定工数**: M
 
-**判断理由**: 指摘は妥当だが Transaction 化は store 設計・テスト追加が必要。本ターンのタグ表示トグル PR とは独立した改善として別対応が妥当。
+**判断理由**: `41d90af60` / マージ `4daaa7119` で `stores/user.ts` の `addUserTag` が Transaction 化され、`addTagToMyProfile` Callable から利用。read-then-write 指摘は解消。
 
 ---
 
@@ -1508,5 +1511,172 @@ This issue also appears on line 42 of the same file.
 **想定工数**: M
 
 **判断理由**: 妥当な指摘。deleteUserAccount との競合は Transaction + is_deleted ガードが必要。RC-34/35 と合わせて Functions 側の原子化タスクとして未着手（セキュリティ影響範囲の確認が必要なため auto-fix 対象外）。
+
+---
+
+## 評価セッション（2026-08-27 11:40・review-comments-evaluate manual）
+
+- **評価日時**: 2026-08-27 11:40 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` manual）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 1、Codex 接続案内ボイラープレート 1）
+- **手順 4a 自動修正**: RC-39（🚨 1件）
+- **既存 RC ステータス更新**: RC-34 → ✅ 対応済み（`addUserTag` Transaction 化済み）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-34 | 3862492263 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | addTagToMyProfile → addUserTag Transaction 化済み |
+| [x] | RC-39 | 3868288823 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 初回ヒント表示中の pendingExecute 上書き<br>showDialog 中は後続クリック無視 |
+| [ ] | RC-40 | 5433627247 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | toggleTag 削除が updateUserTags 全置換<br>removeTag Callable 等でサーバー側原子化が必要 |
+
+---
+
+**識別子**: RC-39（GitHub id: 3868288823）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/composable/useTagImportHint.ts:25`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const interceptTagClick = async (execute: () => Promise<void>) => {
++    if (hasSeenTagImportHint()) {
++      await execute()
++      return
++    }
++    pendingExecute = execute
++    showDialog.value = true
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] 初回ヒント表示中にタグが複数回クリックされると、pendingExecute が後勝ちで上書きされて最初のクリックが失われます（interceptTagClick が showDialog の表示中かどうかを見ずに pendingExecute を再代入しているため）。ダイアログ表示中の後続クリックは無視する等、pendingExecute を上書きしないようにしてください。
+
+**コメント要約**: 初回ヒントダイアログ表示中に別タグをクリックすると pendingExecute が上書きされ、最初の操作が失われる。<br>`showDialog` 表示中は後続クリックを無視する等で pendingExecute を保護すべき。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。`showDialog.value === true` のときは `return` して pendingExecute を上書きしないよう手順 4a で修正済み。
+
+---
+
+**識別子**: RC-40（GitHub id: 5433627247）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/apis/userTags.ts:22-36`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export const toggleTagOnMyProfile = async (
++  tag: string,
++  currentUserTags: string[] | undefined,
++): Promise<'added' | 'removed'> => {
++  ...
++  if (current.includes(t)) {
++    await updateUserTags(current.filter((x) => x !== t))
++    return 'removed'
++  }
++  await addTagToMyProfile(t)
++  return 'added'
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+shokujii-code-review チェックリストで Files changed を確認し、以下 1 点は 🚨必須修正です。
+
+🚨 **必須修正** [🔧微修正/S]: `base/src/apis/userTags.ts:22-36`
+`toggleTagOnMyProfile` の削除分岐が `currentUserTags` を使ったクライアント側 read-then-write（`updateUserTags(current.filter(...))`）になっており、別端末・別画面の直前更新を上書きする race が残っています。追加だけでなく削除もサーバー側で原子的に処理する API（Transaction/arrayRemove 等）に寄せて、stale 配列の全置換を避けてください。
+
+**コメント要約**: タグ削除時に Pinia の stale 配列で `updateUserTags` 全置換しており、他端末の更新を上書きし得る。<br>追加は `addTagToMyProfile`（Transaction）だが、削除もサーバー側原子 API（removeUserTag 等）が必要。RC-35 の削除経路に相当。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。`removeUserTag` Callable + store Transaction の新規追加が必要で設計判断を伴うため auto-fix 対象外。RC-35・RC-38 と合わせて Functions 側タスクとして未着手。
+
+---
+
+## 評価セッション（2026-08-27 11:45・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-27 11:45 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-27T02:31:48Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 1、Codex 接続案内 1）
+- **partial 評価**: はい（Codex substantive 1 件 + Copilot 1 件。RC-39/40 は manual セッションで記録済みのため重複採番なし）
+- **手順 4a 自動修正**: なし
+- **新規 RC**: RC-41（1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-41 | 3868301684 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | タグ更新で未保存の名前・自己紹介が watch で消える<br>user_tags のみ同期するか一括保存に統合 |
+
+---
+
+**識別子**: RC-41（GitHub id: 3868301684）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `user/src/pages/profile.vue:367`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++              <UserProfileTagsEditSection />
+```
+
+**レビュワーのコメント（原文）**:
+
+**P2** タグ更新で編集中のプロフィールを破棄しない
+
+名前や自己紹介を編集してからこのセクションでタグを追加・削除すると、Callable による `users/{uid}` 更新を受けた snapshot により、26〜34行目の `watch(user, ...)` が `currentUser` 全体を保存済みデータから作り直すため、まだ送信していない入力内容が失われます。`enterprise/src/pages/profile.vue` でも同じ構成です。タグ更新時はフォームの未保存フィールドを維持して `user_tags` だけを同期するか、タグもフォームのドラフトに含めて一括保存してください。
+
+**コメント要約**: プロフィール編集フォーム入力中にタグを追加/削除すると Firestore snapshot で `watch(user)` が `currentUser` を丸ごと上書きし、未保存の名前・自己紹介等が消える。<br>タグだけ同期するか、タグもフォームドラフトに含めて一括保存する設計が必要（user / enterprise 共通）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当。`watch(user)` が User 全体を再構築する既存パターンとタグの即時 Callable 更新が衝突。UX ラベル・M 工数のため auto-fix 対象外。
 
 ---
