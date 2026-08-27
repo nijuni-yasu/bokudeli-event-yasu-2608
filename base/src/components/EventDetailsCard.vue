@@ -389,7 +389,7 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
                   {{ members.length }} / {{ event.event_max_people }}
                 </span>
               </span>
-              <div class="d-flex align-center flex-nowrap ga-2 event-participant-actions">
+              <div class="d-flex align-center flex-wrap ga-2 event-participant-actions">
                 <VBtn
                   v-if="showOpenChatButton"
                   variant="outlined"

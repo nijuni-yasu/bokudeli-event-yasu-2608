@@ -81,6 +81,11 @@ describe('user_tags firestore rules', () => {
     await assertFails(userRef(userAuth(USER_A), USER_A).update({ user_tags: [''] }))
   })
 
+  it('rejects user_tags containing whitespace-only string', async () => {
+    await assertFails(userRef(userAuth(USER_A), USER_A).update({ user_tags: ['   '] }))
+    await assertFails(userRef(userAuth(USER_A), USER_A).update({ user_tags: ['\u3000'] }))
+  })
+
   it('rejects user_tags containing tag longer than 20 characters', async () => {
     await assertFails(userRef(userAuth(USER_A), USER_A).update({ user_tags: ['a'.repeat(21)] }))
   })

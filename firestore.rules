@@ -101,12 +101,15 @@ service cloud.firestore {
                 && request.resource.data.get('ordered_food_count', 0) == 0
                 && !('counts_updated_at' in request.resource.data);
         }
+        function userTagNotBlankOnly(tag) {
+            return tag.matches('.*[^ \\t\\n\\r\\u3000].*');
+        }
         function userTagElementValid(tags, index) {
             return tags.size() <= index
                 || (tags[index] is string
                     && tags[index].size() > 0
                     && tags[index].size() <= 20
-                    && tags[index].matches('.*\\S.*'));
+                    && userTagNotBlankOnly(tags[index]));
         }
         function isValidUserTagsList(tags) {
             return tags is list

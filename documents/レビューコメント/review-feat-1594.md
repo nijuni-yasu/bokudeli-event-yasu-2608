@@ -42,8 +42,12 @@
 | [x] | RC-37 | 3863087764 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | TagImportHintDialog 多重マウント |
 | [ ] | RC-38 | 3863090915 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ, 🔒 セキュリティ | 🔧 微修正 | M | 退会済みユーザーへのタグ再書き込み競合 |
 | [x] | RC-39 | 3868288823 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | 初回ヒント表示中の pendingExecute 上書き |
-| [ ] | RC-40 | 5433627247 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | toggleTag 削除がクライアント read-then-write |
+| [x] | RC-40 | 5433627247 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | toggleTag 削除を removeTagFromMyProfile Callable 化（Copilot 84437d811） |
 | [ ] | RC-41 | 3868301684 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | タグ更新で未保存プロフィール入力が消える |
+| [x] | RC-42 | 3869023588 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | user_tags Rules で空白のみタグを拒否 |
+| [x] | RC-43 | 3869064716 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | EventDetailsCard 参加者操作ボタンを折り返し |
+| [x] | RC-44 | 3869092008 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useTagImportHint の watch を初回呼び出し時に初期化 |
+| [x] | RC-45 | 3869091967 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 空白のみタグ拒否の Rules テスト追加 |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 
@@ -1678,5 +1682,199 @@ shokujii-code-review チェックリストで Files changed を確認し、以�
 **想定工数**: M
 
 **判断理由**: 指摘は妥当。`watch(user)` が User 全体を再構築する既存パターンとタグの即時 Callable 更新が衝突。UX ラベル・M 工数のため auto-fix 対象外。
+
+---
+
+## 評価セッション（2026-08-27 14:47・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-27 14:47 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-27T05:32:58Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼定型文 2、Codex 接続案内 1、RC-40 重複トップレベル 1）
+- **partial 評価**: はい（Codex limits/connect のみ。Copilot substantive 2 件 + Codex inline 2 件）
+- **手順 4a 自動修正**: RC-42（🚨）、RC-43（🟡）
+- **新規 RC**: RC-42、RC-43（2 件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-42 | 3869023588 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | user_tags Rules で空白のみタグを拒否 |
+| [x] | RC-43 | 3869064716 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | EventDetailsCard 参加者操作ボタンを折り返し |
+
+---
+
+**識別子**: RC-42（GitHub id: 3869023588 / 3869064712）
+
+**レビュワー**: Copilot / Codex
+
+**指摘箇所**: `firestore.rules:104-108`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+                 || (tags[index] is string
+                     && tags[index].size() > 0
+                     && tags[index].size() <= 20);
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `users.user_tags` のルールが「空白のみのタグ」を許可してしまいます（Callable 側は trim 後に空を拒否）。Firestore への直接 update でバリデーションを迂回できるため、Rules 側でも空白のみを拒否する条件を追加してください。
+
+**コメント要約**: `size() > 0` では半角・全角スペースのみのタグを許可してしまう。Callable と整合するよう Rules でも空白のみを拒否する必要がある。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。`userTagNotBlankOnly` を追加し Rules テストも拡充。手順 4a で修正済み。
+
+---
+
+**識別子**: RC-43（GitHub id: 3869064716）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `base/src/components/EventDetailsCard.vue:392`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-              <div class="d-flex align-center flex-nowrap ga-2 event-participant-actions">
++              <div class="d-flex align-center flex-wrap ga-2 event-participant-actions">
+```
+
+**レビュワーのコメント（原文）**:
+
+P2 モバイルでは参加者操作ボタンを折り返す — 320〜375px 程度で3ボタンが `flex-nowrap` によりはみ出す。折り返しを許可するか、狭幅時だけ複数行にしてください。
+
+**コメント要約**: 参加者本人向けアクション行にタグ表示ボタン追加後、`flex-nowrap` のままだと狭幅で右側がはみ出す。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 指摘は妥当。`flex-wrap` に変更して手順 4a で修正済み。
+
+---
+
+## 評価セッション（2026-08-27 14:57・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-27 14:57 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-27T05:50:25Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型文 1、Codex no_issues 1、Codex 接続案内 1）
+- **partial 評価**: はい（Codex substantive なし。Copilot inline 2 件 + トップレベル修正報告 1 件）
+- **手順 4a 自動修正**: RC-44（🚨）
+- **新規 RC**: RC-44、RC-45（2 件）。RC-40 は Copilot コミット `84437d811` で ✅ 更新
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-40 | 5434985875 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | M | removeTagFromMyProfile Callable（Copilot 84437d811） |
+| [x] | RC-44 | 3869092008 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useTagImportHint watch を初回呼び出し時に初期化 |
+| [x] | RC-45 | 3869091967 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 空白のみタグ拒否 Rules テスト追加 |
+
+---
+
+**識別子**: RC-40（GitHub id: 5434985875 / 5433627247）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/apis/userTags.ts` / `functions/default/src/userTags.ts`
+
+**レビュワーのコメント（原文）**:
+
+`toggleTagOnMyProfile` の削除分岐が stale 配列全置換の read-then-write。`removeTagFromMyProfile` Callable + Transaction で原子化（コミット `84437d811`）。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: Copilot が origin に push 済み。ローカルは未 pull のためマージ/sync が必要。
+
+---
+
+**識別子**: RC-44（GitHub id: 3869092008）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/composable/useTagImportHint.ts:11`
+
+**レビュワーのコメント（原文）**:
+
+[must] `watch(showDialog, ...)` がモジュールトップレベルで実行されており、setup 外 watcher になり得る。`useTagImportHint()` 初回呼び出し時に 1 回だけ watch を初期化する形に寄せる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 4a で `watchInitialized` フラグによる遅延初期化に修正済み。
+
+---
+
+**識別子**: RC-45（GitHub id: 3869091967）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `tests/firestore-rules/src/userTags.test.ts:82`
+
+**レビュワーのコメント（原文）**:
+
+[must] 空白のみタグ拒否 Rules に合わせ、ユニットテストに空白のみ文字列ケースを追加。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-42 自動修正セッションでテスト追加済み（未コミット）。
 
 ---

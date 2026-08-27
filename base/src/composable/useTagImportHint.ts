@@ -7,14 +7,18 @@ import { hasSeenTagImportHint, markTagImportHintSeen } from '@shokujii/base/util
 
 const showDialog = ref(false)
 let pendingExecute: (() => Promise<void>) | null = null
-
-watch(showDialog, (visible, wasVisible) => {
-  if (wasVisible === true && !visible && pendingExecute != null) {
-    pendingExecute = null
-  }
-})
+let watchInitialized = false
 
 export function useTagImportHint() {
+  if (!watchInitialized) {
+    watchInitialized = true
+    watch(showDialog, (visible, wasVisible) => {
+      if (wasVisible === true && !visible && pendingExecute != null) {
+        pendingExecute = null
+      }
+    })
+  }
+
   const interceptTagClick = async (execute: () => Promise<void>) => {
     if (hasSeenTagImportHint()) {
       await execute()
