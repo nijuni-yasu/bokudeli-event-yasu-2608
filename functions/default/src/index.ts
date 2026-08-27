@@ -31,6 +31,7 @@ export const {
   getUserFriends, backfillUserFriends, getUserFriendMeetLog,
   updateUserTags,
   addTagToMyProfile,
+  removeTagFromMyProfile,
   eventReceipt,
   eventCopy,
   eventCopyRepeat,

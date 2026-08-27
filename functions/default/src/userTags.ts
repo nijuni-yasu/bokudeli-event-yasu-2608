@@ -1,12 +1,14 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { createModuleLogger } from './utils/logger.js'
-import { addUserTag, getUser, setUserTags } from './stores/user.js'
+import { addUserTag, removeUserTag, getUser, setUserTags } from './stores/user.js'
 import { normalizeTag, normalizeTagList, tagCodePointLength } from '@shokujii/common/utils/normalizeTag.js'
 import type {
   UpdateUserTagsRequest,
   UpdateUserTagsResponse,
   AddTagToMyProfileRequest,
   AddTagToMyProfileResponse,
+  RemoveTagFromMyProfileRequest,
+  RemoveTagFromMyProfileResponse,
 } from '@shokujii/common/apis/userTags.js'
 
 const logger = createModuleLogger('userTags')
@@ -77,6 +79,34 @@ export const addTagToMyProfile = onCall<AddTagToMyProfileRequest>(
     }
 
     logger.info('user_tags 1件追加', { uid, tag })
+    return { success: true, message: '' }
+  },
+)
+
+export const removeTagFromMyProfile = onCall<RemoveTagFromMyProfileRequest>(
+  async (request): Promise<RemoveTagFromMyProfileResponse> => {
+    const uid = request.auth?.uid
+    if (uid == null) {
+      throw new HttpsError('unauthenticated', '認証が必要です')
+    }
+    const rawTag = request.data?.tag
+    if (typeof rawTag !== 'string') {
+      throw new HttpsError('invalid-argument', 'tag が不正です')
+    }
+    const tag = normalizeTag(rawTag)
+    if (tag.length === 0) {
+      throw new HttpsError('invalid-argument', 'タグが空です')
+    }
+
+    const result = await removeUserTag(uid, tag)
+    if (result === 'userNotFound') {
+      throw new HttpsError('not-found', 'ユーザーが見つかりません')
+    }
+    if (result === 'notFound') {
+      return { success: true, message: '既に削除済みです' }
+    }
+
+    logger.info('user_tags 1件削除', { uid, tag })
     return { success: true, message: '' }
   },
 )

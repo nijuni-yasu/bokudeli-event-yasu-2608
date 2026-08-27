@@ -105,7 +105,8 @@ service cloud.firestore {
             return tags.size() <= index
                 || (tags[index] is string
                     && tags[index].size() > 0
-                    && tags[index].size() <= 20);
+                    && tags[index].size() <= 20
+                    && tags[index].matches('.*\\S.*'));
         }
         function isValidUserTagsList(tags) {
             return tags is list

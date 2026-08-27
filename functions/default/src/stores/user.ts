@@ -297,6 +297,28 @@ export const addUserTag = async (uid: string, tag: string, maxTags: number): Pro
   })
 }
 
+export type RemoveUserTagStatus = 'removed' | 'notFound' | 'userNotFound'
+
+/**
+ * ユーザーの `user_tags` からタグを 1 件削除する。
+ * 読み取りから更新までを Transaction で実行し、同時更新時の取りこぼしを防ぐ。
+ */
+export const removeUserTag = async (uid: string, tag: string): Promise<RemoveUserTagStatus> => {
+  const db = getFirestore()
+  return db.runTransaction(async (transaction) => {
+    const user = await getUser(uid, false, transaction)
+    if (user == null) {
+      return 'userNotFound'
+    }
+    const currentTags = normalizeTagList([...(user.user_tags ?? [])])
+    if (!currentTags.includes(tag)) {
+      return 'notFound'
+    }
+    transaction.update(getUserRef(uid), { user_tags: currentTags.filter((t) => t !== tag) })
+    return 'removed'
+  })
+}
+
 /**
  * ユーザー個人情報を匿名化する。ドキュメントが存在しない場合も merge で作成する。
  * トランザクション内で呼び出すこと。

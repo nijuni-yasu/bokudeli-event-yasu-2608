@@ -1,7 +1,11 @@
 import { httpsCallable, type HttpsCallableResult } from 'firebase/functions'
 import { functions } from '@shokujii/base/firebase'
-import type { UpdateUserTagsRequest, AddTagToMyProfileRequest } from '@shokujii/common/apis/userTags.js'
-import { normalizeTag, normalizeTagList } from '@shokujii/common/utils/normalizeTag.js'
+import type {
+  UpdateUserTagsRequest,
+  AddTagToMyProfileRequest,
+  RemoveTagFromMyProfileRequest,
+} from '@shokujii/common/apis/userTags.js'
+import { normalizeTag } from '@shokujii/common/utils/normalizeTag.js'
 
 type TagResponse = { success: boolean; message: string }
 
@@ -12,6 +16,11 @@ export const updateUserTags = async (tags: string[]): Promise<HttpsCallableResul
 
 export const addTagToMyProfile = async (tag: string): Promise<HttpsCallableResult<TagResponse>> => {
   const f = httpsCallable<AddTagToMyProfileRequest, TagResponse>(functions, 'addTagToMyProfile')
+  return f({ tag })
+}
+
+export const removeTagFromMyProfile = async (tag: string): Promise<HttpsCallableResult<TagResponse>> => {
+  const f = httpsCallable<RemoveTagFromMyProfileRequest, TagResponse>(functions, 'removeTagFromMyProfile')
   return f({ tag })
 }
 
@@ -27,9 +36,9 @@ export const toggleTagOnMyProfile = async (
   if (t.length === 0) {
     throw new Error('タグが空です')
   }
-  const current = normalizeTagList([...(currentUserTags ?? [])])
+  const current = (currentUserTags ?? []).map((s) => normalizeTag(s)).filter((s) => s.length > 0)
   if (current.includes(t)) {
-    await updateUserTags(current.filter((x) => x !== t))
+    await removeTagFromMyProfile(t)
     return 'removed'
   }
   await addTagToMyProfile(t)
