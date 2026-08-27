@@ -56,11 +56,10 @@
 | [x] | RC-51 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未参照の `user_tags` i18n キー 7 件 |
 | [x] | RC-52 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 生成スクリプトの文字列 falsy チェック |
 | [x] | RC-53 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `normalizeTag` 系純粋関数の vitest 未追加 |
+| [x] | RC-54 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | `\S` では全角スペースのみタグを拒否できない |
+| [x] | RC-55 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | 未使用 `userProfileCountFields` 削除は CI 整合 |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
-
-- **評価日時**: 2026-07-24 15:06 JST
-- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
 - **ブランチ名**: feat/1594
 - **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
 - **REVIEW_REQUEST_SINCE**: 2026-07-24T05:46:40Z
@@ -2217,5 +2216,100 @@ P2 モバイルでは参加者操作ボタンを折り返す — 320〜375px 程
 **判断理由**: 手順 3b で `common/src/utils/normalizeTag.test.ts` を追加（全角→半角・大文字小文字維持・全角空白 trim・語間スペース保持・サロゲートペア・重複除去の 7 ケース）。RC-27 / RC-30 の回帰防止も兼ねる。
 
 **コメント要約**: `normalizeTag` / `normalizeTagList` / `tagCodePointLength` の vitest を追加。
+
+---
+
+## 評価セッション（2026-08-27 15:42・shokujii-code-review）
+
+- **評価日時**: 2026-08-27 15:42 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3a 自動修正**: RC-54（🚨 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-54 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | `\S` では全角スペースのみタグを拒否できない<br>→ U+3000 リテラルを否定クラスに追加 |
+| [x] | RC-55 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | 未使用 `userProfileCountFields` 削除は CI 整合<br>個別フィールド検証関数は維持 |
+
+---
+
+**識別子**: RC-54（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `firestore.rules:94`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+         function userTagNotBlankOnly(tag) {
+-            return tag.matches('.*[^ \\t\\n\\r\\u3000].*');
++            return tag.matches('.*\\S.*');
+         }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔒 セキュリティ/🔧 微修正/S]: CI 失敗回避の `\S` 変更は、Firestore Rules の RE2 では `\S` が ASCII 空白のみを指すため全角スペース（U+3000）のみのタグを通してしまう。`tests/firestore-rules/src/userTags.test.ts` の `rejects user_tags containing whitespace-only string` が `\u3000` で失敗する（RC-42 回帰）。→ `\u3000` エスケープの代わりに否定クラスへ U+3000 リテラル（`　`）を含める。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: エミュレータで `userTags.test.ts` 8 件すべて pass を確認。`\u3000` エスケープは Rules コンパイル非対応、`\S` は U+3000 を非空白扱いするため、リテラル `　` を否定クラスに含めるのが正しい CI 修正。
+
+**コメント要約**: `\S` への変更は全角スペースのみタグを許可してしまう。U+3000 リテラルで CI エラーと RC-42 を両立。
+
+---
+
+**識別子**: RC-55（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `firestore.rules:62`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-        function userProfileCountFields() {
+-            return [
+-                'participated_event_count',
+-                ...
+-            ];
+-        }
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: 未使用 `userProfileCountFields()` の削除は CI「Unused function userProfileCountFields」と整合。カウント検証は `userProfileCountFieldUnchanged` / `userProfileCountsUnchanged` / `userProfileCountsZeroOrAbsentOnCreate` が個別フィールド名で継続しており、機能退行なし。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 👀 確認のみ
+
+**想定工数**: —
+
+**判断理由**: 配列ヘルパーは参照ゼロ。RC-56 / RC-74 / RC-78 の意図は残存関数で維持されている。
+
+**コメント要約**: 未使用関数削除は CI 警告解消として妥当。カウント不変条件は個別関数で維持。
 
 ---

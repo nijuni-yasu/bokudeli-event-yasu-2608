@@ -59,16 +59,6 @@ service cloud.firestore {
                 && tokenTenantId() == get(/databases/$(database)/documents/enterprises/$(request.auth.token.enterprise_id)).data.tenant_id;
         }
         // マイページ用冗長カウント（Functions の recount のみ更新。RC-56）
-        function userProfileCountFields() {
-            return [
-                'participated_event_count',
-                'friend_count',
-                'joined_community_count',
-                'managed_community_count',
-                'ordered_food_count',
-                'counts_updated_at',
-            ];
-        }
         // カウント1フィールドがクライアント update で改ざん・削除されていないか。
         // resource に無いフィールドへの request 側 0 追加は許可（未バックフィル既存ユーザー向け RC-74）。
         // resource にあるフィールドは request にも同一値が必須（deleteField 相当の削除を拒否 RC-78）。
@@ -102,7 +92,8 @@ service cloud.firestore {
                 && !('counts_updated_at' in request.resource.data);
         }
         function userTagNotBlankOnly(tag) {
-            return tag.matches('.*[^ \\t\\n\\r\\u3000].*');
+            // RE2 の \S は ASCII 空白のみ。全角スペース（U+3000）はリテラルで除外（\u3000 エスケープは Rules 非対応）。
+            return tag.matches('.*[^ \\t\\n\\r　].*');
         }
         function userTagElementValid(tags, index) {
             return tags.size() <= index
