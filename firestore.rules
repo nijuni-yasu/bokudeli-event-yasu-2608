@@ -98,8 +98,7 @@ service cloud.firestore {
         function userTagElementValid(tags, index) {
             return tags.size() <= index
                 || (tags[index] is string
-                    && tags[index].size() > 0
-                    && tags[index].size() <= 20
+                    && tags[index].matches('^.{1,20}$')
                     && userTagNotBlankOnly(tags[index]));
         }
         function isValidUserTagsList(tags) {

@@ -90,6 +90,13 @@ describe('user_tags firestore rules', () => {
     await assertFails(userRef(userAuth(USER_A), USER_A).update({ user_tags: ['a'.repeat(21)] }))
   })
 
+  it('allows user_tags with 20 multibyte characters and rejects 21', async () => {
+    const tag20 = 'あ'.repeat(20)
+    const tag21 = 'あ'.repeat(21)
+    await assertSucceeds(userRef(userAuth(USER_A), USER_A).update({ user_tags: [tag20] }))
+    await assertFails(userRef(userAuth(USER_A), USER_A).update({ user_tags: [tag21] }))
+  })
+
   it('rejects user_tags containing non-string element', async () => {
     await assertFails(userRef(userAuth(USER_A), USER_A).update({ user_tags: [123] }))
   })

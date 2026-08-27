@@ -5,7 +5,7 @@ import { useDisplay } from 'vuetify'
 import { mdiTagOutline } from '@mdi/js'
 import TagInput from '@shokujii/base/components/TagInput.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { addTagToMyProfile, updateUserTags } from '@shokujii/base/apis/userTags.js'
+import { addTagToMyProfile, removeTagFromMyProfile } from '@shokujii/base/apis/userTags.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const model = defineModel<boolean>({ required: true })
@@ -36,8 +36,7 @@ const onRemoveTag = async (tag: string) => {
   if (isUpdating.value) return
   isUpdating.value = true
   try {
-    const current = tags.value
-    await updateUserTags(current.filter((x) => x !== tag))
+    await removeTagFromMyProfile(tag)
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : $t('user_tags.save_failed')
     notification.show(msg, 'error')

@@ -58,6 +58,9 @@
 | [x] | RC-53 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `normalizeTag` 系純粋関数の vitest 未追加 |
 | [x] | RC-54 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | `\S` では全角スペースのみタグを拒否できない |
 | [x] | RC-55 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | — | 👀 確認のみ | — | 未使用 `userProfileCountFields` 削除は CI 整合 |
+| [x] | RC-56 | 3869354841 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | TagSettingsDialog 削除を removeTagFromMyProfile に |
+| [x] | RC-57 | 3869354895 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | マルチバイト 20 文字上限の Rules テスト追加 |
+| [x] | RC-58 | 3869354923 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules の `.size()` を `^.{1,20}$` に（コードポイント整合） |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 - **ブランチ名**: feat/1594
@@ -2311,5 +2314,140 @@ P2 モバイルでは参加者操作ボタンを折り返す — 320〜375px 程
 **判断理由**: 配列ヘルパーは参照ゼロ。RC-56 / RC-74 / RC-78 の意図は残存関数で維持されている。
 
 **コメント要約**: 未使用関数削除は CI 警告解消として妥当。カウント不変条件は個別関数で維持。
+
+---
+
+## 評価セッション（2026-08-27 15:52・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-27 15:52 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-27T06:37:00Z
+- **partial**: true（Codex は接続案内のみ。Copilot substantive 3件を評価）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 1、Codex 接続案内 1）
+- **手順 4a 自動修正**: RC-56〜58（🚨 2件 / 🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-56 | 3869354841 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | TagSettingsDialog 削除を removeTagFromMyProfile Callable に |
+| [x] | RC-57 | 3869354895 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | マルチバイト 20 文字の Rules テスト追加 |
+| [x] | RC-58 | 3869354923 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | Rules 長さ検証を `^.{1,20}$` に変更 |
+
+---
+
+**識別子**: RC-56（GitHub id: 3869354841）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/components/TagSettingsDialog.vue:9`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-import { addTagToMyProfile, updateUserTags } from '@shokujii/base/apis/userTags.js'
++import { addTagToMyProfile, removeTagFromMyProfile } from '@shokujii/base/apis/userTags.js'
+...
+-    await updateUserTags(current.filter((x) => x !== tag))
++    await removeTagFromMyProfile(tag)
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] 上の指摘（削除を `removeTagFromMyProfile` に切り替え）を行う場合、この import も `updateUserTags` ではなく `removeTagFromMyProfile` を読み込むように更新が必要です。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-40 で toggleTag 削除は Callable 化済みだが、TagSettingsDialog の onRemoveTag が stale 全置換の `updateUserTags` のまま残っていた。指摘妥当。
+
+**コメント要約**: タグ設定ダイアログの削除も `removeTagFromMyProfile` に揃える。
+
+---
+
+**識別子**: RC-57（GitHub id: 3869354895）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `tests/firestore-rules/src/userTags.test.ts:65`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  it('allows user_tags with 20 multibyte characters and rejects 21', async () => {
++    const tag20 = 'あ'.repeat(20)
++    const tag21 = 'あ'.repeat(21)
++    ...
++  })
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] 上限が「20文字」を意図するなら、Firestore Rules の `.matches('^.{1,20}$')` が正しく効くこと（マルチバイトを含む）をテストで押さえておきたいです。ASCII だけだと `.size()`（バイト数）でも通ってしまい、回帰を検知できません。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-58 修正後の回帰検知として妥当。エミュレータ 76 件 pass。
+
+**コメント要約**: 日本語 20/21 文字の Rules テストを追加。
+
+---
+
+**識別子**: RC-58（GitHub id: 3869354923）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `firestore.rules:102`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-                    && tags[index].size() > 0
+-                    && tags[index].size() <= 20
++                    && tags[index].matches('^.{1,20}$')
+                     && userTagNotBlankOnly(tags[index]));
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] Firestore Rules の `string.size()` は UTF-8 バイト数のため、ここで `tags[index].size() <= 20` とすると日本語などのマルチバイト文字が 20 文字未満でも弾かれてしまい、Functions 側の `tagCodePointLength`（コードポイント数）と制約が不一致になります。Rules 側も「文字数上限」を意図するなら正規表現で 20 文字上限を表現するなど、同じ基準に揃えてください。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 仕様の「最大20文字」と Functions のコードポイント数え上げと整合。`^.{1,20}$` に変更し RC-57 テストで確認。
+
+**コメント要約**: Rules の長さ検証をバイト数 `.size()` から正規表現ベースに変更。
 
 ---
