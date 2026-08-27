@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { createModuleLogger } from './utils/logger.js'
 import { addUserTag, removeUserTag, getUser, setUserTags } from './stores/user.js'
+import { USER_TAG_MAX_COUNT, USER_TAG_MAX_LENGTH } from '@shokujii/common/constants/userTags.js'
 import { normalizeTag, normalizeTagList, tagCodePointLength } from '@shokujii/common/utils/normalizeTag.js'
 import type {
   UpdateUserTagsRequest,
@@ -12,9 +13,6 @@ import type {
 } from '@shokujii/common/apis/userTags.js'
 
 const logger = createModuleLogger('userTags')
-
-const MAX_TAGS = 10
-const MAX_TAG_LEN = 20
 
 export const updateUserTags = onCall<UpdateUserTagsRequest>(async (request): Promise<UpdateUserTagsResponse> => {
   const uid = request.auth?.uid
@@ -31,12 +29,12 @@ export const updateUserTags = onCall<UpdateUserTagsRequest>(async (request): Pro
     }
   }
   const normalized = normalizeTagList(raw)
-  if (normalized.length > MAX_TAGS) {
-    throw new HttpsError('invalid-argument', `タグは最大${MAX_TAGS}個までです`)
+  if (normalized.length > USER_TAG_MAX_COUNT) {
+    throw new HttpsError('invalid-argument', `タグは最大${USER_TAG_MAX_COUNT}個までです`)
   }
   for (const t of normalized) {
-    if (tagCodePointLength(t) > MAX_TAG_LEN) {
-      throw new HttpsError('invalid-argument', `各タグは最大${MAX_TAG_LEN}文字までです`)
+    if (tagCodePointLength(t) > USER_TAG_MAX_LENGTH) {
+      throw new HttpsError('invalid-argument', `各タグは最大${USER_TAG_MAX_LENGTH}文字までです`)
     }
   }
 
@@ -63,11 +61,11 @@ export const addTagToMyProfile = onCall<AddTagToMyProfileRequest>(
     if (tag.length === 0) {
       throw new HttpsError('invalid-argument', 'タグが空です')
     }
-    if (tagCodePointLength(tag) > MAX_TAG_LEN) {
-      throw new HttpsError('invalid-argument', `タグは最大${MAX_TAG_LEN}文字までです`)
+    if (tagCodePointLength(tag) > USER_TAG_MAX_LENGTH) {
+      throw new HttpsError('invalid-argument', `タグは最大${USER_TAG_MAX_LENGTH}文字までです`)
     }
 
-    const result = await addUserTag(uid, tag, MAX_TAGS)
+    const result = await addUserTag(uid, tag, USER_TAG_MAX_COUNT)
     if (result === 'userNotFound') {
       throw new HttpsError('not-found', 'ユーザーが見つかりません')
     }
@@ -75,7 +73,7 @@ export const addTagToMyProfile = onCall<AddTagToMyProfileRequest>(
       return { success: true, message: '既に設定済みです' }
     }
     if (result === 'limitExceeded') {
-      throw new HttpsError('failed-precondition', `タグは最大${MAX_TAGS}個までです`)
+      throw new HttpsError('failed-precondition', `タグは最大${USER_TAG_MAX_COUNT}個までです`)
     }
 
     logger.info('user_tags 1件追加', { uid, tag })

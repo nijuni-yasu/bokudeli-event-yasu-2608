@@ -48,6 +48,14 @@
 | [x] | RC-43 | 3869064716 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | EventDetailsCard 参加者操作ボタンを折り返し |
 | [x] | RC-44 | 3869092008 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | useTagImportHint の watch を初回呼び出し時に初期化 |
 | [x] | RC-45 | 3869091967 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 空白のみタグ拒否の Rules テスト追加 |
+| [x] | RC-46 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | api 層で日本語 Error を throw（到達不能な防御ガード） |
+| [x] | RC-47 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `v-if="userDescription"` の文字列 falsy チェック |
+| [x] | RC-48 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | タグ上限 10 / 20 のマジックナンバーが UI と Functions に重複 |
+| [ ] | RC-49 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | フリー入力のリアルタイム trim で空白が入力できない |
+| [x] | RC-50 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | singleton の watch が最初の呼び出し元 scope に束縛される |
+| [x] | RC-51 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未参照の `user_tags` i18n キー 7 件 |
+| [x] | RC-52 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 生成スクリプトの文字列 falsy チェック |
+| [x] | RC-53 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `normalizeTag` 系純粋関数の vitest 未追加 |
 
 ## 評価セッション（2026-08-15 21:16・review-comments-evaluate auto）
 
@@ -1876,5 +1884,338 @@ P2 モバイルでは参加者操作ボタンを折り返す — 320〜375px 程
 **想定工数**: S
 
 **判断理由**: RC-42 自動修正セッションでテスト追加済み（未コミット）。
+
+---
+
+## 評価セッション（2026-08-27 15:05・shokujii-code-review）
+
+- **評価日時**: 2026-08-27 15:05 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/1594
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/1947
+- **REVIEW_REQUEST_SINCE**: 2026-08-27T06:01:00Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **partial 評価**: いいえ
+- **手順 3a/3b 自動修正**: RC-47、RC-48、RC-50、RC-51、RC-52、RC-53（🟡 6 件）
+- **新規 RC**: RC-46〜RC-53（8 件）
+- **備考**: レビュー範囲はローカル `HEAD`（`git diff origin/development...HEAD`）。`origin/feat/1594` の `84437d811`（RC-40 の `removeTagFromMyProfile`）はローカル未取り込みのため本レビュー対象外。
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-46 | なし・エージェントレビュー | 👌 修正不要 | — | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | api 層で日本語 Error を throw（到達不能な防御ガード） |
+| [x] | RC-47 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `v-if="userDescription"` の文字列 falsy チェック |
+| [x] | RC-48 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | タグ上限 10 / 20 のマジックナンバーが UI と Functions に重複 |
+| [ ] | RC-49 | なし・エージェントレビュー | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 📋 仕様追加 | M | フリー入力のリアルタイム trim で空白が入力できない |
+| [x] | RC-50 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | singleton の watch が最初の呼び出し元 scope に束縛される |
+| [x] | RC-51 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未参照の `user_tags` i18n キー 7 件 |
+| [x] | RC-52 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 生成スクリプトの文字列 falsy チェック |
+| [x] | RC-53 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `normalizeTag` 系純粋関数の vitest 未追加 |
+
+---
+
+**識別子**: RC-46（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/apis/userTags.ts:33`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const t = normalizeTag(tag)
++  if (t.length === 0) {
++    throw new Error('タグが空です')
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: `base/src/apis/userTags.ts:33` — api 層が日本語の UI 文言を `Error` で throw しており、`useProfileTagToggle` が `e.message` をそのままトーストに出す経路になっている。→ 表示済みタグからしか呼ばれず `normalizeTag` 後に空になる入力は実質発生しないため、i18n 化のための経路変更は不要。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 呼び出し元は `TagBadge` に描画済みのタグのみを渡す。タグは Callable と Rules で空白のみを拒否済みのため、このガードに到達する経路が無い。i18n 化のためだけに api 層へ `useI18n` を持ち込むのは責務が逆転するため対応不要とした。
+
+**コメント要約**: api 層の日本語 Error 文言。到達不能な防御ガードのため修正不要。
+
+---
+
+**識別子**: RC-47（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/EventMemberCard.vue:174`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      <v-card-text class="event-member-card__description description-wrapper">
++        <div v-if="userDescription" class="description">{{ userDescription }}</div>
++      </v-card-text>
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧 微修正/S]: `base/src/components/EventMemberCard.vue:174` — `userDescription` は `computed<string>` なので `v-if="userDescription"` は文字列の falsy チェックになっている（プロジェクト規約で禁止）。→ `v-if="userDescription !== ''"` にする。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 3b で `v-if="userDescription !== ''"` に修正。挙動は同一で規約に整合する。
+
+**コメント要約**: 文字列の falsy チェックを明示比較に変更。
+
+---
+
+**識別子**: RC-48（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/TagInput.vue:28`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const isAtLimit = computed(() => props.tags.length >= 10)
++const tagProgress = computed(() => (props.tags.length / 10) * 100)
+...
++  if (tagCodePointLength(t) > 20) {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧 微修正/S]: `base/src/components/TagInput.vue:28,29,46,53` — タグ上限 10 個・1 タグ 20 文字が UI（`TagInput`）と `functions/default/src/userTags.ts` の `MAX_TAGS` / `MAX_TAG_LEN` に別々のマジックナンバーとして重複している。片方だけ変更すると UI と Callable のバリデーションがずれる。→ `common` に定数を切り出して両方から参照する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 3b で `common/src/constants/userTags.ts` に `USER_TAG_MAX_COUNT` / `USER_TAG_MAX_LENGTH` を追加し、`TagInput.vue` と `functions/default/src/userTags.ts` から参照するよう修正。`common/src/constants/tags.ts` は自動生成ファイルのため別ファイルとした。Firestore Rules の `10` / `20` は Rules 側に定数機構が無いため据え置き。
+
+**コメント要約**: タグ上限のマジックナンバーを `common` の定数に集約。
+
+---
+
+**識別子**: RC-49（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/components/TagInput.vue:37`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++watch(freeInput, (v) => {
++  const n = normalizeTag(v)
++  if (n !== v) {
++    freeInput.value = n
++  }
++})
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📋 仕様追加/M]: `base/src/components/TagInput.vue:37` — `normalizeTag` は前後空白を trim するため、入力のたびに末尾スペースが即座に消える。結果として「クラフト ビール」のような語間スペースを含むタグをフリー入力欄で入力できない（スペースを打っても消える）。Callable / Rules 側は語間スペースを許容しているため、UI だけが入力不能になっている。→ リアルタイム正規化を全角→半角変換のみに限定し、trim は追加時（`tryAddTag`）に寄せる。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 仕様書 `documents/03_参加者獲得/04_プロフィールタグ機能.md:290` に「フリー入力中にリアルタイム正規化（全角→半角・trim。大文字小文字は維持）を適用」と明記されており、現実装は仕様どおり。語間スペースを許容するかは仕様判断を伴うため自動修正の対象外とし、未着手で記録する。
+
+**コメント要約**: リアルタイム trim により語間スペースを含むタグが入力できない。仕様書 L290 の見直しが必要。
+
+---
+
+**識別子**: RC-50（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/useTagImportHint.ts:13`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++let watchInitialized = false
++
++export function useTagImportHint() {
++  if (!watchInitialized) {
++    watchInitialized = true
++    watch(showDialog, (visible, wasVisible) => {
++      if (wasVisible === true && !visible && pendingExecute != null) {
++        pendingExecute = null
++      }
++    })
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧 微修正/S]: `base/src/composable/useTagImportHint.ts:13` — RC-44 の遅延初期化により、`watch` が「最初に `useTagImportHint()` を呼んだコンポーネント」の effect scope に登録される。`useProfileTagToggle` は `EventMemberCard` / `EventMemberList` / `UserBioPanel` からも呼ばれ、レイアウトの `TagImportHintHost` より先にページ側がマウントされるため、そのページを離脱した時点で watcher が停止し、以後ダイアログを dismiss しても `pendingExecute` がクリアされなくなる（クロージャが解放されない）。`watchInitialized` は true のままなので再登録もされない。→ `effectScope(true)` で detached scope に 1 度だけ登録する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 3b で `effectScope(true).run(() => watch(...))` に変更。RC-44 の指摘（setup 外の裸 watcher を避ける）と、呼び出し元コンポーネントへの束縛回避を両立する。冗長だった `pendingExecute != null` の再チェックも削除した。
+
+**コメント要約**: singleton watch を detached scope に登録し、呼び出し元 unmount で停止しないようにした。
+
+---
+
+**識別子**: RC-51（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/locales/messages/ja.ts:751`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    settings_button_empty: 'タグを設定',
++    settings_button_edit: 'タグを編集',
++    save: '保存',
++    cancel: 'キャンセル',
++    save_success: 'タグを保存しました',
++    cart_hint: '参加者と共通の話題を見つけやすくなります',
++    join_dialog_hint: '参加者と共通の話題を見つけましょう',
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧 微修正/S]: `base/src/locales/messages/ja.ts:751-783` — `user_tags` に追加された 7 キー（`settings_button_empty` / `settings_button_edit` / `save` / `cancel` / `save_success` / `cart_hint` / `join_dialog_hint`）がどこからも参照されていない。イベントタグ実装を本 PR から omit した際の残骸と思われる。→ 未参照キーを削除する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 3b で 7 キーを削除。`close` / `save_failed` は `TagSettingsDialog.vue` から参照されているため残した。
+
+**コメント要約**: 未参照の `user_tags` i18n キー 7 件を削除。
+
+---
+
+**識別子**: RC-52（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/scripts/build-tags-constants.mjs:518`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    if (cell && cell !== ',' && cell !== '、') tags.add(cell.replace(/\r?\n/g, '').trim())
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧 微修正/S]: `common/scripts/build-tags-constants.mjs:518` — `cell` は文字列なので `if (cell && ...)` は文字列の falsy チェックになっている（プロジェクト規約で禁止）。→ `cell !== ''` にする。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 3b で `cell !== ''` に修正。生成される `common/src/constants/tags.ts` に差分は出ない。
+
+**コメント要約**: 生成スクリプトの文字列 falsy チェックを明示比較に変更。
+
+---
+
+**識別子**: RC-53（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/utils/normalizeTag.ts:38`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export function normalizeTag(raw: string): string {
++  const s = raw.trim()
+...
++export function normalizeTagList(tags: string[]): string[] {
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧 微修正/S]: `common/src/utils/normalizeTag.ts` — 全角→半角変換・trim・重複除去・コードポイント数え上げはタグ機能の中核となる純粋関数で、Callable・Rules・UI のバリデーション基準になっているが vitest が無い（`tagDisplayOrder` / `tagImportHintSession` にはある）。テスト方針の「純粋関数・ビジネスロジック」に該当する。→ `common/src/utils/normalizeTag.test.ts` を追加する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 手順 3b で `common/src/utils/normalizeTag.test.ts` を追加（全角→半角・大文字小文字維持・全角空白 trim・語間スペース保持・サロゲートペア・重複除去の 7 ケース）。RC-27 / RC-30 の回帰防止も兼ねる。
+
+**コメント要約**: `normalizeTag` / `normalizeTagList` / `tagCodePointLength` の vitest を追加。
 
 ---

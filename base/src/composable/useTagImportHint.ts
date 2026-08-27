@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { effectScope, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toggleTagOnMyProfile } from '@shokujii/base/apis/userTags.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -7,18 +7,18 @@ import { hasSeenTagImportHint, markTagImportHintSeen } from '@shokujii/base/util
 
 const showDialog = ref(false)
 let pendingExecute: (() => Promise<void>) | null = null
-let watchInitialized = false
+
+// ダイアログ状態はモジュール singleton のため、watch も呼び出し元コンポーネントから独立した
+// detached scope で 1 度だけ登録する（setup 内で登録すると最初の呼び出し元の unmount で停止する）
+effectScope(true).run(() => {
+  watch(showDialog, (visible, wasVisible) => {
+    if (wasVisible === true && !visible) {
+      pendingExecute = null
+    }
+  })
+})
 
 export function useTagImportHint() {
-  if (!watchInitialized) {
-    watchInitialized = true
-    watch(showDialog, (visible, wasVisible) => {
-      if (wasVisible === true && !visible && pendingExecute != null) {
-        pendingExecute = null
-      }
-    })
-  }
-
   const interceptTagClick = async (execute: () => Promise<void>) => {
     if (hasSeenTagImportHint()) {
       await execute()

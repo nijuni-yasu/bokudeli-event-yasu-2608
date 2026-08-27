@@ -72,7 +72,7 @@ const hasSnsLinks = computed(
         </div>
       </v-card-text>
       <v-card-text class="event-member-card__description description-wrapper">
-        <div v-if="userDescription" class="description">{{ userDescription }}</div>
+        <div v-if="userDescription !== ''" class="description">{{ userDescription }}</div>
       </v-card-text>
       <v-card-text class="event-member-card__tags member-tags px-4 py-2">
         <div v-if="showMemberTags" class="d-flex flex-wrap w-100" @click.stop.prevent>

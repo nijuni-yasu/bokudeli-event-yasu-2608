@@ -749,13 +749,8 @@ export default {
   },
   user_tags: {
     add_tag: 'タグ追加',
-    settings_button_empty: 'タグを設定',
-    settings_button_edit: 'タグを編集',
     dialog_title: 'プロフィールタグを追加',
     close: '閉じる',
-    save: '保存',
-    cancel: 'キャンセル',
-    save_success: 'タグを保存しました',
     save_failed: '保存に失敗しました',
     dialog_hint:
       '興味や関心をタグとしてプロフィールに設定できます。イベント参加者と共通のタグが表示され、食事の席で自然に話題が見つかりやすくなります。最大10個まで設定できます。',
@@ -773,8 +768,6 @@ export default {
     section_divider: 'または',
     free_input_hint: '入力して Enter で追加',
     section_count: '{count}/10',
-    cart_hint: '参加者と共通の話題を見つけやすくなります',
-    join_dialog_hint: '参加者と共通の話題を見つけましょう',
     import_hint_title: 'タグの取り込み',
     import_hint_body: 'タグをタップすると、自分のプロフィールに追加・解除できます。',
     import_hint_sample_tag: 'サッカー',

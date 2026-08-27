@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { mdiPencilOutline, mdiTagOutline } from '@mdi/js'
 import { TAG_GENRES } from '@shokujii/common/constants/tags.js'
+import { USER_TAG_MAX_COUNT, USER_TAG_MAX_LENGTH } from '@shokujii/common/constants/userTags.js'
 import { normalizeTag, tagCodePointLength } from '@shokujii/common/utils/normalizeTag.js'
 import TagBadge from '@shokujii/base/components/TagBadge.vue'
 
@@ -25,8 +26,8 @@ const freeInput = ref('')
 const snackbar = ref(false)
 const snackbarMessage = ref('')
 
-const isAtLimit = computed(() => props.tags.length >= 10)
-const tagProgress = computed(() => (props.tags.length / 10) * 100)
+const isAtLimit = computed(() => props.tags.length >= USER_TAG_MAX_COUNT)
+const tagProgress = computed(() => (props.tags.length / USER_TAG_MAX_COUNT) * 100)
 
 const showError = (msg: string) => {
   snackbarMessage.value = msg
@@ -43,14 +44,14 @@ watch(freeInput, (v) => {
 const tryAddTag = (raw: string) => {
   const t = normalizeTag(raw)
   if (t.length === 0) return
-  if (tagCodePointLength(t) > 20) {
+  if (tagCodePointLength(t) > USER_TAG_MAX_LENGTH) {
     showError($t('user_tags.tag_max_length'))
     return
   }
   if (props.tags.includes(t)) {
     return
   }
-  if (props.tags.length >= 10) {
+  if (props.tags.length >= USER_TAG_MAX_COUNT) {
     showError($t('user_tags.limit_reached'))
     return
   }

@@ -291,7 +291,7 @@ const columns = header.map((genre, col) => {
   for (let r = 1; r < lines.length; r++) {
     const cells = parseCsvLine(lines[r])
     const cell = (cells[col] ?? '').trim()
-    if (cell && cell !== ',' && cell !== '、') tags.add(cell.replace(/\r?\n/g, '').trim())
+    if (cell !== '' && cell !== ',' && cell !== '、') tags.add(cell.replace(/\r?\n/g, '').trim())
   }
   const tagList = [...tags]
   if (genre === 'コミュニティ／イベント') {
