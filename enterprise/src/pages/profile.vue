@@ -9,6 +9,7 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 import { validateImageFile } from '@shokujii/base/utils/image'
 import { ALLOWED_IMAGE_ACCEPT_ATTR } from '@shokujii/common/constants/imageMimeTypes.js'
+import UserProfileTagsEditSection from '@shokujii/base/components/profile/UserProfileTagsEditSection.vue'
 
 const currentUserStore = useCurrentUserStore()
 const { user } = storeToRefs(currentUserStore)
@@ -175,6 +176,8 @@ const profileSubmit = async () => {
                 :disabled="isProfileLoading"
                 :rules="[requiredValidator]"
               />
+
+              <UserProfileTagsEditSection />
             </v-sheet>
             <v-row justify="center">
               <v-btn class="rounded-xl" color="primary" :loading="isProfileLoading" type="submit">{{

@@ -5,8 +5,11 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
+import TagBadge from '@shokujii/base/components/TagBadge.vue'
+import TagAddChip from '@shokujii/base/components/TagAddChip.vue'
 import { mdiAlphaXCircle, mdiCogOutline, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
+import { useProfileTagToggle } from '@shokujii/base/composable/useTagImportHint.js'
 
 const { t: $t } = useI18n()
 
@@ -24,6 +27,12 @@ const props = withDefaults(
 const currentUserStore = useCurrentUserStore()
 
 const isEditable = computed(() => props.isEditable ?? false)
+const { toggleTag } = useProfileTagToggle()
+
+const onTagClick = (tag: string) => {
+  if (isEditable.value) return
+  toggleTag(tag)
+}
 
 const userName = computed(() => props.userData.user_name ?? 'ゲスト')
 
@@ -50,6 +59,11 @@ const instagramUrl = computed(() =>
 const websiteUrl = computed(() =>
   props.userData.user_sns_website === '' ? undefined : props.userData.user_sns_website,
 )
+
+const displayTags = computed(() => props.userData.user_tags ?? [])
+
+const myTags = computed(() => new Set(currentUserStore.user?.user_tags ?? []))
+const isHighlighted = (tag: string) => myTags.value.has(tag)
 </script>
 
 <template>
@@ -65,17 +79,17 @@ const websiteUrl = computed(() =>
         </v-card-text>
         <v-row v-if="!hideSns" class="justify-center">
           <v-col cols="auto">
-            <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn :icon="mdiAlphaXCircle" class="ma-2"></v-btn>
+            <a v-if="twitterUrl" :href="twitterUrl" target="_blank" rel="noopener noreferrer">
+              <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-1"></v-btn>
             </a>
-            <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn :icon="mdiFacebook" class="ma-2"></v-btn>
+            <a v-if="facebookUrl" :href="facebookUrl" target="_blank" rel="noopener noreferrer">
+              <v-btn :icon="mdiFacebook" size="small" class="ma-1"></v-btn>
             </a>
-            <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn :icon="mdiInstagram" class="ma-2"></v-btn>
+            <a v-if="instagramUrl" :href="instagramUrl" target="_blank" rel="noopener noreferrer">
+              <v-btn :icon="mdiInstagram" size="small" class="ma-1"></v-btn>
             </a>
-            <a v-if="websiteUrl" :href="websiteUrl" target="_blank">
-              <v-btn :icon="mdiWeb" class="ma-2"></v-btn>
+            <a v-if="websiteUrl" :href="websiteUrl" target="_blank" rel="noopener noreferrer">
+              <v-btn :icon="mdiWeb" size="small" class="ma-1"></v-btn>
             </a>
           </v-col>
         </v-row>
@@ -86,6 +100,19 @@ const websiteUrl = computed(() =>
           style="line-height: 30px; white-space: pre-line"
         >
           {{ userDescription }}
+        </v-card-text>
+        <v-card-text v-if="displayTags.length > 0 || isEditable" class="px-6 pt-0">
+          <div class="d-flex flex-wrap">
+            <TagBadge
+              v-for="t in displayTags"
+              :key="t"
+              :tag="t"
+              :highlighted="isHighlighted(t)"
+              :clickable="!isEditable"
+              @click="onTagClick(t)"
+            />
+            <TagAddChip v-if="isEditable" />
+          </div>
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
           <v-btn color="primary" class="mb-3" :prepend-icon="mdiCogOutline" :to="getProfile()">

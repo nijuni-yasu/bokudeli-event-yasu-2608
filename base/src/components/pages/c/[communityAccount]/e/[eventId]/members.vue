@@ -19,7 +19,6 @@ const props = defineProps<{
 const router = useRouter()
 const notification = useNotification()
 const { t: $t } = useI18n()
-
 const communityStore = useAppCommunityStore(props.communityAccount)
 const isShowMember: boolean = await new Promise((resolve) => {
   watch(
@@ -84,9 +83,17 @@ watch(
       >
         イベントページ
       </v-btn>
-      <v-row class="ma-0 pa-0">
-        <v-col v-for="member in members" :key="member.user_id" class="ma-0 pa-0" lg="3" md="4" sm="6" cols="12">
-          <event-member-card :member="member" />
+      <v-row class="ma-0 pa-0 align-stretch">
+        <v-col
+          v-for="member in members"
+          :key="member.user_id"
+          class="d-flex align-stretch ma-0 pa-0"
+          lg="3"
+          md="4"
+          sm="6"
+          cols="12"
+        >
+          <event-member-card :member="member" class="w-100" />
         </v-col>
       </v-row>
     </div>

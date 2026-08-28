@@ -59,16 +59,6 @@ service cloud.firestore {
                 && tokenTenantId() == get(/databases/$(database)/documents/enterprises/$(request.auth.token.enterprise_id)).data.tenant_id;
         }
         // マイページ用冗長カウント（Functions の recount のみ更新。RC-56）
-        function userProfileCountFields() {
-            return [
-                'participated_event_count',
-                'friend_count',
-                'joined_community_count',
-                'managed_community_count',
-                'ordered_food_count',
-                'counts_updated_at',
-            ];
-        }
         // カウント1フィールドがクライアント update で改ざん・削除されていないか。
         // resource に無いフィールドへの request 側 0 追加は許可（未バックフィル既存ユーザー向け RC-74）。
         // resource にあるフィールドは request にも同一値が必須（deleteField 相当の削除を拒否 RC-78）。
@@ -100,6 +90,30 @@ service cloud.firestore {
                 && request.resource.data.get('managed_community_count', 0) == 0
                 && request.resource.data.get('ordered_food_count', 0) == 0
                 && !('counts_updated_at' in request.resource.data);
+        }
+        function userTagNotBlankOnly(tag) {
+            // RE2 の \S は ASCII 空白のみ。全角スペース（U+3000）はリテラルで除外（\u3000 エスケープは Rules 非対応）。
+            return tag.matches('.*[^ \\t\\n\\r　].*');
+        }
+        function userTagElementValid(tags, index) {
+            return tags.size() <= index
+                || (tags[index] is string
+                    && tags[index].matches('^.{1,20}$')
+                    && userTagNotBlankOnly(tags[index]));
+        }
+        function isValidUserTagsList(tags) {
+            return tags is list
+                && tags.size() <= 10
+                && userTagElementValid(tags, 0)
+                && userTagElementValid(tags, 1)
+                && userTagElementValid(tags, 2)
+                && userTagElementValid(tags, 3)
+                && userTagElementValid(tags, 4)
+                && userTagElementValid(tags, 5)
+                && userTagElementValid(tags, 6)
+                && userTagElementValid(tags, 7)
+                && userTagElementValid(tags, 8)
+                && userTagElementValid(tags, 9);
         }
         function chatRoomDoc(roomId) {
             return get(/databases/$(database)/documents/chat_rooms/$(roomId)).data;
@@ -345,9 +359,13 @@ service cloud.firestore {
             allow create: if request.auth != null
                 && request.auth.uid == user_id
                 && userProfileCountsZeroOrAbsentOnCreate()
+                && (!('user_tags' in request.resource.data)
+                    || isValidUserTagsList(request.resource.data.user_tags))
             allow update: if request.auth != null
                 && request.auth.uid == user_id
                 && userProfileCountsUnchanged()
+                && (!('user_tags' in request.resource.data)
+                    || isValidUserTagsList(request.resource.data.user_tags))
             match /chat_memberships/{roomId} {
                 allow read: if request.auth != null && request.auth.uid == user_id;
                 allow create, delete: if false;

@@ -31,6 +31,7 @@ import {
   mdiAccountGroup,
   mdiHelpCircleOutline,
   mdiMessageTextOutline,
+  mdiTagOutline,
 } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
@@ -158,6 +159,9 @@ const isShowMember = computed(() =>
 const shouldShowParticipantsSection = computed(() =>
   shouldShowEventParticipantsSection(props.event, props.event.members.length),
 )
+
+/** イベント詳細の参加者プレビューで個別タグを表示するか（デフォルト非表示・ページ再訪のたび OFF） */
+const showParticipantTags = ref(false)
 
 const shareButtonSize = computed(() => (display.xs.value ? 'small' : 'large'))
 const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
@@ -385,7 +389,7 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
                   {{ members.length }} / {{ event.event_max_people }}
                 </span>
               </span>
-              <div class="d-flex align-center flex-wrap ga-3 event-participant-actions">
+              <div class="d-flex align-center flex-wrap ga-2 event-participant-actions">
                 <VBtn
                   v-if="showOpenChatButton"
                   variant="outlined"
@@ -408,6 +412,26 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
                 >
                   {{ $t('event_details.participants_profile') }}
                 </VBtn>
+                <VBtn
+                  v-if="isShowMember === true"
+                  :variant="showParticipantTags ? 'flat' : 'outlined'"
+                  rounded="pill"
+                  size="small"
+                  :prepend-icon="mdiTagOutline"
+                  :aria-pressed="showParticipantTags"
+                  :aria-label="
+                    showParticipantTags
+                      ? $t('event_details.hide_participant_tags')
+                      : $t('event_details.show_participant_tags')
+                  "
+                  @click="showParticipantTags = !showParticipantTags"
+                >
+                  {{
+                    showParticipantTags
+                      ? $t('event_details.hide_participant_tags')
+                      : $t('event_details.show_participant_tags')
+                  }}
+                </VBtn>
                 <div v-else-if="isShowMember === false" class="text-subtitle-2 text-right text-medium-emphasis">
                   {{ $t('event_details.participants_profile_hidden') }}
                 </div>
@@ -419,6 +443,7 @@ const shareButtonElevation = computed(() => (display.xs.value ? 0 : 2))
             :members="members"
             :event-max-people="event.event_max_people"
             :is-show-member="isShowMember"
+            :member-tags-visible="showParticipantTags"
           />
         </div>
         <v-card-text class="px-5" :class="{ 'mt-6': !shouldShowParticipantsSection }">

@@ -19,6 +19,7 @@ import { getAuth, type User } from 'firebase/auth'
 import { consumePendingToast } from '@/utils/pendingToast'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
+import TagImportHintHost from '@shokujii/base/components/TagImportHintHost.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -181,6 +182,7 @@ onMounted(() => {
   <v-snackbar v-model="isNotificationShown" :color="notification.color" class="pre-line" location="top">
     {{ notification.message }}
   </v-snackbar>
+  <TagImportHintHost />
 </template>
 
 <style lang="scss">
