@@ -12,7 +12,7 @@ if (enterpriseId.value == null) {
   throw new Error('Enterprise is not resolved')
 }
 
-usePublicEventNotFoundRedirect(eventId, buildEventStoreOptions(enterpriseId.value))
+usePublicEventNotFoundRedirect(eventId, communityAccount, buildEventStoreOptions(enterpriseId.value))
 </script>
 
 <template>

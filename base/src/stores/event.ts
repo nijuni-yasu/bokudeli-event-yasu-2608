@@ -239,6 +239,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
   const store = defineStore(piniaStoreId, () => {
     const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
+    const schemaError = ref<unknown>(null)
     const event = ref<BokudeliEvent | null>(target instanceof BokudeliEvent ? target : null)
     const _coverImageCacheBuster = ref(0)
     const _orders = ref<EventMemberOrder[] | null>(null)
@@ -414,11 +415,13 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
           (doc) => {
             try {
               event.value = doc.data() ?? null
+              schemaError.value = null
               _memberIds.value = event.value?.members ?? []
             } catch (err) {
               console.error(err)
               reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
               if (err instanceof ZodError) {
+                schemaError.value = err
                 rejectPendingLoadedEvent(err)
               }
             }
@@ -646,6 +649,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
       event,
       coverImageUrl,
       exists,
+      schemaError,
       orders,
       confirmedOrders,
       members,

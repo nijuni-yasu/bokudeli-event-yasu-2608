@@ -30,6 +30,8 @@ const forwardSafeHeaders = (from: Response, to: HttpResponse, options?: { exclud
     'proxy-authorization',
     'te',
     'trailer',
+    'etag',
+    'last-modified',
   ])
 
   from.headers.forEach((value, key) => {

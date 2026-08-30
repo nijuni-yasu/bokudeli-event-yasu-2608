@@ -6,7 +6,7 @@ import { usePublicEventNotFoundRedirect } from '@shokujii/base/composable/usePub
 const communityAccount = useRoute().params.communityAccount as string
 const eventId = useRoute().params.eventId as string
 
-usePublicEventNotFoundRedirect(eventId)
+usePublicEventNotFoundRedirect(eventId, communityAccount)
 </script>
 
 <template>

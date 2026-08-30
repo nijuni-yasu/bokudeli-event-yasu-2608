@@ -34,7 +34,7 @@ const router = useRouter()
 const communityAccount = route.params.communityAccount as string
 const eventId = route.params.eventId as string
 
-usePublicEventNotFoundRedirect(eventId)
+usePublicEventNotFoundRedirect(eventId, communityAccount)
 
 const { t: $t } = useI18n()
 

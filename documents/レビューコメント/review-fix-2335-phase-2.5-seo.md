@@ -19,7 +19,10 @@ Phase 2.5 SEO（#2335）のレビューコメント対応記録。パス解決�
 | [x] | RC-11 | 3888667953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `documentTitle.test.ts` の `as never` 禁止<br>`RouteLocationNormalized` の型付き fixture ヘルパーに置換 |
 | [ ] | RC-12 | 3888663241 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | SEO util 重複（RC-3 と同趣旨）<br>Copilot 指摘。RC-3 と統合して別途対応 |
 | [x] | RC-13 | なし | 👌 修正不要 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 存在しない `/c/**/e/**` への SPA 遷移が無限ローディング<br>実機再現。`exists === false` 時のみ `/404`（composable 追加） |
-| [ ] | RC-14 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `usePublicEventNotFoundRedirect()` が eventId の存在しか見ず、URL の communityAccount 不一致を検出しない<br>不整合な `/c/:communityAccount/e/:eventId` でも公開ページが開き、members では実コミュニティの公開設定を迂回しうる |
+| [x] | RC-14 | 5468380410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `usePublicEventNotFoundRedirect` が communityAccount 不一致を検出しない<br>URL と event.community_account 比較を追加 |
+| [x] | RC-15 | 3889229417 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 削除済み公開イベントの SPA 内 404 喪失<br>`event.is_deleted` 時に `/404` |
+| [x] | RC-16 | 3889229419 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | communityList SEO で ETag/Last-Modified 転送により 304 stale<br>検証ヘッダーを転送除外 |
+| [x] | RC-17 | 3889229421 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 公開イベント SPA 内 ZodError で /520 喪失<br>`schemaError` watch で `/520` |
 
 ---
 
@@ -572,11 +575,11 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-14 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `usePublicEventNotFoundRedirect()` が eventId の存在しか見ず、URL の communityAccount 不一致を検出しない<br>不整合な `/c/:communityAccount/e/:eventId` でも公開ページが開き、members では実コミュニティの公開設定を迂回しうる |
+| [x] | RC-14 | 5468380410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `usePublicEventNotFoundRedirect()` が eventId の存在しか見ず、URL の communityAccount 不一致を検出しない |
 
 ---
 
-**識別子**: RC-14（GitHub id: なし・エージェントレビュー）
+**識別子**: RC-14（GitHub id: 5468380410・Copilot トップレベル / エージェントレビュー）
 
 **レビュワー**: Cursor Agent（shokujii-code-review）
 
@@ -601,7 +604,7 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -613,3 +616,28 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 
 **判断理由**: URL 不整合時の 404 判定漏れにより、公開ページの参照先整合性が崩れ、members 公開可否を実コミュニティではなく URL 側コミュニティ設定で判定してしまう。サーバー側は同条件を 404 にしており、クライアント側だけ許可する理由もないため、マージ前に塞ぐ必要があると判断した。
 
+---
+
+## 評価セッション（2026-08-30 20:30・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-30 20:30 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: `fix/2335-phase-2.5-seo`
+- **PR**: #2338
+- **REVIEW_REQUEST_SINCE**: 2026-08-30T11:19:00Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文・Codex 接続案内）
+- **新規 RC**: RC-14〜17（4 件）
+- **自動修正**: RC-14〜17 すべて対応済み
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-14 | 5468380410 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | communityAccount 不一致検出漏れ |
+| [x] | RC-15 | 3889229417 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 削除済みイベント SPA 404 |
+| [x] | RC-16 | 3889229419 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ETag/Last-Modified 転送除外 |
+| [x] | RC-17 | 3889229421 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ZodError → /520 維持 |
+
+**判断理由**: `72c8bf612` 以降の再レビュー。Copilot トップレベル（5468380410）で RC-14。Codex インライン 3 件（3889229417/9419/9421）。🚨 3 件・🟡 1 件を手順 4a で自動修正。

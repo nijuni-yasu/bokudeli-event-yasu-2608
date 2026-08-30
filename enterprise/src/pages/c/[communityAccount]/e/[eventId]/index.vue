@@ -42,7 +42,7 @@ if (enterpriseId.value == null) {
   throw new Error('Enterprise is not resolved')
 }
 
-usePublicEventNotFoundRedirect(eventId, buildEventStoreOptions(enterpriseId.value))
+usePublicEventNotFoundRedirect(eventId, communityAccount, buildEventStoreOptions(enterpriseId.value))
 
 const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
 const communityStore = useEnterpriseCommunityStore(communityAccount)
