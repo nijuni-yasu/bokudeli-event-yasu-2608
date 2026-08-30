@@ -21,7 +21,7 @@ export interface CommunityPrerenderInput {
   communityDesc: string
 }
 
-const buildTopNavLink = (site: string, href: string, label: string): string =>
+const buildNavLink = (href: string, label: string): string =>
   `<a href="${escapeHtmlAttribute(href)}">${escapeHtmlText(label)}</a>`
 
 export const buildEventPrerenderHtml = (input: EventPrerenderInput): string => {
@@ -37,8 +37,8 @@ export const buildEventPrerenderHtml = (input: EventPrerenderInput): string => {
   const addressBlock = fullAddress !== '' ? `<p>${escapeHtmlText(fullAddress)}</p>` : ''
   const descriptionBlock = description !== '' ? `<p>${escapeHtmlText(description)}</p>` : ''
   const navBlock = `<nav>
-  ${buildTopNavLink(input.site, `${input.site}/`, 'トップ')}
-  · ${buildTopNavLink(input.site, communityUrl, input.communityName)}
+  ${buildNavLink(`${input.site}/`, 'トップ')}
+  · ${buildNavLink(communityUrl, input.communityName)}
 </nav>`
 
   return `<article>
@@ -54,8 +54,8 @@ export const buildCommunityPrerenderHtml = (input: CommunityPrerenderInput): str
   const description = toPlainTextExcerpt(input.communityDesc)
   const descriptionBlock = description !== '' ? `<p>${escapeHtmlText(description)}</p>` : ''
   const navBlock = `<nav>
-  ${buildTopNavLink(input.site, `${input.site}/`, 'トップ')}
-  · ${buildTopNavLink(input.site, `${input.site}/communitylist`, 'コミュニティ一覧')}
+  ${buildNavLink(`${input.site}/`, 'トップ')}
+  · ${buildNavLink(`${input.site}/communitylist`, 'コミュニティ一覧')}
 </nav>`
 
   return `<article>

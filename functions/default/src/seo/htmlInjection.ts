@@ -39,6 +39,13 @@ const replaceTitle = (html: string, title: string): string => {
 export const stripStaticMetaDescription = (html: string): string =>
   html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>\s*/i, '')
 
+/**
+ * Function 注入ページ向け: index.html の静的 canonical（トップ固定）を除去。
+ * 残すとページ固有 canonical と 2 本になり、矛盾する canonical は無視される。
+ */
+export const stripStaticCanonicalLink = (html: string): string =>
+  html.replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')
+
 export const injectSeoHtml = (html: string, context: SeoPageContext): string => {
   const documentTitle = buildDocumentTitle(context.pageTitle)
   const seoHeadBlock = buildSeoHeadBlock({
@@ -49,6 +56,7 @@ export const injectSeoHtml = (html: string, context: SeoPageContext): string => 
   const ogpBlock = buildOgpMetaTags(context.ogp)
 
   let result = stripStaticMetaDescription(html)
+  result = stripStaticCanonicalLink(result)
   result = replaceTitle(result, documentTitle)
   result = replaceSection(result, SEO_HEAD_BEGIN, SEO_HEAD_END, `\n${seoHeadBlock}\n`)
   result = replaceSection(result, OGP_BEGIN_TAG, OGP_END_TAG, ogpBlock)

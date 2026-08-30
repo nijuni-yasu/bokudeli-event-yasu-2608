@@ -326,7 +326,7 @@ Phase 2 デプロイ・sitemap 成功後、**検索に出ない直接原因**を
 |:----:|------|--------|
 | 🔴 | [S] | ✅ **P2.5-1** GSC sitemap 再送信・成功確認<br>2026-08-30: `https://shokujii.jp/sitemap.xml` **成功・1,084 URL 検出** |
 | 🔴 | [S] | ✅ **P2.5-2** レンダリング後 `noindex` の修正<br>`user/src/router/index.ts`: 公開 `/c/**/e/**` から `getLoadedEvent` ガード除去。**`/manage/event/**` のみ**維持 |
-| 🔴 | [S] | ✅ **P2.5-3** 静的 `<meta name="description">` の重複除去<br>`htmlInjection.ts` の `stripStaticMetaDescription()` を `injectSeoHtml` で適用。トップは静的維持 |
+| 🔴 | [S] | ✅ **P2.5-3** 静的 `<meta name="description">` / `<link rel="canonical">` の重複除去<br>`htmlInjection.ts` の `stripStaticMetaDescription()` / `stripStaticCanonicalLink()` を `injectSeoHtml` で適用。トップは静的維持 |
 | 🟠 | [S] | ✅ **P2.5-4** プリレンダー HTML に内部リンク追加<br>`prerenderBody.ts`: イベント → トップ・コミュニティ、コミュニティ → トップ・一覧 |
 | 🟠 | [M] | ✅ **P2.5-5** `/communitylist` の SEO 注入<br>`handleCommunityListSeoRequest` + `getPublicCommunitiesForSeoPreview(30)` + firebase rewrite |
 | 🟡 | [S] | ✅ **P2.5-6** 旧パス `/community/**` → `/c/**` 301（`firebase.json` redirects 4 ルール） |
@@ -336,7 +336,7 @@ Phase 2 デプロイ・sitemap 成功後、**検索に出ない直接原因**を
 **Phase 2.5 完了条件**
 
 - ✅ GSC sitemap ステータス「成功」
-- ✅ P2.5-2〜6 コード実装（Issue #2195）
+- ✅ P2.5-2〜6 コード実装（Issue #2335）
 - [ ] 代表 URL 3 件でレンダリング済み HTML に `noindex` なし（**P2.5-7・デプロイ後**）
 - [ ] イベント URL の `<meta name="description">` が 1 本のみ（固有文言）（**P2.5-7**）
 - [ ] プリレンダー HTML に `<a href>` が含まれる（**P2.5-7**）
@@ -625,4 +625,4 @@ PSI で公開イベント詳細を計測したが、個別 URL の CrUX デー�
 | 2026-07-19 | P2-4-V sandbox 検証記録。Event JSON-LD に `organizer.url` を追加 |
 | 2026-07-19 | P3-S1〜3 / P3-3 実装（WebSite / BreadcrumbList / Event enrich / Vue h1） |
 | 2026-08-30 | 本番再監査。GSC sitemap 再送信成功（1,084 URL）。代表イベント URL ライブテスト合格。**Phase 2.5 新設**、GEO を **Phase 3B** に分離、P4-2 前倒し（P2.5-8）。進捗表記を ✅ / `[ ]` に統一 |
-| 2026-08-30 | **Phase 2.5 実装（#2195）**: P2.5-2（公開イベント router ガード除去）・P2.5-3（description 重複除去）・P2.5-4（プリレンダー内部リンク）・P2.5-5（`/communitylist` SEO）・P2.5-6（`/community/**` 301）。P2.5-8 は保留（全イベント sitemap 維持）。P2.5-7 本番検証はデプロイ後 |
+| 2026-08-30 | **Phase 2.5 実装（#2335）**: P2.5-2（公開イベント router ガード除去）・P2.5-3（description 重複除去）・P2.5-4（プリレンダー内部リンク）・P2.5-5（`/communitylist` SEO）・P2.5-6（`/community/**` 301）。P2.5-8 は保留（全イベント sitemap 維持）。P2.5-7 本番検証はデプロイ後 |

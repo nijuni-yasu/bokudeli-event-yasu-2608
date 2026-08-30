@@ -1,5 +1,5 @@
-import express from 'express'
 import { https } from 'firebase-functions/v2'
+import type { HttpResponse } from './utils/httpResponse.js'
 import { createModuleLogger } from './utils/logger.js'
 import { resolveRequestSite } from './utils/resolveRequestSite.js'
 import { getPublicCommunitiesForSeoPreview } from './stores/seoSitemap.js'
@@ -18,7 +18,7 @@ const logger = createModuleLogger('communityListSeoRequest')
 const SEO_CACHE_CONTROL = 'public, max-age=600, s-maxage=600'
 const COMMUNITY_LIST_PREVIEW_LIMIT = 30
 
-const forwardSafeHeaders = (from: Response, to: express.Response, options?: { excludeCacheControl?: boolean }) => {
+const forwardSafeHeaders = (from: Response, to: HttpResponse, options?: { excludeCacheControl?: boolean }) => {
   const excludedHeaderKeys = new Set([
     'content-encoding',
     'transfer-encoding',
@@ -83,7 +83,7 @@ export const handleCommunityListSeoRequest = https.onRequest(
     region: 'asia-northeast1',
     memory: '512MiB',
   },
-  async (req: https.Request, res: express.Response) => {
+  async (req, res) => {
     const site = resolveRequestSite(req)
     if (site == null) {
       res.status(400).send('Bad Request')
