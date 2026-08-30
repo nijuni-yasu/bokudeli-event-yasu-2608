@@ -19,6 +19,7 @@ Phase 2.5 SEO（#2335）のレビューコメント対応記録。パス解決�
 | [x] | RC-11 | 3888667953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `documentTitle.test.ts` の `as never` 禁止<br>`RouteLocationNormalized` の型付き fixture ヘルパーに置換 |
 | [ ] | RC-12 | 3888663241 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | SEO util 重複（RC-3 と同趣旨）<br>Copilot 指摘。RC-3 と統合して別途対応 |
 | [x] | RC-13 | なし | 👌 修正不要 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 存在しない `/c/**/e/**` への SPA 遷移が無限ローディング<br>実機再現。`exists === false` 時のみ `/404`（composable 追加） |
+| [ ] | RC-14 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `usePublicEventNotFoundRedirect()` が eventId の存在しか見ず、URL の communityAccount 不一致を検出しない<br>不整合な `/c/:communityAccount/e/:eventId` でも公開ページが開き、members では実コミュニティの公開設定を迂回しうる |
 
 ---
 
@@ -555,3 +556,60 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 | — | — | — | — | — | — | — | — | — | 新規 RC なし。Copilot は RC-3/RC-7/RC-12 以外に追加指摘なし。Codex は major issues なし |
 
 **判断理由**: `b295b3b90` 以降の再レビュー。Copilot トップレベル（5467397360）で既記録 RC-3/RC-7/RC-12 以外の高信頼指摘はないと確認。Codex（5467400225）は no_issues。インラインコメント 0 件。自動修正対象なし。
+
+---
+
+## 評価セッション（2026-08-30 20:18・shokujii-code-review）
+
+- **評価日時**: 2026-08-30 20:18 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: `fix/2335-phase-2.5-seo`
+- **PR**: #2338
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-14 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ, 🐛 実害 | 🔧 微修正 | S | `usePublicEventNotFoundRedirect()` が eventId の存在しか見ず、URL の communityAccount 不一致を検出しない<br>不整合な `/c/:communityAccount/e/:eventId` でも公開ページが開き、members では実コミュニティの公開設定を迂回しうる |
+
+---
+
+**識別子**: RC-14（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/composable/usePublicEventNotFoundRedirect.ts:6`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export const usePublicEventNotFoundRedirect = (eventId: string, options: EventStoreOptions = {}): void => {
++  const eventStore = useEventStore(eventId, options) as EventStore
++  const { exists } = storeToRefs(eventStore)
++  usePublicResourceNotFoundRedirect(exists)
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `usePublicEventNotFoundRedirect()` が `eventId` の `exists` しか見ておらず、URL の `communityAccount` と `event.community_account` の一致を検証していません。`user/src/pages/c/[communityAccount]/e/[eventId]/index.vue` と `members.vue`、`enterprise/src/pages/c/[communityAccount]/e/[eventId]/members.vue` はこの composable を通したあとに URL 側 community と eventId 側 event を別々に読み込むため、実在する別コミュニティの eventId を差し込んだ不整合 URL でも `/404` になりません。とくに `base/src/components/pages/c/[communityAccount]/e/[eventId]/members.vue` は members 公開可否を URL 由来の `communityStore.community?.is_show_member` で判定しているので、`/c/<公開設定の別community>/e/<対象eventId>/members` の形で実コミュニティ側の公開制御を迂回できます。サーバー側 `functions/default/src/ogpRequest.ts` は同じ `community_account` 不一致を 404 にしているため、SPA 側も一致チェックを入れて挙動を揃えるべきです → `usePublicEventNotFoundRedirect`（または各ページ側）で `event.community_account === route.params.communityAccount` まで確認し、不一致なら `/404` にしてください。
+
+**コメント要約**: `usePublicEventNotFoundRedirect()` が eventId の存在しか見ず、URL の communityAccount 不一致を検出しない。
+不整合な `/c/:communityAccount/e/:eventId` でも公開ページが開き、members では実コミュニティの公開設定を迂回しうる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ, 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: URL 不整合時の 404 判定漏れにより、公開ページの参照先整合性が崩れ、members 公開可否を実コミュニティではなく URL 側コミュニティ設定で判定してしまう。サーバー側は同条件を 404 にしており、クライアント側だけ許可する理由もないため、マージ前に塞ぐ必要があると判断した。
+
