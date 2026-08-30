@@ -108,6 +108,23 @@ const sendNoindexSpaHtml = (res: HttpResponse, indexHtmlResponse: Response, html
     .send(html)
 }
 
+/** `/c/:account/e/:eventId/members` 等、canonical 詳細以外の公開 SPA 子パス */
+const isEventSpaSubpath = (paths: string[]): boolean =>
+  paths[1] === 'c' && paths[3] === 'e' && paths.length === 6 && paths[5] === 'members'
+
+/** `/c/:account/invites` 等、canonical コミュニティ詳細以外の公開 SPA 子パス */
+const isCommunitySpaSubpath = (paths: string[]): boolean =>
+  paths[1] === 'c' && paths.length === 4 && paths[3] === 'invites' && paths[2] !== undefined && paths[2] !== ''
+
+const sendSpaFallback = async (res: HttpResponse): Promise<void> => {
+  const indexResult = await fetchIndexHtml()
+  if (indexResult === undefined) {
+    res.status(500).send('Could not retrieve index.html')
+    return
+  }
+  sendNoindexSpaHtml(res, indexResult.response, indexResult.html)
+}
+
 const buildEventSeoContext = (params: {
   canonicalUrl: string
   eventData: ShokujiiEvent
@@ -232,6 +249,17 @@ export const handleEventOgpRequest: HttpsFunction = https.onRequest(
     const path = paths.join('/')
 
     if (paths[1] !== 'c' || paths[3] !== 'e' || paths.length !== 5) {
+      if (isEventSpaSubpath(paths)) {
+        try {
+          await sendSpaFallback(res)
+        } catch (error) {
+          logger.warn('Unexpected error in event SPA subpath handler', { error })
+          if (!res.headersSent) {
+            res.status(500).send('Internal Server Error')
+          }
+        }
+        return
+      }
       sendNotFound(res)
       return
     }
@@ -322,6 +350,17 @@ export const handleCommunityOgpRequest: HttpsFunction = https.onRequest(
     const path = paths.join('/')
 
     if (paths[1] !== 'c' || paths.length !== 3 || paths[2] === undefined || paths[2] === '') {
+      if (isCommunitySpaSubpath(paths)) {
+        try {
+          await sendSpaFallback(res)
+        } catch (error) {
+          logger.warn('Unexpected error in community SPA subpath handler', { error })
+          if (!res.headersSent) {
+            res.status(500).send('Internal Server Error')
+          }
+        }
+        return
+      }
       sendNotFound(res)
       return
     }

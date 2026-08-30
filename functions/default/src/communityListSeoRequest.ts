@@ -1,4 +1,5 @@
 import { https } from 'firebase-functions/v2'
+import type { HttpsFunction } from 'firebase-functions/v2/https'
 import type { HttpResponse } from './utils/httpResponse.js'
 import { createModuleLogger } from './utils/logger.js'
 import { resolveRequestSite } from './utils/resolveRequestSite.js'
@@ -80,7 +81,7 @@ const buildCommunityListJsonLd = (params: {
   )
 }
 
-export const handleCommunityListSeoRequest = https.onRequest(
+export const handleCommunityListSeoRequest: HttpsFunction = https.onRequest(
   {
     region: 'asia-northeast1',
     memory: '512MiB',

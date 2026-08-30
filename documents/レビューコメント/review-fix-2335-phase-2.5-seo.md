@@ -23,7 +23,8 @@ Phase 2.5 SEO（#2335）のレビューコメント対応記録。パス解決�
 | [x] | RC-15 | 3889229417 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 削除済み公開イベントの SPA 内 404 喪失<br>`event.is_deleted` 時に `/404` |
 | [x] | RC-16 | 3889229419 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | communityList SEO で ETag/Last-Modified 転送により 304 stale<br>検証ヘッダーを転送除外 |
 | [x] | RC-17 | 3889229421 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 公開イベント SPA 内 ZodError で /520 喪失<br>`schemaError` watch で `/520` |
-| [ ] | RC-18 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `/c/**/e/**`・`/c/**` rewrite が子ページまで SEO Function に流れ、`members` / `invites` の直開き・リロードが 404 になる<br>wildcard rewrite を canonical ページに限定する必要がある |
+| [x] | RC-18 | 5468480624 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | rewrite が members/invites 等子ページも SEO Function に流し 404<br>子パスは `sendNoindexSpaHtml` で SPA フォールバック |
+| [x] | RC-19 | 3889271754 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `handleCommunityListSeoRequest` の戻り値型が推論任せ<br>`HttpsFunction` を明示 |
 
 ---
 
@@ -645,6 +646,8 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 
 ---
 
+---
+
 ## 評価セッション（2026-08-30 20:42・shokujii-code-review）
 
 - **評価日時**: 2026-08-30 20:42 JST
@@ -653,22 +656,47 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 - **PR**: #2338
 - **Outdated 除外件数**: 該当なし
 - **レビュー非該当スキップ件数**: 該当なし
+- **新規 RC**: RC-18（1 件）
 
 ### RC 一覧（サマリ）
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| [ ] | RC-18 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `/c/**/e/**`・`/c/**` rewrite が子ページまで SEO Function に流れ、`members` / `invites` の直開き・リロードが 404 になる<br>wildcard rewrite を canonical ページに限定する必要がある |
+| [x] | RC-18 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `/c/**/e/**`・`/c/**` rewrite が子ページまで SEO Function に流れ、`members` / `invites` の直開き・リロードが 404 になる |
 
 ---
 
-**識別子**: RC-18（GitHub id: なし・エージェントレビュー）
+## 評価セッション（2026-08-30 20:50・review-comments-evaluate auto）
 
-**レビュワー**: Cursor Agent（shokujii-code-review）
+- **評価日時**: 2026-08-30 20:50 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: `fix/2335-phase-2.5-seo`
+- **PR**: #2338
+- **REVIEW_REQUEST_SINCE**: 2026-08-30T11:38:53Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼定型文・Copilot 承知返信 2 件・Codex 接続案内 2 件）
+- **新規 RC**: RC-19（1 件）。RC-18 は GitHub id 5468480624 で同一指摘を確認し実装済み
+- **自動修正**: RC-18（🚨）・RC-19（🟡）対応済み
 
-**指摘箇所**: `firebase.json:139`
+### RC 一覧（サマリ）
 
-**該当コード（レビュー時点の diff）**:
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-18 | 5468480624 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | members/invites 子ページ直開き・リロード 404 |
+| [x] | RC-19 | 3889271754 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `handleCommunityListSeoRequest` に `HttpsFunction` 明示 |
+
+**判断理由**: `9e3041d0c` 以降の再レビュー。Copilot トップレベル（5468480624）で RC-18。Codex インライン（3889271754）で RC-19。🚨 1 件・🟡 1 件を手順 4a で自動修正。
+
+---
+
+**識別子**: RC-18（GitHub id: 5468480624・Copilot トップレベル / 5468480624 以前にエージェントレビューでも同根指摘）
+
+**レビュワー**: Copilot / Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `firebase.json:139` + `functions/default/src/ogpRequest.ts`
+
+**該当コード（レビュー時点）**:
 
 ```diff
 +        {
@@ -681,18 +709,25 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 +          "function": "handleCommunityOgpRequest",
 +          "region": "asia-northeast1"
 +        },
+
+// ogpRequest.ts — canonical のみ受付
+if (paths.length !== 5) { sendNotFound(res); return }
+if (paths.length !== 3) { sendNotFound(res); return }
 ```
 
 **レビュワーのコメント（原文）**:
 
 🚨 **必須修正** [🔧微修正/S]: `firebase.json` の rewrite が `/c/**/e/**` と `/c/**` を丸ごと SEO Function に流していますが、`functions/default/src/ogpRequest.ts` は event 側で `paths.length !== 5`、community 側で `paths.length !== 3` を即 `/404` にしています。そのため既存の有効な SPA ルートである `/c/{community}/e/{eventId}/members` と `/c/{community}/invites?t=...` を直開き・リロードすると server 404 になります。`user/src/pages/c/[communityAccount]/e/[eventId]/members.vue` と `user/src/pages/c/[communityAccount]/invites.vue` は現行ルートとして存在し、`common/src/utils/urls.ts` でも招待 URL を `/c/${communityAccount}/invites?t=${tokenId}` で生成しているため、公開導線が実際に壊れます → rewrite 対象を canonical な詳細ページだけに絞るか、`members` / `invites` などの子パスは Function に流さず `/index.html` にフォールバックさせてください。
 
-**コメント要約**: `/c/**/e/**`・`/c/**` rewrite が子ページまで SEO Function に流れ、`members` / `invites` の直開き・リロードが 404 になる。
-wildcard rewrite を canonical ページに限定する必要がある。
+再レビューし、RC-18 を追加しました（e6fe831）。
+`/c/**/e/**` と `/c/**` の rewrite が子ページまで SEO Function に流れる一方、Function 側は canonical な詳細ページしか受け付けないため、`/c/:community/e/:eventId/members` と `/c/:community/invites?t=...` の直開き・リロードが 404 になります。
+
+**コメント要約**: rewrite が members/invites 等子ページも SEO Function に流し 404。
+子パスは `sendNoindexSpaHtml` で SPA フォールバック。
 
 **評価**: 🚨 必須修正
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -702,5 +737,40 @@ wildcard rewrite を canonical ページに限定する必要がある。
 
 **想定工数**: S
 
-**判断理由**: rewrite 条件と Function 側の path 検証条件が整合しておらず、既存の有効ルートが直開き・リロードで 404 になる退行を確認できた。招待 URL 生成ヘルパーも現存しているため机上の懸念ではなく、実ユーザー導線に影響するバグとしてマージ前に修正が必要と判断した。
+**判断理由**: 実在する SPA 子ページの直開き・リロードが 404 となり UX 回帰。限定公開イベントと同様 noindex SPA フォールバックが一意の修正方針。
 
+---
+
+**識別子**: RC-19（GitHub id: 3889271754・Codex インライン）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/communityListSeoRequest.ts:84`
+
+**該当コード（レビュー時点）**:
+
+```diff
+-export const handleCommunityListSeoRequest = https.onRequest(
++export const handleCommunityListSeoRequest: HttpsFunction = https.onRequest(
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 新規 export の `handleCommunityListSeoRequest` だけ戻り値型が推論任せになっており、同種の `handleSitemapRequest` や OGP ハンドラーが `HttpsFunction` を明示している規約と一致しません。Firebase SDK の overload やハンドラー定義を変更した際に export の契約変化を型検査で検出できるよう、`HttpsFunction` を import して明示してください。
+
+**コメント要約**: `handleCommunityListSeoRequest` の戻り値型が推論任せ。
+`HttpsFunction` を明示。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 同種ハンドラーとの型注釈一貫性。修正方針が一意で工数 S のため手順 4a で自動修正。
