@@ -9,7 +9,9 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import {
   useEnterpriseCommunityMemberFlags,
   useEnterpriseCommunityStore,
+  buildEnterpriseCommunityScope,
 } from '@/composable/useEnterpriseCommunityStore'
+import { usePublicCommunityNotFoundRedirect } from '@shokujii/base/composable/usePublicCommunityNotFoundRedirect.js'
 
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
@@ -31,6 +33,8 @@ const { enterpriseId } = useEnterpriseId()
 if (enterpriseId.value == null) {
   throw new Error('Enterprise is not resolved')
 }
+
+usePublicCommunityNotFoundRedirect(communityAccount, buildEnterpriseCommunityScope())
 
 const communityStore = useEnterpriseCommunityStore(communityAccount)
 

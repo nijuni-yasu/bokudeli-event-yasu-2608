@@ -12,6 +12,7 @@ import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import type { EventStore, BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
+import { usePublicCommunityNotFoundRedirect } from '@shokujii/base/composable/usePublicCommunityNotFoundRedirect.js'
 import { useEventListStore } from '@shokujii/base/stores/eventList'
 import { where, orderBy } from 'firebase/firestore'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
@@ -25,6 +26,8 @@ const router = useRouter()
 const display = useDisplay()
 const communityAccount = useRoute().params.communityAccount as string
 const { t: $t } = useI18n()
+
+usePublicCommunityNotFoundRedirect(communityAccount)
 
 const communityStore = useCommunityStore(communityAccount)
 

@@ -18,7 +18,7 @@ Phase 2.5 SEO（#2335）のレビューコメント対応記録。パス解決�
 | [x] | RC-10 | 3888667952 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `index.html` の固定 canonical が `/u/**` 等 rewrite 対象外ページにも配信され全ページがトップ canonical 化<br>静的 canonical を削除 |
 | [x] | RC-11 | 3888667953 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `documentTitle.test.ts` の `as never` 禁止<br>`RouteLocationNormalized` の型付き fixture ヘルパーに置換 |
 | [ ] | RC-12 | 3888663241 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | SEO util 重複（RC-3 と同趣旨）<br>Copilot 指摘。RC-3 と統合して別途対応 |
-| [x] | RC-13 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | 存在しない `/c/**/e/**` への SPA 遷移が無限ローディングになる懸念<br>RC-8 と同根。Phase 2.5 方針で許容 |
+| [x] | RC-13 | なし | 👌 修正不要 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 存在しない `/c/**/e/**` への SPA 遷移が無限ローディング<br>実機再現。`exists === false` 時のみ `/404`（composable 追加） |
 
 ---
 
@@ -533,3 +533,25 @@ Copilot: 公開 `/c/**/e/**` から `getLoadedEvent` ガードを除去したた
 **想定工数**: —
 
 **判断理由**: セルフレビュー RC-8 と同根。直リンク・リロードは Function 404、一覧リンクは `is_deleted == false` 由来。Phase 2.5 の noindex 解消を優先する現方針で妥当。
+
+---
+
+## 評価セッション（2026-08-30 16:34・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-30 16:34 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: `fix/2335-phase-2.5-seo`
+- **PR**: #2338
+- **REVIEW_REQUEST_SINCE**: 2026-08-30T07:26:31Z
+- **partial**: true（Codex 接続案内 + no_issues サマリのみ。substantive インライン指摘なし）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼定型文・Copilot 承知返信・Codex 接続案内・Codex no_issues）
+- **新規 RC**: なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| — | — | — | — | — | — | — | — | — | 新規 RC なし。Copilot は RC-3/RC-7/RC-12 以外に追加指摘なし。Codex は major issues なし |
+
+**判断理由**: `b295b3b90` 以降の再レビュー。Copilot トップレベル（5467397360）で既記録 RC-3/RC-7/RC-12 以外の高信頼指摘はないと確認。Codex（5467400225）は no_issues。インラインコメント 0 件。自動修正対象なし。

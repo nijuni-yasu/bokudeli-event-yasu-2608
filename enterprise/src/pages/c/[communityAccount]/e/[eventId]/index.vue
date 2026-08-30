@@ -29,6 +29,7 @@ import { useEnterpriseTenantGuard } from '@/composable/useEnterpriseTenantGuard'
 import EnterpriseErrorPage from '@/components/EnterpriseErrorPage.vue'
 import { getChatPath } from '@/router/utils'
 import { useNavigateToEventChat } from '@shokujii/base/composable/useNavigateToEventChat.js'
+import { usePublicEventNotFoundRedirect } from '@shokujii/base/composable/usePublicEventNotFoundRedirect.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -40,6 +41,8 @@ const { enterpriseId } = useEnterpriseId()
 if (enterpriseId.value == null) {
   throw new Error('Enterprise is not resolved')
 }
+
+usePublicEventNotFoundRedirect(eventId, buildEventStoreOptions(enterpriseId.value))
 
 const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
 const communityStore = useEnterpriseCommunityStore(communityAccount)
