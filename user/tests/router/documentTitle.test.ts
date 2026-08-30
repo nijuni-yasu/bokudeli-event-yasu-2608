@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_DOCUMENT_TITLE,
   formatDocumentTitle,
+  isCommunityListPath,
   parseCommunityAccountFromPath,
   parseErrorCodeFromRoute,
   parseEventIdFromPath,
 } from '@/router/documentTitleHelpers.js'
+import { resolveDocumentTitle } from '@/router/documentTitle.js'
+import { getI18n } from '@shokujii/base/plugins/i18n/index.js'
 
 describe('documentTitle', () => {
   it('formatDocumentTitle matches server-side suffix format', () => {
@@ -38,5 +41,18 @@ describe('documentTitle', () => {
 
   it('DEFAULT_DOCUMENT_TITLE matches index.html default', () => {
     expect(DEFAULT_DOCUMENT_TITLE).toBe('食事でつながる「shokujii」')
+  })
+
+  it('isCommunityListPath matches community list routes only', () => {
+    expect(isCommunityListPath('/communitylist')).toBe(true)
+    expect(isCommunityListPath('/communitylist/')).toBe(true)
+    expect(isCommunityListPath('/c/example')).toBe(false)
+  })
+
+  it('resolveDocumentTitle returns community list title without Firestore', async () => {
+    const t = getI18n().global.t as (key: string) => string
+    await expect(resolveDocumentTitle({ path: '/communitylist' } as never)).resolves.toBe(
+      formatDocumentTitle(t('communitylist.page_title')),
+    )
   })
 })

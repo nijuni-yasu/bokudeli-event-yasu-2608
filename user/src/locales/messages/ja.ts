@@ -30,6 +30,9 @@ export default {
     upcoming_events: '開催予定のイベント',
     past_events: '終了したイベント',
   },
+  communitylist: {
+    page_title: 'コミュニティ一覧',
+  },
   user: {
     order_list: '参加イベント',
     member_community_list: '参加コミュニティ',

@@ -5,6 +5,7 @@ import { useEventStore } from '@shokujii/base/stores/event.js'
 import {
   DEFAULT_DOCUMENT_TITLE,
   formatDocumentTitle,
+  isCommunityListPath,
   parseCommunityAccountFromPath,
   parseErrorCodeFromRoute,
   parseEventIdFromPath,
@@ -17,6 +18,11 @@ export const resolveDocumentTitle = async (to: RouteLocationNormalized): Promise
   if (errorCode != null) {
     const t = getI18n().global.t as (key: string) => string
     return formatDocumentTitle(t(`error.${errorCode}.title`))
+  }
+
+  if (isCommunityListPath(to.path)) {
+    const t = getI18n().global.t as (key: string) => string
+    return formatDocumentTitle(t('communitylist.page_title'))
   }
 
   const eventId = parseEventIdFromPath(to.path)

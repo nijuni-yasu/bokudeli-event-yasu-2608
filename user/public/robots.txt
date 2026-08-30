@@ -4,6 +4,7 @@ Allow: /c/
 Allow: /communitylist
 Disallow: /manage/
 Disallow: /chat/
+Disallow: /c/*/invites
 Disallow: /cart
 Disallow: /login
 Disallow: /register
