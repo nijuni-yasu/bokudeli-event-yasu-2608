@@ -108,13 +108,17 @@ const sendNoindexSpaHtml = (res: HttpResponse, indexHtmlResponse: Response, html
     .send(html)
 }
 
-/** `/c/:account/e/:eventId/members` 等、canonical 詳細以外の公開 SPA 子パス */
-const isEventSpaSubpath = (paths: string[]): boolean =>
-  paths[1] === 'c' && paths[3] === 'e' && paths.length === 6 && paths[5] === 'members'
+/** `/c/:account/e/:eventId/members` 等、canonical 詳細以外の公開 SPA 子パス（末尾スラッシュ許容） */
+const isEventSpaSubpath = (paths: string[]): boolean => {
+  const segments = paths.filter((segment) => segment !== '')
+  return segments.length === 5 && segments[0] === 'c' && segments[2] === 'e' && segments[4] === 'members'
+}
 
-/** `/c/:account/invites` 等、canonical コミュニティ詳細以外の公開 SPA 子パス */
-const isCommunitySpaSubpath = (paths: string[]): boolean =>
-  paths[1] === 'c' && paths.length === 4 && paths[3] === 'invites' && paths[2] !== undefined && paths[2] !== ''
+/** `/c/:account/invites` 等、canonical コミュニティ詳細以外の公開 SPA 子パス（末尾スラッシュ許容） */
+const isCommunitySpaSubpath = (paths: string[]): boolean => {
+  const segments = paths.filter((segment) => segment !== '')
+  return segments.length === 3 && segments[0] === 'c' && segments[2] === 'invites' && segments[1] !== ''
+}
 
 const sendSpaFallback = async (res: HttpResponse): Promise<void> => {
   const indexResult = await fetchIndexHtml()

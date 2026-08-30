@@ -25,6 +25,8 @@ Phase 2.5 SEO（#2335）のレビューコメント対応記録。パス解決�
 | [x] | RC-17 | 3889229421 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 公開イベント SPA 内 ZodError で /520 喪失<br>`schemaError` watch で `/520` |
 | [x] | RC-18 | 5468480624 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | rewrite が members/invites 等子ページも SEO Function に流し 404<br>子パスは `sendNoindexSpaHtml` で SPA フォールバック |
 | [x] | RC-19 | 3889271754 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `handleCommunityListSeoRequest` の戻り値型が推論任せ<br>`HttpsFunction` を明示 |
+| [x] | RC-20 | 3889326180 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | members/invites 末尾スラッシュで SPA フォールバック判定外 → 404<br>空セグメント除去で末尾スラッシュ許容 |
+| [x] | RC-21 | 3889326199 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | `usePublicEventNotFoundRedirect` の回帰テスト不足<br>Vitest 4 ケース追加 |
 
 ---
 
@@ -774,3 +776,86 @@ if (paths.length !== 3) { sendNotFound(res); return }
 **想定工数**: S
 
 **判断理由**: 同種ハンドラーとの型注釈一貫性。修正方針が一意で工数 S のため手順 4a で自動修正。
+
+---
+
+## 評価セッション（2026-08-30 21:14・review-comments-evaluate auto）
+
+- **評価日時**: 2026-08-30 21:14 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: `fix/2335-phase-2.5-seo`
+- **PR**: #2338
+- **REVIEW_REQUEST_SINCE**: 2026-08-30T12:06:00Z
+- **partial**: true（Codex no_issues のみ。Copilot 初回エラー 1 件）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型文・Copilot エラー・Codex no_issues）
+- **新規 RC**: RC-20〜21（2 件）
+- **自動修正**: RC-20（🟡）・RC-21（🟡）対応済み
+- **RC-3 重複**: Copilot トップレベル（5468613062）の seoUtils 抽出は未実装（RC-3/RC-12 と同根・採番なし）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-20 | 3889326180 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | members 末尾スラッシュで 404 |
+| [x] | RC-21 | 3889326199 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | composable 回帰テスト追加 |
+
+**判断理由**: `56534fb11` 以降の再レビュー。Copilot インライン 2 件。Codex no_issues。🟡 2 件を手順 4a で自動修正。
+
+---
+
+**識別子**: RC-20（GitHub id: 3889326180・Copilot インライン）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/ogpRequest.ts:112`
+
+**レビュワーのコメント（原文）**:
+
+🟡[imo] `/c/:account/e/:eventId/members/`（末尾スラッシュ）だと `paths.length` が 7 になり、この SPA フォールバック判定に入らず 404 になります。直開き/リロードの揺れを減らすため、末尾スラッシュも許容する条件にしておくと安全です。
+
+**コメント要約**: members/invites 末尾スラッシュで SPA フォールバック判定外 → 404。
+空セグメント除去で末尾スラッシュ許容。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-18 フォールバックの取りこぼし。空セグメント正規化で修正方針が一意。
+
+---
+
+**識別子**: RC-21（GitHub id: 3889326199・Copilot インライン）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `base/src/composable/usePublicEventNotFoundRedirect.ts`
+
+**レビュワーのコメント（原文）**:
+
+🟡[imo] `usePublicEventNotFoundRedirect` は `is_deleted` / `community_account` 不一致 / `ZodError`→`/520` と分岐が増えているので、`router.replace` が期待どおり呼ばれることの回帰テスト（Vitest）を追加しておくと安心です。
+
+**コメント要約**: `usePublicEventNotFoundRedirect` の回帰テスト不足。
+Vitest 4 ケース追加。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 分岐増加に対する回帰防止。モック store + router で S 工数のテスト追加が一意。

@@ -184,6 +184,17 @@ describe('handleEventOgpRequest', () => {
     expect(getEvent).not.toHaveBeenCalled()
   })
 
+  it('イベント members 子パス（末尾スラッシュ）は noindex 付きの素の SPA を返す', async () => {
+    const { res, recorded } = createRes()
+
+    await eventHandler({ path: '/c/acct/e/evt1/members/' }, res)
+
+    expect(recorded.status).toBe(200)
+    expect(recorded.headers['x-robots-tag']).toBe('noindex, nofollow')
+    expect(recorded.body).toBe(INDEX_HTML)
+    expect(getEvent).not.toHaveBeenCalled()
+  })
+
   it('イベント ID の後ろに未知の余分なセグメントがある URL は 404 を返す', async () => {
     const { res, recorded } = createRes()
 
@@ -229,6 +240,17 @@ describe('handleCommunityOgpRequest', () => {
     const { res, recorded } = createRes()
 
     await communityHandler({ path: '/c/acct/invites' }, res)
+
+    expect(recorded.status).toBe(200)
+    expect(recorded.headers['x-robots-tag']).toBe('noindex, nofollow')
+    expect(recorded.body).toBe(INDEX_HTML)
+    expect(getCommunityByAccount).not.toHaveBeenCalled()
+  })
+
+  it('コミュニティ invites 子パス（末尾スラッシュ）は noindex 付きの素の SPA を返す', async () => {
+    const { res, recorded } = createRes()
+
+    await communityHandler({ path: '/c/acct/invites/' }, res)
 
     expect(recorded.status).toBe(200)
     expect(recorded.headers['x-robots-tag']).toBe('noindex, nofollow')
