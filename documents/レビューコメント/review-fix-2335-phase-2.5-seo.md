@@ -14,6 +14,8 @@ Phase 2.5 SEO（#2335）のレビューコメント対応記録。パス解決�
 | [x] | RC-6 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 静的 canonical が SEO_HEAD ブロック外にあり、Function 注入ページで canonical が 2 本になる<br>矛盾する canonical は無視され P2-3 の施策が無効化。`stripStaticCanonicalLink()` を追加 |
 | [ ] | RC-7 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | `isPublicEventDetailPath` 分岐が到達不能になった<br>ガードが `/manage/event/**` 限定になったため dead code + JSDoc が実態と不一致。方針判断が必要 |
 | [x] | RC-8 | なし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | 公開イベントのクライアント側 404 ガード除去<br>直リンク・リロードは Function が 404、アプリ内リンクは `is_deleted == false` クエリ由来のため実害なし |
+| [ ] | RC-9 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `user/index.html` に固定 canonical を追加したが、rewrite 対象外の公開パスでは差し替わらない<br>`/u/**` などが常にトップ canonical を返し、公開ページの正規URL判定を壊す |
+| [ ] | RC-10 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 公開イベントの存在確認を外した一方で、`exists === false` を UI が処理していない<br>存在しない `/c/**/e/**` へ SPA 遷移すると `/404` にならず無限ローディングになる |
 
 ---
 
@@ -364,3 +366,107 @@ Phase 2.5 SEO（#2335）のレビューコメント対応記録。パス解決�
 **想定工数**: —
 
 **判断理由**: サーバー側 404 が一次防御として機能しており、誤 404 → noindex のリスク（R-2）のほうが影響が大きい。ドキュメント（P2.5-2）にも方針が明記されている。
+
+---
+
+## 評価セッション（2026-08-30 15:31・shokujii-code-review）
+
+- **評価日時**: 2026-08-30 15:31 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: `fix/2335-phase-2.5-seo`
+- **PR**: #2338
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [ ] | RC-9 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | `user/index.html` に固定 canonical を追加したが、rewrite 対象外の公開パスでは差し替わらない<br>`/u/**` などが常にトップ canonical を返し、公開ページの正規URL判定を壊す |
+| [ ] | RC-10 | なし | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 公開イベントの存在確認を外した一方で、`exists === false` を UI が処理していない<br>存在しない `/c/**/e/**` へ SPA 遷移すると `/404` にならず無限ローディングになる |
+
+---
+
+**識別子**: RC-9（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `user/index.html:12`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+     <meta
+       name="description"
+       content="ランチ会・食事会の幹事向けプラットフォーム。イベント・会議・セミナー・社内交流会・異業種交流会。飲食店からお弁当やケータリングを配達・デリバリー"
+     />
++    <link rel="canonical" href="https://shokujii.jp/" />
+     <link rel="stylesheet" type="text/css" href="/loader.css" />
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `user/index.html` にトップ固定の canonical を追加していますが、`firebase.json` で canonical を差し替える Function rewrite は `/communitylist`・`/c/**`・`/c/**/e/**` だけです。`/u/**` など rewrite 対象外の公開 URL ではこの静的 canonical がそのまま返り、どのページでも正規 URL が `https://shokujii.jp/` になってしまいます。`user/src` 側にも route ごとに canonical を更新する処理は見当たらないため、公開プロフィール等のインデックス判定を壊す実害があります → 固定 canonical の追加は差し替え経路があるページに限定するか、rewrite 対象外の公開ルートでも正しい canonical を設定する仕組みを入れてください。
+
+**コメント要約**: `user/index.html` に固定 canonical を追加したが、rewrite 対象外の公開パスでは差し替わらない。
+`/u/**` などが常にトップ canonical を返し、公開ページの正規URL判定を壊す。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 差分で追加された canonical が rewrite 対象外ルートにも配信されるため、公開ページの canonical が誤る実害がある。修正方針は複数あるが、いずれにせよ現状のままはマージ不可のため 🚨 と判断した。
+
+---
+
+**識別子**: RC-10（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `user/src/router/index.ts:466`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-    // イベントページ or イベント管理ページの場合: 削除済みイベントは404へリダイレクト
+-    // 例: /c/example-community/e/abc123, /manage/event/abc123
+-    const eventIdMatch = to.path.match(/\/c\/[^/]+\/e\/([^/]+)/) || to.path.match(/\/manage\/event\/([^/]+)/)
+-    if (eventIdMatch) {
+-      const eventId = eventIdMatch[1]
++    // イベント管理ページのみ: 削除済みイベントは404へリダイレクト
++    // 公開 /c/**/e/** は ogpRequest 側で404済みのためクライアント存在チェックは行わない
++    // （getLoadedEvent タイムアウト時の誤404→noindex を防ぐ）
++    const manageEventMatch = to.path.match(/^\/manage\/event\/([^/]+)/)
++    if (manageEventMatch) {
++      const eventId = manageEventMatch[1]
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: 公開イベント詳細の `getLoadedEvent()` ガードを外した一方で、ページ側は `event != null` しか見ておらず、`base/src/stores/event.ts` が `exists.value = false` に落ちたケースを処理していません。そのため存在しない `/c/**/e/**` へ SPA 内遷移や手入力で到達すると、`/404` に遷移せずスピナーが出続けます。サーバー側 404 はリロード時しか効かないので、クライアント遷移の退行は別途吸収が必要です → 公開イベントでも「存在しない」ケースだけは `/404` に落とすか、少なくとも詳細ページで `eventStore.exists === false` を監視して not found を表示してください。
+
+**コメント要約**: 公開イベントの存在確認を外した一方で、`exists === false` を UI が処理していない。
+存在しない `/c/**/e/**` へ SPA 遷移すると `/404` にならず無限ローディングになる。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `base/src/stores/event.ts` は未存在イベントを `exists = false` で確定させるのに、今回の差分でそのシグナルを受ける側がなくなった。Function rewrite では防げない SPA 内遷移で実際に無限ローディングへ落ちるため、実害のある退行として 🚨 に分類した。
+
