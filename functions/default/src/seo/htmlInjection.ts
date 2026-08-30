@@ -43,8 +43,7 @@ export const stripStaticMetaDescription = (html: string): string =>
  * Function 注入ページ向け: index.html の静的 canonical（トップ固定）を除去。
  * 残すとページ固有 canonical と 2 本になり、矛盾する canonical は無視される。
  */
-export const stripStaticCanonicalLink = (html: string): string =>
-  html.replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')
+export const stripStaticCanonicalLink = (html: string): string => html.replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')
 
 export const injectSeoHtml = (html: string, context: SeoPageContext): string => {
   const documentTitle = buildDocumentTitle(context.pageTitle)

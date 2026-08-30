@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   DEFAULT_DOCUMENT_TITLE,
@@ -8,8 +8,24 @@ import {
   parseErrorCodeFromRoute,
   parseEventIdFromPath,
 } from '@/router/documentTitleHelpers.js'
+
+vi.mock('@shokujii/base/plugins/i18n/index.js', () => ({
+  getI18n: vi.fn(() => ({
+    global: {
+      t: (key: string) => (key === 'communitylist.page_title' ? 'コミュニティ一覧' : key),
+    },
+  })),
+}))
+
+vi.mock('@shokujii/base/stores/community.js', () => ({
+  useCommunityStore: vi.fn(),
+}))
+
+vi.mock('@shokujii/base/stores/event.js', () => ({
+  useEventStore: vi.fn(),
+}))
+
 import { resolveDocumentTitle } from '@/router/documentTitle.js'
-import { getI18n } from '@shokujii/base/plugins/i18n/index.js'
 
 describe('documentTitle', () => {
   it('formatDocumentTitle matches server-side suffix format', () => {
@@ -50,9 +66,8 @@ describe('documentTitle', () => {
   })
 
   it('resolveDocumentTitle returns community list title without Firestore', async () => {
-    const t = getI18n().global.t as (key: string) => string
-    await expect(resolveDocumentTitle({ path: '/communitylist' } as never)).resolves.toBe(
-      formatDocumentTitle(t('communitylist.page_title')),
-    )
+    await expect(
+      resolveDocumentTitle({ path: '/communitylist', params: {} } as never),
+    ).resolves.toBe(formatDocumentTitle('コミュニティ一覧'))
   })
 })
