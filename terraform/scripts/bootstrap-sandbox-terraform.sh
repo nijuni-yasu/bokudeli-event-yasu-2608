@@ -29,6 +29,11 @@ if [[ -d .terraform ]]; then
 fi
 
 chmod +x init.sh
+cat <<EOF > terraform.tfvars
+project = "${PROJECT_ID}"
+github_repo = "${GITHUB_REPO}"
+github_env = ""
+EOF
 printf '%s\n%s\n\n' "${PROJECT_ID}" "${GITHUB_REPO}" | ./init.sh
 
 terraform plan -out="tfplan-${NUM}"
@@ -39,6 +44,6 @@ echo "=== Next steps for ${PROJECT_ID} ==="
 echo "1. Create JSON key for firebase-deploy@${PROJECT_ID}.iam.gserviceaccount.com"
 echo "2. Register as GitHub Secret GCLOUD_SERVICE_KEY on ${GITHUB_REPO}"
 echo "3. Copy Secret Manager values from bokudeli-event-yasu-2605 (or test)"
-echo "4. Run deploy workflows (firestore → storage → functions → user → partner)"
+echo "4. Run deploy workflows (firestore → storage → user → partner; functions は Phase 3 の 0004 後)"
 echo ""
 echo "If google_storage_bucket.default returns 409, see terraform/README.md import section."
