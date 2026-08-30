@@ -9,6 +9,12 @@
 set -euo pipefail
 
 NUM="${1:?usage: $0 <2606|2607|2608>}"
+
+case "$NUM" in
+  2606|2607|2608) ;;
+  *) echo "unsupported: $NUM (allowed: 2606, 2607, 2608)"; exit 1 ;;
+esac
+
 PROJECT_ID="bokudeli-event-yasu-${NUM}"
 GITHUB_REPO="nijuni-yasu/bokudeli-event-yasu-${NUM}"
 
