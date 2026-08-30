@@ -66,8 +66,8 @@ describe('documentTitle', () => {
   })
 
   it('resolveDocumentTitle returns community list title without Firestore', async () => {
-    await expect(
-      resolveDocumentTitle({ path: '/communitylist', params: {} } as never),
-    ).resolves.toBe(formatDocumentTitle('コミュニティ一覧'))
+    await expect(resolveDocumentTitle({ path: '/communitylist', params: {} } as never)).resolves.toBe(
+      formatDocumentTitle('コミュニティ一覧'),
+    )
   })
 })
