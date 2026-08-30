@@ -18,7 +18,7 @@ TERRAFORM_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${TERRAFORM_DIR}"
 
 if [[ -d .terraform ]]; then
-  echo "Remove existing .terraform first (switching project)"
+  echo "Removing existing .terraform (switching project)"
   rm -rf .terraform
 fi
 
