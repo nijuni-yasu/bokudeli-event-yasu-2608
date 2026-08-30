@@ -144,6 +144,9 @@ const buildEventSeoContext = (params: {
       ]),
     ),
     prerenderHtml: buildEventPrerenderHtml({
+      site: ogp.site,
+      communityAccount: eventData.community_account,
+      communityName: eventData.community_name,
       eventName: eventData.event_name,
       eventDesc: eventData.event_desc,
       startDatetimeMillis: eventData.event_start_datetime,
@@ -186,6 +189,7 @@ const buildCommunitySeoContext = (params: {
       ]),
     ),
     prerenderHtml: buildCommunityPrerenderHtml({
+      site: ogp.site,
       communityName: communityData.community_name,
       communityDesc: communityData.community_desc,
     }),

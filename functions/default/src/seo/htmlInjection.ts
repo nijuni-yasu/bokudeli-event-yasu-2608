@@ -35,6 +35,10 @@ const replaceTitle = (html: string, title: string): string => {
   return html.replace(/<title>[^<]*<\/title>/, () => `<title>${escaped}</title>`)
 }
 
+/** Function 注入ページ向け: index.html の静的 meta description を除去（重複防止） */
+export const stripStaticMetaDescription = (html: string): string =>
+  html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>\s*/i, '')
+
 export const injectSeoHtml = (html: string, context: SeoPageContext): string => {
   const documentTitle = buildDocumentTitle(context.pageTitle)
   const seoHeadBlock = buildSeoHeadBlock({
@@ -44,7 +48,8 @@ export const injectSeoHtml = (html: string, context: SeoPageContext): string => 
   })
   const ogpBlock = buildOgpMetaTags(context.ogp)
 
-  let result = replaceTitle(html, documentTitle)
+  let result = stripStaticMetaDescription(html)
+  result = replaceTitle(result, documentTitle)
   result = replaceSection(result, SEO_HEAD_BEGIN, SEO_HEAD_END, `\n${seoHeadBlock}\n`)
   result = replaceSection(result, OGP_BEGIN_TAG, OGP_END_TAG, ogpBlock)
   result = replaceSection(result, SEO_BODY_BEGIN, SEO_BODY_END, `\n${context.prerenderHtml}\n`)

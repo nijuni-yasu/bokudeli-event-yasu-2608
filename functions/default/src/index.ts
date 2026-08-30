@@ -17,7 +17,7 @@ setGlobalOptions({ region: 'asia-northeast1' })
 export const {
   getInvitationUrlForCommunityManager, acceptInvitationForCommunityManager,
   sendTestLetter,
-  handleEventOgpRequest, handleCommunityOgpRequest, handleSitemapRequest,
+  handleEventOgpRequest, handleCommunityOgpRequest, handleCommunityListSeoRequest, handleSitemapRequest,
   communityAdded, communityContact,
   createStripeCheckoutSession, stripeWebhook, cancelOrders,
   eventInformation, eventInformationPreview,
@@ -86,6 +86,7 @@ export const {
   import('./communityManager.js'),
   import('./letter.js'),
   import('./ogpRequest.js'),
+  import('./communityListSeoRequest.js'),
   import('./sitemapRequest.js'),
   import('./communityMail.js'),
   import('./stripe.js'), import('./stripeWebhook.js'), import('./cancelOrders.js'),
