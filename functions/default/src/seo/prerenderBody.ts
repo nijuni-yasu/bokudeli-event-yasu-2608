@@ -1,8 +1,11 @@
 import { convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { computeEventFullAddress } from '@shokujii/common/utils/splitAddress.js'
-import { escapeHtmlText, toPlainTextExcerpt } from './escape.js'
+import { escapeHtmlAttribute, escapeHtmlText, toPlainTextExcerpt } from './escape.js'
 
 export interface EventPrerenderInput {
+  site: string
+  communityAccount: string
+  communityName: string
   eventName: string
   eventDesc: string
   startDatetimeMillis: number
@@ -13,9 +16,13 @@ export interface EventPrerenderInput {
 }
 
 export interface CommunityPrerenderInput {
+  site: string
   communityName: string
   communityDesc: string
 }
+
+const buildNavLink = (href: string, label: string): string =>
+  `<a href="${escapeHtmlAttribute(href)}">${escapeHtmlText(label)}</a>`
 
 export const buildEventPrerenderHtml = (input: EventPrerenderInput): string => {
   const datetimeLabel = convertToDatetimeWeekdayShort(input.startDatetimeMillis)
@@ -25,11 +32,17 @@ export const buildEventPrerenderHtml = (input: EventPrerenderInput): string => {
     event_address_detail: input.eventAddressDetail,
   })
   const description = toPlainTextExcerpt(input.eventDesc)
+  const communityUrl = `${input.site}/c/${input.communityAccount.toLowerCase()}`
 
   const addressBlock = fullAddress !== '' ? `<p>${escapeHtmlText(fullAddress)}</p>` : ''
   const descriptionBlock = description !== '' ? `<p>${escapeHtmlText(description)}</p>` : ''
+  const navBlock = `<nav>
+  ${buildNavLink(`${input.site}/`, 'トップ')}
+  · ${buildNavLink(communityUrl, input.communityName)}
+</nav>`
 
   return `<article>
+  ${navBlock}
   <h1>${escapeHtmlText(input.eventName)}</h1>
   <p>${escapeHtmlText(datetimeLabel)} · ${escapeHtmlText(input.shopName)}</p>
   ${addressBlock}
@@ -40,8 +53,13 @@ export const buildEventPrerenderHtml = (input: EventPrerenderInput): string => {
 export const buildCommunityPrerenderHtml = (input: CommunityPrerenderInput): string => {
   const description = toPlainTextExcerpt(input.communityDesc)
   const descriptionBlock = description !== '' ? `<p>${escapeHtmlText(description)}</p>` : ''
+  const navBlock = `<nav>
+  ${buildNavLink(`${input.site}/`, 'トップ')}
+  · ${buildNavLink(`${input.site}/communitylist`, 'コミュニティ一覧')}
+</nav>`
 
   return `<article>
+  ${navBlock}
   <h1>${escapeHtmlText(input.communityName)}</h1>
   ${descriptionBlock}
 </article>`

@@ -5,6 +5,10 @@ export const formatDocumentTitle = (pageName: string): string => `${pageName} | 
 
 const EVENT_PATH_PATTERN = /^\/c\/[^/]+\/e\/([^/]+)/
 const COMMUNITY_PATH_PATTERN = /^\/c\/([^/]+)$/
+const COMMUNITY_LIST_PATH_PREFIX = '/communitylist'
+
+export const isCommunityListPath = (path: string): boolean =>
+  path === COMMUNITY_LIST_PATH_PREFIX || path.startsWith(`${COMMUNITY_LIST_PATH_PREFIX}/`)
 
 export const parseEventIdFromPath = (path: string): string | null => {
   const match = path.match(EVENT_PATH_PATTERN)

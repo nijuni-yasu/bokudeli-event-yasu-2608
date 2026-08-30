@@ -11,6 +11,11 @@ export interface SitemapEventEntry {
   updatedAtMillis: number
 }
 
+export interface SeoCommunityPreviewEntry {
+  communityAccount: string
+  communityName: string
+}
+
 const toUpdatedAtMillis = (value: unknown): number | undefined => {
   if (value instanceof Timestamp) {
     return value.toMillis()
@@ -58,5 +63,30 @@ export const getPublicEventsForSitemap = async (): Promise<SitemapEventEntry[]> 
       return []
     }
     return [{ communityAccount, eventId: doc.id, updatedAtMillis }]
+  })
+}
+
+export const getPublicCommunitiesForSeoPreview = async (limit: number): Promise<SeoCommunityPreviewEntry[]> => {
+  const db = getFirestore()
+  const snapshot = await db
+    .collection('communities')
+    .where('is_public', '==', true)
+    .where('is_approved', '==', true)
+    .where('enterprise_id', '==', null)
+    .orderBy('community_num_members', 'desc')
+    .limit(limit)
+    .get()
+
+  return snapshot.docs.flatMap((doc) => {
+    const data = doc.data()
+    const communityAccount = data.community_account
+    const communityName = data.community_name
+    if (typeof communityAccount !== 'string' || communityAccount === '') {
+      return []
+    }
+    if (typeof communityName !== 'string' || communityName === '') {
+      return []
+    }
+    return [{ communityAccount, communityName }]
   })
 }

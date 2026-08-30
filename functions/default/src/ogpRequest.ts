@@ -42,6 +42,8 @@ const forwardSafeHeaders = (from: Response, to: HttpResponse, options?: { exclud
     'proxy-authorization',
     'te',
     'trailer',
+    'etag',
+    'last-modified',
   ])
 
   from.headers.forEach((value, key) => {
@@ -106,6 +108,27 @@ const sendNoindexSpaHtml = (res: HttpResponse, indexHtmlResponse: Response, html
     .send(html)
 }
 
+/** `/c/:account/e/:eventId/members` 等、canonical 詳細以外の公開 SPA 子パス（末尾スラッシュ許容） */
+const isEventSpaSubpath = (paths: string[]): boolean => {
+  const segments = paths.filter((segment) => segment !== '')
+  return segments.length === 5 && segments[0] === 'c' && segments[2] === 'e' && segments[4] === 'members'
+}
+
+/** `/c/:account/invites` 等、canonical コミュニティ詳細以外の公開 SPA 子パス（末尾スラッシュ許容） */
+const isCommunitySpaSubpath = (paths: string[]): boolean => {
+  const segments = paths.filter((segment) => segment !== '')
+  return segments.length === 3 && segments[0] === 'c' && segments[2] === 'invites' && segments[1] !== ''
+}
+
+const sendSpaFallback = async (res: HttpResponse): Promise<void> => {
+  const indexResult = await fetchIndexHtml()
+  if (indexResult === undefined) {
+    res.status(500).send('Could not retrieve index.html')
+    return
+  }
+  sendNoindexSpaHtml(res, indexResult.response, indexResult.html)
+}
+
 const buildEventSeoContext = (params: {
   canonicalUrl: string
   eventData: ShokujiiEvent
@@ -144,6 +167,9 @@ const buildEventSeoContext = (params: {
       ]),
     ),
     prerenderHtml: buildEventPrerenderHtml({
+      site: ogp.site,
+      communityAccount: eventData.community_account,
+      communityName: eventData.community_name,
       eventName: eventData.event_name,
       eventDesc: eventData.event_desc,
       startDatetimeMillis: eventData.event_start_datetime,
@@ -186,6 +212,7 @@ const buildCommunitySeoContext = (params: {
       ]),
     ),
     prerenderHtml: buildCommunityPrerenderHtml({
+      site: ogp.site,
       communityName: communityData.community_name,
       communityDesc: communityData.community_desc,
     }),
@@ -226,6 +253,17 @@ export const handleEventOgpRequest: HttpsFunction = https.onRequest(
     const path = paths.join('/')
 
     if (paths[1] !== 'c' || paths[3] !== 'e' || paths.length !== 5) {
+      if (isEventSpaSubpath(paths)) {
+        try {
+          await sendSpaFallback(res)
+        } catch (error) {
+          logger.warn('Unexpected error in event SPA subpath handler', { error })
+          if (!res.headersSent) {
+            res.status(500).send('Internal Server Error')
+          }
+        }
+        return
+      }
       sendNotFound(res)
       return
     }
@@ -316,6 +354,17 @@ export const handleCommunityOgpRequest: HttpsFunction = https.onRequest(
     const path = paths.join('/')
 
     if (paths[1] !== 'c' || paths.length !== 3 || paths[2] === undefined || paths[2] === '') {
+      if (isCommunitySpaSubpath(paths)) {
+        try {
+          await sendSpaFallback(res)
+        } catch (error) {
+          logger.warn('Unexpected error in community SPA subpath handler', { error })
+          if (!res.headersSent) {
+            res.status(500).send('Internal Server Error')
+          }
+        }
+        return
+      }
       sendNotFound(res)
       return
     }

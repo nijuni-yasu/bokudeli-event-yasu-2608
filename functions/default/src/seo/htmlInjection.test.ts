@@ -13,6 +13,11 @@ const SAMPLE_HTML = `<!doctype html>
 <html lang="ja">
   <head>
     <title>食事でつながる「shokujii」</title>
+    <meta
+      name="description"
+      content="ランチ会・食事会の幹事向けプラットフォーム。イベント・会議・セミナー・社内交流会・異業種交流会。飲食店からお弁当やケータリングを配達・デリバリー"
+    />
+    <link rel="canonical" href="https://shokujii.jp/" />
     ${OGP_BEGIN_TAG}
     <meta property="og:title" content="default" />
     ${OGP_END_TAG}
@@ -56,6 +61,22 @@ describe('injectSeoHtml', () => {
     expect(result).toContain('<link rel="canonical" href="https://shokujii.jp/c/test/e/abc123">')
     expect(result).toContain('<script type="application/ld+json">')
     expect(result).toContain('"@type":"Event"')
+  })
+
+  it('removes static meta description so only one description tag remains', () => {
+    const result = injectSeoHtml(SAMPLE_HTML, baseContext)
+    const matches = result.match(/<meta name="description"/g)
+    expect(matches?.length).toBe(1)
+    expect(result).toContain('content="テスト説明文"')
+    expect(result).not.toContain('幹事向けプラットフォーム')
+  })
+
+  it('removes static canonical so only the page canonical remains', () => {
+    const result = injectSeoHtml(SAMPLE_HTML, baseContext)
+    const matches = result.match(/<link rel="canonical"/g)
+    expect(matches?.length).toBe(1)
+    expect(result).toContain('href="https://shokujii.jp/c/test/e/abc123"')
+    expect(result).not.toContain('<link rel="canonical" href="https://shokujii.jp/" />')
   })
 
   it('replaces OGP block while keeping markers', () => {

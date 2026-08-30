@@ -3,9 +3,10 @@
 Shokujii（shokujii.jp）の検索エンジン最適化に関する調査結果と対策タスク。
 
 - **関連 Issue**: [#2195 SEO 対策（robots / sitemap / 動的メタ / 構造化データ）](https://github.com/nijuniinc/bokudeli-event-new/issues/2195)
+- **露出施策（開発 × プロモーション）**: [13_成長・露出/01_露出獲得施策.md](../13_成長・露出/01_露出獲得施策.md)
 - **対象アプリ**: 主に `user`（一般ユーザー向け・shokujii.jp）
 - **対象外**: `partner` / `enterprise` / `manager`（管理画面。検索流入は不要。noindex のみ実施）
-- **関連スキル**: `/seo-audit`（監査）、`/schema`（JSON-LD・構造化データ。skills.sh 上は schema-markup）、`/ai-seo`（Phase 3 GEO）、`/programmatic-seo`（Phase 4 量産ページ）、`/content-strategy`（Phase 4 キーワード・コンテンツ設計）
+- **関連スキル**: `/seo-audit`（監査）、`/schema`（JSON-LD・構造化データ。skills.sh 上は schema-markup）、`/ai-seo`（Phase 3B GEO）、`/programmatic-seo`（Phase 4 量産ページ）、`/content-strategy`（Phase 4 キーワード・コンテンツ設計）
 
 ---
 
@@ -19,25 +20,38 @@ Shokujii（shokujii.jp）の検索エンジン最適化に関する調査結果�
 
 タスク見出しの `[S]` / `[M]` / `[L]` は上記の目安。実装・レビュー・デプロイ・検証を含む。
 
+進捗表記: 完了 **✅** / 未着手・進行中 **`[ ]`**
+
 ---
 
 ## スキルとタスクの対応
 
 | スキル | 主な用途 | 対応 Phase / タスク |
 |--------|----------|---------------------|
-| `/seo-audit` | 技術 SEO 監査・再監査 | Phase 0、P3-1、検証チェックリスト |
-| `/schema` | JSON-LD 実装・検証・拡張 | P2-4 / **P2-4-V**、**P3-S1〜3**、P4-5（LocalBusiness） |
-| `/ai-seo` | AI 検索・GEO 最適化 | **P3-5-1〜4** |
+| `/seo-audit` | 技術 SEO 監査・再監査 | Phase 2.5、P3-1、検証チェックリスト |
+| `/schema` | JSON-LD 実装・検証・拡張 | P2-4 / **P2-4-V** / **P2.5-7**、**P3-S1〜3**、P4-5（LocalBusiness） |
+| `/ai-seo` | AI 検索・GEO 最適化 | **Phase 3B（P3B-1〜4）** |
 | `/programmatic-seo` | 量産ページ設計・プレイブック | P4-0-4、P4-8〜9 |
 | `/content-strategy` | キーワード・ピラー・Hub/Spoke 設計 | **P4-0-1〜2**、P4-4 |
 
-**推奨実行順**: デプロイ後 **`/schema` 検証（P2-4-V）** → **P3-1（GSC 再計測）** → **`/schema` ギャップ修正（P3-S3）** → **`/ai-seo`（P3-5）** → **P3-6 着手判断** → **`/content-strategy` + `/programmatic-seo`（P4-0）**
+**推奨実行順（2026-08-30 更新）**
+
+1. **P2.5-7** 本番デプロイ後検証（GSC レンダリング済み HTML・Schema.org Validator）— **現在ここ**
+2. **P3-1** GSC 再ベースライン（sitemap 成功後 **7 日後・14 日後** の 2 回）
+3. **P2-4-V 本番**・検証チェックリスト完走
+4. **Phase 3B（GEO）** — インデックス改善が確認できてから
+5. **Phase 4（pSEO）** — P3-6 ゲート通過後
+
+> Phase 3B（GEO）・Phase 4（pSEO）は **インデックス基盤が機能している前提** の施策。
+> sitemap 未取得・レンダリング後 noindex・description 重複が残る間は着手しない。
 
 ---
 
 ## 調査サマリ
 
 2026-07-19 に `/seo-audit` および `/programmatic-seo` スキルに基づきコードベースと本番 URL を調査した（**初回監査時点のベースライン**。下記「実装進捗サマリ」参照）。
+
+2026-08-30 に本番 URL・GSC を再監査。sitemap 再送信成功・代表イベント URL ライブテスト合格を確認（下記 Phase 2.5 参照）。
 
 | 観点 | 評価（初回） | 概要（初回） |
 |------|-------------|-------------|
@@ -51,38 +65,42 @@ Shokujii（shokujii.jp）の検索エンジン最適化に関する調査結果�
 
 **初回結論**: SNS シェア（OGP）対応は整っているが、**検索エンジン向け SEO はほぼ未着手**。Phase 1〜2 で既存ページのインデックス基盤を整え、Phase 4 で検索需要に合わせた量産ページを段階的に検討する。
 
-### 実装進捗サマリ（2026-07-19 更新）
+### 実装進捗サマリ（2026-08-30 更新）
 
 | 観点 | 評価（現在） | 概要 |
 |------|-------------|------|
-| クローラビリティ | **改善済み（要デプロイ確認）** | robots.txt・sitemap.xml・404 化を実装。本番 URL 検証は未 |
-| インデックス | 要改善 | GSC ベースライン 100 / 68。Phase 2 デプロイ後に P3-1 で再計測 |
-| 技術基盤 | **大幅改善（要デプロイ確認）** | title / description / canonical の動的注入を実装 |
-| 構造化データ | **実装済み（要デプロイ確認）** | Event / Organization + BreadcrumbList + トップ WebSite/Organization。**P2-4-V** sandbox 合格（本番未） |
-| レンダリング | **部分改善** | P3-4 サーバー注入 + **P3-3** Vue 側 h1 整備。完全 SSR ではない |
-| 管理画面 | **改善済み（要デプロイ確認）** | partner / enterprise / manager に noindex headers |
-| programmatic SEO | 未着手 | Phase 4。`/content-strategy` + `/programmatic-seo` で P4-0 から |
-| AI 検索（GEO） | 未着手 | Phase 3。**P3-5**（`/ai-seo`） |
+| クローラビリティ | **本番 OK** | robots.txt・sitemap.xml 200。GSC sitemap **成功（1,084 URL・2026-08-30）** |
+| インデックス | **回復待ち** | ベースライン 100 / 68（2026-07-10）。sitemap 成功後に P3-1 で再計測 |
+| 技術基盤 | **実装済み（デプロイ待ち）** | P2.5-2〜6 実装完了。description 重複除去・内部リンク・communitylist SEO・301。**本番 curl / GSC で P2.5-7 検証待ち** |
+| 構造化データ | **本番 OK** | 代表 URL ライブテスト Event 有効 1 件（2026-08-30） |
+| レンダリング | **要検証** | ライブテストは合格。レンダリング後 noindex 修正（P2.5-2）実装済み。**デプロイ後 GSC で再確認** |
+| 管理画面 | **本番 OK** | partner / enterprise / manager に noindex headers |
+| programmatic SEO | 未着手 | Phase 4。Phase 2.5 + P3-1 後 |
+| AI 検索（GEO） | 未着手 | **Phase 3B**。インデックス改善後 |
 
 ---
 
 ## 現状（できていること）
 
-- [x] `user/index.html` に OGP / Twitter Card の静的メタタグ
-- [x] `lang="ja"` 設定
-- [x] Firebase Hosting + HTTPS
-- [x] レスポンシブ UI（Vuetify）
-- [x] `functions/default/src/ogpRequest.ts` による `/c/**`・`/c/**/e/**` の OGP 動的注入
-- [x] `firebase.json` で OGP 対象パスを Cloud Function にルーティング
-- [x] SEO 用エージェントスキルの導入（#2195）: `seo-audit` / `programmatic-seo` / `schema` / `ai-seo` / `content-strategy`
-- [x] Google Search Console に `shokujii.jp`（ドメインプロパティ）を登録
-- [x] Phase 1 主要タスク（robots.txt、noindex、静的メタ）
-- [x] Phase 2 主要タスク（動的 title / description / canonical、JSON-LD、sitemap、404 化）
-- [x] P3-4 プリレンダー（`SEO_BODY` マーカーへイベント・コミュニティ概要 HTML 注入）
-- [x] P3-3 公開ページ Vue 側 h1（EventDetailsCard / コミュニティヒーロー）
-- [x] P3-S1〜3 構造化データ拡張（WebSite / BreadcrumbList / Event enrich）
-- [x] P2-4-V sandbox 構造化データ検証（Event 有効 1 件）
-- [ ] Phase 2 デプロイ後の本番検証（**P2-4-V 本番**、検証チェックリスト）— 2026-08-24: curl / Rich Results Test / Schema.org Validator ✅。**未**: GSC ライブテスト・インデックス検証
+- ✅ `user/index.html` に OGP / Twitter Card の静的メタタグ
+- ✅ `lang="ja"` 設定
+- ✅ Firebase Hosting + HTTPS
+- ✅ レスポンシブ UI（Vuetify）
+- ✅ `functions/default/src/ogpRequest.ts` による `/c/**`・`/c/**/e/**` の OGP 動的注入
+- ✅ `firebase.json` で OGP 対象パスを Cloud Function にルーティング
+- ✅ SEO 用エージェントスキルの導入（#2195）: `seo-audit` / `programmatic-seo` / `schema` / `ai-seo` / `content-strategy`
+- ✅ Google Search Console に `shokujii.jp`（ドメインプロパティ）を登録
+- ✅ Phase 1 主要タスク（robots.txt、noindex、静的メタ）
+- ✅ Phase 2 主要タスク（動的 title / description / canonical、JSON-LD、sitemap、404 化）
+- ✅ P3-4 プリレンダー（`SEO_BODY` マーカーへイベント・コミュニティ概要 HTML 注入）
+- ✅ P3-3 公開ページ Vue 側 h1（EventDetailsCard / コミュニティヒーロー）
+- ✅ P3-S1〜3 構造化データ拡張（WebSite / BreadcrumbList / Event enrich）
+- ✅ P2-4-V sandbox 構造化データ検証（Event 有効 1 件）
+- ✅ P2-4-V 本番 curl / Rich Results Test / Schema.org Validator（2026-08-24）
+- ✅ GSC sitemap 再送信成功（1,084 URL・2026-08-30）
+- ✅ 本番代表 URL ライブテスト合格（`/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL`・2026-08-30）
+- ✅ Phase 2.5 クリティカル修正（P2.5-2〜6 実装・2026-08-30）
+- [ ] P2.5-7 本番検証（デプロイ後）・GSC レンダリング済み HTML の noindex 再確認
 
 ### Search Console（ベースライン）
 
@@ -93,23 +111,23 @@ Shokujii（shokujii.jp）の検索エンジン最適化に関する調査結果�
 
 - ウェブ検索の合計クリック数: **645 回**（約 3 ヶ月）
 - 日次クリックはおおむね 3〜16 回で変動（大きな上昇トレンドは見られない）
-- 推奨事項: 「最近、ページのインプレッション数が通常より減っています」— Phase 1〜2 実施後に再確認
+- 推奨事項: 「最近、ページのインプレッション数が通常より減っています」— Phase 2.5 完了 + P3-1 再計測後に再確認
 
-#### ページのインデックス登録（2026-07-10 時点）
+#### ページのインデックス登録（2026-07-10 時点・再計測前）
 
 レポート: [インデックス作成 > ページ](https://search.google.com/search-console/index?resource_id=sc-domain%3Ashokujii.jp&hl=ja)
 
 | 区分 | 件数 | 備考 |
 |------|------|------|
 | **登録済み** | **100** | 4/20〜6/27 は約 **125** 件で横ばい → **6/27 頃に 100 へ急減**（-25 件） |
-| **未登録** | **68** | 下表の理由別 |
+| **未登録** | **68** | 下表の理由別。**P3-1（sitemap 成功後）で再計測予定** |
 
 **未登録の内訳**
 
 | 理由 | 件数 | ソース | 対応 Phase / タスク |
 |------|------|--------|---------------------|
-| クロール済み - インデックス未登録 | **63** | Google システム | Phase 2（P2-1〜4: title / description / canonical / JSON-LD）。SPA + 同一メタが主因と推定 |
-| ソフト 404 | **3** | ウェブサイト | Phase 2（P2-5, P2-9）+ **P0-3** で代表 URL 特定 |
+| クロール済み - インデックス未登録 | **63** | Google システム | Phase 2.5（P2.5-2〜3: noindex 調査・description 重複）+ P3-1 再計測 |
+| ソフト 404 | **3** | ウェブサイト | Phase 2.5（P2.5-7）+ **P0-3** で代表 URL 特定 |
 | 見つかりませんでした（404） | **1** | ウェブサイト | **P0-3** で URL 特定・修正 |
 | ページにリダイレクトがあります | **1** | ウェブサイト | 意図的リダイレクトなら問題なし。要確認 |
 | サーバーエラー（5xx） | 0 | — | — |
@@ -118,47 +136,46 @@ Shokujii（shokujii.jp）の検索エンジン最適化に関する調査結果�
 **所見**
 
 - 未登録 68 件の **93%（63/68）** が「クロール済み・未登録」。Google はページを認識しているが、品質・差別化不足でインデックスを見送っている状態。
-- コード監査で判明した **全ページ同一 title / description 欠如** と整合。Phase 2 のメタ動的化が最優先の対策になる。
-- ソフト 404（3 件）は SPA の `** → index.html` フォールバック（課題 M-1）と一致。P2-5 の 404 化で改善見込み。
+- 2026-08-30: sitemap が GSC で **取得できませんでした** → 再送信後 **成功（1,084 URL）**。以降クロール・インデックス回復を P3-1 で追う。
 - 修正デプロイ後、Search Console で各カテゴリの **修正の確認（Validate fix）** を実施する。
 
-#### URL 検査：代表イベントページ（2026-07-19）
+#### サイトマップ（2026-08-30）
+
+| 項目 | 値 |
+|------|-----|
+| URL | `https://shokujii.jp/sitemap.xml` |
+| GSC ステータス | **成功しました**（再送信後） |
+| 検出ページ数 | **1,084** |
+| 最終読み込み | 2026-08-30 |
+
+#### URL 検査：代表イベントページ（2026-07-19・旧）
 
 対象 URL: [https://shokujii.jp/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf](https://shokujii.jp/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf)  
 GSC: [URL 検査](https://search.google.com/search-console/inspect?resource_id=sc-domain%3Ashokujii.jp&id=TfW_8xocw-dGlvG5sD8NiQ&hl=ja)
 
-**2 つの結果が矛盾している点に注意**
+**2 つの結果が矛盾している点に注意（2026-07-19 時点）**
 
 | 検査種別 | 結果 | 日時 |
 |----------|------|------|
 | インデックス登録済み URL（過去クロール） | ✅ **登録済み**（配信可能） | 最終クロール 2026-07-10 |
 | **ライブテスト**（公開 URL をテスト） | ❌ **登録不可 — ソフト 404** | 2026-07-19 17:58 |
 
-→ 過去にはインデックスされていたが、**現時点の HTML では Google が「実質 404」と判定**している。登録済み 100 件 → 6/27 の 125→100 急減とも整合。**他のイベントページも同様の可能性が高い**。
+→ Phase 2 デプロイ後、**2026-08-30 の新代表 URL** ではライブテスト合格（下記）。旧代表 URL は P2.5-7 で再検査する。
 
-**ライブテストで判明した問題**
+#### URL 検査：代表イベントページ（2026-08-30・新）
 
-| 項目 | 状態 | 対応タスク |
-|------|------|-----------|
-| ページの可用性 | **ソフト 404** | P2-1〜4, P3-4（メタ + 本文のサーバー注入） |
-| ユーザー指定 canonical | **なし** | P2-3 |
-| `<title>` | トップと同一「食事でつながる「shokujii」」 | P2-1（ogpRequest は OGP のみ差し替え、title は未変更） |
-| `<meta name="description">` | なし | P2-2 |
-| 初期 HTML の `#app` 内 | ローディングスピナーのみ（イベント本文なし） | P3-4（プリレンダリング検討） |
-| サイトマップ | **一時的な処理エラー** | P2-7（sitemap 未配置が原因） |
-| 参照元ページ | 検出されませんでした | P2-7 + 内部リンク強化 |
-| HTTPS | ✅ 問題なし | — |
-| クロール / インデックス許可 | ✅ 問題なし（noindex なし） | — |
+対象 URL: [https://shokujii.jp/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL](https://shokujii.jp/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL)
 
-**ソフト 404 の技術的原因（推定）**
-
-1. すべてのイベント URL が **同一 `<title>`** と **空に近い初期 HTML** を返す（`user/index.html` + ローダーのみ）
-2. `ogpRequest.ts` は **OGP タグだけ**差し替え、`title` / `description` / 本文は触らない
-3. Google のライブテストは「URL ごとに固有のコンテンツがあるか」を見る → トップページのコピーと判別 → **ソフト 404**
+| 検査種別 | 結果 | 備考 |
+|----------|------|------|
+| 登録済み URL | ❌ **未登録**（Google 未認識） | 前回クロールなし。sitemap 成功後に回復見込み |
+| **ライブテスト** | ✅ **登録可能** | インデックス許可・canonical・Event JSON-LD 有効 1 件 |
+| サイトマップ | 未検出（当時） | sitemap 再送信 **成功後** に再確認 |
 
 **P0-3 サンプル URL（記録済み）**
 
-- イベント（登録済みだがライブテスト Soft 404）: `https://shokujii.jp/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf`
+- イベント（旧・Soft 404 再現）: `https://shokujii.jp/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf`
+- イベント（新・ライブテスト合格）: `https://shokujii.jp/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL`
 - 登録済み一覧の他例: `/c/hr_library/e/...`, `/c/foodculture/e/...`, `https://shokujii.jp/`, `https://about.shokujii.jp/`
 
 ### 関連ファイル
@@ -168,6 +185,7 @@ GSC: [URL 検査](https://search.google.com/search-console/inspect?resource_id=s
 | `user/index.html` | 静的 OGP プレースホルダ + `SEO_HEAD` / `SEO_BODY` マーカー |
 | `user/public/robots.txt` | クローラー指示・sitemap 参照 |
 | `functions/default/src/ogpRequest.ts` | コミュニティ・イベントページの SEO 動的注入 |
+| `functions/default/src/communityListSeoRequest.ts` | `/communitylist` の SEO 動的注入 |
 | `functions/default/src/sitemapRequest.ts` | `sitemap.xml` 動的生成 |
 | `functions/default/src/seo/` | title / meta / JSON-LD / プリレンダー HTML の純粋関数 |
 | `functions/default/src/stores/seoSitemap.ts` | sitemap 用 Firestore クエリ |
@@ -181,193 +199,179 @@ GSC: [URL 検査](https://search.google.com/search-console/inspect?resource_id=s
 
 ## 調査で判明した課題
 
-### 優先度: 高（技術 SEO）
+### 優先度: 高（技術 SEO）— 初回監査。Phase 1〜2 で大部分解消
+
+| # | 課題 | 証拠・影響 | 状態 |
+|---|------|-----------|------|
+| H-1 | **robots.txt が存在しない** | クローラー指示・sitemap 参照不可 | ✅ Phase 1 |
+| H-2 | **sitemap.xml が存在しない** | 公開 URL の発見困難 | ✅ Phase 2 + GSC 成功 |
+| H-3 | **全ページの title が同一** | SERP に全ページ同タイトル | ✅ Phase 2（`/c/**`） |
+| H-4 | **meta description が皆無** | スニペット機会損失 | ✅ Phase 2 + **P2.5-3**（`stripStaticMetaDescription`） |
+| H-5 | **構造化データが無い** | リッチリザルト機会損失 | ✅ Phase 2 |
+
+### 優先度: 高（2026-08-30 再監査・Phase 2.5 対象）
 
 | # | 課題 | 証拠・影響 |
 |---|------|-----------|
-| H-1 | **robots.txt が存在しない** | `https://shokujii.jp/robots.txt` が index.html を 200 で返す。クローラーへの指示・sitemap 参照ができない |
-| H-2 | **sitemap.xml が存在しない** | 公開コミュニティ・イベントが外部リンクなしでは発見されにくい |
-| H-3 | **全ページの title が同一** | `user/index.html` 固定。`document.title` 更新も未実装。SERP に全ページ同タイトル |
-| H-4 | **meta description が皆無** | `og:description` のみ。Google スニペット用の description タグが無い |
-| H-5 | **構造化データが無い** | JSON-LD 未使用。イベントリッチリザルト（日時・場所）の機会損失 |
+| R-1 | **GSC sitemap 取得失敗（歴史的）** | 「取得できませんでした」→ 再送信で **成功（1,084 URL）**。**2026-08-30 解消** |
+| R-2 | **レンダリング後 noindex の疑い** | sandbox P2-4-V で JS レンダリング後 `meta robots noindex` 検出。**P2.5-2 実装済み**（公開 `/c/**/e/**` から `getLoadedEvent` ガード除去）。GSC 再確認は P2.5-7 |
+| R-3 | **`<meta name="description">` が 2 本** | **P2.5-3 実装済み**（`injectSeoHtml` で静的 description を 1 件除去） |
+| R-4 | **プリレンダー HTML に内部リンクなし** | **P2.5-4 実装済み**（`prerenderBody.ts` に nav + `<a href>`） |
+| R-5 | **`/communitylist` が未最適化** | **P2.5-5 実装済み**（`handleCommunityListSeoRequest` + rewrite） |
+| R-6 | **終了イベントが sitemap に大量掲載** | **P2.5-8 保留**（全イベント sitemap 維持。P4-2 で再検討） |
 
 ### 優先度: 中（技術 SEO）
 
-| # | 課題 | 証拠・影響 |
-|---|------|-----------|
-| M-1 | **ソフト 404** | SPA + 同一 title。**GSC 集計 3 件 + イベント URL ライブテストでも再現**（2026-07-19） |
-| M-2 | **canonical タグが無い** | URL 検査で「ユーザー指定 canonical: なし」を確認。**GSC 実測済み** |
-| M-3 | **完全 CSR（SPA）** | JS 非実行クローラー・AI 検索系にコンテンツが見えない |
-| M-4 | **管理画面の noindex 未設定** | partner / enterprise のログイン画面が検索結果に出うる |
-| M-5 | **ogpRequest が title を更新しない** | OGP のみ差し替え。**ライブテスト Soft 404 の直接原因の一つ** |
+| # | 課題 | 証拠・影響 | 状態 |
+|---|------|-----------|------|
+| M-1 | **ソフト 404** | 2026-07-19 代表 URL で再現 | ⚠️ 新代表 URL はライブテスト合格。旧 URL 再検査（P2.5-7） |
+| M-2 | **canonical タグが無い** | GSC 実測済み | ✅ Phase 2 |
+| M-3 | **完全 CSR（SPA）** | AI クローラーに不利 | ⚠️ P3-4 で部分改善。完全 SSR ではない |
+| M-4 | **管理画面の noindex 未設定** | 検索結果に出うる | ✅ Phase 1 |
+| M-5 | **ogpRequest が title を更新しない** | Soft 404 原因の一つ | ✅ Phase 2 |
 
 ### 優先度: 低（技術 SEO）
 
-| # | 課題 | 証拠・影響 |
-|---|------|-----------|
-| L-1 | `twitter:site` に URL が入っている | 本来は @ユーザー名。アカウント無ければ削除 |
-| L-2 | トップページの `og:type` が `article` | トップは `website` が適切 |
-| L-3 | 公開ページに `<h1>` が無い | イベント名・コミュニティ名を h1 にすべき |
-| ~~L-4~~ | ~~Search Console 未登録~~ | **2026-07-19 登録済み**。ベースライン取得済み（P0-2） |
+| # | 課題 | 証拠・影響 | 状態 |
+|---|------|-----------|------|
+| L-1 | `twitter:site` に URL が入っている | 本来は @ユーザー名 | ✅ Phase 1 |
+| L-2 | トップページの `og:type` が `article` | トップは `website` が適切 | ✅ Phase 1 |
+| L-3 | 公開ページに `<h1>` が無い | イベント名・コミュニティ名を h1 に | ✅ P3-3 |
+| ~~L-4~~ | ~~Search Console 未登録~~ | **2026-07-19 登録済み** | ✅ |
 
 ### 優先度: 高（Search Console 実測・2026-07-10）
 
 | # | 課題 | 証拠・影響 |
 |---|------|-----------|
-| GSC-1 | **クロール済み・未登録が 63 件** | 最大のボトルネック。同一 title / 薄いコンテンツ / SPA の組み合わせが疑われる |
-| GSC-2 | **未登録合計 68 件（登録率 59%）** | 100 登録 / 168 既知 URL。Phase 2 後に再計測し改善率を KPI にする |
-| GSC-3 | **登録済みが 125→100 に急減（6/27 頃）** | ライブテスト Soft 404 と整合。放置するとさらに脱落するリスク |
-| GSC-4 | **イベント URL のライブテストが Soft 404** | 代表 URL で確認（2026-07-19）。**全イベントページに波及する可能性大** |
-
-
+| GSC-1 | **クロール済み・未登録が 63 件** | 最大のボトルネック。**P3-1 再計測で改善率を KPI 化** |
+| GSC-2 | **未登録合計 68 件（登録率 59%）** | 100 登録 / 168 既知 URL |
+| GSC-3 | **登録済みが 125→100 に急減（6/27 頃）** | ライブテスト Soft 404 と整合 |
+| GSC-4 | **イベント URL のライブテストが Soft 404** | 2026-07-19 旧代表 URL。**2026-08-30 新代表 URL は合格** |
 
 ### 優先度: 中（programmatic SEO・Phase 4 向け）
 
 | # | 課題 | 証拠・影響 |
 |---|------|-----------|
-| P-1 | **住所がフリーテキスト** | `event_address_base` 等が文字列のみ。都道府県・市区の階層ページを機械生成できない |
-| P-2 | **店舗の一般公開 URL が無い** | `PartnerShop` は partner 管理画面専用。店舗名指名検索を拾えない |
-| P-3 | **ハブページが未整備** | `/communitylist` のみ。エリア別・ジャンル別の内部リンク構造が無い |
-| P-4 | **終了イベントの扱い未定義** | 期限切れイベントが薄いページとして蓄積しうる |
-| P-5 | **subdomain_tags の URL 方針** | サブドメイン分割前提の設計。サブフォルダの方がドメインオーソリティを集約できる |
-| P-6 | **量産ページのレンダリング基盤が無い** | Phase 2 の ogpRequest は既存ページのメタ注入のみ。新規一覧ページの本文は CSR では不十分 |
+| P-1 | **住所がフリーテキスト** | 都道府県・市区の階層ページを機械生成できない |
+| P-2 | **店舗の一般公開 URL が無い** | 店舗名指名検索を拾えない |
+| P-3 | **ハブページが未整備** | `/communitylist` のみ |
+| P-4 | **終了イベントの扱い未定義** | sitemap 品質低下。**P2.5-8 保留**（P4-2 で再検討） |
+| P-5 | **subdomain_tags の URL 方針** | サブフォルダ推奨 |
+| P-6 | **量産ページのレンダリング基盤が無い** | Phase 4 で対応 |
 
 ---
 
 ## 対策タスクリスト
 
-進捗はチェックボックスで管理する。**Phase 1 → 2 → 3** の順で着手し、**Phase 4** は Phase 2 完了後に需要検証から段階的に進める。
+**Phase 0 → 1 → 2（実装済）→ 2.5（現在）→ 3 → 3B → 4** の順で着手する。
 
 ### Phase 0: 準備
 
 | 工数 | タスク |
 |------|--------|
-| — | [x] SEO 監査の実施（本ドキュメント） |
-| — | [x] GitHub Issue 作成（#2195） |
-| — | [x] エージェントスキル導入（初回: `seo-audit` / `programmatic-seo`） |
-| — | [x] **P0-5** 追加スキル導入（`schema` / `ai-seo` / `content-strategy`） |
-| [S] | [x] **P0-1** Google Search Console に shokujii.jp を登録<br>プロパティ: `sc-domain:shokujii.jp` |
-| [S] | [x] **P0-2** Search Console で現状のインデックス数・カバレッジを確認（ベースライン取得）<br>2026-07-10: 登録済み 100 / 未登録 68。内訳は上記「ページのインデックス登録」参照 |
-| [S] | [ ] **P0-3** 未登録 URL の代表サンプルを特定<br>イベント（Soft 404 再現）: `https://shokujii.jp/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf` **記録済み**。未登録 63 件・ソフト 404 3 件の URL エクスポートは残 |
-
-
+| — | ✅ SEO 監査の実施（本ドキュメント） |
+| — | ✅ GitHub Issue 作成（#2195） |
+| — | ✅ エージェントスキル導入（初回: `seo-audit` / `programmatic-seo`） |
+| — | ✅ **P0-5** 追加スキル導入（`schema` / `ai-seo` / `content-strategy`） |
+| [S] | ✅ **P0-1** Google Search Console に shokujii.jp を登録<br>プロパティ: `sc-domain:shokujii.jp` |
+| [S] | ✅ **P0-2** Search Console で現状のインデックス数・カバレッジを確認（ベースライン取得）<br>2026-07-10: 登録済み 100 / 未登録 68。内訳は上記「ページのインデックス登録」参照 |
+| [S] | [ ] **P0-3** 未登録 URL の代表サンプルを特定<br>旧（Soft 404）: `https://shokujii.jp/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf` **記録済み**<br>新（ライブテスト合格）: `https://shokujii.jp/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` **記録済み**<br>未登録 63 件・ソフト 404 3 件の URL エクスポートは残 |
 
 ### Phase 1: インデックスの土台
 
-クローラーへの基本指示と管理画面の除外。
+クローラーへの基本指示と管理画面の除外。**完了済み。**
 
 | 工数 | タスク |
 |------|--------|
-| [S] | [x] **P1-1** `user/public/robots.txt` を追加<br>Allow: 公開ページ（`/`, `/c/**`, `/communitylist` 等）<br>Disallow: `/manage/**`, `/chat/**`, `/cart`, `/login`, `/register/**`, `/profile` 等<br>Sitemap: `https://shokujii.jp/sitemap.xml` を記載 |
-| [S] | [x] **P1-2** partner / enterprise / manager に noindex を設定<br>方式: `firebase.json` の headers で `X-Robots-Tag: noindex`（推奨） |
-| [S] | [x] **P1-3** `user/index.html` の静的メタ修正<br>`meta description` 追加、`twitter:site` 修正、トップの `og:type` を `website` に |
+| [S] | ✅ **P1-1** `user/public/robots.txt` を追加 |
+| [S] | ✅ **P1-2** partner / enterprise / manager に noindex を設定 |
+| [S] | ✅ **P1-3** `user/index.html` の静的メタ修正 |
 | [S] | [ ] **P1-4** Search Console 登録手順を本ドキュメントに追記 |
 
-**Phase 1 完了条件**
+**Phase 1 完了条件** — ✅ 達成済み
 
-- `https://shokujii.jp/robots.txt` が正しいテキストを返す（HTML ではない）
-- partner / enterprise が noindex になっている
-
-**Phase 1 合計工数目安**: S × 4（約 2〜4 日）
-
-### Phase 2: ページ別メタの動的化（本命）
-
-既存 `ogpRequest.ts` を拡張し、検索エンジン向けメタをサーバーサイド注入する。
+### Phase 2: ページ別メタの動的化 — **実装完了・本番デプロイ済（2026-08 確認）**
 
 | 工数 | タスク |
 |------|--------|
-| [M] | [x] **P2-1** `ogpRequest.ts` で `<title>` を動的注入<br>コミュニティ: `{community_name} \| shokujii` / イベント: `{event_name} \| shokujii` |
-| [S] | [x] **P2-2** `ogpRequest.ts` で `<meta name="description">` を動的注入<br>`og:description` と同値で可 |
-| [S] | [x] **P2-3** `ogpRequest.ts` で `<link rel="canonical">` を注入<br>正規形: 小文字 `/c/{account}` / `/c/{account}/e/{eventId}` |
-| [M] | [x] **P2-4** JSON-LD 構造化データを注入<br>イベント: schema.org `Event` / コミュニティ: `Organization`<br>検証: [Google Rich Results Test](https://search.google.com/test/rich-results)（**デプロイ後に実施**） |
-| [S] | [x] **P2-5** データ不在時の HTTP ステータス改善<br>不在・削除済み・エンプラ配下（`enterprise_id != null`）・パス不正: **404**<br>限定公開イベント / 非公開・未承認コミュニティ: **200 + `X-Robots-Tag: noindex, nofollow`**（SEO メタ・JSON-LD は注入しない）<br>`firebase.json` の rewrite はブラウザの直リンク・リロードも同ハンドラに通すため、限定公開の「URL を知る人だけが参加できる」仕様を守るには 404 にできない |
-| [S] | [ ] **P2-6** 旧パス `/community/**` から `/c/**` への 301 リダイレクト<br>Function 側または router 側で方針決定 |
-| [M] | [x] **P2-7** `sitemap.xml` の動的生成<br>対象: `is_public == true` のコミュニティ・イベント<br>方式: onRequest + rewrite（`handleSitemapRequest`） |
-| [S] | [x] **P2-8** クライアント側 `document.title` 更新<br>router `afterEach` でページ遷移時に更新 |
-| [S] | [x] **P2-9** 404 ページ（`[[...error]].vue`）に noindex を設定 |
-| [S] | [x] **P2-4-V** デプロイ後の構造化データ検証（`/schema`）— **sandbox 実施済み**（本番 shokujii.jp は未）<br>詳細: 下記「P2-4-V 検証記録」参照 |
+| [M] | ✅ **P2-1** `ogpRequest.ts` で `<title>` を動的注入<br>コミュニティ: `{community_name} \| shokujii` / イベント: `{event_name} \| shokujii` |
+| [S] | ✅ **P2-2** `ogpRequest.ts` で `<meta name="description">` を動的注入<br>`og:description` と同値で可 |
+| [S] | ✅ **P2-3** `ogpRequest.ts` で `<link rel="canonical">` を注入<br>正規形: 小文字 `/c/{account}` / `/c/{account}/e/{eventId}` |
+| [M] | ✅ **P2-4** JSON-LD 構造化データを注入<br>イベント: schema.org `Event` / コミュニティ: `Organization` |
+| [S] | ✅ **P2-5** データ不在時の HTTP ステータス改善<br>不在・削除済み・エンプラ配下（`enterprise_id != null`）・パス不正: **404**<br>限定公開イベント / 非公開・未承認コミュニティ: **200 + `X-Robots-Tag: noindex, nofollow`** |
+| [S] | ✅ **P2-6** 旧パス `/community/**` から `/c/**` への 301 — **P2.5-6 で実装** |
+| [M] | ✅ **P2-7** `sitemap.xml` の動的生成<br>対象: `is_public == true` のコミュニティ・イベント |
+| [S] | ✅ **P2-8** クライアント側 `document.title` 更新 |
+| [S] | ✅ **P2-9** 404 ページ（`[[...error]].vue`）に noindex を設定 |
+| [S] | ✅ **P2-4-V** 構造化データ検証（`/schema`）— sandbox + 本番 curl / Rich Results / Schema.org Validator（2026-08-24） |
 
-**P2-4-V 検証記録（2026-07-19・sandbox）**
+**P2-4-V 検証記録（2026-07-19・sandbox）** — 変更なし。詳細は git 履歴参照。
 
-検証環境: `bokudeli-event-yasu-2605.firebaseapp.com`（GSC 未登録の sandbox。インデックス可否とスキーマ検証は別問題）
+**P2-4-V 本番クローズ（残タスク → P2.5-7 に統合）**
 
-| 対象 | URL | Rich Results Test | 結果 |
-|------|-----|-------------------|------|
-| イベント | `/c/yasu/e/3fstfqB3BE0sSQxpJhnV` | [結果](https://search.google.com/test/rich-results/result?id=zZvIU4QixGck6-Vrx_KD5g) | **Event 有効 1 件**（リッチリザルト対象） |
-| コミュニティ | `/c/yasu` | 同上手順で実施 | **Organization**（リッチリザルト対象外だが JSON-LD 検出） |
+- ✅ Search Console に sitemap 送信 — **2026-08-30 成功（1,084 URL）**
+- ✅ 本番代表 URL ライブテスト — `/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` 合格（Event 有効 1 件）
+- [ ] Schema.org Validator（本番）
+- [ ] 旧代表 URL Soft 404 再検査 — `/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf`
 
-**イベント（Event）— 必須項目**
+**Phase 2 完了条件** — ✅ 実装・本番デプロイ済。本番検証の残りは **Phase 2.5** で完走。
 
-| プロパティ | 判定 |
-|-----------|------|
-| `name` | OK |
-| `startDate` / `endDate` | OK（ISO 8601 +09:00） |
-| `location`（Place + address） | OK |
-| `url` / `image` / `description` | OK |
+---
 
-**非重大な問題（任意項目・初回検証時）**
+### Phase 2.5: インデックス回復（クリティカル）— **実装完了・本番検証待ち**
 
-| 項目 | 対応 |
-|------|------|
-| `organizer.url` なし | **2026-07-19 実装**（`jsonLd.ts` + `ogpRequest.ts`）。再デプロイ後に Rich Results Test で警告解消を確認 |
-| `performer` なし | **意図的に省略**（食事会に出演者概念なし） |
-| `offers` なし | **意図的に省略**（決済・価格が複数パターンのため Phase 1 では付けない） |
+Phase 2 デプロイ・sitemap 成功後、**検索に出ない直接原因**を潰す。GEO / pSEO の前提。
 
-**Rich Results Test 上部の「URL は Google に登録できません」について**
+| 優先 | 工数 | タスク |
+|:----:|------|--------|
+| 🔴 | [S] | ✅ **P2.5-1** GSC sitemap 再送信・成功確認<br>2026-08-30: `https://shokujii.jp/sitemap.xml` **成功・1,084 URL 検出** |
+| 🔴 | [S] | ✅ **P2.5-2** レンダリング後 `noindex` の修正<br>`user/src/router/index.ts`: 公開 `/c/**/e/**` から `getLoadedEvent` ガード除去。**`/manage/event/**` のみ**維持 |
+| 🔴 | [S] | ✅ **P2.5-3** 静的 `<meta name="description">` / `<link rel="canonical">` の重複除去<br>`htmlInjection.ts` の `stripStaticMetaDescription()` / `stripStaticCanonicalLink()` を `injectSeoHtml` で適用。トップは静的維持 |
+| 🟠 | [S] | ✅ **P2.5-4** プリレンダー HTML に内部リンク追加<br>`prerenderBody.ts`: イベント → トップ・コミュニティ、コミュニティ → トップ・一覧 |
+| 🟠 | [M] | ✅ **P2.5-5** `/communitylist` の SEO 注入<br>`handleCommunityListSeoRequest` + `getPublicCommunitiesForSeoPreview(30)` + firebase rewrite |
+| 🟡 | [S] | ✅ **P2.5-6** 旧パス `/community/**` → `/c/**` 301（`firebase.json` redirects 4 ルール） |
+| 🟡 | [S] | [ ] **P2.5-7** P2-4-V 本番クローズ（**デプロイ後**）<br>curl / GSC レンダリング済み HTML・Schema.org Validator・旧代表 URL Soft 404 再検査 |
+| 🟠 | [M] | ⏸ **P2.5-8** 終了イベントの sitemap 方針 — **保留**（全イベント sitemap 維持。**P4-2 で再検討**） |
 
-- 原因: JS レンダリング後に `meta robots noindex` が検出された（Search Console 未登録が直接原因ではない）
-- **構造化データ検証としては Event「有効 1 件」で P2-4-V 合格**
-- 本番 `shokujii.jp` ではインデックス可否も含め再検証する
+**Phase 2.5 完了条件**
 
-**残タスク（P2-4-V 本番クローズ）**
+- ✅ GSC sitemap ステータス「成功」
+- ✅ P2.5-2〜6 コード実装（Issue #2335）
+- [ ] 代表 URL 3 件でレンダリング済み HTML に `noindex` なし（**P2.5-7・デプロイ後**）
+- [ ] イベント URL の `<meta name="description">` が 1 本のみ（固有文言）（**P2.5-7**）
+- [ ] プリレンダー HTML に `<a href>` が含まれる（**P2.5-7**）
+- [ ] P2-4-V 本番チェックリスト完走（**P2.5-7**）
 
-- [x] sandbox 再デプロイ後、`organizer.url` 警告が消えることを Rich Results Test で確認
-- [x] ✅ 本番代表 URL の HTML に `organizer.url` 含む（2026-08-24 curl 確認: `https://shokujii.jp/c/flc_fes`）
-- [x] ✅ 本番公開イベント URL で Rich Results Test + Schema.org Validator（2026-08-24）
-- [x] ✅ 本番公開イベント URL で Rich Results Test — **Event 有効 1 件** + Breadcrumbs 有効 1 件（2026-08-24）
-- [x] ✅ 本番公開イベント URL で Schema.org Validator — **エラー 0・警告 0**（Event + BreadcrumbList 各 1 件）
-- [ ] Search Console に sitemap 送信（検証チェックリスト）
+**Phase 2.5 合計工数目安**: S × 5 + M × 2（約 1 週間）
 
 **P2-4-V 本番検証記録（2026-08-24）**
 
 | 対象 | URL | 方法 | 結果 |
 |------|-----|------|------|
 | robots.txt | `https://shokujii.jp/robots.txt` | curl | ✅ `text/plain`、Sitemap 行あり |
-| sitemap.xml | `https://shokujii.jp/sitemap.xml` | curl | ✅ XML 200、1074 URL（代表イベント含む） |
+| sitemap.xml | `https://shokujii.jp/sitemap.xml` | curl | ✅ XML 200（2026-08-30 GSC: **1,084 URL**） |
 | イベント | `/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf` | curl | ✅ 固有 title / description / canonical、`#app` 内 h1 + 概要 HTML |
 | イベント JSON-LD | 同上 | curl | ✅ Event + BreadcrumbList `@graph`、`PostalAddress`、`OfflineEventAttendanceMode`、`organizer.url` |
 | トップ | `https://shokujii.jp/` | curl | ✅ WebSite + Organization JSON-LD |
 | 404 | `/c/flc_fes/e/nonexistent-event-id-12345` | curl | ✅ HTTP 404 |
 | noindex | partner / enterprise | curl -I | ✅ `X-Robots-Tag: noindex` |
-| Rich Results Test | `/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` | [結果](https://search.google.com/test/rich-results/result?id=a6DnOb5qkYXyGehWxq2O-g) | ✅ **Event 有効 1 件** + Breadcrumbs 有効 1 件（非重大警告あり）。上部「URL is not available」/ JS 後 noindex は sandbox 同様・インデックス可否は別途 GSC で確認 |
-| Schema.org Validator | `/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` | [validator.schema.org](https://validator.schema.org/#url=https%3A%2F%2Fshokujii.jp%2Fc%2F33_lab_future%2Fe%2Fw4Iwl5D1zKS81CX0dQqL) | ✅ **エラー 0・警告 0**（Event + BreadcrumbList 各 1 件） |
-| GSC ライブテスト | 代表イベント | Search Console | ❌ noindex 検出（JS 後）。Soft 404 から変化。**修正: #2301** |
+| Rich Results Test | `/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` | [結果](https://search.google.com/test/rich-results/result?id=a6DnOb5qkYXyGehWxq2O-g) | ✅ **Event 有効 1 件** + Breadcrumbs 有効 1 件（2026-08-24） |
+| Schema.org Validator | `/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL` | [validator.schema.org](https://validator.schema.org/#url=https%3A%2F%2Fshokujii.jp%2Fc%2F33_lab_future%2Fe%2Fw4Iwl5D1zKS81CX0dQqL) | ✅ **エラー 0・警告 0**（2026-08-24） |
+| GSC ライブテスト | 代表イベント | Search Console | 2026-08-24: JS 後 noindex 検出。**P2.5-2 実装後に P2.5-7 で再検証** |
 
-**Phase 2 完了条件**
+---
 
-- `https://shokujii.jp/sitemap.xml` が公開 URL を含む
-- 公開イベントページの HTML にページ固有の title・description・canonical が含まれる
-- イベントページに schema.org Event の JSON-LD が含まれる（Rich Results Test で PASS。**P2-4-V**）
-- 存在しないイベント URL が 404 を返す
+### Phase 3: 計測・品質改善
 
-**Phase 2 合計工数目安**: M × 3 + S × 7（約 2〜3 週間）
-
-### Phase 3: 計測に基づく改善
-
-Phase 1・2 デプロイ後、Search Console のデータを見て判断する。
+Phase 2.5 完了後、Search Console のデータを見て判断する。**GEO（旧 P3-5）は Phase 3B へ分離。**
 
 | 工数 | タスク |
 |------|--------|
-| [S] | [ ] **P3-1** Search Console でカバレッジ・クロールエラーを確認<br>Phase 2 デプロイ後: 未登録 68 → 目標 50% 削減。修正の確認（Validate fix）を実施 |
-| [S] | [x] **P3-2** Core Web Vitals を PageSpeed Insights で計測（LCP / INP / CLS）<br>2026-08-24 計測完了（下記記録）。CWV 不合格。改善は #2302 に分離 |
-| [S] | [x] **P3-3** 公開ページの `<h1>` 整備（イベント名・コミュニティ名を h1 に）<br>サーバー注入（P3-4）+ Vue クライアント側 DOM（EventDetailsCard / コミュニティ index）を実装 |
-| [M] | [x] **P3-4** プリレンダリング強化の要否判断・実装<br>`ogpRequest.ts` で `#app` 内にイベント概要 HTML を注入（`SEO_BODY` マーカー） |
-| [S] | [ ] **P3-5** AI 検索対応（GEO）— 親タスク（`/ai-seo`） |
-| [S] | [ ] **P3-5-1** AI Visibility Audit<br>10〜20 クエリ × Google AI Overview / ChatGPT / Perplexity<br>例:「食事会 東京」「ランチ会 幹事」「shokujii」「食事 コミュニティ」 |
-| [S] | [ ] **P3-5-2** プリレンダー HTML の extractability 評価・改善案<br>P3-4 出力が AI クローラーに十分読めるか `/ai-seo` で確認 |
-| [S] | [ ] **P3-5-3** AI クローラー robots 方針の文書化<br>GPTBot / ClaudeBot / PerplexityBot 等を Allow 継続するか方針決定（現状 `User-agent: *` Allow） |
-| [S] | [ ] **P3-5-4** `llms.txt` 導入要否の判断<br>必須ではない。エージェント可読性向上の選択肢として `/ai-seo` 参照 |
-| [S] | [ ] **P3-6** Phase 4 着手判断<br>P3-1 のインデックス改善率 + P3-5-1 の AI 可視性を見て pSEO の優先度を決定 |
+| [S] | [ ] **P3-1** GSC 再ベースライン（**sitemap 成功後**）<br>計測タイミング: 2026-08-30 から **7 日後・14 日後** の 2 回<br>KPI: 登録済み URL 数、未登録 68 → 目標 50% 削減、クロール済み・未登録 63 の推移 |
+| [S] | ✅ **P3-2** Core Web Vitals を PageSpeed Insights で計測（LCP / INP / CLS）<br>2026-08-24 計測完了（下記記録）。CWV 不合格。改善は #2302 に分離 |
+| [S] | ✅ **P3-3** 公開ページの `<h1>` 整備 |
+| [M] | ✅ **P3-4** プリレンダリング強化（`SEO_BODY` 注入） |
+| [S] | [ ] **P3-6** Phase 4 着手判断<br>**ゲート**: P3-1 で登録済み増加 **または** 代表 URL 10 件中 7 件以上が GSC「登録済み」 |
 
 #### P3-2 Core Web Vitals 計測記録（2026-08-24）
 
@@ -377,58 +381,55 @@ PSI で公開イベント詳細を計測したが、個別 URL の CrUX デー�
 
 > There is insufficient real-user data for this URL. Falling back to aggregate data for all user experiences on this origin (`https://shokujii.jp`) instead.
 
-複数 URL（`/c/33_lab_future/e/w4Iwl5D1zKS81CX0dQqL`、`/c/millennium/e/4Ddz1BvrxNIy4z3rEVEQ`）で数値が完全一致したのはこのため。**「代表 URL の実測値」と誤読しないこと。**
-
 | 項目 | 値 |
 | ---- | -- |
 | スコープ | `https://shokujii.jp` オリジン集計 |
 | 収集期間 | 2026-07-25 〜 2026-08-21（28 日ローリング） |
-| フォームファクタ | デスクトップ |
 | CWV 総合 | **不合格** |
 
-| 指標 | p75 | Good | 要改善 | Poor | 判定 |
-| ---- | --- | ---- | ------ | ---- | ---- |
-| LCP | 2.9s | 68% | 16% | 17% | 要改善 |
-| INP | N/A | — | — | — | データ不足 |
-| CLS | **0.38** | 24% | 20% | **55%** | **Poor** |
-| FCP | 2.1s | 69% | 17% | 14% | 要改善 |
-| TTFB | 0.3s | 91% | 6% | 3% | 良好 |
+| 指標 | p75 | 判定 |
+| ---- | --- | ---- |
+| LCP | 2.9s | 要改善 |
+| CLS | **0.38** | **Poor** |
+| TTFB | 0.3s | 良好 |
 
-**解釈**
+**派生 Issue**: [#2302](https://github.com/nijuniinc/bokudeli-event-new/issues/2302)（CWV 改善）、[#2303](https://github.com/nijuniinc/bokudeli-event-new/issues/2303)（Storage cacheControl）
 
-- **CLS は構造的問題**: 過半数（55%）が Poor。特定イベント固有ではなく、SPA の loader → スピナー → 本 UI 差し替えという構造そのものが原因
-- **LCP は裾の問題**: 68% が Good。p75 を押し上げているのは 17% の裾（重い画像・低速回線）
-- **TTFB 91% Good**: `ogpRequest` のサーバー応答は問題なし。クライアント側が原因
-- カバー JPEG は 71〜80KB で原寸でも小さく、画像サイズ単体が主因ではない
-- Storage 画像が `cache-control: private, max-age=0` で配信されており、ブラウザキャッシュが無効（→ #2303）
-
-**派生 Issue**
-
-| Issue | 内容 |
-| ----- | ---- |
-| [#2302](https://github.com/nijuniinc/bokudeli-event-new/issues/2302) | イベント詳細ページ Core Web Vitals 改善（CLS / LCP） |
-| [#2303](https://github.com/nijuniinc/bokudeli-event-new/issues/2303) | Storage 画像に `cacheControl` を設定 |
-| [#820](https://github.com/nijuniinc/bokudeli-event-new/issues/820) / #448 / #449 / #450 | Storage 保存時の画像リサイズ（LCP 裾の対策） |
-
-**検証上の制約**
-
-個別ページの CrUX データが存在しないため、修正してもページ単位で効果検証できない。オリジン集計は 28 日ローリング窓のため、効果が見え始めるまで数日〜1 週、窓が完全に入れ替わるまで約 4 週（PSI の集計ラグ 3 日程度を含め約 1 ヶ月）。中間検証は Lighthouse ラボ値 + `web-vitals` RUM（#2302 D1）で行う。
-
-#### 構造化データ拡張（`/schema`）
-
-P2-4-V 完了後、Rich Results Test の警告・推奨に応じて実施。
+#### 構造化データ拡張（`/schema`）— **完了済み**
 
 | 工数 | タスク |
 |------|--------|
-| [S] | [x] **P3-S1** トップページに `WebSite` + `Organization` JSON-LD<br>`user/index.html` 静的注入 + `buildHomePageJsonLd` |
-| [S] | [x] **P3-S2** コミュニティ・イベントに `BreadcrumbList` JSON-LD<br>`ogpRequest` + `@graph` |
-| [S] | [x] **P3-S3** Event JSON-LD の enrich<br>`PostalAddress`・`OfflineEventAttendanceMode`・`&nbsp;` デコード。`organizer.url` は 2026-07-19 実装済み |
+| [S] | ✅ **P3-S1** トップページに `WebSite` + `Organization` JSON-LD |
+| [S] | ✅ **P3-S2** コミュニティ・イベントに `BreadcrumbList` JSON-LD |
+| [S] | ✅ **P3-S3** Event JSON-LD の enrich |
 
-**Phase 3 合計工数目安**: S × 9 + M × 1（約 1〜2 週間。P3-S1〜3 は P2-4-V 後）
+**Phase 3 合計工数目安**: S × 3 + M × 1（P3-S1〜3 は完了）
+
+---
+
+### Phase 3B: AI 検索（GEO）— `/ai-seo`
+
+**着手条件（いずれか）**
+
+- P3-1（14 日後）で登録済み URL が 2026-07-10 比 +20% 以上
+- または代表イベント URL 10 件中 7 件以上が GSC「登録済み」
+
+| 工数 | タスク |
+|------|--------|
+| [S] | [ ] **P3B-1**（旧 P3-5-1）AI Visibility Audit<br>10〜20 クエリ × Google AI Overview / ChatGPT / Perplexity |
+| [S] | [ ] **P3B-2**（旧 P3-5-2）プリレンダー HTML の extractability 評価・改善案 |
+| [S] | [ ] **P3B-3**（旧 P3-5-3）AI クローラー robots 方針の文書化 |
+| [S] | [ ] **P3B-4**（旧 P3-5-4）`llms.txt` 導入要否の判断 |
+
+**Phase 3B 合計工数目安**: S × 4（約 1 週間）
+
+---
 
 ### Phase 4: programmatic SEO（量産ページ）
 
-Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推奨**する項目あり。
+**着手条件**: P3-6 合格 + **Phase 2.5 完了** + P3-1（14 日後）でインデックス改善トレンド確認
+
+**前倒し済み**: P4-2 の sitemap 方針 → **P2.5-8 で検討したが保留**（全イベント維持）。アーカイブ UI / 集約ページ設計は Phase 4 で継続。
 
 #### 4-0. 前提データ・方針（着手前）
 
@@ -438,9 +439,9 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 
 | 工数 | タスク |
 |------|--------|
-| [S] | [ ] **P4-0-1** キーワード需要検証（`/content-strategy`）<br>「食事会 {エリア}」「ランチ会 {ジャンル}」等の検索ボリューム確認<br>出力: コンテンツピラー 3〜5 本（例: エリア別食事会、幹事向け、コミュニティ運営） |
-| [S] | [ ] **P4-0-2** キーワードマッピング表の作成（`/content-strategy`）<br>URL ↔ キーワード ↔ 既存 `/c/**`・`/communitylist` とのカニバリ回避 |
-| [S] | [ ] **P4-0-3** 薄いコンテンツ対策の設計<br>Searchable（Locations 等）vs Shareable（幹事ガイド等）の分類<br>ページ固有の価値（開催実績数・参加人数・写真等）の定義。掲載 0 件は未生成 or noindex |
+| [S] | [ ] **P4-0-1** キーワード需要検証（`/content-strategy`） |
+| [S] | [ ] **P4-0-2** キーワードマッピング表の作成（`/content-strategy`） |
+| [S] | [ ] **P4-0-3** 薄いコンテンツ対策の設計 |
 | [S] | [ ] **P4-0-4** 適用プレイブックの選定（`/programmatic-seo`、下表参照） |
 
 **適用可能なプレイブック**
@@ -467,25 +468,25 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 
 | 工数 | タスク |
 |------|--------|
-| [L] | [ ] **P4-1** エリア情報の構造化<br>schema に `prefecture` / `city` 追加、または既存住所からの正規化 backfill<br>実装先: `bokudeli-event-batch` 側を検討 |
-| [M] | [ ] **P4-2** 終了イベントのアーカイブ戦略<br>noindex / 集約ページへの巻き取り / 開催実績データとして再利用の方針決定 |
-| [S] | [ ] **P4-3** `subdomain_tags` の URL 方針決定<br>サブドメインではなく `shokujii.jp/t/{tag}/` 等のサブフォルダを推奨 |
+| [L] | [ ] **P4-1** エリア情報の構造化 |
+| [M] | [ ] **P4-2** 終了イベントのアーカイブ戦略<br>sitemap 除外方針は **P2.5-8 保留分**を本 Phase で再検討。UI / 集約ページ設計は本 Phase で継続 |
+| [S] | [ ] **P4-3** `subdomain_tags` の URL 方針決定 |
 
 #### 4-2. ページ・リンク構造
 
 | 工数 | タスク |
 |------|--------|
-| [M] | [ ] **P4-4** ハブページ（一覧の細分化）の新設（`/content-strategy` Hub/Spoke + `/programmatic-seo`）<br>例: `/events/tokyo/` → `/events/tokyo/curry/` → 各イベント |
-| [L] | [ ] **P4-5** 店舗公開ページの新設（`/schema` LocalBusiness）<br>例: `/shops/{shopId}` + `LocalBusiness` JSON-LD<br>店舗側の掲載同意・公開フラグ設計を含む（**別 Issue 推奨**） |
-| [L] | [ ] **P4-6** 量産ページのレンダリング基盤<br>onRequest Function で HTML 生成 / ビルド時 SSG 等の方式選定<br>CSR のままでは pSEO ページは機能しない |
-| [M] | [ ] **P4-7** sitemap のページタイプ別分割<br>events / communities / areas / shops 等。Search Console でタイプ別インデックス率を追跡 |
+| [M] | [ ] **P4-4** ハブページ（一覧の細分化）の新設 |
+| [L] | [ ] **P4-5** 店舗公開ページの新設（**別 Issue 推奨**） |
+| [L] | [ ] **P4-6** 量産ページのレンダリング基盤 |
+| [M] | [ ] **P4-7** sitemap のページタイプ別分割 |
 
 #### 4-3. 小規模検証 → 拡大
 
 | 工数 | タスク |
 |------|--------|
-| [M] | [ ] **P4-8** パイロット: 上位 10〜20 エリアのみ Locations ページ化<br>インデックス率・流入・CV を計測 |
-| [M] | [ ] **P4-9** 成果に応じてジャンル掛け合わせ・店舗ディレクトリへ展開<br>薄いコンテンツ警告が出ないか監視 |
+| [M] | [ ] **P4-8** パイロット: 上位 10〜20 エリアのみ Locations ページ化 |
+| [M] | [ ] **P4-9** 成果に応じてジャンル掛け合わせ・店舗ディレクトリへ展開 |
 
 **Phase 4 完了条件（パイロット段階）**
 
@@ -510,19 +511,21 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 
 | 要素 | 注入先 | 備考 |
 |------|--------|------|
-| `<title>` | `<head>` 内 | OGP セクション外。別 ReplaceSectionStream または head 全体置換 |
-| `<meta name="description">` | `<head>` 内 | 同上 |
-| `<link rel="canonical">` | `<head>` 内 | 同上 |
-| JSON-LD | `<head>` 内 `<script type="application/ld+json">` | Event / Organization |
+| `<title>` | `<head>` 内 | 実装済み |
+| `<meta name="description">` | `<head>` 内 | 実装済み。**P2.5-3** で静的重複除去 |
+| `<link rel="canonical">` | `<head>` 内 | 実装済み |
+| JSON-LD | `<head>` 内 | Event / Organization — 実装済み |
+| プリレンダー本文 | `SEO_BODY` | 実装済み。**P2.5-4** で内部リンク追加 |
+| `/communitylist` SEO | Function rewrite | **P2.5-5** `handleCommunityListSeoRequest` |
 | OGP タグ | `<!-- OGP_BEGIN_TAG -->` 〜 | 既存実装 |
 
 ### programmatic SEO の進め方（Phase 4）
 
-1. Phase 2 完了 + **P2-4-V** → P3-1 で GSC 改善確認 → **P3-6** で着手判断
-2. **P4-0**（`/content-strategy` で需要・マッピング + `/programmatic-seo` でプレイブック）
-3. P4-1（住所構造化）+ P4-6（レンダリング基盤）の方式見積もり
+1. **Phase 2.5 完了** → P3-1 で GSC 改善確認 → **P3-6** で着手判断
+2. **P4-0**（`/content-strategy` + `/programmatic-seo`）
+3. P4-1（住所構造化）+ P4-6（レンダリング基盤）
 4. P4-8（パイロット 10〜20 エリア）で効果測定
-5. 成果が出たら P4-9 で拡大。店舗公開（P4-5）は別 Issue
+5. 成果が出たら P4-9 で拡大
 
 ### 構造化データ拡張の候補（`/schema`）
 
@@ -530,18 +533,18 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 
 | 項目 | 現状 | 備考 |
 |------|------|------|
-| Event `organizer.url` | **実装済み** | 再デプロイ後 Rich Results Test で確認 |
-| Event `location.address` | **PostalAddress 実装済み** | 都道府県先頭マッチ + JP |
-| Event `eventAttendanceMode` | **Offline 固定** | 対面食事会前提 |
-| トップページ | **WebSite + Organization 実装済み** | `user/index.html` 静的 JSON-LD |
-| パンくず | **BreadcrumbList 実装済み** | イベント 3 段 / コミュニティ 2 段 |
+| Event `organizer.url` | **実装済み** | 本番ライブテスト合格 |
+| Event `location.address` | **PostalAddress 実装済み** | — |
+| Event `eventAttendanceMode` | **Offline 固定** | — |
+| トップページ | **WebSite + Organization 実装済み** | — |
+| パンくず | **BreadcrumbList 実装済み** | — |
 | 店舗ページ | 未実装 | `LocalBusiness`（P4-5） |
 
 ### AI 検索（GEO）の注意（`/ai-seo`）
 
-- Google 向け: **AI 専用コンテンツの量産は避ける**（scaled content abuse リスク）。人向けに書き、見出し・段落で整理する
-- ChatGPT / Perplexity 向け: P3-4 プリレンダー + FAQ 構造・比較表等の extractable ブロックが有効
-- 第三者引用（Reddit・メディア）の比重が高い点を P3-5-1 で記録し、Phase 4 以降の PR 施策に接続
+- Google 向け: **AI 専用コンテンツの量産は避ける**（scaled content abuse リスク）
+- ChatGPT / Perplexity 向け: P3-4 プリレンダー + extractable ブロックが有効
+- **Phase 3B はインデックス改善後に着手**（効果測定可能な状態で実施）
 
 ### ログイン必須パス（robots.txt Disallow 候補）
 
@@ -557,34 +560,46 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 - `/`（トップ）
 - `/c/{communityAccount}`（公開コミュニティ）
 - `/c/{communityAccount}/e/{eventId}`（公開イベント）
-- `/communitylist`（コミュニティ一覧）
+- `/communitylist`（コミュニティ一覧 — **P2.5-5 SEO 注入済み**）
 - `/u/{userId}`（ユーザープロフィール ※公開設定次第）
 
 ---
 
 ## 検証チェックリスト
 
+### Phase 2.5（インデックス回復）
+
+- ✅ GSC sitemap 成功（1,084 URL・2026-08-30）
+- ✅ P2.5-2〜6 実装（router noindex 修正・description 除去・内部リンク・communitylist SEO・301）
+- ⏸ P2.5-8 保留（全イベント sitemap 維持。P4-2 で再検討）
+- [ ] **デプロイ後（P2.5-7）** レンダリング済み HTML に `noindex` なし（代表 URL 3 件）
+- [ ] **デプロイ後** イベント / コミュニティ URL の `description` タグが 1 本（固有文言）
+- [ ] **デプロイ後** プリレンダー HTML に内部リンク（`<a href>`）
+- [ ] **デプロイ後** `/communitylist` に固有 title / description
+- [ ] **デプロイ後** `curl -I /community/foo` → `Location: /c/foo`（301）
+
 ### Phase 1〜2（技術 SEO）
 
-- [x] ✅ `curl -s https://shokujii.jp/robots.txt` が robots 形式のテキストを返す（2026-08-24 本番確認）
-- [x] ✅ `curl -s https://shokujii.jp/sitemap.xml` が XML を返す（2026-08-24 本番確認・1074 URL）
-- [x] ✅ 公開イベント URL の HTML に固有 title / description / canonical が含まれる（2026-08-24 本番確認）
-- [x] ✅ 公開イベント URL の `#app` 内に `<h1>` と概要 HTML が含まれる（2026-08-24 本番確認）
-- [ ] Vue 描画後も公開イベント / コミュニティページに `<h1>` が 1 件（**P3-3**・ブラウザ手動未）
-- [x] ✅ トップページ HTML に WebSite + Organization JSON-LD が含まれる（2026-08-24 本番確認）
-- [x] ✅ Rich Results Test（本番）で Event スキーマが有効 1 件（**P2-4-V**・2026-08-24）
-- [x] ✅ Schema.org Validator で JSON-LD エラーが無い（**P2-4-V 本番**・2026-08-24・Event + BreadcrumbList）
-- [ ] GSC URL 検査ライブテストで Soft 404 が解消される（代表: `/c/flc_fes/e/drl46nkkVgwFFv4Jy0Vf`）— 2026-08-24: Soft 404 → **noindex** に変化。**#2301** で router guard 修正後に再検証
-- [x] ✅ 存在しないイベント URL が 404 を返す（2026-08-24 本番確認）
-- [ ] 限定公開イベント URL が 200 + `X-Robots-Tag: noindex` で SPA を返す（**P2-5**・未確認）
-- [x] ✅ partner / enterprise に `X-Robots-Tag: noindex` が付く（2026-08-24: partner.shokujii.jp / enterprise Hosting）
-- [ ] Search Console に sitemap を送信済み
+- ✅ `curl -s https://shokujii.jp/robots.txt` が robots 形式のテキストを返す（2026-08-24 本番確認）
+- ✅ `curl -s https://shokujii.jp/sitemap.xml` が XML を返す（2026-08-30 GSC: **1,084 URL**）
+- ✅ 公開イベント URL の HTML に固有 title / description / canonical（2026-08-24 本番確認）
+- ✅ 公開イベント URL の `#app` 内に `<h1>` と概要 HTML（2026-08-24 本番確認）
+- ✅ Vue 描画後も公開イベント / コミュニティページに `<h1>` が 1 件
+- ✅ トップページ HTML に WebSite + Organization JSON-LD（2026-08-24 本番確認）
+- ✅ Rich Results Test（本番）で Event スキーマが有効 1 件（2026-08-24）
+- ✅ Schema.org Validator で JSON-LD エラー 0（2026-08-24）
+- [ ] GSC レンダリング済み HTML に noindex なし（**P2.5-2 デプロイ後・P2.5-7**）
+- [ ] 旧代表 URL GSC ライブテストで Soft 404 解消確認（P2.5-7）
+- ✅ 存在しないイベント URL が 404 を返す（2026-08-24 本番確認）
+- [ ] 限定公開イベント URL が 200 + `X-Robots-Tag: noindex`（P2-5・未確認）
+- ✅ partner / enterprise に `X-Robots-Tag: noindex`（2026-08-24 本番確認）
+- ✅ Search Console に sitemap 送信成功（2026-08-30）
 
-### Phase 3（GEO・`/ai-seo`）
+### Phase 3B（GEO・`/ai-seo`）— Phase 3B 着手後
 
-- [ ] P3-5-1: 主要クエリ 10 件以上で AI 回答に shokujii が引用されているか記録
-- [ ] P3-5-2: デプロイ後 HTML にイベント名・日時・場所が extractable 形式で含まれる
-- [ ] P3-5-3: AI クローラー robots 方針を本ドキュメントに記載済み
+- [ ] P3B-1: 主要クエリ 10 件以上で AI 回答に shokujii が引用されているか記録
+- [ ] P3B-2: デプロイ後 HTML にイベント名・日時・場所が extractable 形式で含まれる
+- [ ] P3B-3: AI クローラー robots 方針を本ドキュメントに記載済み
 
 ### Phase 4（programmatic SEO・パイロット後）
 
@@ -609,3 +624,5 @@ Phase 2 完了後、需要検証から段階的に着手。**別 Issue 化を推
 | 2026-07-19 | 追加スキル導入（P0-5: schema / ai-seo / content-strategy）。スキル対応表・P2-4-V・P3-S1〜3・P3-5-1〜4・実装進捗サマリを追記 |
 | 2026-07-19 | P2-4-V sandbox 検証記録。Event JSON-LD に `organizer.url` を追加 |
 | 2026-07-19 | P3-S1〜3 / P3-3 実装（WebSite / BreadcrumbList / Event enrich / Vue h1） |
+| 2026-08-30 | 本番再監査。GSC sitemap 再送信成功（1,084 URL）。代表イベント URL ライブテスト合格。**Phase 2.5 新設**、GEO を **Phase 3B** に分離、P4-2 前倒し（P2.5-8）。進捗表記を ✅ / `[ ]` に統一 |
+| 2026-08-30 | **Phase 2.5 実装（#2335）**: P2.5-2（公開イベント router ガード除去）・P2.5-3（description 重複除去）・P2.5-4（プリレンダー内部リンク）・P2.5-5（`/communitylist` SEO）・P2.5-6（`/community/**` 301）。P2.5-8 は保留（全イベント sitemap 維持）。P2.5-7 本番検証はデプロイ後 |

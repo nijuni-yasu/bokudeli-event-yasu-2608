@@ -26,6 +26,11 @@ const communities = computed(() => {
 
 <template>
   <v-row class="justify-center">
+    <v-col cols="12" md="10">
+      <h1 class="pt-4 pb-2 text-sm-h2 text-h4 font-weight-black">{{ $t('communitylist.page_title') }}</h1>
+    </v-col>
+  </v-row>
+  <v-row class="justify-center">
     <v-col v-for="community in communities" :key="community.community_id" md="10" sm="12" cols="12">
       <router-link :to="getCommunityPath(community.community_account)">
         <CommunityCard :community="community" />

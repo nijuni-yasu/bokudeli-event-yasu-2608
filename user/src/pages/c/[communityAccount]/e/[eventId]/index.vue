@@ -27,11 +27,14 @@ import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storage
 import { useDisplay } from 'vuetify'
 import { getChatPath } from '@/router/utils'
 import { useNavigateToEventChat } from '@shokujii/base/composable/useNavigateToEventChat.js'
+import { usePublicEventNotFoundRedirect } from '@shokujii/base/composable/usePublicEventNotFoundRedirect.js'
 
 const route = useRoute()
 const router = useRouter()
 const communityAccount = route.params.communityAccount as string
 const eventId = route.params.eventId as string
+
+usePublicEventNotFoundRedirect(eventId, communityAccount)
 
 const { t: $t } = useI18n()
 

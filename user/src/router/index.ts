@@ -463,20 +463,19 @@ export const setupRouter = (router: Router) => {
 
   router.beforeEach(async (to) => {
     let communityAccount: string | null = null
-    // イベントページ or イベント管理ページの場合: 削除済みイベントは404へリダイレクト
-    // 例: /c/example-community/e/abc123, /manage/event/abc123
-    const eventIdMatch = to.path.match(/\/c\/[^/]+\/e\/([^/]+)/) || to.path.match(/\/manage\/event\/([^/]+)/)
-    if (eventIdMatch) {
-      const eventId = eventIdMatch[1]
+    // イベント管理ページのみ: 削除済みイベントは404へリダイレクト
+    // 公開 /c/**/e/** は ogpRequest 側で404済みのためクライアント存在チェックは行わない
+    // （getLoadedEvent タイムアウト時の誤404→noindex を防ぐ）
+    const manageEventMatch = to.path.match(/^\/manage\/event\/([^/]+)/)
+    if (manageEventMatch) {
+      const eventId = manageEventMatch[1]
       const eventStore = useEventStore(eventId) as EventStore
       try {
         const event = await eventStore.getLoadedEvent(5000)
         if (event.is_deleted) {
           return '/404'
         }
-        if (to.path.startsWith('/manage/event/')) {
-          communityAccount = event.community_account
-        }
+        communityAccount = event.community_account
       } catch (err) {
         const redirect = resolveEventLoadFailureRedirect(to.path, err)
         if (redirect != null) {

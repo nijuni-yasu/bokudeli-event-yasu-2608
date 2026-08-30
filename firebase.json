@@ -92,10 +92,47 @@
           "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
         }
       ],
+      "redirects": [
+        {
+          "source": "/community",
+          "destination": "/communitylist",
+          "type": 301
+        },
+        {
+          "source": "/community/",
+          "destination": "/communitylist",
+          "type": 301
+        },
+        {
+          "source": "/communitylist/",
+          "destination": "/communitylist",
+          "type": 301
+        },
+        {
+          "source": "/community/:account",
+          "destination": "/c/:account",
+          "type": 301
+        },
+        {
+          "source": "/community/:account/e/:eventId",
+          "destination": "/c/:account/e/:eventId",
+          "type": 301
+        },
+        {
+          "source": "/community/:account/events/:eventId",
+          "destination": "/c/:account/e/:eventId",
+          "type": 301
+        }
+      ],
       "rewrites": [
         {
           "source": "/sitemap.xml",
           "function": "handleSitemapRequest",
+          "region": "asia-northeast1"
+        },
+        {
+          "source": "/communitylist",
+          "function": "handleCommunityListSeoRequest",
           "region": "asia-northeast1"
         },
         {

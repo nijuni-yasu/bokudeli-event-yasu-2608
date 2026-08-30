@@ -238,6 +238,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
   const store = defineStore(`/communities/${storeKey}/${communityAccount}`, () => {
     const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${storeKey}_${communityAccount}`
     const eventStoreOptions = resolveEventStoreOptionsFromInjectedEnterpriseId(resolvedEnterpriseId)
+    const exists = ref<boolean | null>(null)
     const community = ref<BokudeliCommunity | null>(target instanceof BokudeliCommunity ? target : null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
     const _communityRef = ref<DocumentReference<BokudeliCommunity> | null>(null)
@@ -640,12 +641,12 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
               window.setTimeout(subscribe, 500)
               return
             }
+            exists.value = false
             console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
-            // TODO: マイページ動作しないため、一時的にコメントアウト
-            // router.replace('/404')
             return
           }
           retry = 0
+          exists.value = true
           _communityRef.value = communityRef
           subscribeCommunity(communityRef)
           // 他の Store は遅延評価なので、以下を呼ぶ必要はない
@@ -736,6 +737,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity, scope?: Co
 
     return {
       community,
+      exists,
       coverImageUrl,
       iconImageUrl,
       members,

@@ -1,12 +1,47 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import type { RouteLocationNormalized } from 'vue-router'
 
 import {
   DEFAULT_DOCUMENT_TITLE,
   formatDocumentTitle,
+  isCommunityListPath,
   parseCommunityAccountFromPath,
   parseErrorCodeFromRoute,
   parseEventIdFromPath,
 } from '@/router/documentTitleHelpers.js'
+
+vi.mock('@shokujii/base/plugins/i18n/index.js', () => ({
+  getI18n: vi.fn(() => ({
+    global: {
+      t: (key: string) => (key === 'communitylist.page_title' ? 'コミュニティ一覧' : key),
+    },
+  })),
+}))
+
+vi.mock('@shokujii/base/stores/community.js', () => ({
+  useCommunityStore: vi.fn(),
+}))
+
+vi.mock('@shokujii/base/stores/event.js', () => ({
+  useEventStore: vi.fn(),
+}))
+
+import { resolveDocumentTitle } from '@/router/documentTitle.js'
+
+const createDocumentTitleRoute = (
+  path: string,
+  params: RouteLocationNormalized['params'] = {},
+): RouteLocationNormalized => ({
+  path,
+  params,
+  matched: [],
+  fullPath: path,
+  query: {},
+  hash: '',
+  name: undefined,
+  meta: {},
+  redirectedFrom: undefined,
+})
 
 describe('documentTitle', () => {
   it('formatDocumentTitle matches server-side suffix format', () => {
@@ -38,5 +73,17 @@ describe('documentTitle', () => {
 
   it('DEFAULT_DOCUMENT_TITLE matches index.html default', () => {
     expect(DEFAULT_DOCUMENT_TITLE).toBe('食事でつながる「shokujii」')
+  })
+
+  it('isCommunityListPath matches community list routes only', () => {
+    expect(isCommunityListPath('/communitylist')).toBe(true)
+    expect(isCommunityListPath('/communitylist/')).toBe(true)
+    expect(isCommunityListPath('/c/example')).toBe(false)
+  })
+
+  it('resolveDocumentTitle returns community list title without Firestore', async () => {
+    await expect(resolveDocumentTitle(createDocumentTitleRoute('/communitylist'))).resolves.toBe(
+      formatDocumentTitle('コミュニティ一覧'),
+    )
   })
 })
