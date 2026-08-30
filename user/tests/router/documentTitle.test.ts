@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { RouteLocationNormalized } from 'vue-router'
 
 import {
   DEFAULT_DOCUMENT_TITLE,
@@ -26,6 +27,21 @@ vi.mock('@shokujii/base/stores/event.js', () => ({
 }))
 
 import { resolveDocumentTitle } from '@/router/documentTitle.js'
+
+const createDocumentTitleRoute = (
+  path: string,
+  params: RouteLocationNormalized['params'] = {},
+): RouteLocationNormalized => ({
+  path,
+  params,
+  matched: [],
+  fullPath: path,
+  query: {},
+  hash: '',
+  name: undefined,
+  meta: {},
+  redirectedFrom: undefined,
+})
 
 describe('documentTitle', () => {
   it('formatDocumentTitle matches server-side suffix format', () => {
@@ -66,7 +82,7 @@ describe('documentTitle', () => {
   })
 
   it('resolveDocumentTitle returns community list title without Firestore', async () => {
-    await expect(resolveDocumentTitle({ path: '/communitylist', params: {} } as never)).resolves.toBe(
+    await expect(resolveDocumentTitle(createDocumentTitleRoute('/communitylist'))).resolves.toBe(
       formatDocumentTitle('コミュニティ一覧'),
     )
   })

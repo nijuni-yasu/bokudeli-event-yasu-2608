@@ -99,6 +99,16 @@
           "type": 301
         },
         {
+          "source": "/community/",
+          "destination": "/communitylist",
+          "type": 301
+        },
+        {
+          "source": "/communitylist/",
+          "destination": "/communitylist",
+          "type": 301
+        },
+        {
           "source": "/community/:account",
           "destination": "/c/:account",
           "type": 301
