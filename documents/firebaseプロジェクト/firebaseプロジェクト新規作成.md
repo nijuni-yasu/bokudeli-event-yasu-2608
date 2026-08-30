@@ -13,7 +13,11 @@
 | 個人環境  | bokudeli-event-yasu-2603 |
 | 個人環境  | bokudeli-event-yasu-2604 |
 | 個人環境  | bokudeli-event-yasu-2605 |
+| 個人環境  | bokudeli-event-yasu-2606 |
+| 個人環境  | bokudeli-event-yasu-2607 |
+| 個人環境  | bokudeli-event-yasu-2608 |
 
+3 本まとめて構築する手順: [sandbox2606-2608_環境構築手順.md](./sandbox2606-2608_環境構築手順.md)
 
 ---
 
@@ -263,6 +267,10 @@ git remote -v
 | `sandbox2510` | `nijuni-yasu/bokudeli-event-yasu-2510`   |
 | `sandbox2603` | `nijuni-yasu/bokudeli-event-yasu-2603-2` |
 | `sandbox2604` | `nijuni-yasu/bokudeli-event-yasu-2604`   |
+| `sandbox2605` | `nijuni-yasu/bokudeli-event-yasu-2605`   |
+| `sandbox2606` | `nijuni-yasu/bokudeli-event-yasu-2606`   |
+| `sandbox2607` | `nijuni-yasu/bokudeli-event-yasu-2607`   |
+| `sandbox2608` | `nijuni-yasu/bokudeli-event-yasu-2608`   |
 
 
 ### 10. デプロイを実行する

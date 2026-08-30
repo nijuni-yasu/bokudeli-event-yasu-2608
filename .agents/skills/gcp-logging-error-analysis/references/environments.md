@@ -12,6 +12,9 @@
 | 個人 sandbox | `bokudeli-event-yasu-2603` | 作業ブランチ任意 |
 | 個人 sandbox | `bokudeli-event-yasu-2604` | 作業ブランチ任意 |
 | 個人 sandbox | `bokudeli-event-yasu-2605` | 作業ブランチ任意 |
+| 個人 sandbox | `bokudeli-event-yasu-2606` | 作業ブランチ任意 |
+| 個人 sandbox | `bokudeli-event-yasu-2607` | 作業ブランチ任意 |
+| 個人 sandbox | `bokudeli-event-yasu-2608` | 作業ブランチ任意 |
 
 ## 混同しやすい点
 
@@ -35,6 +38,10 @@
 | `sandbox2510` | `nijuni-yasu/bokudeli-event-yasu-2510` | `bokudeli-event-yasu-2510` |
 | `sandbox2603` | `nijuni-yasu/bokudeli-event-yasu-2603-2` | `bokudeli-event-yasu-2603`（要 remote URL 確認） |
 | `sandbox2604` | `nijuni-yasu/bokudeli-event-yasu-2604` | `bokudeli-event-yasu-2604` |
+| `sandbox2605` | `nijuni-yasu/bokudeli-event-yasu-2605` | `bokudeli-event-yasu-2605` |
+| `sandbox2606` | `nijuni-yasu/bokudeli-event-yasu-2606` | `bokudeli-event-yasu-2606` |
+| `sandbox2607` | `nijuni-yasu/bokudeli-event-yasu-2607` | `bokudeli-event-yasu-2607` |
+| `sandbox2608` | `nijuni-yasu/bokudeli-event-yasu-2608` | `bokudeli-event-yasu-2608` |
 
 リモート URL の repo 名と GCP project ID が一致しない場合がある。`git remote get-url` の結果を優先する。
 
