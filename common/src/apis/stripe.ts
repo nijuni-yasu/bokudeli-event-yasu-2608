@@ -5,6 +5,7 @@ export type CreateStripeCheckoutSessionRequest = {
   isPosted: boolean
   /** Stripe 完了後のリダイレクト先オリジン（enterprise 等）。Functions 側でテナントホストと照合する */
   origin?: string
+  form_attempt_id?: string
 }
 
 export type CreateStripeCheckoutSessionResponse = {

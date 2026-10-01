@@ -15,6 +15,7 @@ export type ConfirmOrderRequest = {
   community_id: string
   event_id: string
   order_ids: string[]
+  form_attempt_id?: string
 }
 
 export type ConfirmOrderResponse = {
