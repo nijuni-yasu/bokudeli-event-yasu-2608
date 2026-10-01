@@ -221,7 +221,12 @@ export const setEventFormFromCommunity = onCall(async (request): Promise<SetEven
     fields: cloneFormFields(form.fields),
   })
   await saveEventFormConfig(community_id, event_id, config)
-  logger.info('イベントへフォームを設定した', { communityId: community_id, eventId: event_id, formId: form.id, userId: uid })
+  logger.info('イベントへフォームを設定した', {
+    communityId: community_id,
+    eventId: event_id,
+    formId: form.id,
+    userId: uid,
+  })
   return { config: toEventFormConfigDto(config) }
 })
 
@@ -277,10 +282,7 @@ function toResponseItem(
   }
 }
 
-async function buildResponseItems(
-  communityId: string,
-  eventId: string,
-): Promise<EventFormResponseListItem[]> {
+async function buildResponseItems(communityId: string, eventId: string): Promise<EventFormResponseListItem[]> {
   const [responses, ordered, canceled] = await Promise.all([
     listFormResponses(communityId, eventId),
     getOrders(communityId, eventId, 'ordered'),

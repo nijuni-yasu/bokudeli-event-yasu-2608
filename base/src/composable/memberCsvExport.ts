@@ -135,7 +135,14 @@ export const buildEventFormResponseCsv = (rows: EventFormResponseCsvRow[]): stri
       }
     }
   }
-  const headers = ['ユーザーID', '表示名', '参加状態', '回答日時', '更新日時', ...labels.map((label) => `設問:${label}`)]
+  const headers = [
+    'ユーザーID',
+    '表示名',
+    '参加状態',
+    '回答日時',
+    '更新日時',
+    ...labels.map((label) => `設問:${label}`),
+  ]
   const csvRows = rows.map((row) => {
     const byLabel = new Map(row.answers.map((answer) => [answer.field_label, answer.display_value]))
     return [

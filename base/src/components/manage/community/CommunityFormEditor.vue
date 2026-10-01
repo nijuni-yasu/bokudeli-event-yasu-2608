@@ -5,7 +5,12 @@ import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityS
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { createCommunityForm, getCommunityForm, updateCommunityForm } from '@shokujii/base/apis/form.js'
 import type { FormFieldInput } from '@shokujii/common/apis/form.js'
-import { FORM_FIELD_LIMITS, FormFieldSchema, isChoiceFieldType, type FormField } from '@shokujii/common/schemas/formFields.js'
+import {
+  FORM_FIELD_LIMITS,
+  FormFieldSchema,
+  isChoiceFieldType,
+  type FormField,
+} from '@shokujii/common/schemas/formFields.js'
 import { getManageCommunityFormsPath } from '@/router/utils'
 
 const props = defineProps<{
@@ -142,7 +147,13 @@ const back = () => {
     <div class="text-h6 mb-4">{{ formId == null ? $t('manage.forms.create') : $t('manage.forms.edit') }}</div>
     <v-progress-linear v-if="loading" indeterminate class="mb-4" />
     <v-text-field v-model="name" :label="$t('manage.forms.name')" :maxlength="FORM_FIELD_LIMITS.maxName" class="mb-2" />
-    <v-textarea v-model="description" :label="$t('manage.forms.description')" :maxlength="FORM_FIELD_LIMITS.maxDescription" rows="2" class="mb-2" />
+    <v-textarea
+      v-model="description"
+      :label="$t('manage.forms.description')"
+      :maxlength="FORM_FIELD_LIMITS.maxDescription"
+      rows="2"
+      class="mb-2"
+    />
     <v-textarea
       v-model="purpose"
       :label="$t('manage.forms.purpose')"

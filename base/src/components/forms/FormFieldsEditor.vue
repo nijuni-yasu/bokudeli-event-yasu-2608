@@ -60,7 +60,9 @@ const addOption = (index: number) => {
 
 const updateOption = (fieldIndex: number, optionIndex: number, patch: { label?: string; hidden_for_new?: boolean }) => {
   const field = props.modelValue[fieldIndex]
-  const options = (field.options ?? []).map((option, index) => (index === optionIndex ? { ...option, ...patch } : option))
+  const options = (field.options ?? []).map((option, index) =>
+    index === optionIndex ? { ...option, ...patch } : option,
+  )
   updateField(fieldIndex, { options })
 }
 
@@ -96,7 +98,12 @@ const onTypeChange = (index: number, type: FormFieldInput['type']) => {
         {{ $t('manage.forms.add_field') }}
       </v-btn>
     </div>
-    <v-card v-for="(field, index) in modelValue" :key="field.field_id ?? `new-${index}`" class="mb-4" variant="outlined">
+    <v-card
+      v-for="(field, index) in modelValue"
+      :key="field.field_id ?? `new-${index}`"
+      class="mb-4"
+      variant="outlined"
+    >
       <v-card-text>
         <v-row>
           <v-col cols="12" md="4">
@@ -144,7 +151,11 @@ const onTypeChange = (index: number, type: FormFieldInput['type']) => {
           </v-col>
           <v-col v-if="isChoiceFieldType(field.type)" cols="12">
             <div class="text-body-2 mb-2">{{ $t('manage.forms.options') }}</div>
-            <div v-for="(option, optionIndex) in field.options ?? []" :key="option.option_id ?? `opt-${optionIndex}`" class="d-flex ga-2 mb-2">
+            <div
+              v-for="(option, optionIndex) in field.options ?? []"
+              :key="option.option_id ?? `opt-${optionIndex}`"
+              class="d-flex ga-2 mb-2"
+            >
               <v-text-field
                 :model-value="option.label"
                 :label="$t('manage.forms.option_label')"

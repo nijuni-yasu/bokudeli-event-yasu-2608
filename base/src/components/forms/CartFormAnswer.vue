@@ -85,9 +85,13 @@ const load = async () => {
   }
 }
 
-watch(cartItem, () => {
-  void load()
-}, { immediate: true })
+watch(
+  cartItem,
+  () => {
+    void load()
+  },
+  { immediate: true },
+)
 
 const getOrderErrorMessage = (error: unknown): string | null => {
   if (error instanceof FirebaseError && error.code === 'functions/failed-precondition') {
@@ -149,14 +153,19 @@ const startOrder = async (attemptId: string) => {
     const auth = getAuth()
     const user = auth.currentUser
     const token = user == null ? undefined : await user.getIdTokenResult()
-    const eventStore = useEventStore(item.event.event_id, buildEventStoreOptions(token?.claims.enterprise_id as string | undefined))
+    const eventStore = useEventStore(
+      item.event.event_id,
+      buildEventStoreOptions(token?.claims.enterprise_id as string | undefined),
+    )
     await eventStore.confirmOrder({
       community_id: item.event.community_id,
       event_id: item.event.event_id,
       order_ids: orderIds,
       form_attempt_id: attemptId,
     })
-    await router.push(props.resolveOrdersPath({ eventId: item.event.event_id, communityAccount: item.event.community_account }))
+    await router.push(
+      props.resolveOrdersPath({ eventId: item.event.event_id, communityAccount: item.event.community_account }),
+    )
   } catch (error) {
     showAlert(getOrderErrorMessage(error) ?? $t('cart.order_failed'))
   }
@@ -209,18 +218,12 @@ const confirmOrderNow = async () => {
     <v-progress-circular v-if="loading" indeterminate color="primary" />
     <template v-else-if="form?.has_form">
       <FormAnswerFields v-model="answers" :fields="fields" :issues="issues" />
-      <v-btn
-        class="mt-8"
-        color="grey-900"
-        size="x-large"
-        rounded="pill"
-        block
-        :loading="saving"
-        @click="onPrimary"
-      >
+      <v-btn class="mt-8" color="grey-900" size="x-large" rounded="pill" block :loading="saving" @click="onPrimary">
         {{ needsStripe ? $t('cart.proceed_to_payment') : $t('cart.order_and_attend_event') }}
       </v-btn>
-      <v-btn class="mt-4" variant="text" block @click="router.push(resolveCartPath())">{{ $t('cart.back_to_cart') }}</v-btn>
+      <v-btn class="mt-4" variant="text" block @click="router.push(resolveCartPath())">{{
+        $t('cart.back_to_cart')
+      }}</v-btn>
     </template>
     <ConfirmDialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="confirmOrderNow" :ok-loading-state="saving">
       {{ confirmDialogMessage }}

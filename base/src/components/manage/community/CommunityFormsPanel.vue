@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { useAppCommunityStore } from '@shokujii/base/composable/useAppCommunityStore.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
-import {
-  archiveCommunityForm,
-  duplicateCommunityForm,
-  listCommunityForms,
-} from '@shokujii/base/apis/form.js'
+import { archiveCommunityForm, duplicateCommunityForm, listCommunityForms } from '@shokujii/base/apis/form.js'
 import type { CommunityFormSummary } from '@shokujii/common/apis/form.js'
 import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
 import { getManageCommunityFormEditPath, getManageCommunityFormNewPath } from '@/router/utils'
@@ -36,9 +32,13 @@ const load = async () => {
   }
 }
 
-watch(communityId, () => {
-  void load()
-}, { immediate: true })
+watch(
+  communityId,
+  () => {
+    void load()
+  },
+  { immediate: true },
+)
 
 const goNew = () => {
   void router.push(getManageCommunityFormNewPath(communityAccount))
@@ -99,7 +99,9 @@ const toggleArchive = async (form: CommunityFormSummary) => {
           <td>{{ convertToDatetime(form.updated_at) }}</td>
           <td class="text-right">
             <v-btn variant="text" size="small" @click="goEdit(form.form_id)">{{ $t('manage.forms.edit') }}</v-btn>
-            <v-btn variant="text" size="small" @click="duplicate(form.form_id)">{{ $t('manage.forms.duplicate') }}</v-btn>
+            <v-btn variant="text" size="small" @click="duplicate(form.form_id)">{{
+              $t('manage.forms.duplicate')
+            }}</v-btn>
             <v-btn variant="text" size="small" @click="toggleArchive(form)">
               {{ form.archived ? $t('manage.forms.unarchive') : $t('manage.forms.archive') }}
             </v-btn>

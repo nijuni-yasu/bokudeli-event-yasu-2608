@@ -236,8 +236,7 @@ export const listPendingFormCheckoutAttemptsForUser = async (
 ): Promise<FormCheckoutAttempt[]> => {
   const query = formAttemptsCollection(communityId, eventId).where('user_id', '==', userId)
   const snapshot = await (transaction === undefined ? query.get() : transaction.get(query))
-  return snapshot
-    .docs
+  return snapshot.docs
     .map((doc) => doc.data())
     .filter((attempt) => attempt.status === 'pending' || attempt.status === 'frozen')
 }

@@ -82,7 +82,9 @@ const download = () => {
       </div>
     </div>
     <v-progress-linear v-if="loading" indeterminate />
-    <v-alert v-else-if="responses.length === 0" type="info" variant="tonal">{{ $t('manage.forms.responses_empty') }}</v-alert>
+    <v-alert v-else-if="responses.length === 0" type="info" variant="tonal">{{
+      $t('manage.forms.responses_empty')
+    }}</v-alert>
     <v-table v-else>
       <thead>
         <tr>

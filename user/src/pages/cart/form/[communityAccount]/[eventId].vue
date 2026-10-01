@@ -6,9 +6,5 @@ const eventId = useRoute().params.eventId as string
 </script>
 
 <template>
-  <CartFormAnswer
-    :event-id="eventId"
-    :resolve-orders-path="getOrdersPathAfterOrder"
-    :resolve-cart-path="getCartPath"
-  />
+  <CartFormAnswer :event-id="eventId" :resolve-orders-path="getOrdersPathAfterOrder" :resolve-cart-path="getCartPath" />
 </template>

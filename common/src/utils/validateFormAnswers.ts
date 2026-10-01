@@ -59,10 +59,7 @@ export function validateFormAnswers(params: {
   expectedDefinitionVersion?: number
 }): FormValidationResult {
   const issues: FormValidationIssue[] = []
-  if (
-    params.expectedDefinitionVersion != null &&
-    params.expectedDefinitionVersion !== params.definitionVersion
-  ) {
+  if (params.expectedDefinitionVersion != null && params.expectedDefinitionVersion !== params.definitionVersion) {
     issues.push({ code: 'version_mismatch' })
     return { ok: false, issues }
   }

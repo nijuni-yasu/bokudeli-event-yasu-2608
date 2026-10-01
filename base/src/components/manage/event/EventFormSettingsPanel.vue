@@ -129,7 +129,9 @@ const clear = async () => {
 <template>
   <div>
     <v-alert v-if="isEnterprise" type="info" variant="tonal">{{ $t('manage.forms.enterprise_unsupported') }}</v-alert>
-    <v-alert v-else-if="!editable" type="info" variant="tonal" class="mb-4">{{ $t('manage.forms.event_not_editable') }}</v-alert>
+    <v-alert v-else-if="!editable" type="info" variant="tonal" class="mb-4">{{
+      $t('manage.forms.event_not_editable')
+    }}</v-alert>
     <template v-else>
       <v-progress-linear v-if="loading" indeterminate class="mb-4" />
       <div class="d-flex flex-wrap ga-3 align-center mb-4">

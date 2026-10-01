@@ -111,10 +111,7 @@ export const getOrderFormForCart = (input: GetOrderFormForCartRequest) => {
 }
 
 export const saveOrderFormAttempt = (input: SaveOrderFormAttemptRequest) => {
-  const f = httpsCallable<SaveOrderFormAttemptRequest, SaveOrderFormAttemptResponse>(
-    functions,
-    'saveOrderFormAttempt',
-  )
+  const f = httpsCallable<SaveOrderFormAttemptRequest, SaveOrderFormAttemptResponse>(functions, 'saveOrderFormAttempt')
   return f(input)
 }
 

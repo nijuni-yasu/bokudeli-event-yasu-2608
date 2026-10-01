@@ -7,9 +7,7 @@ import {
 } from '../schemas/formFields.js'
 import type { FormFieldInput } from '../apis/form.js'
 
-export type NormalizeFormFieldsResult =
-  | { ok: true; fields: FormField[] }
-  | { ok: false; message: string }
+export type NormalizeFormFieldsResult = { ok: true; fields: FormField[] } | { ok: false; message: string }
 
 function createEntityId(prefix: string): string {
   const bytes = new Uint8Array(8)
@@ -31,10 +29,7 @@ function existingTypeById(existing: FormField[] | undefined): Map<string, FormFi
   return map
 }
 
-export function normalizeFormFields(
-  inputs: FormFieldInput[],
-  existing?: FormField[],
-): NormalizeFormFieldsResult {
+export function normalizeFormFields(inputs: FormFieldInput[], existing?: FormField[]): NormalizeFormFieldsResult {
   if (inputs.length > FORM_FIELD_LIMITS.maxFields) {
     return { ok: false, message: `設問は${FORM_FIELD_LIMITS.maxFields}件までです` }
   }

@@ -96,7 +96,12 @@ const visibleOptions = (field: FormField) => {
         hide-details="auto"
         @update:model-value="setOption(field.field_id, String($event ?? ''))"
       >
-        <v-radio v-for="option in visibleOptions(field)" :key="option.option_id" :label="option.label" :value="option.option_id" />
+        <v-radio
+          v-for="option in visibleOptions(field)"
+          :key="option.option_id"
+          :label="option.label"
+          :value="option.option_id"
+        />
       </v-radio-group>
       <v-select
         v-else-if="field.type === 'select'"

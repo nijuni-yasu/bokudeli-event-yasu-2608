@@ -32,6 +32,14 @@ export const getManageCommunityAlbumPath = (communityAccount: string): string =>
   `/manage/community/${communityAccount}/album`
 export const getManageCommunityInvoicePath = (communityAccount: string): string =>
   `/manage/community/${communityAccount}/invoice`
+export const getManageCommunityFormsPath = (communityAccount: string): string =>
+  `/manage/community/${communityAccount}/forms`
+export const getManageCommunityFormNewPath = (communityAccount: string): string =>
+  `/manage/community/${communityAccount}/form/new`
+export const getManageCommunityFormEditPath = (communityAccount: string, formId: string): string =>
+  `/manage/community/${communityAccount}/form/${formId}`
+export const getCartFormPath = (communityAccount: string, eventId: string): string =>
+  `/cart/form/${communityAccount}/${eventId}`
 export const getManageEventPath = (eventId: string): string => `/manage/event/${eventId}`
 export const getManageEventSettingsPath = (eventId: string): string => `/manage/event/${eventId}/settings`
 export const getEventBillInvoicePath = (eventId: string): string => `/manage/event/${eventId}/invoice`

@@ -40,8 +40,7 @@ export const getManageCommunityPath = (communityAccount: string) => `/manage/com
 export const getManageCommunityAlbumPath = (communityAccount: string) => `/manage/community/${communityAccount}/album`
 export const getManageCommunityInvoicePath = (communityAccount: string) =>
   `/manage/community/${communityAccount}/invoice`
-export const getManageCommunityFormsPath = (communityAccount: string) =>
-  `/manage/community/${communityAccount}/forms`
+export const getManageCommunityFormsPath = (communityAccount: string) => `/manage/community/${communityAccount}/forms`
 export const getManageCommunityFormNewPath = (communityAccount: string) =>
   `/manage/community/${communityAccount}/form/new`
 export const getManageCommunityFormEditPath = (communityAccount: string, formId: string) =>

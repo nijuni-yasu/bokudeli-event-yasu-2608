@@ -53,7 +53,7 @@ import {
   type CartEnterpriseSubsidyBudget,
   type CartEnterpriseSubsidyBudgetLoader,
 } from '@shokujii/base/composable/cartMonthlyUsage.js'
-import type { ResolveOrdersPathFn } from '@shokujii/base/types/profilePathResolvers.js'
+import type { ResolveFormAnswerPathFn, ResolveOrdersPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import {
   loadMenuLimitRemainingMap,
@@ -68,7 +68,7 @@ const props = withDefaults(
     /** 注文確定後の注文履歴 URL（各 app の cart shell から注入） */
     resolveOrdersPath: ResolveOrdersPathFn
     /** PF の事前アンケート回答画面。未指定またはエンプラではフォーム導線を出さない */
-    resolveFormAnswerPath?: (params: { communityAccount: string; eventId: string }) => string
+    resolveFormAnswerPath?: ResolveFormAnswerPathFn
     /** エンプラ等: SNS・ハッシュタグ行を非表示 */
     hideShareSns?: boolean
   }>(),
