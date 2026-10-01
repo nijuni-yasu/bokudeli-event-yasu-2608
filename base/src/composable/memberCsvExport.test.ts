@@ -3,6 +3,7 @@ import {
   buildCommunityMemberCsv,
   buildCommunityMemberCsvRows,
   buildCsvContent,
+  buildEventFormResponseCsv,
   buildEventMemberCsv,
   buildEventMemberCsvHeaders,
   buildEventMemberCsvRows,
@@ -169,6 +170,26 @@ describe('buildEventMemberCsv', () => {
     })
     const csv = buildEventMemberCsv([{ order: sampleOrder(), member, statusLabel: '注文済' }], eventHeaders)
     expect(csv).toContain('"こんにちは, ""Alice""です\nよろしく","食事,交流 / ""和食"""\n')
+  })
+})
+
+describe('buildEventFormResponseCsv', () => {
+  it('確定時ラベルを設問列にして複数選択を1セルに入れる', () => {
+    const csv = buildEventFormResponseCsv([
+      {
+        user_id: 'u1',
+        display_name: '太郎',
+        participation_label: '参加確定',
+        answered_at: '2026/01/01 12:00',
+        updated_at: '2026/01/02 12:00',
+        answers: [
+          { field_label: '氏名', display_value: '山田' },
+          { field_label: '希望', display_value: '昼、夜' },
+        ],
+      },
+    ])
+    expect(csv).toContain('"設問:氏名","設問:希望"')
+    expect(csv).toContain('"u1","太郎","参加確定","2026/01/01 12:00","2026/01/02 12:00","山田","昼、夜"')
   })
 })
 

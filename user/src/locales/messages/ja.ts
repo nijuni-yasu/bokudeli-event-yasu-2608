@@ -328,6 +328,7 @@ export default {
         slackSetting: 'Slack連携',
         album: 'アルバム',
         settings: 'コミュニティ設定',
+        forms: '事前アンケート',
       },
       album: {
         page_title: 'アルバムを設定しよう🎨',
@@ -363,6 +364,7 @@ export default {
         letter: 'レター',
         settings: '設定',
         flyer: 'チラシ',
+        form: '事前アンケート',
       },
       edit: 'イベント設定',
       delete: 'イベント削除',

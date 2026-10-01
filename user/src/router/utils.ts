@@ -7,6 +7,7 @@ export const getEventPath = (communityAccount: string, eventId: string) => `/c/$
 export const getUserPath = (userId: string) => `/u/${userId}`
 /** PF には利用状況セクションが無いため `?tab=usage` は扱わない（enterprise 限定） */
 export const getOrdersPath = () => '/orders'
+export const getCartPath = () => '/cart'
 
 export const getOrdersPathAfterOrder = ({
   eventId,
@@ -39,6 +40,14 @@ export const getManageCommunityPath = (communityAccount: string) => `/manage/com
 export const getManageCommunityAlbumPath = (communityAccount: string) => `/manage/community/${communityAccount}/album`
 export const getManageCommunityInvoicePath = (communityAccount: string) =>
   `/manage/community/${communityAccount}/invoice`
+export const getManageCommunityFormsPath = (communityAccount: string) =>
+  `/manage/community/${communityAccount}/forms`
+export const getManageCommunityFormNewPath = (communityAccount: string) =>
+  `/manage/community/${communityAccount}/form/new`
+export const getManageCommunityFormEditPath = (communityAccount: string, formId: string) =>
+  `/manage/community/${communityAccount}/form/${formId}`
+export const getCartFormPath = (communityAccount: string, eventId: string) =>
+  `/cart/form/${communityAccount}/${eventId}`
 // export const getManageEventListPath = (communityAccount: string) => `/manage/community/${communityAccount}/event`
 export const getManageEventPath = (eventId: string) => `/manage/event/${eventId}`
 export const getManageEventSettingsPath = (eventId: string) => `/manage/event/${eventId}/settings`

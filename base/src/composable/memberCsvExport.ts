@@ -111,3 +111,41 @@ export const buildEventMemberCsv = (
 export const downloadMemberCsv = (filename: string, content: string): void => {
   downloadCsv(filename, content)
 }
+
+export type EventFormResponseCsvRow = {
+  user_id: string
+  display_name: string
+  participation_label: string
+  answered_at: string
+  updated_at: string
+  answers: Array<{
+    field_label: string
+    display_value: string
+  }>
+}
+
+export const buildEventFormResponseCsv = (rows: EventFormResponseCsvRow[]): string => {
+  const labels: string[] = []
+  const seen = new Set<string>()
+  for (const row of rows) {
+    for (const answer of row.answers) {
+      if (!seen.has(answer.field_label)) {
+        seen.add(answer.field_label)
+        labels.push(answer.field_label)
+      }
+    }
+  }
+  const headers = ['ユーザーID', '表示名', '参加状態', '回答日時', '更新日時', ...labels.map((label) => `設問:${label}`)]
+  const csvRows = rows.map((row) => {
+    const byLabel = new Map(row.answers.map((answer) => [answer.field_label, answer.display_value]))
+    return [
+      row.user_id,
+      row.display_name,
+      row.participation_label,
+      row.answered_at,
+      row.updated_at,
+      ...labels.map((label) => byLabel.get(label) ?? ''),
+    ]
+  })
+  return buildCsvContent(headers, csvRows)
+}

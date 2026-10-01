@@ -22,6 +22,7 @@ import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/
 import { priceString } from '@shokujii/base/schemes/converter'
 import type { User } from '@shokujii/common/schemas/User'
 import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
+import EventFormResponsesPanel from '@shokujii/base/components/manage/event/EventFormResponsesPanel.vue'
 
 const { t: $t } = useI18n()
 const route = useRoute()
@@ -254,6 +255,7 @@ const downloadCsvFile = () => {
             </v-row>
           </template>
         </v-card>
+        <EventFormResponsesPanel v-if="eventStore.event != null" :event="eventStore.event" />
       </v-col>
     </v-row>
   </v-container>

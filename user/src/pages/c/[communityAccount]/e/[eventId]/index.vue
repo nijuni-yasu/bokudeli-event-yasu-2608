@@ -29,6 +29,7 @@ import { getChatPath } from '@/router/utils'
 import { useNavigateToEventChat } from '@shokujii/base/composable/useNavigateToEventChat.js'
 import { useMenuLimitRemaining } from '@shokujii/base/composable/useMenuLimitRemaining.js'
 import { usePublicEventNotFoundRedirect } from '@shokujii/base/composable/usePublicEventNotFoundRedirect.js'
+import { getEventFormPresence } from '@shokujii/base/apis/form.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -52,6 +53,27 @@ let menuListObserver: IntersectionObserver | null = null
 const { isManager } = useCommunityMemberFlags(communityAccount)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
+const hasPreEventForm = ref(false)
+
+watch(
+  event,
+  async (current) => {
+    hasPreEventForm.value = false
+    if (current == null || (current.enterprise_id != null && current.enterprise_id !== '')) {
+      return
+    }
+    try {
+      const response = await getEventFormPresence({
+        community_id: current.community_id,
+        event_id: current.event_id,
+      })
+      hasPreEventForm.value = response.data.has_form
+    } catch {
+      hasPreEventForm.value = false
+    }
+  },
+  { immediate: true },
+)
 
 const canOpenChat = computed(() => {
   const uid = currentUserStore.firebaseUser?.uid
@@ -365,6 +387,9 @@ onUnmounted(() => {
           :open-chat-loading="isNavigatingToChat"
           @open-chat="onOpenChat"
         />
+        <v-alert v-if="hasPreEventForm" class="mt-4" type="info" variant="tonal">
+          {{ $t('event_details.pre_event_form') }}
+        </v-alert>
         <!-- メニュ -->
         <div class="event-page-menu">
           <event-menu-list

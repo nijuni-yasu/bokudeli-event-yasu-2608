@@ -46,6 +46,7 @@ import {
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
+import { getEventFormPresence } from '@shokujii/base/apis/form'
 import {
   pfCartEnterpriseSubsidyBudgetLoader,
   fetchCartEnterpriseSubsidyBudget,
@@ -66,12 +67,15 @@ const props = withDefaults(
     enterpriseSubsidyBudgetLoader?: CartEnterpriseSubsidyBudgetLoader
     /** 注文確定後の注文履歴 URL（各 app の cart shell から注入） */
     resolveOrdersPath: ResolveOrdersPathFn
+    /** PF の事前アンケート回答画面。未指定またはエンプラではフォーム導線を出さない */
+    resolveFormAnswerPath?: (params: { communityAccount: string; eventId: string }) => string
     /** エンプラ等: SNS・ハッシュタグ行を非表示 */
     hideShareSns?: boolean
   }>(),
   {
     enterpriseSubsidyBudgetLoader: pfCartEnterpriseSubsidyBudgetLoader,
     hideShareSns: false,
+    resolveFormAnswerPath: undefined,
   },
 )
 
@@ -426,6 +430,75 @@ const enrichedCart = computed<EnrichedCartItem[] | null>(() => {
 
 const findEnrichedCartItem = (cartItem: CartItem): EnrichedCartItem | undefined =>
   enrichedCart.value?.find((item) => item.event.event_id === cartItem.event.event_id)
+
+type FormPresence = 'loading' | 'yes' | 'no' | 'error'
+const formPresenceByEventId = ref<Record<string, FormPresence>>({})
+
+const isPfEvent = (event: BokudeliEvent): boolean => event.enterprise_id == null || event.enterprise_id === ''
+
+const loadFormPresence = async (event: BokudeliEvent) => {
+  const eventId = event.event_id
+  if (!isPfEvent(event) || props.resolveFormAnswerPath == null) {
+    formPresenceByEventId.value = { ...formPresenceByEventId.value, [eventId]: 'no' }
+    return
+  }
+  if (formPresenceByEventId.value[eventId] === 'yes' || formPresenceByEventId.value[eventId] === 'no') {
+    return
+  }
+  formPresenceByEventId.value = { ...formPresenceByEventId.value, [eventId]: 'loading' }
+  try {
+    const response = await getEventFormPresence({
+      community_id: event.community_id,
+      event_id: eventId,
+    })
+    formPresenceByEventId.value = {
+      ...formPresenceByEventId.value,
+      [eventId]: response.data.has_form ? 'yes' : 'no',
+    }
+  } catch {
+    formPresenceByEventId.value = { ...formPresenceByEventId.value, [eventId]: 'error' }
+  }
+}
+
+watch(
+  () => enrichedCart.value?.map((item) => item.event.event_id).join(',') ?? '',
+  () => {
+    for (const item of enrichedCart.value ?? []) {
+      void loadFormPresence(item.event)
+    }
+  },
+  { immediate: true },
+)
+
+const formPresenceOf = (eventId: string): FormPresence => formPresenceByEventId.value[eventId] ?? 'loading'
+
+const primaryCartButtonLabel = (item: EnrichedCartItem): string => {
+  if (formPresenceOf(item.event.event_id) === 'yes') {
+    return $t('cart.answer_pre_event_form')
+  }
+  return needsStripeCheckoutForItem(item) ? $t('cart.proceed_to_payment') : $t('cart.order_and_attend_event')
+}
+
+const onPrimaryCartButton = async (item: EnrichedCartItem) => {
+  const presence = formPresenceOf(item.event.event_id)
+  if (presence === 'loading') {
+    return
+  }
+  if (presence === 'error') {
+    alertBody.value = $t('cart.form_presence_failed')
+    return
+  }
+  if (presence === 'yes') {
+    const path = props.resolveFormAnswerPath
+    if (path == null) {
+      alertBody.value = $t('cart.form_presence_failed')
+      return
+    }
+    await router.push(path({ communityAccount: item.event.community_account, eventId: item.event.event_id }))
+    return
+  }
+  await showConfirm(item)
+}
 
 const needsStripeCheckoutForItem = (item: EnrichedCartItem): boolean => {
   const { event, orders } = item
@@ -1119,15 +1192,13 @@ const openMinimumParticipantsDialog = (minimumParticipants: MinimumParticipantsT
               class="mt-8 text-md-h4 text-h5"
               color="grey-900"
               size="x-large"
-              :loading="isOrderProcessing"
+              :loading="isOrderProcessing || formPresenceOf(cartItem.event.event_id) === 'loading'"
               rounded="pill"
               elevation="5"
               width="85%"
-              @click="showConfirm(cartItem)"
+              @click="onPrimaryCartButton(cartItem)"
             >
-              {{
-                needsStripeCheckoutForItem(cartItem) ? $t('cart.proceed_to_payment') : $t('cart.order_and_attend_event')
-              }}
+              {{ primaryCartButtonLabel(cartItem) }}
             </v-btn>
           </v-col>
         </v-row>

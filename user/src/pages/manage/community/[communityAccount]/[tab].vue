@@ -13,6 +13,7 @@ import CommunityAlbum from '@shokujii/base/components/manage/community/Community
 import CommunityInvoice from '@shokujii/base/components/manage/community/CommunityInvoice.vue'
 import CommunitySlackSetting from '@shokujii/base/components/manage/community/CommunitySlackSetting.vue'
 import CommunitySettings from '@shokujii/base/components/manage/community/CommunitySettings.vue'
+import CommunityFormsPanel from '@shokujii/base/components/manage/community/CommunityFormsPanel.vue'
 import {
   getCommunityPath,
   getEventCreatePath,
@@ -25,7 +26,7 @@ import {
 const { t: $t } = useI18n()
 const router = useRouter()
 
-const tabs = ['events', 'member', 'letter', 'album', 'invoice', 'slackSetting', 'settings'] as const
+const tabs = ['events', 'member', 'letter', 'album', 'invoice', 'forms', 'slackSetting', 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const communityAccount = useRoute().params.communityAccount as string
@@ -93,6 +94,9 @@ const onManagerSelfRemoved = () => {
           </v-tabs-window-item>
           <v-tabs-window-item value="slackSetting">
             <CommunitySlackSetting />
+          </v-tabs-window-item>
+          <v-tabs-window-item value="forms">
+            <CommunityFormsPanel />
           </v-tabs-window-item>
           <v-tabs-window-item value="settings">
             <CommunitySettings />
