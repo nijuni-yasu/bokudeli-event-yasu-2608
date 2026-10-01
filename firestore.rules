@@ -340,6 +340,18 @@ service cloud.firestore {
                 match /menus/{menuId} {
                     allow read: if true
                 }
+                match /form_configs/{docId} {
+                    allow read, write: if false;
+                }
+                match /form_responses/{userId} {
+                    allow read, write: if false;
+                }
+                match /form_checkout_attempts/{attemptId} {
+                    allow read, write: if false;
+                }
+            }
+            match /forms/{formId} {
+                allow read, write: if false;
             }
             match /members/{memberId} {
                 allow read: if true
