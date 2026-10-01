@@ -30,6 +30,7 @@ import {
 import { getEventInCommunity } from './stores/event.js'
 import { createModuleLogger } from './utils/logger.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
+import { applyAttemptToConfirmedResponse, planFormConfirmation } from './utils/formConfirm.js'
 import {
   addEnterpriseSubsidyMenusToCart,
   assertActiveEnterpriseMember,
@@ -252,7 +253,7 @@ export const confirmOrder = onCall(
       throw new HttpsError('unauthenticated', '認証が必要です')
     }
 
-    const { community_id, event_id, order_ids } = request.data as ConfirmOrderRequest
+    const { community_id, event_id, order_ids, form_attempt_id } = request.data as ConfirmOrderRequest
 
     if (!community_id || !event_id || !Array.isArray(order_ids) || order_ids.length === 0) {
       throw new HttpsError('invalid-argument', '必須パラメータが不足しています')
@@ -353,6 +354,22 @@ export const confirmOrder = onCall(
       }
       if (eventData.event_payment === 'community_bill' && totalPayment > 0) {
         throw new HttpsError('failed-precondition', '差額のある割引参加は Stripe Checkout で決済してください')
+      }
+
+      const formPlan = await planFormConfirmation({
+        event: eventData,
+        userId: uid,
+        attemptId: form_attempt_id,
+        transaction,
+      })
+      if (formPlan.kind === 'apply') {
+        await applyAttemptToConfirmedResponse({
+          event: eventData,
+          userId: uid,
+          attempt: formPlan.attempt,
+          transaction,
+          existing: formPlan.existing,
+        })
       }
 
       const orderedAt = Timestamp.now().toMillis()

@@ -26,6 +26,8 @@ import {
   getEventEnterpriseId,
   processEnterpriseSubsidyOrdersForWebhook,
 } from './utils/enterpriseSubsidyOrders.js'
+import { applyAttemptToConfirmedResponse } from './utils/formConfirm.js'
+import { getFormCheckoutAttempt, getFormResponse } from './stores/form.js'
 
 const logger = createModuleLogger('stripeWebhook')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
@@ -67,7 +69,7 @@ function getPaymentIntentId(session: Stripe.Checkout.Session): string | null {
 }
 
 function parseSessionContext(session: Stripe.Checkout.Session) {
-  const { eventId, communityId, userId } = session.metadata ?? {}
+  const { eventId, communityId, userId, formAttemptId } = session.metadata ?? {}
   if (eventId == null || communityId == null || userId == null) return null
 
   const orderIdChunks: string[] = []
@@ -81,7 +83,7 @@ function parseSessionContext(session: Stripe.Checkout.Session) {
     .split(',')
     .filter((id) => id.length > 0)
 
-  return { eventId, communityId, userId, orderIds }
+  return { eventId, communityId, userId, orderIds, formAttemptId }
 }
 
 export const stripeWebhook = onRequest(
@@ -127,7 +129,7 @@ export const stripeWebhook = onRequest(
       res.status(400).send('Missing metadata')
       return
     }
-    const { eventId, communityId, userId, orderIds } = ctx
+    const { eventId, communityId, userId, orderIds, formAttemptId } = ctx
 
     if (orderIds.length === 0) {
       logger.error('orderIds is empty', { metadata: session.metadata })
@@ -160,7 +162,17 @@ export const stripeWebhook = onRequest(
     }
 
     // checkout.session.completed (paid / no_payment_required) と async_payment_succeeded は確定フロー
-    await handleOrderConfirmation({ stripe, session, event, eventId, communityId, userId, orderIds, res })
+    await handleOrderConfirmation({
+      stripe,
+      session,
+      event,
+      eventId,
+      communityId,
+      userId,
+      orderIds,
+      formAttemptId,
+      res,
+    })
   },
 )
 
@@ -170,6 +182,7 @@ type HandlerArgs = {
   communityId: string
   userId: string
   orderIds: string[]
+  formAttemptId?: string
 }
 
 /** PayPay 等の遅延決済: payment_status=unpaid。order を processing に遷移し、processing_payment_intent と processing_at を保存する */
@@ -289,7 +302,7 @@ async function handleAsyncPaymentFailed(args: HandlerArgs): Promise<void> {
 async function handleOrderConfirmation(
   args: HandlerArgs & { stripe: Stripe; event: Stripe.Event; res: HttpResponse },
 ): Promise<void> {
-  const { stripe, session, event, eventId, communityId, userId, orderIds, res } = args
+  const { stripe, session, event, eventId, communityId, userId, orderIds, formAttemptId, res } = args
 
   // no_payment_required では payment_intent が null の可能性があるため、必須はしない
   const paymentStatus = session.payment_status
@@ -349,6 +362,13 @@ async function handleOrderConfirmation(
     if (eventData == null) {
       return { kind: 'client_error', message: 'Event not found' }
     }
+
+    const formAttempt =
+      formAttemptId == null || formAttemptId === ''
+        ? undefined
+        : await getFormCheckoutAttempt(communityId, eventId, formAttemptId, transaction)
+    const existingFormResponse =
+      formAttempt == null ? undefined : await getFormResponse(communityId, eventId, userId, transaction)
 
     const enterpriseId = getEventEnterpriseId(eventData)
     let subsidyTotal = 0
@@ -439,6 +459,17 @@ async function handleOrderConfirmation(
           count: 1,
         })
       }
+    }
+
+    if (formAttempt != null && formAttempt.user_id === userId) {
+      await applyAttemptToConfirmedResponse({
+        event: eventData,
+        userId,
+        attempt: formAttempt,
+        transaction,
+        existing: existingFormResponse,
+        ignoreDefinitionMismatch: true,
+      })
     }
 
     for (const order of orders) {

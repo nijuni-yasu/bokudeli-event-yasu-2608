@@ -32,6 +32,8 @@ import {
 } from './utils/enterpriseSubsidyOrders.js'
 import { findSoldOutMenuIds, SOLD_OUT_MENU_ERROR_MESSAGE } from '@shokujii/common/utils/assertEventMenusOrderable.js'
 import { assertMenuLimitsForConfirm } from './utils/menuLimitValidation.js'
+import { planFormConfirmation } from './utils/formConfirm.js'
+import { getFormCheckoutAttempt, saveFormCheckoutAttempt } from './stores/form.js'
 
 const logger = createModuleLogger('stripe')
 const db = getFirestore()
@@ -50,7 +52,7 @@ export const createStripeCheckoutSession = onCall<
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', '認証が必要です')
     }
-    const { community_id, event_id, order_ids, isPosted, origin } = request.data
+    const { community_id, event_id, order_ids, isPosted, origin, form_attempt_id } = request.data
 
     if (!community_id || !event_id || !Array.isArray(order_ids) || order_ids.length === 0) {
       throw new HttpsError('invalid-argument', '必須パラメータが不足しています')
@@ -116,6 +118,7 @@ export const createStripeCheckoutSession = onCall<
     }
 
     let checkoutOrders = orders
+    let frozenFormAttemptId: string | undefined
 
     if (event.event_payment === 'enterprise_subsidy') {
       if (enterpriseId == null) {
@@ -179,7 +182,7 @@ export const createStripeCheckoutSession = onCall<
         }
       }
 
-      await db.runTransaction(async (transaction) => {
+      frozenFormAttemptId = await db.runTransaction(async (transaction) => {
         const ordersInTx = await getOrdersByIds(community_id, event_id, uid, order_ids, transaction)
         if (ordersInTx.length !== order_ids.length) {
           throw new HttpsError('not-found', '一部の注文が見つかりません')
@@ -206,6 +209,18 @@ export const createStripeCheckoutSession = onCall<
           orders: ordersInTx,
           transaction,
         })
+        const formPlan = await planFormConfirmation({
+          event,
+          userId: uid,
+          attemptId: form_attempt_id,
+          transaction,
+        })
+        if (formPlan.kind === 'apply') {
+          formPlan.attempt.status = 'frozen'
+          await saveFormCheckoutAttempt(community_id, event_id, formPlan.attempt, transaction)
+          return formPlan.attempt.id
+        }
+        return undefined
       })
     }
 
@@ -325,10 +340,19 @@ export const createStripeCheckoutSession = onCall<
         communityId: community_id,
         userId: uid,
         ...(enterpriseId != null ? { enterpriseId } : {}),
+        ...(frozenFormAttemptId != null ? { formAttemptId: frozenFormAttemptId } : {}),
         ...buildOrderIdChunks(order_ids),
       },
     }
     const session = await stripe.checkout.sessions.create(sessionParams)
+
+    if (frozenFormAttemptId != null) {
+      const attempt = await getFormCheckoutAttempt(community_id, event_id, frozenFormAttemptId)
+      if (attempt != null) {
+        attempt.stripe_session_id = session.id
+        await saveFormCheckoutAttempt(community_id, event_id, attempt)
+      }
+    }
 
     logger.info('Checkout セッション作成', {
       sessionId: session.id,
@@ -345,10 +369,10 @@ export const createStripeCheckoutSession = onCall<
 
 /**
  * order_ids を Stripe metadata の value 上限（500文字）に収まるよう分割する。
- * Stripe metadata のキー上限（50個）のうち固定キー分（4個）を除いた 46 チャンクが最大。
+ * Stripe metadata のキー上限（50個）のうち固定キー分（最大 5 個 + enterpriseId）を除いた 44 チャンクが最大。
  */
 function buildOrderIdChunks(orderIds: string[]): Record<string, string> {
-  const maxChunks = 46
+  const maxChunks = 44
   const maxOrders = maxChunks * ORDER_IDS_CHUNK_SIZE
   if (orderIds.length > maxOrders) {
     throw new HttpsError('invalid-argument', `一度にチェックアウトできる注文数の上限（${maxOrders}件）を超えています`)
